@@ -11,7 +11,7 @@ import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 
-const WIND = ['East', 'South', 'West', 'North'];
+const WIND = ['東', '南', '西', '北'];
 
 interface RunIx { id: string; money: boolean; unit: string; hands: number }
 interface HandIx { file: string; g: number; h: number; winner: number | null; sd: boolean; fan: number | null; combo: string; turns: number; delta: number[]; bots: string[]; evals: number }
@@ -116,7 +116,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
         <Button size="sm" variant="outline" onClick={onBack}>← All hands</Button>
         <span><b>{hand.winner === null ? 'Draw' : `${WIND[hand.winner]} wins ${hand.combo} (${hand.fan} tai)${hand.selfDraw ? ' by self-draw' : hand.discarder !== null ? ` off ${WIND[hand.discarder]}` : ''}`}</b></span>
         <span className="text-muted-foreground">Prevailing {WIND[hand.wind]} · dealer {WIND[hand.dealer]}</span>
-        <span className="ml-auto text-muted-foreground">{unit === '$' ? 'money' : 'chips'}: {hand.delta.map((d, s) => `${WIND[s]![0]} ${fmt(d)}`).join('  ')}</span>
+        <span className="ml-auto text-muted-foreground">{unit === '$' ? 'money' : 'chips'}: {hand.delta.map((d, s) => `${WIND[s]} ${fmt(d)}`).join('  ')}</span>
       </div>
 
       {/* timeline */}

@@ -11,7 +11,7 @@ import { tileLabel } from '@/lib/tiles';
 import { makeScenario, CONFIG, type Phase, type Scenario } from '@/lib/scenario';
 import { cn } from '@/lib/utils';
 
-const WIND_NAME = ['East', 'South', 'West', 'North'];
+const WIND_NAME = ['東', '南', '西', '北'];
 const VERDICT_STYLE: Record<Verdict, string> = {
   best: 'bg-emerald-600 text-white', fine: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
   mistake: 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50', blunder: 'bg-red-600 text-white',
@@ -58,7 +58,7 @@ export default function Trainer() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-4 py-6 space-y-5">
+      <div className="mx-auto max-w-5xl px-4 py-6 space-y-5">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Which tile?</h1>
@@ -96,15 +96,15 @@ export default function Trainer() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex flex-wrap items-end gap-1 sm:gap-1.5">
+            <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
               {sortedHand.map((k, i) => (
-                <Tile key={i} kind={k} size="md" onClick={pick === null ? () => choose(k) : undefined}
+                <Tile key={i} kind={k} size="md" fluid onClick={pick === null ? () => choose(k) : undefined}
                   highlight={pick !== null && k === scenario.ranking.best.tile} dim={pick !== null && k !== pick && k !== scenario.ranking.best.tile} />
               ))}
               {scenario.drawn !== null && (
                 <>
-                  <div className="w-3" />
-                  <Tile kind={scenario.drawn} size="md" badge="drew" onClick={pick === null ? () => choose(scenario.drawn!) : undefined}
+                  <div className="w-2 shrink-0" />
+                  <Tile kind={scenario.drawn} size="md" fluid badge="drew" onClick={pick === null ? () => choose(scenario.drawn!) : undefined}
                     highlight={pick !== null && scenario.drawn === scenario.ranking.best.tile} dim={pick !== null && scenario.drawn !== pick && scenario.drawn !== scenario.ranking.best.tile} />
                 </>
               )}

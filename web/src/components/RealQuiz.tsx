@@ -10,7 +10,7 @@ import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 
-const WIND = ['East', 'South', 'West', 'North'];
+const WIND = ['東', '南', '西', '北'];
 
 interface PackIx { id: string; money: boolean; unit: string; questions: number }
 interface Action { a: string; ev: number; win: number; dealin: number; draw: number }
@@ -79,7 +79,7 @@ export default function RealQuiz() {
   const handTiles = drIdx >= 0 ? [...sorted.slice(0, drIdx), ...sorted.slice(drIdx + 1)] : sorted;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 space-y-4">
+    <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
         <span className="ml-auto" />
@@ -103,16 +103,16 @@ export default function RealQuiz() {
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-end gap-1 sm:gap-1.5">
+          <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
             {handTiles.map((k, i) => (
-              <Tile key={i} kind={k} size="md"
+              <Tile key={i} kind={k} size="md" fluid
                 onClick={q.k === 'discard' && picked === null && discardKinds.has(k) ? () => choose(`d:${k}`) : undefined}
                 dim={picked !== null && !(kindsOf(q.actions[0]!.a).includes(k) && q.actions[0]!.a.startsWith('d:')) && `d:${k}` !== picked}
                 highlight={picked !== null && q.actions[0]!.a === `d:${k}`} />
             ))}
             {q.dr !== null && (
-              <><div className="w-3" />
-                <Tile kind={q.dr} size="md" badge="drew"
+              <><div className="w-2 shrink-0" />
+                <Tile kind={q.dr} size="md" badge="drew" fluid
                   onClick={q.k === 'discard' && picked === null && discardKinds.has(q.dr) ? () => choose(`d:${q.dr}`) : undefined}
                   dim={picked !== null && q.actions[0]!.a !== `d:${q.dr}` && `d:${q.dr}` !== picked}
                   highlight={picked !== null && q.actions[0]!.a === `d:${q.dr}`} /></>

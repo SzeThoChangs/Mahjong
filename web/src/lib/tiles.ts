@@ -9,6 +9,6 @@ export function tileLabel(k: TileKind): string {
   const n = kindName(k);
   const m = /^([1-9])([wts])$/.exec(n);
   if (m) return `${m[1]} ${({ w: 'Wan', t: 'Tong', s: 'Sok' } as const)[m[2] as 'w' | 't' | 's']}`;
-  return ({ E: 'East', S: 'South', W: 'West', N: 'North', R: 'Red Dragon', G: 'Green Dragon', Wh: 'White Dragon' } as Record<string, string>)[n]
+  return ({ E: '東', S: '南', W: '西', N: '北', R: 'Red Dragon', G: 'Green Dragon', Wh: 'White Dragon' } as Record<string, string>)[n]
     ?? n.replace('A:', 'Animal: ').replace(/^F(\d)/, 'Flower $1').replace(/^S(\d)/, 'Season $1');
 }
