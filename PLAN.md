@@ -121,7 +121,7 @@ The trainer plan above still stands; the project also now carries the three-laye
 | Layer | Status |
 |---|---|
 | 1 — Data generator (`datagen/`) | **Done, milestone met**: 100,000 hands / 8.22M decisions generated, 0 illegal actions, chips net zero, every hand replays from its seed; 5 bot personalities with 70/15/10/5 controlled randomness; JSONL.gz + Parquet; validation stats + flags. |
-| 2 — Evaluator (`datagen/src/evaluate.ts`) | **v1 working**: exact position reconstruction, determinization of hidden state, paired rollouts per legal action, EV / win / deal-in / draw per action, regret vs the bot's pick. Needs scale (more rollouts, stronger rollout policy) before its numbers are labels. |
+| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Running at scale**: `data/gen/run100k-table` = 100k hands under the confirmed table rules (jokers, shooter-pays, pay-all, 8-flower) with **99,980 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy); 82% of decisions have a clear best action. Resumable, crash-tolerant. |
 | 3 — Model | Not started. |
 
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
