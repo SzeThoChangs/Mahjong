@@ -40,6 +40,8 @@ export default function RealQuiz() {
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
   const [score, setScore] = useState({ best: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
+  const [challenging, setChallenging] = useState(false);
+  const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
 
   useEffect(() => { fetch('/quiz/index.json').then((r) => r.json()).then((d: { packs: PackIx[] }) => { setPacks(d.packs); if (d.packs[0]) setPack(d.packs[0].id); }).catch(() => setPacks([])); }, []);
   useEffect(() => {
@@ -71,7 +73,17 @@ export default function RealQuiz() {
     const v = verdictOf(bestAction.ev - act.ev, unit);
     setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
   };
-  const next = () => { setPicked(null); setPos((p) => p + 1); };
+  const next = () => { setPicked(null); setChallengeResult(null); setPos((p) => p + 1); };
+  const runsChallenge = async () => {
+    if (!pack || picked === null) return;
+    setChallenging(true); setChallengeResult(null);
+    try {
+      const packMeta = await fetch(`/quiz/${pack}.json`).then((r) => r.json()) as { run: string };
+      const res = await fetch(`/api/challenge?run=${packMeta.run}&id=${q.id}&hand=${q.h.join(',')}&rollouts=512`).then((r) => r.json());
+      setChallengeResult(res);
+    } catch { setChallengeResult({ error: 'challenge needs the local dev server' }); }
+    setChallenging(false);
+  };
 
   const discardKinds = new Set(q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))));
   const sorted = [...q.h].sort((a, b) => a - b);
@@ -180,7 +192,29 @@ export default function RealQuiz() {
                 </div>
               );
             })}
-            <div className="pt-2"><Button onClick={next}>Next position</Button></div>
+            <div className="pt-2 flex items-center gap-2">
+              <Button onClick={next}>Next position</Button>
+              <Button variant="outline" disabled={challenging} onClick={runsChallenge}>{challenging ? 'Re-judging — up to a minute…' : 'Challenge the verdict (512 play-outs)'}</Button>
+            </div>
+            {challengeResult && (
+              <div className="mt-2 rounded-md border p-3 text-sm space-y-1">
+                {challengeResult.error && <div className="text-muted-foreground">{challengeResult.error}</div>}
+                {challengeResult.ev && (() => {
+                  const na = challengeResult.ev.actions;
+                  const nBest = na[0]!;
+                  const nPick = na.find((a) => a.a === picked);
+                  const overturned = picked !== null && nBest.a === picked && bestAction.a !== picked;
+                  const stillBest = nBest.a === bestAction.a;
+                  return (
+                    <>
+                      <div className="font-medium">{overturned ? '🎉 Overturned — the recount says YOUR move is best.' : stillBest ? 'Verdict stands on the recount.' : `The recount prefers ${actionText(nBest.a).toLowerCase()} — a genuinely close position.`}</div>
+                      <div className="text-muted-foreground">512 fresh play-outs per move: your {picked !== null ? actionText(picked).toLowerCase() : ''} {nPick ? fmt(nPick.ev) : '?'} vs best {actionText(nBest.a).toLowerCase()} {fmt(nBest.ev)} (was {fmt(bestAction.ev)} at {q.n}).</div>
+                      {nPick && Math.abs(nBest.ev - nPick.ev) < 0.3 && <div className="text-muted-foreground">Gap under 0.3 — call it a coin flip; either move is fine at the table.</div>}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
