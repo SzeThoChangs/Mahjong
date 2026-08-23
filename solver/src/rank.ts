@@ -17,7 +17,7 @@ export interface Ranking {
   best: DiscardOption;
 }
 
-const SUIT_NAME = { wan: 'Wan (characters)', tong: 'Tong (circles)', sok: 'Sok (bamboo)' } as const;
+const SUIT_NAME = { wan: '萬', tong: '筒', sok: '條' } as const;
 const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All-Chow', half_color: 'Half-Color', all_pong: 'All-Pong', chicken: 'Chicken', thirteen: '13 Wonders' };
 
 /** how many tile kinds (weighted by copies left) would raise the best target's evaluator */
