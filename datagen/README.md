@@ -77,6 +77,8 @@ hand and average the acting seat's chips. Output `evals-wN.jsonl.gz`:
 tile conservation after determinization. `evalstats.ts` reports regret / agreement by bot, kind and phase, plus flags.
 `scripts/to_parquet.py` also converts `evals-*` to one row per (decision, action).
 
-## Known gaps (engine)
+## Engine rules coverage
 
-Pay-All liability, robbing the kong, Eight-Flower / all-animals instant wins are not implemented (config exists, logic does not).
+Robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability are implemented and config-gated
+(`engine/src/rules.ts`: `special_hands`, `bao`; both off by default until the house rules are confirmed). Enabling the rob
+rule inserted a new decision point, so datasets generated before it differ on ~0.2% of hands — regenerate rather than mix.

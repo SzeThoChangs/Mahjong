@@ -125,4 +125,4 @@ The trainer plan above still stands; the project also now carries the three-laye
 | 3 — Model | Not started. |
 
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
-Open engine gaps: Pay-All liability, robbing the kong, Eight-Flower / all-animals instant wins.
+Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).

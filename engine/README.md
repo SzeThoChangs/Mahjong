@@ -32,12 +32,14 @@ pnpm sim 2000 random # same with purely random bots
 - All-Chow restrictions: eye not dragon / seat / prevailing wind; not with two concealed tiles; discard win needs two
   or more unique winning tiles (self-draw exempt).
 
-## Not yet implemented
+## Rules coverage
 
-- Pay-All liability (the eight scenarios in `data/rules.singapore.json`)
-- Robbing the kong
-- Eight Flower / Seven Flower special wins
-- Strategy. The bots here exist to exercise the rules; the playbook AI is the next layer.
+- Robbing the kong: an added kong (kong1) can be robbed by any winning hand; a concealed kong (kong4) only by 13 Wonders. The robbed kong is undone.
+- Seven Flower (10 Fan, replaces individual flower Fan), Eight Flower and all-four-animals instant wins (`special_hands`, off by default).
+- Pay-All liability (`bao`, off by default): feeding the third dragon set / fourth wind set / an honour pong that takes the exposed Fan to the limit,
+  feeding a 3-4-exposed-set colour hand, and fresh-tile discards late in the wall. The liable seat pays all three shares.
+- Not modelled: seven-pairs (no such hand on this table), table-etiquette remedies.
+- Strategy lives in `solver/`; the bots here exist to exercise the rules.
 
 ## Reading the sim output against the book
 

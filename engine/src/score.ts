@@ -47,7 +47,7 @@ function fanTable(r: RulesConfig): FanTable {
   return {
     ...r.combination_tai,
     animal: r.animal_scoring.each, animal_set: r.animal_scoring.set,
-    own_flower: r.flower_scoring.own_flower, flower_set: r.flower_scoring.flower_set, season_set: r.flower_scoring.season_set,
+    own_flower: r.flower_scoring.own_flower, flower_set: r.flower_scoring.flower_set, season_set: r.flower_scoring.season_set, seven_flower: r.flower_scoring.seven_flower, eight_flower: r.flower_scoring.eight_flower,
     dragon_pong: r.honour_scoring.dragon_pong, prevailing_wind: r.honour_scoring.prevailing_wind, seat_wind: r.honour_scoring.seat_wind,
     two_dragons_eye: r.honour_scoring.two_dragons_eye, three_winds_eye: r.honour_scoring.three_winds_eye,
     replacement_win: r.event_scoring.replacement_win, last_tile: r.event_scoring.last_tile, robbing_kong: r.event_scoring.robbing_kong,
@@ -174,6 +174,7 @@ function bonusItems(ctx: WinContext): FanItem[] {
   for (const _ of animals) items.push({ id: 'animal', fan: FAN['animal']! });
   if (animals.length === 4) items.push({ id: 'animal_set', fan: FAN['animal_set']! });
   const flowers = ctx.bonus.filter(isFlower), seasons = ctx.bonus.filter(isSeason);
+  if (flowers.length + seasons.length === 7 && FAN['seven_flower']) { items.push({ id: 'seven_flower', fan: FAN['seven_flower']! }); return items; }   // individual flower Fan does not add
   for (const f of [...flowers, ...seasons]) if (bonusSeat(f) === ctx.seat) items.push({ id: 'own_flower', fan: FAN['own_flower']! });
   if (flowers.length === 4) items.push({ id: 'flower_set', fan: FAN['flower_set']! });
   if (seasons.length === 4) items.push({ id: 'season_set', fan: FAN['season_set']! });

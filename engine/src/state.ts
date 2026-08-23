@@ -18,7 +18,8 @@ import { scoreHand, type ScoreResult } from './score.js';
 import { immediatePayout, meetsMinimum, winPayments, type TableConfig } from './payout.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 import { couldBeComplete } from './shanten.js';
-import { countsOf } from './tiles.js';
+import { countsOf, isHonour, isDragon, isWind } from './tiles.js';
+import { fanInHand } from './score.js';
 import type {
   Bot, ClaimKind, ClaimOption, DecisionKind, DiscardEvent, GameOptions, GameResult, GroundTruth, InstMeld, LegalAction, PlayerState, PlayerView, SelfAction,
 } from './game.js';
@@ -33,6 +34,10 @@ export interface Snapshot {
   dealer: number; prevailingWind: number; turn: number; phase: Phase; playerTurns: number;
   drawnInfo: { tile: TileInstance; replaced: boolean; lastTile: boolean } | null;
   pendingDiscard: { tile: TileInstance; from: number; lastTileDiscard: boolean; eligible: number[] } | null;
+  /** a kong in progress that opponents may rob; `kongKind` tells how to complete it if nobody does */
+  pendingRob: { tile: TileInstance; from: number; kong: 'kong1' | 'kong4'; meldIndex: number } | null;
+  /** Pay-All liability: seat -> the seat that must pay for everyone if this seat wins (null = none) */
+  liable: (number | null)[];
   paidEvents: string[][];
   counts: GameResult['counts'];
   claimQueue: { seat: number; options: ClaimOption[] }[];
@@ -44,6 +49,7 @@ export class GameState {
   players: PlayerState[]; wall: Wall; discardLog: DiscardEvent[] = [];
   dealer: number; prevailingWind: number; turn: number; phase: Phase = 'draw'; playerTurns = 0;
   drawnInfo: Snapshot['drawnInfo'] = null; pendingDiscard: Snapshot['pendingDiscard'] = null;
+  pendingRob: Snapshot['pendingRob'] = null; liable: (number | null)[] = [null, null, null, null];
   paidEvents: Set<string>[]; counts: GameResult['counts'] = { chow: 0, pong: 0, kong: 0, flowers: 0, animals: 0, decisions: 0, illegal: 0 };
   log: string[] = []; result: GameResult | null = null;
   private selfOptions: SelfAction[] = [];
@@ -62,8 +68,9 @@ export class GameState {
     const g = new GameState(cfg, wall, opts);
     for (let i = 0; i < 13; i++) for (let s = 0; s < 4; s++) {
       const p = g.players[(g.dealer + s) % 4]!;
-      const { tile } = g.absorb(p, wall.draw(), true);
-      if (tile !== null) p.hand.push(tile);
+      const a = g.absorb(p, wall.draw(), true);
+      if (a.special) { g.finish(p.seat, true, null, a.special); return g; }
+      if (a.tile !== null) p.hand.push(a.tile);
     }
     return g;
   }
@@ -74,6 +81,7 @@ export class GameState {
     g.players = snap.players.map((p) => ({ ...p, hand: [...p.hand], melds: p.melds.map((m) => ({ ...m, tiles: [...m.tiles], instances: [...m.instances] })), bonus: [...p.bonus], discards: [...p.discards], seenSinceLastDiscard: new Set(p.seenSinceLastDiscard) }));
     g.discardLog = snap.discardLog.map((e) => ({ ...e })); g.turn = snap.turn; g.phase = snap.phase; g.playerTurns = snap.playerTurns;
     g.drawnInfo = snap.drawnInfo ? { ...snap.drawnInfo } : null; g.pendingDiscard = snap.pendingDiscard ? { ...snap.pendingDiscard } : null;
+    g.pendingRob = snap.pendingRob ? { ...snap.pendingRob } : null; g.liable = [...snap.liable];
     g.paidEvents = snap.paidEvents.map((e) => new Set(e)); g.counts = { ...snap.counts };
     // melds inside claim options must reference the rebuilt players' meld objects where relevant (kong1 uses melds; claims don't), so a plain copy is fine
     g.claimQueue = snap.claimQueue.map((q) => ({ seat: q.seat, options: q.options.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })) }));
@@ -87,6 +95,7 @@ export class GameState {
       wall: this.wall.snapshot(), discardLog: this.discardLog.map((e) => ({ ...e })),
       dealer: this.dealer, prevailingWind: this.prevailingWind, turn: this.turn, phase: this.phase, playerTurns: this.playerTurns,
       drawnInfo: this.drawnInfo ? { ...this.drawnInfo } : null, pendingDiscard: this.pendingDiscard ? { ...this.pendingDiscard } : null,
+      pendingRob: this.pendingRob ? { ...this.pendingRob } : null, liable: [...this.liable],
       paidEvents: this.paidEvents.map((e) => [...e]), counts: { ...this.counts },
       claimQueue: this.claimQueue.map((q) => ({ seat: q.seat, options: q.options.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })) })),
       wanted: this.wanted.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })),
@@ -111,11 +120,24 @@ export class GameState {
     if (seasons.length === 4) fire('season_set', 'flower_set');
     if (ownPair) fire('flower_pair', 'flower_pair');
   }
-  private absorb(p: PlayerState, t: TileInstance | null, fromInitial: boolean): { tile: TileInstance | null; replaced: boolean } {
+  /** instant wins on bonus tiles (config-gated): Eight Flower, all four animals */
+  private specialBonusWin(p: PlayerState): ScoreResult | null {
+    const kinds = p.bonus.map(kindOf);
+    const fs = kinds.filter((k) => isFlower(k) || isSeason(k)).length, an = kinds.filter(isAnimal).length;
+    const items: { id: string; fan: number }[] = [];
+    if (fs === 8 && this.rules.special_hands.eight_flower_instant_win) items.push({ id: 'eight_flower', fan: this.rules.flower_scoring.eight_flower });
+    else if (an === 4 && this.rules.special_hands.all_animals_instant_win) items.push({ id: 'animal', fan: this.rules.animal_scoring.each * 4 }, { id: 'animal_set', fan: this.rules.animal_scoring.set });
+    else return null;
+    if (items[0]!.id === 'eight_flower') { for (let i = 0; i < an; i++) items.push({ id: 'animal', fan: this.rules.animal_scoring.each }); if (an === 4) items.push({ id: 'animal_set', fan: this.rules.animal_scoring.set }); }
+    return { fan: items.reduce((a, i) => a + i.fan, 0), items, combination: items[0]!.id === 'eight_flower' ? 'eight_flower' : 'all_animals', valid: true };
+  }
+  private absorb(p: PlayerState, t: TileInstance | null, fromInitial: boolean): { tile: TileInstance | null; replaced: boolean; special?: ScoreResult } {
     let replaced = false;
     while (t !== null && isBonus(kindOf(t))) {
       p.bonus.push(t); if (isAnimal(kindOf(t))) this.counts.animals++; else this.counts.flowers++;
       this.settleBonus(p, fromInitial); replaced = true;
+      const special = this.specialBonusWin(p);
+      if (special) return { tile: null, replaced, special };
       t = this.wall.drawReplacement();
     }
     return { tile: t, replaced };
@@ -133,14 +155,28 @@ export class GameState {
     if (!legal.some((l) => JSON.stringify(l) === JSON.stringify(selected))) this.counts.illegal++;
     this.opts.recorder?.record({ kind, seat, view: v, legal, selected, drawn, truth: this.truth });
   }
-  private score(p: PlayerState, concealed: TileKind[], winningTile: TileKind, selfDraw: boolean, extra: { replacementWin?: boolean; lastTile?: boolean }) {
+  private score(p: PlayerState, concealed: TileKind[], winningTile: TileKind, selfDraw: boolean, extra: { replacementWin?: boolean; lastTile?: boolean; robbingKong?: boolean }) {
     return scoreHand({ concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: p.seat, prevailingWind: this.prevailingWind, winningTile, selfDraw, ...extra }, this.rules);
   }
   private tilesAccounted() { return this.players.reduce((a, p) => a + p.hand.length + p.bonus.length + p.discards.length + p.melds.reduce((b, m) => b + m.instances.length, 0), 0); }
   private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null): GameResult {
     if (winner !== null && sc) {
       const pays = winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'thirteen_wonders', rules: this.rules });
-      for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
+      let liable: number | null = this.rules.bao.enabled ? this.liable[winner]! : null;
+      if (this.rules.bao.enabled && discarder !== null && liable === null) {
+        const b = this.rules.bao; const w = this.players[winner]!;
+        const exposed = w.melds.length;
+        const suits = new Set(w.melds.flatMap((m) => m.tiles).filter(isSuited).map(suitOf));
+        const allHon = w.melds.every((m) => isHonour(m.tiles[0]!)), oneSuit = suits.size === 1 && w.melds.every((m) => isHonour(m.tiles[0]!) || suitOf(m.tiles[0]!) === [...suits][0]);
+        if (exposed >= 3 && (allHon || (oneSuit && suits.size === 1)) && ['half_color', 'full_color', 'all_terminal'].includes(sc.combination)) liable = discarder;   // full/half-colour with 3-4 exposed sets fed
+        if (b.fresh_tile_threshold !== null && this.wall.remaining < b.fresh_tile_threshold && liable === null) {
+          const dk = kindOf(this.discardLog[this.discardLog.length - 1]!.tile);
+          const seenBefore = this.discardLog.slice(0, -1).some((e) => kindOf(e.tile) === dk);
+          if (!seenBefore) liable = discarder;
+        }
+      }
+      if (liable !== null && liable !== winner) { const total = pays.reduce((a, b) => a + b, 0); this.pay(liable, winner, total); }
+      else for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
     }
     this.phase = 'done';
     this.result = { winner, selfDraw, discarder, score: sc, chipsDelta: this.players.map((p) => p.chips), playerTurns: this.playerTurns, log: this.log, tilesAccounted: this.tilesAccounted(), counts: this.counts };
@@ -214,7 +250,7 @@ export class GameState {
     }
     if (this.phase === 'discard') return { kind: 'discard', seat: this.turn, legal: this.players[this.turn]!.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })) };
     if (this.phase === 'claim' && this.claimQueue.length) {
-      const q = this.claimQueue[0]!; const dk = kindOf(this.pendingDiscard!.tile);
+      const q = this.claimQueue[0]!; const dk = kindOf(this.claimTile());
       return { kind: 'claim', seat: q.seat, legal: [...q.options.map((o) => this.encClaim(o, dk)), { a: 'pass' }] };
     }
     return null;
@@ -233,6 +269,7 @@ export class GameState {
         if (raw === null) { this.finish(null, false, null, null); return; }
         const lastTile = this.wall.isExhausted;
         const a = this.absorb(p, raw, false);
+        if (a.special) { this.finish(this.turn, true, null, a.special); return; }
         if (a.tile === null) { this.finish(null, false, null, null); return; }
         p.hand.push(a.tile);
         this.drawnInfo = { tile: a.tile, replaced: this.phase === 'replacement' || a.replaced, lastTile };
@@ -262,15 +299,46 @@ export class GameState {
       const o = this.selfOptions.find((x) => x.kind === 'kong4' && kindOf(x.tiles[0]!) === action.kind) as Extract<SelfAction, { kind: 'kong4' }>;
       p.hand = p.hand.filter((t) => !o.tiles.includes(t));
       p.melds.push({ type: 'kong', tiles: o.tiles.map(kindOf), concealed: true, instances: o.tiles });
-      this.payAllOpponents(this.turn, immediatePayout('kong_4', this.cfg, false, this.rules)); this.counts.kong++; this.phase = 'replacement'; return;
+      this.payAllOpponents(this.turn, immediatePayout('kong_4', this.cfg, false, this.rules)); this.counts.kong++;
+      this.beginRob(o.tiles[0]!, 'kong4', p.melds.length - 1); return;
     }
     if (action.a === 'kong1') {
       const o = this.selfOptions.find((x) => x.kind === 'kong1' && kindOf(x.tile) === action.kind) as Extract<SelfAction, { kind: 'kong1' }>;
       p.hand = p.hand.filter((t) => t !== o.tile);
       o.meld.type = 'kong'; o.meld.tiles.push(kindOf(o.tile)); o.meld.instances.push(o.tile);
-      this.payAllOpponents(this.turn, immediatePayout('kong_1', this.cfg, false, this.rules)); this.counts.kong++; this.phase = 'replacement'; return;
+      this.payAllOpponents(this.turn, immediatePayout('kong_1', this.cfg, false, this.rules)); this.counts.kong++;
+      this.beginRob(o.tile, 'kong1', p.melds.indexOf(o.meld)); return;
     }
     this.phase = 'discard';
+  }
+  /** Pay-All: after seat `q` claims an honour set from `from`, does `from` become liable for q's eventual win? */
+  private noteLiability(q: PlayerState, from: number, dk: TileKind) {
+    const b = this.rules.bao; if (!b.enabled) return;
+    const honourSets = q.melds.filter((m) => m.type !== 'chow' && isHonour(m.tiles[0]!));
+    const dragons = honourSets.filter((m) => isDragon(m.tiles[0]!)).length, winds = honourSets.filter((m) => isWind(m.tiles[0]!)).length;
+    if (isDragon(dk) && b.dragon_set_feed && dragons === 3) { this.liable[q.seat] = from; return; }
+    if (isWind(dk) && b.wind_set_feed && winds === 4) { this.liable[q.seat] = from; return; }
+    if (b.fan_limit_feed && isHonour(dk)) {
+      const exposedFan = fanInHand({ melds: q.melds, bonus: q.bonus.map(kindOf), seat: q.seat, prevailingWind: this.prevailingWind });
+      if (exposedFan >= this.cfg.fan_limit) this.liable[q.seat] = from;        // each player carries at most one such infraction; later replaces earlier
+    }
+  }
+  /** After a kong: can anyone win on the kong tile? (kong4 only robbable for 13 Wonders.) If so, open a claim phase; else take the replacement draw. */
+  private beginRob(tile: TileInstance, kong: 'kong1' | 'kong4', meldIndex: number) {
+    const dk = kindOf(tile);
+    this.claimQueue = []; this.wanted = [];
+    for (let off = 1; off <= 3; off++) {
+      const s = (this.turn + off) % 4, q = this.players[s]!;
+      if (q.lastDiscardKind === dk || q.seenSinceLastDiscard.has(dk)) continue;       // same prohibition as a discard
+      const withTile = [...q.hand.map(kindOf), dk];
+      if (!couldBeComplete(countsOf(withTile), q.melds.length)) continue;
+      const sc = this.score(q, withTile, dk, false, { robbingKong: true });
+      if (!sc.valid || !meetsMinimum(sc.fan, false, this.cfg)) continue;
+      if (kong === 'kong4' && sc.combination !== 'thirteen_wonders') continue;
+      this.claimQueue.push({ seat: s, options: [{ kind: 'win', seat: s, score: sc }] });
+    }
+    if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex }; this.phase = 'claim'; }
+    else this.phase = 'replacement';
   }
   private applyDiscard(action: LegalAction) {
     if (action.a !== 'discard') throw new Error('discard expected');
@@ -288,9 +356,11 @@ export class GameState {
     for (const q of this.players) if (q !== p) q.seenSinceLastDiscard.add(dk);
     this.phase = 'claim';
   }
+  private claimTile(): TileInstance { return this.pendingRob ? this.pendingRob.tile : this.pendingDiscard!.tile; }
+  private claimFrom(): number { return this.pendingRob ? this.pendingRob.from : this.pendingDiscard!.from; }
   private applyClaim(action: LegalAction) {
-    const q = this.claimQueue.shift()!; const dk = kindOf(this.pendingDiscard!.tile);
-    const v = this.view(q.seat, { tile: this.pendingDiscard!.tile, from: this.pendingDiscard!.from });
+    const q = this.claimQueue.shift()!; const dk = kindOf(this.claimTile());
+    const v = this.view(q.seat, { tile: this.claimTile(), from: this.claimFrom() });
     this.record('claim', q.seat, v, [...q.options.map((o) => this.encClaim(o, dk)), { a: 'pass' }], action, null);
     if (action.a !== 'pass') {
       const o = q.options.find((x) => JSON.stringify(this.encClaim(x, dk)) === JSON.stringify(action));
@@ -298,6 +368,22 @@ export class GameState {
     }
   }
   private resolveClaims() {
+    if (this.pendingRob) {   // robbing the kong: only wins were offered
+      const rob = this.pendingRob; const from = rob.from;
+      const prio: Record<ClaimKind, number> = { win: 0, kong3: 1, pong: 2, chow: 3 };
+      this.wanted.sort((a, b) => prio[a.kind] - prio[b.kind] || ((a.seat - from + 4) % 4) - ((b.seat - from + 4) % 4));
+      const taken = this.wanted[0]; this.wanted = []; this.pendingRob = null;
+      if (taken) {
+        // the robbed tile leaves the kong (kong1: meld reverts to a pong; kong4: cannot happen except 13 wonders - meld removed entirely)
+        const p = this.players[from]!; const m = p.melds[rob.meldIndex]!;
+        if (rob.kong === 'kong1') { m.type = 'pong'; m.tiles.pop(); m.instances = m.instances.filter((t) => t !== rob.tile); }
+        else { p.melds.splice(rob.meldIndex, 1); for (const t of m.instances) if (t !== rob.tile) p.hand.push(t); }
+        this.counts.kong--;
+        this.L(`seat${taken.seat} robs the kong of seat${from}`);
+        this.finish(taken.seat, false, from, taken.score!); return;
+      }
+      this.phase = 'replacement'; return;
+    }
     const { tile: d, from } = this.pendingDiscard!;
     const prio: Record<ClaimKind, number> = { win: 0, kong3: 1, pong: 2, chow: 3 };
     this.wanted.sort((a, b) => prio[a.kind] - prio[b.kind] || ((a.seat - from + 4) % 4) - ((b.seat - from + 4) % 4));
@@ -316,6 +402,7 @@ export class GameState {
     const inst = [...taken.tiles!, d];
     q.melds.push({ type: taken.kind === 'chow' ? 'chow' : taken.kind === 'pong' ? 'pong' : 'kong', tiles: inst.map(kindOf).sort((a, b) => a - b), concealed: false, instances: inst });
     if (taken.kind === 'chow') this.counts.chow++; else if (taken.kind === 'pong') this.counts.pong++; else this.counts.kong++;
+    this.noteLiability(q, from, kindOf(d));
     this.playerTurns++;
     this.turn = taken.seat;
     if (taken.kind === 'kong3') { this.payAllOpponents(this.turn, immediatePayout('kong_3', this.cfg, false, this.rules)); this.phase = 'replacement'; }
@@ -335,8 +422,8 @@ export class GameState {
       const d = bots[this.turn]!.chooseDiscard(v);
       this.apply({ a: 'discard', tile: d, kind: kindOf(d) });
     } else if (this.phase === 'claim') {
-      const q = this.claimQueue[0]!; const dk = kindOf(this.pendingDiscard!.tile);
-      const c = bots[q.seat]!.chooseClaim(this.view(q.seat, { tile: this.pendingDiscard!.tile, from: this.pendingDiscard!.from }), q.options);
+      const q = this.claimQueue[0]!; const dk = kindOf(this.claimTile());
+      const c = bots[q.seat]!.chooseClaim(this.view(q.seat, { tile: this.claimTile(), from: this.claimFrom() }), q.options);
       this.apply(c ? this.encClaim(c, dk) : { a: 'pass' });
     }
   }
