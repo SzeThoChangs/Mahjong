@@ -41,12 +41,21 @@ function acceptance(h: HandInput, best: TargetEval): number {
 export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context): Ranking {
   const kinds = [...new Set(concealed)];
   const opts: DiscardOption[] = [];
+  const hands = new Map<TileKind, HandInput>();
   for (const k of kinds) {
     const rest = [...concealed]; rest.splice(rest.indexOf(k), 1);
     const h = { concealed: rest, melds };
+    hands.set(k, h);
     const hv = handValue(h, ctx);
-    const acc = acceptance(h, hv.best);
-    opts.push({ tile: k, chips: hv.chips + acc * 0.06, delta: 0, verdict: 'fine', target: hv.best, acceptance: acc, reasons: [] });
+    opts.push({ tile: k, chips: hv.chips, delta: 0, verdict: 'fine', target: hv.best, acceptance: 0, reasons: [] });
+  }
+  opts.sort((a, b) => b.chips - a.chips);
+  // acceptance (what improves next draw) is the expensive part: only compute it where it can change the order
+  const cutoff = opts[0]!.chips - 1.5;
+  for (const o of opts) {
+    if (o.chips < cutoff) break;
+    o.acceptance = acceptance(hands.get(o.tile)!, o.target);
+    o.chips += o.acceptance * 0.06;
   }
   opts.sort((a, b) => b.chips - a.chips);
   const top = opts[0]!;
@@ -57,9 +66,13 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   }
   const t = top.target;
   const where = t.suit ? ` in ${SUIT_NAME[t.suit as keyof typeof SUIT_NAME]}` : '';
-  const plan = `${TARGET_NAME[t.id]}${where}`;
+  const restAll = [...concealed.filter((_, i) => i !== concealed.indexOf(top.tile)), ...melds.flatMap((m) => m.tiles)];
+  const pureSuit = t.id === 'half_color' && !restAll.some(isHonour);
+  const label = pureSuit ? 'Full-Color (no honours — 4 Fan)' : TARGET_NAME[t.id]!;
+  const plan = `${label}${where}`;
   const detail: string[] = [];
-  detail.push(`${TARGET_NAME[t.id]}${where}: ${t.id === 'all_pong' ? 'breakdown' : 'score'} ${t.value} → about ${fmt(t.chips)} chips/game at turn ${ctx.playerTurns}.`);
+  detail.push(`${label}${where}: ${t.id === 'all_pong' ? 'breakdown' : 'score'} ${t.value} → about ${fmt(t.chips)} chips/game at turn ${ctx.playerTurns}.`);
+  if (pureSuit) detail.push('Scored with the Half-Color method (the book treats Full-Color as Half-Color without honours); the payout is higher.');
   if (t.note) detail.push(`Note: ${t.note}.`);
   const hvAll = handValue({ concealed: (() => { const r = [...concealed]; r.splice(r.indexOf(top.tile), 1); return r; })(), melds }, ctx).all;
   const second = hvAll[1];

@@ -4,7 +4,8 @@ import { isHonour, isSuited, kindOf, rankOf, suitOf, type TileInstance } from '.
 
 /** Random legal play. Always wins when able, always kongs, pongs/chows with fixed probability. */
 export class RandomBot implements Bot {
-  constructor(private rng: () => number, private pongP = 0.6, private chowP = 0.4) {}
+  protected rng: () => number; private pongP: number; private chowP: number;
+  constructor(rng: () => number, pongP = 0.6, chowP = 0.4) { this.rng = rng; this.pongP = pongP; this.chowP = chowP; }
   chooseDiscard(v: PlayerView): TileInstance { return v.hand[Math.floor(this.rng() * v.hand.length)]!; }
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
     return options.find((o) => o.kind === 'win') ?? options[0] ?? null;

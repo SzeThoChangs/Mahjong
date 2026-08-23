@@ -2,7 +2,7 @@
  * Convert evaluator values to chips-per-game for each target at the current
  * Player Turns, using the book's tables. Picks the best target.
  */
-import { fanInHand, isAnimal, isFlower, isSeason, type TileKind, type Meld } from 'sg-mahjong-engine';
+import { fanInHand, isAnimal, isFlower, isSeason, type TileKind } from 'sg-mahjong-engine';
 import { TABLES } from './tables.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, thirteenBreakdown, type HandInput } from './evaluators.js';
 

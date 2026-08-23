@@ -4,8 +4,8 @@
  * Fan and tai are the same unit.
  */
 import {
-  KIND, bonusSeat, countsOf, isAnimal, isDragon, isFlower, isHonour, isSeason, isSuited,
-  isTerminal, isTerminalOrHonour, isWind, suitOf, windKind, type TileKind,
+  bonusSeat, countsOf, isAnimal, isDragon, isFlower, isHonour, isSeason, isSuited,
+  isTerminalOrHonour, isWind, suitOf, windKind, type TileKind,
 } from './tiles.js';
 import { decompose, isThirteenWonders, winningKinds, type ConcealedSet } from './decompose.js';
 

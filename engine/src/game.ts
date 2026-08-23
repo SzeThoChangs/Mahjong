@@ -75,7 +75,11 @@ export interface GameResult {
   tilesAccounted: number;
 }
 
-export interface GameOptions { prevailingWind?: number; dealer?: number; log?: boolean; }
+export interface GameOptions {
+  prevailingWind?: number; dealer?: number; log?: boolean;
+  /** Called right before a player chooses a discard. `drawn` is the tile just drawn, or null after a pong/chow. Throw to abort the game. */
+  onDiscardDecision?: (view: PlayerView, drawn: TileInstance | null) => void;
+}
 
 export function playGame(bots: Bot[], cfg: TableConfig, wall: Wall, opts: GameOptions = {}): GameResult {
   const log: string[] = [];
@@ -187,6 +191,7 @@ export function playGame(bots: Bot[], cfg: TableConfig, wall: Wall, opts: GameOp
     }
 
     // ---- discard ---------------------------------------------------------------
+    opts.onDiscardDecision?.(view(turn, null), drawnInfo?.tile ?? null);
     const d = bots[turn]!.chooseDiscard(view(turn, null));
     const idx = p.hand.indexOf(d);
     if (idx < 0) throw new Error(`seat ${turn} discarded a tile it does not hold`);
@@ -241,7 +246,7 @@ export function playGame(bots: Bot[], cfg: TableConfig, wall: Wall, opts: GameOp
     playerTurns++;
     turn = taken.seat;
     if (taken.kind === 'kong3') { payAllOpponents(turn, immediatePayout('kong_3', cfg)); phase = 'replacement'; }
-    else phase = 'discard';
+    else { phase = 'discard'; drawnInfo = null; }
   }
   throw new Error('game loop guard tripped');
 }

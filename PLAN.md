@@ -102,6 +102,8 @@ Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
 
 ## Open items
 
+- **Rust / WASM:** not now. Revisit only if we start tuning runs in the millions of games; first fix would be algorithmic in TS (cache evaluations, prune candidates), WASM port of the solver hot loop only after that.
+
 - Tile images: the four animals are low-res (~90px source). Fine for v1; a sharper
   photo later.
 - Table config still has unconfirmed items (unplayable tiles, Pay-All threshold,
