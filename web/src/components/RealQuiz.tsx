@@ -89,8 +89,8 @@ export default function RealQuiz() {
       <Card>
         <CardContent className="pt-4 !flex !flex-row flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <span>You are <b>{WIND[q.seat]}</b></span>
-          <span className="text-muted-foreground">Prevailing <b className="text-foreground">{WIND[q.w]}</b></span>
-          <span className="text-muted-foreground">Turn <b className="text-foreground">{q.t}</b></span>
+          <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}圈</b></span>
+          <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b> <span title="each 巡 = one go-around of the table">({q.t} moves played)</span></span>
           <span className="text-muted-foreground">Tai in hand <b className="text-foreground">{q.fih}</b></span>
           {q.b.length > 0 && <span className="flex items-center gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="sm" />)}</span>}
           {q.m.length > 0 && <span className="flex items-center gap-2">{q.m.map((m, i) => <span key={i} className="flex gap-0.5">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="sm" dim={m[1] === 1} />)}</span>)}</span>}

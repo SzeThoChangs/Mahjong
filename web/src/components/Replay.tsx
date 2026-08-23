@@ -73,7 +73,7 @@ export default function Replay() {
               <button key={h.file} onClick={() => open(h.file)} className="flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent">
                 <span className="font-medium w-24">{h.winner === null ? 'Draw' : `${WIND[h.winner]} wins`}</span>
                 <span className="text-muted-foreground w-28 truncate">{h.combo}{h.fan !== null ? ` · ${h.fan} tai` : ''}</span>
-                <span className="text-muted-foreground">turn {h.turns}</span>
+                <span className="text-muted-foreground">第{Math.max(1, Math.ceil(h.turns / 4))}巡</span>
                 <span className="ml-auto text-xs text-muted-foreground">{h.evals} evaluated</span>
               </button>
             ))}
@@ -115,7 +115,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Button size="sm" variant="outline" onClick={onBack}>← All hands</Button>
         <span><b>{hand.winner === null ? 'Draw' : `${WIND[hand.winner]} wins ${hand.combo} (${hand.fan} tai)${hand.selfDraw ? ' by self-draw' : hand.discarder !== null ? ` off ${WIND[hand.discarder]}` : ''}`}</b></span>
-        <span className="text-muted-foreground">Prevailing {WIND[hand.wind]} · dealer {WIND[hand.dealer]}</span>
+        <span className="text-muted-foreground">{WIND[hand.wind]}圈 · dealer {WIND[hand.dealer]}</span>
         <span className="ml-auto text-muted-foreground">{unit === '$' ? 'money' : 'chips'}: {hand.delta.map((d, s) => `${WIND[s]} ${fmt(d)}`).join('  ')}</span>
       </div>
 
@@ -125,7 +125,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
           <Button size="sm" variant="outline" onClick={() => setI(Math.max(0, i - 1))}>◀</Button>
           <input type="range" min={0} max={hand.decisions.length - 1} value={i} onChange={(e) => setI(Number(e.target.value))} className="flex-1" />
           <Button size="sm" variant="outline" onClick={() => setI(Math.min(hand.decisions.length - 1, i + 1))}>▶</Button>
-          <span className="text-xs text-muted-foreground w-40">decision {i + 1}/{hand.decisions.length} · turn {cur.t}</span>
+          <span className="text-xs text-muted-foreground w-44">decision {i + 1}/{hand.decisions.length} · 第{Math.max(1, Math.ceil(cur.t / 4))}巡</span>
         </div>
         {evalIdxs.length > 0 && (
           <div className="flex flex-wrap gap-1 text-xs items-center"><span className="text-muted-foreground mr-1">evaluated:</span>

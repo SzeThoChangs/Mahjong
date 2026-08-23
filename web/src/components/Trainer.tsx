@@ -78,8 +78,8 @@ export default function Trainer() {
         <Card>
           <CardContent className="pt-5 !flex !flex-row flex-wrap items-center justify-start gap-x-6 gap-y-3 text-sm">
             <div><span className="text-muted-foreground">You are</span> <b>{WIND_NAME[scenario.seat]}</b></div>
-            <div><span className="text-muted-foreground">Prevailing</span> <b>{WIND_NAME[scenario.prevailingWind]}</b></div>
-            <div><span className="text-muted-foreground">Turn</span> <b>{scenario.playerTurns}</b> <span className="text-muted-foreground">({scenario.phase} game)</span></div>
+            <div><span className="text-muted-foreground">Round</span> <b>{WIND_NAME[scenario.prevailingWind]}圈</b></div>
+            <div><b>第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡</b> <span className="text-muted-foreground">({scenario.phase} game · {scenario.playerTurns} moves)</span></div>
             <div><span className="text-muted-foreground">Fan in hand</span> <b>{fan}</b>{fan < CONFIG.minimum_fan && <span className="text-muted-foreground"> — need {CONFIG.minimum_fan} to win on a discard</span>}</div>
             {scenario.bonus.length > 0 && (
               <div className="flex items-center gap-1"><span className="text-muted-foreground mr-1">Flowers/animals</span>{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="sm" />)}</div>
