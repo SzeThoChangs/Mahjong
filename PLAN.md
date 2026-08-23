@@ -110,3 +110,19 @@ Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
   self-draw bonus Fan). They don't block the trainer; they'd matter for push/fold.
 - Section 6.5 of the book (All-Pong at MF2) was never captured; the solver uses
   MF1 All-Pong tables with the general MF2 correction until it is.
+
+
+---
+
+# Status — 2026-08-23 (data-generation programme)
+
+The trainer plan above still stands; the project also now carries the three-layer data programme.
+
+| Layer | Status |
+|---|---|
+| 1 — Data generator (`datagen/`) | **Done, milestone met**: 100,000 hands / 8.22M decisions generated, 0 illegal actions, chips net zero, every hand replays from its seed; 5 bot personalities with 70/15/10/5 controlled randomness; JSONL.gz + Parquet; validation stats + flags. |
+| 2 — Evaluator (`datagen/src/evaluate.ts`) | **v1 working**: exact position reconstruction, determinization of hidden state, paired rollouts per legal action, EV / win / deal-in / draw per action, regret vs the bot's pick. Needs scale (more rollouts, stronger rollout policy) before its numbers are labels. |
+| 3 — Model | Not started. |
+
+Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
+Open engine gaps: Pay-All liability, robbing the kong, Eight-Flower / all-animals instant wins.

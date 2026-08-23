@@ -48,6 +48,28 @@ Actions: `d:<kind>` `win` `kong4:<kind>` `kong1:<kind>` `proceed` `pass` `pong:<
 `hand seed = fnv1a("<sessionSeed>:<handIdx>")`, `bot seed = fnv1a("<handSeed>:bot:<seat>")`, wall = `Wall(makeRng(handSeed))`.
 Given a hand record (seed, dealer, wind, bot types) the hand replays bit-for-bit; `replay.ts` checks the decision hash.
 
+## Layer 2 — evaluator (v1)
+
+```bash
+pnpm -C datagen exec tsx src/evaluate.ts --dir ../data/gen/run100k --hands 200 --per-hand 4 --rollouts 64 --mode sampled --policy fast --workers 8
+```
+
+For each sampled decision: rebuild the exact position (`positionAt` replays the hand to decision *d*), then for every
+legal action run N rollouts to the end of the hand and average the acting seat's chips. Output `evals-wN.jsonl.gz`:
+`{g,h,d,k,seat,bot,sel,mode,policy,n, actions:[{a,ev,sd,win,dealin,draw,n}], best, selEv, regret}`.
+
+- `--mode sampled` (default): hidden information is re-dealt for every rollout consistent with what the acting seat can
+  see — opponents' concealed tiles (standard tiles only), the remaining wall, the reserve. This is the honest label.
+  `--mode oracle`: continue from the true hidden state (hindsight value; useful for debugging).
+- Common random numbers: every action at a decision sees the same sampled hidden states and rollout seeds, so EV
+  differences are paired comparisons, not noise between independent samples.
+- `--policy fast` rolls out with the engine's IsolationBot (~2–3 ms per rollout); `efficiency` uses the heuristic bot
+  (slower, stronger). Rollout-policy strength biases the values — treat v1 EVs as relative rankings.
+- At a claim decision the other seats' (hidden) intentions are re-decided by the rollout bots after determinization.
+
+`positionAt` + `determinize` live in `src/position.ts`; tests assert exact reconstruction of every decision of a hand and
+tile conservation after determinization.
+
 ## Known gaps (engine)
 
 Pay-All liability, robbing the kong, Eight-Flower / all-animals instant wins are not implemented (config exists, logic does not).

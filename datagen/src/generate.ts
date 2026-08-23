@@ -38,7 +38,7 @@ if (workers <= 1) {
     const args: WorkerArgs = { workerIndex: i, workers, handQuota: quota(i), out, baseSeed, truth, rulesOverride, randomness, maxHands, decisions };
     const w = new Worker(fileURLToPath(new URL('./worker.ts', import.meta.url)), { workerData: args });
     w.on('message', (m: { type: string; hands: number; sessions?: number; decisions?: number }) => {
-      if (m.type === 'progress') { progress[i] = m.hands; const tot = progress.reduce((a, b) => a + b, 0); if (tot % 500 < 40) process.stdout.write(`\r${tot}/${hands} hands  ${(tot / ((Date.now() - t0) / 1000)).toFixed(0)} hands/s   `); }
+      if (m.type === 'progress') { progress[i] = m.hands; const tot = progress.reduce((a, b) => a + b, 0); if (tot % 500 < 40) { const line = `${tot}/${hands} hands  ${(tot / ((Date.now() - t0) / 1000)).toFixed(0)} hands/s`; if (process.stdout.isTTY) process.stdout.write(`\r${line}   `); else if (tot % 5000 < 40) console.log(line); } }
       if (m.type === 'done') { manifest.shards.push({ worker: i, hands: m.hands, sessions: m.sessions ?? 0, decisions: m.decisions ?? 0 }); if (--remaining === 0) finish(); }
     });
     w.on('error', (e) => { console.error(`worker ${i} failed:`, e); process.exit(1); });

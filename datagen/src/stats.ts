@@ -5,7 +5,9 @@ import { gunzipSync } from 'node:zlib';
 import type { HandRecord } from './records.js';
 
 export function readJsonlGz<T>(path: string): T[] {
-  const txt = gunzipSync(readFileSync(path)).toString('utf8');
+  const raw = readFileSync(path);
+  if (raw.length === 0) return [];
+  const txt = gunzipSync(raw).toString('utf8');
   const out: T[] = [];
   for (const line of txt.split('\n')) if (line) out.push(JSON.parse(line) as T);
   return out;

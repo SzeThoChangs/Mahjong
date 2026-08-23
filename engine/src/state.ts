@@ -30,7 +30,7 @@ export interface Snapshot {
   discardLog: DiscardEvent[];
   dealer: number; prevailingWind: number; turn: number; phase: Phase; playerTurns: number;
   drawnInfo: { tile: TileInstance; replaced: boolean; lastTile: boolean } | null;
-  pendingDiscard: { tile: TileInstance; from: number; lastTileDiscard: boolean } | null;
+  pendingDiscard: { tile: TileInstance; from: number; lastTileDiscard: boolean; eligible: number[] } | null;
   paidEvents: string[][];
   counts: GameResult['counts'];
   claimQueue: { seat: number; options: ClaimOption[] }[];
@@ -168,12 +168,24 @@ export class GameState {
   }
   /** compute claim options for all seats on the pending discard (prohibition uses pre-discard seen-sets) */
   private prepareClaims() {
+    const pd = this.pendingDiscard!;
+    const { tile: d, from } = pd; const dk = kindOf(d);
+    pd.eligible = [];
+    for (let off = 1; off <= 3; off++) { const s = (from + off) % 4, q = this.players[s]!; if (!(q.lastDiscardKind === dk || q.seenSinceLastDiscard.has(dk))) pd.eligible.push(s); }
+    this.buildClaimQueue(pd.eligible);
+  }
+  /** (Re)build claim options for the given seats from their CURRENT hands, in the given order. Used after determinization. */
+  rebuildClaims(firstSeat: number) {
+    const pd = this.pendingDiscard!;
+    const order = [firstSeat, ...pd.eligible.filter((s) => s !== firstSeat)].filter((s) => pd.eligible.includes(s));
+    this.buildClaimQueue(order);
+  }
+  private buildClaimQueue(seats: number[]) {
     const { tile: d, from, lastTileDiscard } = this.pendingDiscard!;
     const dk = kindOf(d);
     this.claimQueue = []; this.wanted = [];
-    for (let off = 1; off <= 3; off++) {
-      const s = (from + off) % 4, q = this.players[s]!;
-      if (q.lastDiscardKind === dk || q.seenSinceLastDiscard.has(dk)) continue;
+    for (const s of seats) {
+      const q = this.players[s]!; const off = (s - from + 4) % 4;
       const os: ClaimOption[] = [];
       const sc = this.score(q, [...q.hand.map(kindOf), dk], dk, false, { lastTile: lastTileDiscard });
       if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
@@ -260,7 +272,7 @@ export class GameState {
     this.record('discard', this.turn, v, p.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
     p.hand.splice(idx, 1); p.discards.push(action.tile);
     const dk = kindOf(action.tile);
-    this.pendingDiscard = { tile: action.tile, from: this.turn, lastTileDiscard: this.wall.isExhausted };
+    this.pendingDiscard = { tile: action.tile, from: this.turn, lastTileDiscard: this.wall.isExhausted, eligible: [] };
     this.discardLog.push({ seat: this.turn, tile: action.tile, claimedBy: null, claimKind: null, turn: this.playerTurns });
     this.prepareClaims();
     // update prohibition state AFTER computing claims

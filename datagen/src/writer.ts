@@ -8,5 +8,5 @@ export class JsonlGzWriter {
   constructor(readonly path: string, private chunkBytes = 4 << 20) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, ''); }
   write(obj: unknown) { const s = JSON.stringify(obj) + '\n'; this.buf.push(s); this.bytes += s.length; this.lines++; if (this.bytes >= this.chunkBytes) this.flush(); }
   flush() { if (!this.buf.length) return; appendFileSync(this.path, gzipSync(this.buf.join(''), { level: 4 })); this.buf = []; this.bytes = 0; }
-  close() { this.flush(); }
+  close() { if (this.lines === 0) { appendFileSync(this.path, gzipSync('')); return; } this.flush(); }
 }
