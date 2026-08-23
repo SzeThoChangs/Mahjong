@@ -89,4 +89,7 @@ used the engine defaults (no jokers, discarder-pays-double, no pay-all).
 Robbing the kong, Seven/Eight-Flower and all-animals specials, Pay-All liability, shooter-pays, and **jokers** (4 wild tiles;
 dealer's four-joker instant win; four jokers in a complete hand = 5 tai; discarded jokers dead; jokers never in exposed melds)
 are implemented and config-gated (`engine/src/rules.ts`). The player's table (`data/table.config.json`) turns on shooter-pays,
-pay-all (fresh tile: last 8), 8-flower instant win and 4 jokers. With jokers in play ~83% of hands end in a win (vs ~37% without).
+pay-all (fresh tile: last 8), 8-flower instant win, 4 jokers, and the **real-money schedule** ("3/6, shooter pay, ZM +$2"):
+ZM $4/5/7/12/22 per player at 1-5 tai, shoot $7/11/20/40 total, kong $2 each (fed kong: feeder pays $6), bites $4 hidden /
+$2 open (own seat-flower pair and animal pairs from everyone; another seat's number pair from that seat only). With money
+rules on, all chip deltas and EVs are in dollars. With jokers in play ~82% of hands end in a win (vs ~37% without).

@@ -22,6 +22,23 @@ export interface KongScoring {
 export interface BaoRules { enabled: boolean; fan_limit_feed: boolean; dragon_set_feed: boolean; wind_set_feed: boolean; fresh_tile_threshold: number | null; }
 export interface DealerRules { retain_on_win: boolean; retain_on_draw: boolean; hands_per_wind: number; }
 export interface SpecialHands { seven_pairs: boolean; eight_flower_instant_win: boolean; all_animals_instant_win: boolean; }
+/** Real-money payout schedule (e.g. the "3/6, shooter pay, ZM +$2" table). When set, it replaces the 2^tai chip formula entirely. */
+export interface MoneyRules {
+  /** per-person base amount by tai (values above the highest key use the highest) */
+  ladder: Record<number, number>;
+  /** added per person on a self-draw (ZM) */
+  zm_bonus_per_player: number;
+  /** total the shooter pays on a discard win, by tai */
+  shoot_total: Record<number, number>;
+  /** self-made kong (drawn 4th tile or concealed): each opponent pays this */
+  kong_each: number;
+  /** fed kong (claimed from a discard): the feeder alone pays this */
+  kong_fed_total: number;
+  /** bite completed during the opening deal replacements */
+  bite_hidden: number;
+  /** bite completed during play */
+  bite_open: number;
+}
 export interface JokerRules {
   /** number of joker (wild) tiles shuffled into the wall; 0 = the standard 148-tile game */
   count: number;
@@ -54,6 +71,8 @@ export interface RulesConfig {
   dealer_rules: DealerRules;
   special_hands: SpecialHands;
   jokers: JokerRules;
+  /** null = abstract chips (2^tai); set = real-money schedule */
+  money: MoneyRules | null;
 }
 
 export const DEFAULT_RULES: RulesConfig = {
@@ -70,6 +89,7 @@ export const DEFAULT_RULES: RulesConfig = {
   dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
   special_hands: { seven_pairs: false, eight_flower_instant_win: false, all_animals_instant_win: false },
   jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, claimable_when_discarded: false, usable_in_exposed_melds: false },
+  money: null,
 };
 
 type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };

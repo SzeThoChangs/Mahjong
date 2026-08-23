@@ -34,6 +34,32 @@ export function winPayments(
   return pays;
 }
 
+/** Money-table lookup: values above the highest tai key use the highest (the cap). */
+export function moneyAt(table: Record<number, number>, tai: number): number {
+  const keys = Object.keys(table).map(Number).sort((a, b) => a - b);
+  let v = table[keys[0]!]!;
+  for (const k of keys) if (tai >= k) v = table[k]!;
+  return v;
+}
+/**
+ * Real-money win payments. Returns chips paid BY each seat.
+ *  - self-draw (ZM): each opponent pays ladder(tai) + zm_bonus
+ *  - discard win: the shooter alone pays shoot_total(tai)
+ *  - a liable (Pay-All) seat takes over the whole bill
+ */
+export function winPaymentsMoney(fan: number, winner: number, discarder: number | null, m: NonNullable<RulesConfig['money']>, liable: number | null = null): number[] {
+  const pays = [0, 0, 0, 0];
+  if (discarder === null) {
+    const each = moneyAt(m.ladder, fan) + m.zm_bonus_per_player;
+    for (let s = 0; s < 4; s++) if (s !== winner) pays[s] = each;
+    if (liable !== null && liable !== winner) { const total = each * 3; pays.fill(0); pays[liable] = total; }
+  } else {
+    const payer = liable !== null && liable !== winner ? liable : discarder;
+    pays[payer] = moneyAt(m.shoot_total, fan);
+  }
+  return pays;
+}
+
 /** Immediate payouts (each opponent pays this to the declarer). Source values assume MF1; multiplier handles MF2. */
 export function immediatePayout(kind: 'kong_1' | 'kong_3' | 'kong_4' | 'animal_set' | 'flower_set' | 'animal_pair' | 'flower_pair', cfg: TableConfig, fromInitialHand = false, rules: RulesConfig = DEFAULT_RULES): number {
   const base = rules.kong_scoring[kind];

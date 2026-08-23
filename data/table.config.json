@@ -8,14 +8,51 @@
     "_note": "deep-merged over engine/src/rules.ts DEFAULT_RULES; confirmed with the player 2026-08-23",
     "discard_win_payment": "discarder_pays_all",
     "self_draw_payment": "all_double",
-    "bao": { "enabled": true, "fan_limit_feed": true, "dragon_set_feed": true, "wind_set_feed": true, "fresh_tile_threshold": 8 },
-    "special_hands": { "eight_flower_instant_win": true, "all_animals_instant_win": false, "seven_pairs": false },
-    "jokers": { "count": 4, "dealer_all_four_instant_win": true, "all_four_tai": 5, "claimable_when_discarded": false, "usable_in_exposed_melds": false }
+    "bao": {
+      "enabled": true,
+      "fan_limit_feed": true,
+      "dragon_set_feed": true,
+      "wind_set_feed": true,
+      "fresh_tile_threshold": 8
+    },
+    "special_hands": {
+      "eight_flower_instant_win": true,
+      "all_animals_instant_win": false,
+      "seven_pairs": false
+    },
+    "jokers": {
+      "count": 4,
+      "dealer_all_four_instant_win": true,
+      "all_four_tai": 5,
+      "claimable_when_discarded": false,
+      "usable_in_exposed_melds": false
+    },
+    "money": {
+      "_note": "the \"3/6, shooter pay, ZM +$2\" table, amounts in SGD; confirmed 2026-08-24",
+      "ladder": {
+        "1": 2,
+        "2": 3,
+        "3": 5,
+        "4": 10,
+        "5": 20
+      },
+      "zm_bonus_per_player": 2,
+      "shoot_total": {
+        "2": 7,
+        "3": 11,
+        "4": 20,
+        "5": 40
+      },
+      "kong_each": 2,
+      "kong_fed_total": 6,
+      "bite_hidden": 4,
+      "bite_open": 2
+    }
   },
   "unconfirmed": {
-    "kong_payout_amount": "fixed amount per kong / animal pair / flower pair - price to be given; engine currently uses the book values x2 (kong 4, kong4 8, set 8, pair 4)",
     "unplayable_tiles": "15 is the 67% default - confirm",
     "self_draw_bonus_fan": "some tables add +1 Fan for a self-draw - confirm whether yours does on top of the 1-Fan exemption",
-    "joker_assumptions": "a discarded joker is dead (not claimable); jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value"
+    "joker_assumptions": "a discarded joker is dead (not claimable); jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
+    "animal_pair_bite_payers": "assumed ALL three pay for cat+mouse / rooster+centipede bites (animals have no seat) - confirm"
   }
 }

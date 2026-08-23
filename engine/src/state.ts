@@ -15,7 +15,7 @@ import {
   type TileInstance, type TileKind,
 } from './tiles.js';
 import { scoreHand, type ScoreResult } from './score.js';
-import { immediatePayout, meetsMinimum, winPayments, type TableConfig } from './payout.js';
+import { immediatePayout, meetsMinimum, winPayments, winPaymentsMoney, type TableConfig } from './payout.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 import { couldBeComplete } from './shanten.js';
 import { countsAndJokers, isHonour, isDragon, isWind, isJoker } from './tiles.js';
@@ -109,6 +109,27 @@ export class GameState {
   private payAllOpponents(to: number, each: number) { for (let s = 0; s < 4; s++) if (s !== to) this.pay(s, to, each); }
   private settleBonus(p: PlayerState, fromInitial: boolean) {
     const kinds = p.bonus.map(kindOf), e = this.paidEvents[p.seat]!;
+    if (this.rules.money) {         // ---- real-money bites ----
+      const m = this.rules.money;
+      const amount = fromInitial ? m.bite_hidden : m.bite_open;
+      // flower-number pairs: flower n + season n. Own number: everyone pays. Another player's number: only that seat pays.
+      for (let n = 0; n < 4; n++) {
+        const id = `bite_flowers_${n}`;
+        if (e.has(id)) continue;
+        if (kinds.includes(34 + n) && kinds.includes(38 + n)) {
+          e.add(id);
+          if (n === p.seat) this.payAllOpponents(p.seat, amount);
+          else this.pay(n, p.seat, amount);
+          this.L(`seat${p.seat} bite flowers#${n + 1} ${fromInitial ? 'hidden' : 'open'} $${amount}`);
+        }
+      }
+      // animal pairs: cat+mouse, rooster+centipede - everyone pays (assumption: animals belong to no seat)
+      for (const [id, a, b] of [['bite_cat_mouse', 42, 43], ['bite_rooster_centipede', 44, 45]] as const) {
+        if (e.has(id)) continue;
+        if (kinds.includes(a) && kinds.includes(b)) { e.add(id); this.payAllOpponents(p.seat, amount); this.L(`seat${p.seat} ${id} ${fromInitial ? 'hidden' : 'open'} $${amount}`); }
+      }
+      return;
+    }
     const animals = kinds.filter(isAnimal), flowers = kinds.filter(isFlower), seasons = kinds.filter(isSeason);
     const ownPair = kinds.filter((k) => (isFlower(k) || isSeason(k)) && bonusSeat(k) === p.seat).length >= 2;
     const animalPair = kinds.some((k) => isAnimal(k) && kinds.includes(animalPartner(k) as TileKind));
@@ -169,7 +190,6 @@ export class GameState {
   private tilesAccounted() { return this.players.reduce((a, p) => a + p.hand.length + p.bonus.length + p.discards.length + p.melds.reduce((b, m) => b + m.instances.length, 0), 0); }
   private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null): GameResult {
     if (winner !== null && sc) {
-      const pays = winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'thirteen_wonders', rules: this.rules });
       let liable: number | null = this.rules.bao.enabled ? this.liable[winner]! : null;
       if (this.rules.bao.enabled && discarder !== null && liable === null) {
         const b = this.rules.bao; const w = this.players[winner]!;
@@ -183,7 +203,11 @@ export class GameState {
           if (!seenBefore) liable = discarder;
         }
       }
-      if (liable !== null && liable !== winner) { const total = pays.reduce((a, b) => a + b, 0); this.pay(liable, winner, total); }
+      const asSelfDraw = discarder === null || sc.combination === 'thirteen_wonders';
+      const pays = this.rules.money
+        ? winPaymentsMoney(sc.fan, winner, asSelfDraw ? null : discarder, this.rules.money, liable)
+        : winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'thirteen_wonders', rules: this.rules });
+      if (!this.rules.money && liable !== null && liable !== winner) { const total = pays.reduce((a, b) => a + b, 0); this.pay(liable, winner, total); }
       else for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
     }
     this.phase = 'done';
@@ -315,17 +339,30 @@ export class GameState {
       const o = this.selfOptions.find((x) => x.kind === 'kong4' && kindOf(x.tiles[0]!) === action.kind) as Extract<SelfAction, { kind: 'kong4' }>;
       p.hand = p.hand.filter((t) => !o.tiles.includes(t));
       p.melds.push({ type: 'kong', tiles: o.tiles.map(kindOf), concealed: true, instances: o.tiles });
-      this.payAllOpponents(this.turn, immediatePayout('kong_4', this.cfg, false, this.rules)); this.counts.kong++;
+      this.kongPayment(this.turn, null); this.counts.kong++;
       this.beginRob(o.tiles[0]!, 'kong4', p.melds.length - 1); return;
     }
     if (action.a === 'kong1') {
       const o = this.selfOptions.find((x) => x.kind === 'kong1' && kindOf(x.tile) === action.kind) as Extract<SelfAction, { kind: 'kong1' }>;
       p.hand = p.hand.filter((t) => t !== o.tile);
       o.meld.type = 'kong'; o.meld.tiles.push(kindOf(o.tile)); o.meld.instances.push(o.tile);
-      this.payAllOpponents(this.turn, immediatePayout('kong_1', this.cfg, false, this.rules)); this.counts.kong++;
+      this.kongPayment(this.turn, null); this.counts.kong++;
       this.beginRob(o.tile, 'kong1', p.melds.indexOf(o.meld)); return;
     }
     this.phase = 'discard';
+  }
+  /** Kong side payment. `feeder` = the discarder for a fed kong (kong3), null for a self-made kong. */
+  private kongPayment(to: number, feeder: number | null) {
+    const m = this.rules.money;
+    if (m) {
+      if (feeder !== null) this.pay(feeder, to, m.kong_fed_total);
+      else this.payAllOpponents(to, m.kong_each);
+      return;
+    }
+    // chips mode keeps the book's per-type amounts; the caller tells us only fed vs self-made, so look at the last meld
+    const p = this.players[to]!; const last = p.melds[p.melds.length - 1];
+    const kind = feeder !== null ? 'kong_3' : last && last.concealed ? 'kong_4' : 'kong_1';
+    this.payAllOpponents(to, immediatePayout(kind, this.cfg, false, this.rules));
   }
   /** Pay-All: after seat `q` claims an honour set from `from`, does `from` become liable for q's eventual win? */
   private noteLiability(q: PlayerState, from: number, dk: TileKind) {
@@ -426,7 +463,7 @@ export class GameState {
     this.noteLiability(q, from, kindOf(d));
     this.playerTurns++;
     this.turn = taken.seat;
-    if (taken.kind === 'kong3') { this.payAllOpponents(this.turn, immediatePayout('kong_3', this.cfg, false, this.rules)); this.phase = 'replacement'; }
+    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from); this.phase = 'replacement'; }
     else { this.phase = 'discard'; this.drawnInfo = null; }
   }
 
