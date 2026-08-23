@@ -77,8 +77,16 @@ hand and average the acting seat's chips. Output `evals-wN.jsonl.gz`:
 tile conservation after determinization. `evalstats.ts` reports regret / agreement by bot, kind and phase, plus flags.
 `scripts/to_parquet.py` also converts `evals-*` to one row per (decision, action).
 
+## Which rules a dataset uses
+
+The generator plays the rules in `data/table.config.json` (`rules` block, deep-merged over the engine defaults) unless
+`--book-rules` is given; the *effective* rules are written to `manifest.json` and `evaluate`/`replay` read them back from
+there, so a dataset always replays under the rules it was made with. Datasets `run100k` / `run100k-v2` predate this and
+used the engine defaults (no jokers, discarder-pays-double, no pay-all).
+
 ## Engine rules coverage
 
-Robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability are implemented and config-gated
-(`engine/src/rules.ts`: `special_hands`, `bao`; both off by default until the house rules are confirmed). Enabling the rob
-rule inserted a new decision point, so datasets generated before it differ on ~0.2% of hands — regenerate rather than mix.
+Robbing the kong, Seven/Eight-Flower and all-animals specials, Pay-All liability, shooter-pays, and **jokers** (4 wild tiles;
+dealer's four-joker instant win; four jokers in a complete hand = 5 tai; discarded jokers dead; jokers never in exposed melds)
+are implemented and config-gated (`engine/src/rules.ts`). The player's table (`data/table.config.json`) turns on shooter-pays,
+pay-all (fresh tile: last 8), 8-flower instant win and 4 jokers. With jokers in play ~83% of hands end in a win (vs ~37% without).

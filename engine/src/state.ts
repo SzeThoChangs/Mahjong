@@ -18,7 +18,7 @@ import { scoreHand, type ScoreResult } from './score.js';
 import { immediatePayout, meetsMinimum, winPayments, type TableConfig } from './payout.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 import { couldBeComplete } from './shanten.js';
-import { countsOf, isHonour, isDragon, isWind } from './tiles.js';
+import { countsAndJokers, isHonour, isDragon, isWind, isJoker } from './tiles.js';
 import { fanInHand } from './score.js';
 import type {
   Bot, ClaimKind, ClaimOption, DecisionKind, DiscardEvent, GameOptions, GameResult, GroundTruth, InstMeld, LegalAction, PlayerState, PlayerView, SelfAction,
@@ -72,6 +72,7 @@ export class GameState {
       if (a.special) { g.finish(p.seat, true, null, a.special); return g; }
       if (a.tile !== null) p.hand.push(a.tile);
     }
+    const dj = g.fourJokerWin(g.players[g.dealer]!); if (dj) g.finish(g.dealer, true, null, dj);
     return g;
   }
   /** Rebuild from a snapshot (ground truth). */
@@ -119,6 +120,13 @@ export class GameState {
     if (flowers.length === 4) fire('flower_set', 'flower_set');
     if (seasons.length === 4) fire('season_set', 'flower_set');
     if (ownPair) fire('flower_pair', 'flower_pair');
+  }
+  /** the dealer holding all four jokers wins on the spot (config-gated) */
+  private fourJokerWin(p: PlayerState): ScoreResult | null {
+    const jr = this.rules.jokers;
+    if (jr.count < 4 || !jr.dealer_all_four_instant_win || p.seat !== this.dealer) return null;
+    if (p.hand.filter((t) => isJoker(kindOf(t))).length < 4) return null;
+    return { fan: jr.all_four_tai, items: [{ id: 'four_jokers', fan: jr.all_four_tai }], combination: 'four_jokers', valid: true };
   }
   /** instant wins on bonus tiles (config-gated): Eight Flower, all four animals */
   private specialBonusWin(p: PlayerState): ScoreResult | null {
@@ -197,12 +205,13 @@ export class GameState {
     const p = this.players[this.turn]!, d = this.drawnInfo!;
     const options: SelfAction[] = [];
     const kinds = p.hand.map(kindOf);
-    if (couldBeComplete(countsOf(kinds), p.melds.length)) {
+    const cj = countsAndJokers(kinds);
+    if (couldBeComplete(cj.counts, p.melds.length, cj.jokers)) {
       const sc = this.score(p, kinds, kindOf(d.tile), true, { replacementWin: d.replaced, lastTile: d.lastTile });
       if (sc.valid && meetsMinimum(sc.fan, true, this.cfg)) options.push({ kind: 'win', score: sc });
     }
     const byKind = new Map<TileKind, TileInstance[]>();
-    for (const t of p.hand) { const k = kindOf(t); (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(t); }
+    for (const t of p.hand) { const k = kindOf(t); if (isJoker(k)) continue; (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(t); }
     for (const [, ts] of byKind) if (ts.length === 4) options.push({ kind: 'kong4', tiles: ts });
     for (const m of p.melds) if (m.type === 'pong') { const t = p.hand.find((x) => kindOf(x) === m.tiles[0]); if (t !== undefined) options.push({ kind: 'kong1', meld: m, tile: t }); }
     return options;
@@ -229,7 +238,8 @@ export class GameState {
       const q = this.players[s]!; const off = (s - from + 4) % 4;
       const os: ClaimOption[] = [];
       const withTile = [...q.hand.map(kindOf), dk];
-      if (couldBeComplete(countsOf(withTile), q.melds.length)) {
+      const cj = countsAndJokers(withTile);
+      if (couldBeComplete(cj.counts, q.melds.length, cj.jokers)) {
         const sc = this.score(q, withTile, dk, false, { lastTile: lastTileDiscard });
         if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
       }
@@ -274,6 +284,7 @@ export class GameState {
         p.hand.push(a.tile);
         this.drawnInfo = { tile: a.tile, replaced: this.phase === 'replacement' || a.replaced, lastTile };
         this.playerTurns++;
+        const fj = this.fourJokerWin(p); if (fj) { this.finish(this.turn, true, null, fj); return; }
         this.selfOptions = this.computeSelfOptions();
         if (this.selfOptions.length) { this.phase = 'self'; return; }
         this.phase = 'discard'; return;
@@ -331,7 +342,8 @@ export class GameState {
       const s = (this.turn + off) % 4, q = this.players[s]!;
       if (q.lastDiscardKind === dk || q.seenSinceLastDiscard.has(dk)) continue;       // same prohibition as a discard
       const withTile = [...q.hand.map(kindOf), dk];
-      if (!couldBeComplete(countsOf(withTile), q.melds.length)) continue;
+      const cjr = countsAndJokers(withTile);
+      if (!couldBeComplete(cjr.counts, q.melds.length, cjr.jokers)) continue;
       const sc = this.score(q, withTile, dk, false, { robbingKong: true });
       if (!sc.valid || !meetsMinimum(sc.fan, false, this.cfg)) continue;
       if (kong === 'kong4' && sc.combination !== 'thirteen_wonders') continue;
@@ -350,7 +362,8 @@ export class GameState {
     const dk = kindOf(action.tile);
     this.pendingDiscard = { tile: action.tile, from: this.turn, lastTileDiscard: this.wall.isExhausted, eligible: [] };
     this.discardLog.push({ seat: this.turn, tile: action.tile, claimedBy: null, claimKind: null, turn: this.playerTurns });
-    this.prepareClaims();
+    if (isJoker(dk) && !this.rules.jokers.claimable_when_discarded) { this.claimQueue = []; this.wanted = []; }   // a discarded joker is dead
+    else this.prepareClaims();
     // update prohibition state AFTER computing claims
     p.lastDiscardKind = dk; p.seenSinceLastDiscard.clear();
     for (const q of this.players) if (q !== p) q.seenSinceLastDiscard.add(dk);

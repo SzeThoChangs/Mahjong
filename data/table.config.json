@@ -3,14 +3,19 @@
   "minimum_fan": 2,
   "fan_limit": 5,
   "self_draw_minimum_fan": 1,
-  "_self_draw_note": "A Self-Draw (zi mo) may win with 1 Fan. A win on an opponent's discard still needs 2. This is a house rule NOT in the analytic source - every Minimum-Fan-2 table below assumes 2 Fan for every win, so treat them as slightly pessimistic for hands sitting at exactly 1 Fan.",
   "immediate_payouts_multiplier": 2,
-  "_payout_note": "Source states its immediate-payout values assume Minimum Fan 1 and DOUBLE at Minimum Fan 2. So on this table: Kong-1/Kong-3 = 4, Kong-4 = 8, Animal or Flower set = 8, Animal or Flower pair = 4, all doubled again if obtained from the initial 13 tiles.",
+  "rules": {
+    "_note": "deep-merged over engine/src/rules.ts DEFAULT_RULES; confirmed with the player 2026-08-23",
+    "discard_win_payment": "discarder_pays_all",
+    "self_draw_payment": "all_double",
+    "bao": { "enabled": true, "fan_limit_feed": true, "dragon_set_feed": true, "wind_set_feed": true, "fresh_tile_threshold": 8 },
+    "special_hands": { "eight_flower_instant_win": true, "all_animals_instant_win": false, "seven_pairs": false },
+    "jokers": { "count": 4, "dealer_all_four_instant_win": true, "all_four_tai": 5, "claimable_when_discarded": false, "usable_in_exposed_melds": false }
+  },
   "unconfirmed": {
+    "kong_payout_amount": "fixed amount per kong / animal pair / flower pair - price to be given; engine currently uses the book values x2 (kong 4, kong4 8, set 8, pair 4)",
     "unplayable_tiles": "15 is the 67% default - confirm",
-    "pay_all_fresh_tile_threshold": "3 to 8 remaining; confirm the number and whether 'fresh' counts exposed tiles or discards only",
-    "self_draw_bonus_fan": "some tables add +1 Fan for a Self-Draw - confirm whether yours does on top of the 1-Fan exemption",
-    "animal_flower_pair_payout": "recognised by 91% of tables - confirm",
-    "seven_pairs": "some tables allow a Hong Kong style seven-pairs hand - confirm"
+    "self_draw_bonus_fan": "some tables add +1 Fan for a self-draw - confirm whether yours does on top of the 1-Fan exemption",
+    "joker_assumptions": "a discarded joker is dead (not claimable); jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value"
   }
 }

@@ -3,7 +3,7 @@
  * an integer key, then suits + honours combined. ~5 µs per call warm.
  *   -1 = complete, 0 = one tile away (calling), 1 = two away, ...
  */
-import { THIRTEEN_WONDER_KINDS, countsOf, type TileKind, type Counts } from './tiles.js';
+import { THIRTEEN_WONDER_KINDS, countsAndJokers, type TileKind, type Counts } from './tiles.js';
 
 type Outcome = [sets: number, partials: number, pairs: number];
 const suitMemo = new Map<number, Outcome[]>();
@@ -52,14 +52,15 @@ export function shantenThirteen(counts: ArrayLike<number>): number {
   for (const k of THIRTEEN_WONDER_KINDS) { const n = counts[k]!; if (n >= 1) distinct++; if (n >= 2) pair = 1; }
   return 13 - distinct - pair;
 }
-/** Shanten of concealed tiles given `melds` exposed sets (13 Wonders considered only when fully concealed). */
+/** Shanten of concealed tiles given `melds` exposed sets (13 Wonders considered only when fully concealed). Jokers in the hand each reduce it by one. */
 export function shanten(concealed: TileKind[], melds: number): number {
-  const c = countsOf(concealed);
+  const { counts: c, jokers } = countsAndJokers(concealed);
   const s = shantenStandard(c, melds);
-  return melds === 0 ? Math.min(s, shantenThirteen(c)) : s;
+  const base = melds === 0 ? Math.min(s, shantenThirteen(c)) : s;
+  return Math.max(-1, base - jokers);
 }
-/** Cheap necessary check before calling scoreHand: can these 3n+2 tiles be a complete hand? */
-export function couldBeComplete(counts: Counts, melds: number): boolean {
-  if (shantenStandard(counts, melds) === -1) return true;
-  return melds === 0 && shantenThirteen(counts) === -1;
+/** Cheap necessary check before calling scoreHand: can these 3n+2 tiles (plus `jokers` wild tiles) be a complete hand? */
+export function couldBeComplete(counts: Counts, melds: number, jokers = 0): boolean {
+  if (shantenStandard(counts, melds) <= jokers - 1) return true;
+  return melds === 0 && shantenThirteen(counts) <= jokers - 1;
 }

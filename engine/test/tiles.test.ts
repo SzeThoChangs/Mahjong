@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { INSTANCE_KIND, TOTAL_TILES, kindOf, parseKinds, kindName, isAnimal, animalPartner, bonusSeat, KIND } from '../src/tiles.js';
 
 describe('tiles', () => {
-  it('has 148 instances: 34 kinds x4 + 12 bonus x1', () => {
-    expect(INSTANCE_KIND.length).toBe(TOTAL_TILES);
+  it('has 148 standard instances (34 kinds x4 + 12 bonus x1) plus 4 jokers', () => {
+    expect(INSTANCE_KIND.length).toBe(TOTAL_TILES + 4);
+    expect(INSTANCE_KIND.slice(TOTAL_TILES).every((k) => k === 46)).toBe(true);
     const c = new Map<number, number>();
     for (const k of INSTANCE_KIND) c.set(k, (c.get(k) ?? 0) + 1);
     for (let k = 0; k < 34; k++) expect(c.get(k)).toBe(4);

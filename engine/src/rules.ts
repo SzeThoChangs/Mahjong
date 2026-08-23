@@ -22,6 +22,18 @@ export interface KongScoring {
 export interface BaoRules { enabled: boolean; fan_limit_feed: boolean; dragon_set_feed: boolean; wind_set_feed: boolean; fresh_tile_threshold: number | null; }
 export interface DealerRules { retain_on_win: boolean; retain_on_draw: boolean; hands_per_wind: number; }
 export interface SpecialHands { seven_pairs: boolean; eight_flower_instant_win: boolean; all_animals_instant_win: boolean; }
+export interface JokerRules {
+  /** number of joker (wild) tiles shuffled into the wall; 0 = the standard 148-tile game */
+  count: number;
+  /** the dealer wins on the spot when holding all four */
+  dealer_all_four_instant_win: boolean;
+  /** a completed hand holding all four jokers is worth at least this many tai */
+  all_four_tai: number;
+  /** may a discarded joker be claimed (pong/chow/win)? */
+  claimable_when_discarded: boolean;
+  /** may jokers be used inside exposed pongs / chows / kongs? */
+  usable_in_exposed_melds: boolean;
+}
 
 export interface RulesConfig {
   minimum_tai: number;
@@ -41,6 +53,7 @@ export interface RulesConfig {
   bao: BaoRules;
   dealer_rules: DealerRules;
   special_hands: SpecialHands;
+  jokers: JokerRules;
 }
 
 export const DEFAULT_RULES: RulesConfig = {
@@ -56,6 +69,7 @@ export const DEFAULT_RULES: RulesConfig = {
   bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, fresh_tile_threshold: 4 },
   dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
   special_hands: { seven_pairs: false, eight_flower_instant_win: false, all_animals_instant_win: false },
+  jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, claimable_when_discarded: false, usable_in_exposed_melds: false },
 };
 
 type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };

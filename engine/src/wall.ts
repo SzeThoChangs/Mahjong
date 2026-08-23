@@ -1,4 +1,4 @@
-import { TOTAL_TILES, type TileInstance } from './tiles.js';
+import { TOTAL_TILES, TOTAL_TILES_WITH_JOKERS, type TileInstance } from './tiles.js';
 
 /** Deterministic PRNG (mulberry32) so simulations are reproducible. */
 export function makeRng(seed: number): () => number {
@@ -25,9 +25,9 @@ export class Wall {
   private back: number;        // next index for a replacement draw (moves down)
   readonly unplayable: number;
 
-  constructor(rng: () => number, unplayable = 15) {
+  constructor(rng: () => number, unplayable = 15, jokers = 0) {
     const t: TileInstance[] = [];
-    for (let i = 0; i < TOTAL_TILES; i++) t.push(i);
+    for (let i = 0; i < (jokers > 0 ? TOTAL_TILES_WITH_JOKERS : TOTAL_TILES); i++) t.push(i);
     for (let i = t.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [t[i], t[j]] = [t[j]!, t[i]!];
@@ -50,6 +50,8 @@ export class Wall {
   get isExhausted(): boolean { return this.remaining <= 0; }
   /** Every tile still in the wall, reserve included. For conservation checks. */
   get totalLeft(): number { return this.back - this.front + 1; }
+  /** Number of tiles in this game (148, or 152 with jokers). */
+  get size(): number { return this.tiles.length; }
   /** Ground truth: full shuffled order and the live cursors. Never expose to a player-visible state. */
   snapshot(): { order: TileInstance[]; front: number; back: number; unplayable: number } {
     return { order: [...this.tiles], front: this.front, back: this.back, unplayable: this.unplayable };

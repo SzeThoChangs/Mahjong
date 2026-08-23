@@ -9,6 +9,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 import { runWorker, type WorkerArgs } from './worker.js';
+import { loadTableRulesOverride } from './tablerules.js';
+import { makeRules } from 'sg-mahjong-engine';
 
 function arg(name: string, def?: string): string | undefined { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? 'true') : def; }
 const hands = Number(arg('hands', '1000'));
@@ -20,22 +22,23 @@ const decisions = !process.argv.includes('--no-decisions');
 const maxHands = Number(arg('max-hands', '32'));
 const randomness = arg('randomness') ? JSON.parse(arg('randomness')!) : DEFAULT_RANDOMNESS;
 const rulesOverride = arg('rules') ? JSON.parse(arg('rules')!) : {};
+const rules = makeRules({ ...(process.argv.includes('--book-rules') ? {} : loadTableRulesOverride()), ...rulesOverride });   // effective rules: table config + overrides (or --book-rules for engine defaults)
 
 mkdirSync(out, { recursive: true });
 const t0 = Date.now();
 const quota = (i: number) => Math.floor(hands / workers) + (i < hands % workers ? 1 : 0);
 type Shard = { worker: number; hands: number; sessions: number; decisions: number };
-const manifest = { hands, workers, baseSeed, truth, decisions, maxHands, randomness, rulesOverride, startedAt: new Date().toISOString(), shards: [] as Shard[] };
+const manifest = { hands, workers, baseSeed, truth, decisions, maxHands, randomness, rulesOverride, rules, startedAt: new Date().toISOString(), shards: [] as Shard[] };
 
 if (workers <= 1) {
-  const res = runWorker({ workerIndex: 0, workers: 1, handQuota: hands, out, baseSeed, truth, rulesOverride, randomness, maxHands, decisions }, (n) => { if (n % 1000 === 0) process.stdout.write(`\r${n}/${hands} hands`); });
+  const res = runWorker({ workerIndex: 0, workers: 1, handQuota: hands, out, baseSeed, truth, rulesOverride, rules, randomness, maxHands, decisions }, (n) => { if (n % 1000 === 0) process.stdout.write(`\r${n}/${hands} hands`); });
   manifest.shards.push({ worker: 0, ...res });
   finish();
 } else {
   const progress = new Array<number>(workers).fill(0);
   let remaining = workers;
   for (let i = 0; i < workers; i++) {
-    const args: WorkerArgs = { workerIndex: i, workers, handQuota: quota(i), out, baseSeed, truth, rulesOverride, randomness, maxHands, decisions };
+    const args: WorkerArgs = { workerIndex: i, workers, handQuota: quota(i), out, baseSeed, truth, rulesOverride, rules, randomness, maxHands, decisions };
     const w = new Worker(fileURLToPath(new URL('./worker.ts', import.meta.url)), { workerData: args });
     w.on('message', (m: { type: string; hands: number; sessions?: number; decisions?: number }) => {
       if (m.type === 'progress') { progress[i] = m.hands; const tot = progress.reduce((a, b) => a + b, 0); if (tot % 500 < 40) { const line = `${tot}/${hands} hands  ${(tot / ((Date.now() - t0) / 1000)).toFixed(0)} hands/s`; if (process.stdout.isTTY) process.stdout.write(`\r${line}   `); else if (tot % 5000 < 40) console.log(line); } }

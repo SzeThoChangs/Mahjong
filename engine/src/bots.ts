@@ -1,6 +1,6 @@
 /** Baseline bots. Not strategy - just legal, deterministic-with-seed play for engine verification. */
 import type { Bot, ClaimOption, PlayerView, SelfAction } from './game.js';
-import { isHonour, isSuited, kindOf, rankOf, suitOf, type TileInstance, type TileKind } from './tiles.js';
+import { isHonour, isJoker, isSuited, kindOf, rankOf, suitOf, type TileInstance, type TileKind } from './tiles.js';
 import { shanten } from './shanten.js';
 
 /** Random legal play. Always wins when able, always kongs, pongs/chows with fixed probability. */
@@ -31,6 +31,7 @@ export class IsolationBot extends RandomBot {
     for (const t of v.hand) {
       const k = kindOf(t);
       let s = 0;
+      if (isJoker(k)) s = 1000;                  // never throw a wild tile
       const same = kinds.filter((x) => x === k).length;
       s += (same - 1) * 3;                      // pair / triplet potential
       if (isSuited(k)) {
@@ -66,6 +67,7 @@ export class ShantenBot extends IsolationBot {
   }
   /** higher = more isolated = better to throw */
   private isolation(k: TileKind, kinds: TileKind[]): number {
+    if (isJoker(k)) return -1000;
     const same = kinds.filter((x) => x === k).length;
     let s = -(same - 1) * 3;
     if (isSuited(k)) { const r = rankOf(k), su = suitOf(k); for (const x of kinds) if (x !== k && suitOf(x) === su) { const d = Math.abs(rankOf(x) - r); if (d === 1) s -= 2; else if (d === 2) s -= 1; } if (r === 1 || r === 9) s += 0.5; }

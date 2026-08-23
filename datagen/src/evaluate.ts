@@ -12,12 +12,13 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
-import { GameState, makeRng, makeRules, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type LegalAction, type RulesConfig, type Snapshot } from 'sg-mahjong-engine';
+import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type LegalAction, type RulesConfig, type Snapshot } from 'sg-mahjong-engine';
 import { positionAt, determinize } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
 import { loadHands } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
+import { rulesForDir } from './tablerules.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
 
 export type Policy = 'fast' | 'shanten' | 'efficiency';
@@ -113,7 +114,7 @@ export function selectDecisions(dir: string, a: EvalArgs, rules: RulesConfig): {
 }
 
 export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { evaluated: number } {
-  const rules = makeRules(a.rulesOverride);
+  const rules = rulesForDir(a.dir, a.rulesOverride);
   const out = new JsonlGzWriter(join(a.dir, `evals-w${a.workerIndex}.jsonl.gz`));
   let n = 0;
   for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {

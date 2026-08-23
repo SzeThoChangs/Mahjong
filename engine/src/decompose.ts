@@ -92,3 +92,96 @@ export function winningKinds(counts: Counts, needSets: number): TileKind[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Jokers (wild tiles)
+// ---------------------------------------------------------------------------
+import { isSuited as _isSuited, rankOf as _rankOf } from './tiles.js';
+
+/** One way to complete a hand using jokers: which kinds the jokers stand for, plus any groups made entirely of jokers. */
+export interface JokerCompletion { jokerKinds: TileKind[]; freeSets: number; freeEye: boolean }
+
+/**
+ * All ways the `jokers` wild tiles can complete `counts` into (needSets) sets + eye.
+ * Jokers may stand for any standard tile (a 5th copy is allowed). Groups made only of
+ * jokers are reported as `freeSets` / `freeEye` because their identity is the scorer's choice.
+ */
+export function jokerCompletions(counts: Counts, jokers: number, needSets: number): JokerCompletion[] {
+  const total = counts.reduce((a, b) => a + b, 0) + jokers;
+  if (total !== needSets * 3 + 2) return [];
+  const out: JokerCompletion[] = []; const seen = new Set<string>();
+  const c = Uint8Array.from(counts);
+  const emit = (assign: TileKind[], freeSets: number, freeEye: boolean) => {
+    const key = [...assign].sort((a, b) => a - b).join(',') + '|' + freeSets + '|' + (freeEye ? 1 : 0);
+    if (!seen.has(key)) { seen.add(key); out.push({ jokerKinds: [...assign], freeSets, freeEye }); }
+  };
+  const rec = (from: number, jl: number, setsLeft: number, eyeTaken: boolean, assign: TileKind[]) => {
+    let i = from; while (i < KIND.STANDARD_COUNT && !c[i]) i++;
+    if (i >= KIND.STANDARD_COUNT) {
+      const needTiles = setsLeft * 3 + (eyeTaken ? 0 : 2);
+      if (jl === needTiles) emit(assign, setsLeft, !eyeTaken);
+      return;
+    }
+    // pong at i: r real + (3-r) jokers
+    for (let r = Math.min(3, c[i]!); r >= 1; r--) {
+      const j = 3 - r; if (j > jl || setsLeft === 0) continue;
+      c[i] = c[i]! - r; for (let x = 0; x < j; x++) assign.push(i);
+      rec(i, jl - j, setsLeft - 1, eyeTaken, assign);
+      for (let x = 0; x < j; x++) assign.pop(); c[i] = c[i]! + r;
+    }
+    // eye at i: r real + (2-r) jokers
+    if (!eyeTaken) for (let r = Math.min(2, c[i]!); r >= 1; r--) {
+      const j = 2 - r; if (j > jl) continue;
+      c[i] = c[i]! - r; for (let x = 0; x < j; x++) assign.push(i);
+      rec(i, jl - j, setsLeft, true, assign);
+      for (let x = 0; x < j; x++) assign.pop(); c[i] = c[i]! + r;
+    }
+    // chows containing i (i is the lowest real tile present, so anything below i must be a joker)
+    if (_isSuited(i) && setsLeft > 0) {
+      const r = _rankOf(i);
+      for (const offs of [[-2, -1, 0], [-1, 0, 1], [0, 1, 2]] as const) {
+        if (r + offs[0] < 1 || r + offs[2] > 9) continue;
+        const others = offs.filter((o) => o !== 0).map((o) => i + o);
+        // each other tile: real if available and above i, else joker; enumerate real-or-joker for the ones above i
+        const choices: TileKind[][] = [[]];
+        let ok = true;
+        for (const k of others) {
+          const next: TileKind[][] = [];
+          for (const ch of choices) {
+            next.push([...ch, -1 - k]);                       // joker standing for k (encoded negative)
+            if (k > i && c[k]! > 0) next.push([...ch, k]);    // real
+          }
+          choices.length = 0; choices.push(...next);
+          if (!next.length) ok = false;
+        }
+        if (!ok) continue;
+        for (const ch of choices) {
+          const jokersNeeded = ch.filter((x) => x < 0).length;
+          if (jokersNeeded > jl) continue;
+          const reals = ch.filter((x) => x >= 0);
+          // a real tile used twice in one template is impossible; templates have distinct kinds so fine
+          c[i]!--; for (const k of reals) c[k]!--;
+          for (const x of ch) if (x < 0) assign.push(-1 - x);
+          rec(i, jl - jokersNeeded, setsLeft - 1, eyeTaken, assign);
+          for (const x of ch) if (x < 0) assign.pop();
+          for (const k of reals) c[k]!++; c[i]!++;
+        }
+      }
+    }
+  };
+  rec(0, jokers, needSets, false, []);
+  return out;
+}
+
+/** 13 Wonders with jokers: missing wonders (and the pair) may be jokers. Returns the kinds the jokers must stand for, or null. */
+export function thirteenWithJokers(counts: Counts, jokers: number): TileKind[] | null {
+  let total = jokers; for (let i = 0; i < counts.length; i++) total += counts[i]!;
+  if (total !== 14) return null;
+  const missing: TileKind[] = []; let extra = 0; let pairKind: TileKind = -1;
+  for (const k of THIRTEEN_WONDER_KINDS) { const n = counts[k]!; if (n === 0) missing.push(k); else if (n === 2) { if (pairKind >= 0) return null; pairKind = k; } else if (n > 2) return null; }
+  for (let k = 0; k < counts.length; k++) if (counts[k]! && !THIRTEEN_WONDER_KINDS.includes(k)) extra += counts[k]!;
+  if (extra) return null;
+  const need = missing.length + (pairKind >= 0 ? 0 : 1);
+  if (need !== jokers) return null;
+  return pairKind >= 0 ? missing : [...missing, THIRTEEN_WONDER_KINDS[0]!];   // free pair: call it 1-wan
+}

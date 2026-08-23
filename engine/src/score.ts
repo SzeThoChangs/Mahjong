@@ -7,7 +7,8 @@ import {
   bonusSeat, countsOf, isAnimal, isDragon, isFlower, isHonour, isSeason, isSuited,
   isTerminalOrHonour, isWind, suitOf, windKind, type TileKind,
 } from './tiles.js';
-import { decompose, isThirteenWonders, winningKinds, type ConcealedSet } from './decompose.js';
+import { decompose, isThirteenWonders, winningKinds, jokerCompletions, thirteenWithJokers, type ConcealedSet } from './decompose.js';
+import { countsAndJokers, isJoker } from './tiles.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 
 export type MeldType = 'chow' | 'pong' | 'kong';
@@ -18,7 +19,7 @@ export interface Meld {
 }
 
 export interface WinContext {
-  /** Concealed standard tiles INCLUDING the winning tile. */
+  /** Concealed tiles INCLUDING the winning tile. May contain jokers (kind 46) when the table plays with them. */
   concealed: TileKind[];
   melds: Meld[];
   /** Flowers / seasons / animals held. */
@@ -58,9 +59,42 @@ let FAN: FanTable = DEFAULT_FAN;
 
 interface SetView { type: 'chow' | 'pong' | 'kong'; kind: TileKind; tiles: TileKind[]; concealed: boolean }
 
-/** Score a hand. Tries every decomposition and returns the highest-Fan one. */
+/** Score a hand. Tries every decomposition (and every joker assignment) and returns the highest-Fan one. */
 export function scoreHand(ctx: WinContext, rules: RulesConfig = DEFAULT_RULES): ScoreResult {
   FAN = rules === DEFAULT_RULES ? DEFAULT_FAN : fanTable(rules);
+  const { counts, jokers } = countsAndJokers(ctx.concealed);
+  if (jokers === 0) return scoreStandard(ctx, rules, false);
+  // ---- jokers: enumerate what they could stand for, score each virtual hand, keep the best ----
+  const std = ctx.concealed.filter((k) => !isJoker(k));
+  const needSets = 4 - ctx.melds.length;
+  const suitTally = [0, 0, 0]; for (const k of [...std, ...ctx.melds.flatMap((m) => m.tiles)]) if (isSuited(k)) suitTally[Math.floor(k / 9)]!++;
+  const major = suitTally.indexOf(Math.max(...suitTally)) * 9;          // base kind of the majority suit (wan if none)
+  const candidates: TileKind[][] = [];
+  for (const c of jokerCompletions(counts, jokers, needSets)) {
+    const base = [...std, ...c.jokerKinds];
+    const eye = c.freeEye ? [major + 4, major + 4] : [];
+    // free sets: try all-pong and all-chow materialisations (honour-free, majority suit)
+    const variants: TileKind[][] = c.freeSets === 0 ? [[...base, ...eye]] : [
+      [...base, ...eye, ...Array.from({ length: c.freeSets }, () => [major + 1, major + 1, major + 1]).flat()],
+      [...base, ...eye, ...Array.from({ length: c.freeSets }, () => [major + 1, major + 2, major + 3]).flat()],
+    ];
+    candidates.push(...variants);
+  }
+  if (ctx.melds.length === 0) { const tw = thirteenWithJokers(counts, jokers); if (tw) candidates.push([...std, ...tw]); }
+  let best: ScoreResult | null = null;
+  for (const virt of candidates) {
+    const wt = isJoker(ctx.winningTile) ? virt[virt.length - 1]! : ctx.winningTile;
+    const r = scoreStandard({ ...ctx, concealed: virt, winningTile: wt }, rules, true);
+    if (!r.valid) continue;
+    if (!best || r.fan > best.fan) best = r;
+  }
+  if (!best) return { fan: 0, items: [], combination: 'none', valid: false, reason: 'no joker assignment completes the hand' };
+  if (jokers === 4 && best.fan < rules.jokers.all_four_tai) { best.items.push({ id: 'four_jokers', fan: rules.jokers.all_four_tai - best.fan }); best.fan = rules.jokers.all_four_tai; }
+  best.items.push({ id: 'jokers_used', fan: 0 });
+  return best;
+}
+
+function scoreStandard(ctx: WinContext, _rules: RulesConfig, withJokers: boolean): ScoreResult {
   const counts = countsOf(ctx.concealed);
   const needSets = 4 - ctx.melds.length;
 
@@ -77,14 +111,14 @@ export function scoreHand(ctx: WinContext, rules: RulesConfig = DEFAULT_RULES): 
 
   let best: ScoreResult | null = null;
   for (const d of decs) {
-    const r = scoreDecomposition(ctx, d.sets, d.eye);
+    const r = scoreDecomposition(ctx, d.sets, d.eye, withJokers);
     if (!r.valid) continue;
     if (!best || r.fan > best.fan) best = r;
   }
   return best ?? { fan: 0, items: [], combination: 'none', valid: false, reason: 'no valid decomposition' };
 }
 
-function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye: TileKind): ScoreResult {
+function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye: TileKind, withJokers = false): ScoreResult {
   const sets: SetView[] = [
     ...ctx.melds.map((m) => ({ type: m.type, kind: m.tiles[0]!, tiles: m.tiles, concealed: m.concealed })),
     ...concealedSets.map((s) => ({ type: s.type, kind: s.tiles[0]!, tiles: s.tiles, concealed: true })),
@@ -105,7 +139,7 @@ function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye:
       return invalid('all_chow eye may not be a dragon, seat wind or prevailing wind');
     if (ctx.concealed.length <= 2)
       return invalid('all_chow cannot win with only two concealed tiles');
-    if (!ctx.selfDraw) {
+    if (!ctx.selfDraw && !withJokers) {     // with jokers the wait set is not well defined; restriction not applied (assumption)
       const before = countsOf(ctx.concealed);
       before[ctx.winningTile] = before[ctx.winningTile]! - 1;
       const outs = winningKinds(before, 4 - ctx.melds.length);

@@ -1,16 +1,17 @@
 /** Worker: runs sessions until its hand quota is met, writing its own shard files. */
 import { parentPort, workerData } from 'node:worker_threads';
 import { join } from 'node:path';
-import { makeRules, makeRng } from 'sg-mahjong-engine';
+import { makeRules, makeRng, type RulesConfig } from 'sg-mahjong-engine';
+import { loadTableRulesOverride } from './tablerules.js';
 import { runSession } from './session.js';
 import { JsonlGzWriter } from './writer.js';
 import { BOT_TYPES, type BotType, type RandomnessConfig } from './bots.js';
 import { fnv1a } from './records.js';
 
-export interface WorkerArgs { workerIndex: number; workers: number; handQuota: number; out: string; baseSeed: number; truth: boolean; rulesOverride: object; randomness: RandomnessConfig; maxHands: number; decisions: boolean }
+export interface WorkerArgs { workerIndex: number; workers: number; handQuota: number; out: string; baseSeed: number; truth: boolean; rulesOverride: object; rules?: RulesConfig; randomness: RandomnessConfig; maxHands: number; decisions: boolean }
 
 export function runWorker(a: WorkerArgs, progress?: (hands: number) => void) {
-  const rules = makeRules(a.rulesOverride);
+  const rules = a.rules ?? makeRules({ ...loadTableRulesOverride(), ...a.rulesOverride });
   const dec = new JsonlGzWriter(join(a.out, `decisions-w${a.workerIndex}.jsonl.gz`));
   const hands = new JsonlGzWriter(join(a.out, `hands-w${a.workerIndex}.jsonl.gz`));
   const truth = a.truth ? new JsonlGzWriter(join(a.out, `truth-w${a.workerIndex}.jsonl.gz`)) : null;

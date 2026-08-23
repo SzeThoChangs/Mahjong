@@ -23,7 +23,7 @@ export interface HandSetup { sessionId: number; handIdx: number; seed: number; d
 /** Play one hand from a full setup. Used by the session loop and by replay. */
 export function playHand(setup: HandSetup, rules: RulesConfig, randomness: RandomnessConfig, sink?: SessionSink, recordDecisions = true) {
   const cfg = tableConfigOf(rules);
-  const wall = new Wall(makeRng(setup.seed), rules.unplayable_tiles);
+  const wall = new Wall(makeRng(setup.seed), rules.unplayable_tiles, rules.jokers.count);
   const wallOrder = wall.snapshot().order;
   const bots = setup.botTypes.map((t, seat) => makeBot(t, makeRng(botSeed(setup.seed, seat)), randomness));
   let decisionIdx = 0; let hash = 0x811c9dc5;

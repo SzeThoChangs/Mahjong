@@ -5,7 +5,7 @@
  *  determinize(g, seat, rng)  -> a copy where everything `seat` cannot see is re-dealt at random,
  *                                consistent with the visible state (hand sizes, melds, bonus, discards, wall size)
  */
-import { GameState, Wall, makeRng, tableConfigOf, isBonus, kindOf, TOTAL_TILES, type RulesConfig, type Bot, type Snapshot, type TileInstance } from 'sg-mahjong-engine';
+import { GameState, Wall, makeRng, tableConfigOf, isBonus, kindOf, type RulesConfig, type Bot, type Snapshot, type TileInstance } from 'sg-mahjong-engine';
 import { makeBot, type RandomnessConfig, DEFAULT_RANDOMNESS } from './bots.js';
 import { botSeed } from './session.js';
 import type { HandRecord } from './records.js';
@@ -17,7 +17,7 @@ export function botsFor(rec: HandRecord, randomness: RandomnessConfig = DEFAULT_
 /** Replay hand `rec` until decision index `d` is pending. Returns the live state and the bots (with rng state advanced). */
 export function positionAt(rec: HandRecord, d: number, rules: RulesConfig, randomness: RandomnessConfig = DEFAULT_RANDOMNESS): { g: GameState; bots: Bot[] } | null {
   const cfg = tableConfigOf(rules);
-  const g = GameState.deal(cfg, new Wall(makeRng(rec.seed), rules.unplayable_tiles), { dealer: rec.dl, prevailingWind: rec.w, rules });
+  const g = GameState.deal(cfg, new Wall(makeRng(rec.seed), rules.unplayable_tiles, rules.jokers.count), { dealer: rec.dl, prevailingWind: rec.w, rules });
   const bots = botsFor(rec, randomness);
   let idx = 0;
   g.advance();
@@ -43,7 +43,7 @@ export function determinize(g: GameState, seat: number, rng: () => number): Snap
   // tiles already drawn from the wall but not visible are exactly the opponents' concealed tiles;
   // the unseen pool = everything not visible
   const unseen: TileInstance[] = [];
-  for (let t = 0; t < TOTAL_TILES; t++) if (!visible.has(t)) unseen.push(t);
+  for (const t of snap.wall.order) if (!visible.has(t)) unseen.push(t);     // the wall order holds every tile in this game (148 or 152)
   for (let i = unseen.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [unseen[i], unseen[j]] = [unseen[j]!, unseen[i]!]; }
   // opponents' hands: standard tiles only (bonus tiles would have been exposed on draw)
   const standard = unseen.filter((t) => !isBonus(kindOf(t)));
