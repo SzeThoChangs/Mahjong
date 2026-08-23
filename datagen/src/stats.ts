@@ -79,7 +79,7 @@ export function formatStats(st: Stats): string {
   ];
   return L.join('\n');
 }
-if (process.argv[1] && /stats\.(ts|js)$/.test(process.argv[1])) {
+if (process.argv[1] && /[\\/]stats\.(ts|js)$/.test(process.argv[1])) {
   const dir = process.argv[2] ?? '../data/gen/dev';
   const hands = loadHands(dir);
   console.log(formatStats(computeStats(hands)));

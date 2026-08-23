@@ -34,12 +34,22 @@ export function formatEvalStats(evs: EvalRecord[]): string {
   table('by decision kind', byKey((e) => e.k));
   table('by game phase (turn of the hand)', byKey((e) => { const t = (e as unknown as { t?: number }).t; return t === undefined ? 'n/a' : t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late'; }));
   // how decisive are decisions? share where best beats 2nd by > 1 SE
-  const decisive = evs.filter((e) => e.actions.length > 1).map((e) => { const a = e.actions[0]!, b = e.actions[1]!; const se = Math.sqrt(a.sd ** 2 / a.n + b.sd ** 2 / b.n); return (a.ev - b.ev) > se ? 1 : 0; });
-  L.push(`\nclear best action (gap > 1 SE over runner-up): ${pct(mean(decisive))} of decisions`);
+  const withGap = evs.filter((e) => e.actions.length > 1 && e.actions[1]!.gapSe !== undefined);
+  if (withGap.length) {
+    const clear1 = withGap.map((e) => (e.actions[1]!.gap > e.actions[1]!.gapSe ? 1 : 0)), clear2 = withGap.map((e) => (e.actions[1]!.gap > 2 * e.actions[1]!.gapSe ? 1 : 0));
+    L.push(`\nclear best action (paired gap to runner-up > 1 SE): ${pct(mean(clear1))}   (> 2 SE): ${pct(mean(clear2))}   mean paired SE ${mean(withGap.map((e) => e.actions[1]!.gapSe)).toFixed(2)} chips`);
+  } else {
+    const decisive = evs.filter((e) => e.actions.length > 1).map((e) => { const a = e.actions[0]!, b = e.actions[1]!; const se = Math.sqrt(a.sd ** 2 / a.n + b.sd ** 2 / b.n); return (a.ev - b.ev) > se ? 1 : 0; });
+    L.push(`\nclear best action (independent-SE gap > 1 SE over runner-up): ${pct(mean(decisive))} of decisions`);
+  }
+  // normalised regret: regret / EV spread of the decision (0 = picked best, 1 = picked worst)
+  const norm = byKey((e) => e.bot).map(([k, g]) => `${k} ${mean(g.filter((e) => e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev > 0).map((e) => e.regret / (e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev))).toFixed(2)}`);
+  L.push(`normalised regret (regret / spread, lower is better): ${norm.join('  ')}`);
   const flags: string[] = [];
   if (bad.length / evs.length > 0.01) flags.push(`${bad.length} evaluations could not match the bot's selected action`);
   const rb = byKey((e) => e.bot).find(([k]) => k === 'random')?.[1]; const eb = byKey((e) => e.bot).find(([k]) => k === 'efficiency')?.[1];
-  if (rb && eb && mean(rb.map((e) => e.regret)) < mean(eb.map((e) => e.regret))) flags.push('random bot shows LOWER regret than efficiency bot - evaluator or bots suspicious');
+  const agree = (g: EvalRecord[]) => mean(g.map((e) => e.actions.slice(0, 3).some((a) => a.a === e.sel) ? 1 : 0));
+  if (rb && eb && agree(rb) >= agree(eb)) flags.push('random bot agrees with the evaluator at least as often as the efficiency bot - evaluator or bots suspicious');
   L.push(flags.length ? `FLAGS:\n  - ${flags.join('\n  - ')}` : 'no flags');
   return L.join('\n');
 }

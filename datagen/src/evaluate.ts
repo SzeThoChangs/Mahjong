@@ -22,7 +22,8 @@ import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './record
 
 export type Policy = 'fast' | 'shanten' | 'efficiency';
 export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean }
-export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number }
+export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number }
+// gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
 
 function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig): Bot[] {
@@ -47,13 +48,13 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     if (!h) { const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`); h = determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)); hiddenCache.set(i, h); }
     return h;
   };
-  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0 }));
+  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[] }));
   const roll = (x: typeof acc[number], i: number) => {
     const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
     const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
     h.apply(x.act);
     const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness));
-    const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++;
+    const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++; x.outcomes[i] = v;
     if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
   };
   if (!a.adaptive || acc.length <= 2) {
@@ -70,7 +71,16 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
       target = Math.min(a.rollouts, target * 2);
     }
   }
-  const actions: ActionEval[] = acc.map((x) => { const ev = x.sum / x.n; return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n }; });
+  const evOf = (x: typeof acc[number]) => x.sum / x.n;
+  const bestAcc = acc.reduce((p, q) => (evOf(q) > evOf(p) ? q : p));
+  const actions: ActionEval[] = acc.map((x) => {
+    const ev = evOf(x);
+    // paired gap to the best action over the rollout indices both have
+    let m = 0, m2 = 0, k = 0;
+    for (let i = 0; i < Math.min(x.outcomes.length, bestAcc.outcomes.length); i++) { const a = bestAcc.outcomes[i], b = x.outcomes[i]; if (a === undefined || b === undefined) continue; const d = a - b; m += d; m2 += d * d; k++; }
+    const gap = k ? m / k : 0, gapVar = k > 1 ? Math.max(0, m2 / k - gap * gap) / (k - 1) * k / Math.max(1, k) : 0;
+    return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n, gap, gapSe: Math.sqrt(gapVar / Math.max(1, k)) };
+  });
   actions.sort((x, y) => y.ev - x.ev);
   const selEv = actions.find((x) => x.a === rec.sel)?.ev ?? NaN;
   return { g: rec.g, h: rec.h, d: rec.d, k: rec.k, t: rec.t, seat, bot: rec.bot, sel: rec.sel, mode: a.mode, policy: a.policy, n: a.rollouts, actions, best: actions[0]!.a, selEv, regret: actions[0]!.ev - selEv };
