@@ -95,6 +95,14 @@ export default function Trainer() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>
           <CardContent className="@container">
+            {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
+              <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pb-2 mb-2 border-b">
+                {scenario.bonus.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
+                {scenario.melds.map((m, i) => (
+                  <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m.concealed} />)}</span>
+                ))}
+              </div>
+            )}
             <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
               {sortedHand.map((k, i) => (
                 <Tile key={i} kind={k} size="md" fluid onClick={pick === null ? () => choose(k) : undefined}
@@ -108,14 +116,6 @@ export default function Trainer() {
                 </>
               )}
             </div>
-            {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
-              <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pt-2 mt-2 border-t">
-                {scenario.bonus.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
-                {scenario.melds.map((m, i) => (
-                  <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m.concealed} />)}</span>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
 

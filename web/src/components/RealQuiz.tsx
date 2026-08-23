@@ -115,6 +115,14 @@ export default function RealQuiz() {
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle></CardHeader>
         <CardContent className="space-y-3 @container">
+          {(q.m.length > 0 || q.b.length > 0) && (
+            <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pb-1 border-b">
+              {q.b.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
+              {q.m.map((m, i) => (
+                <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m[1] === 1} />)}</span>
+              ))}
+            </div>
+          )}
           <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
             {handTiles.map((k, i) => (
               <Tile key={i} kind={k} size="md" fluid
@@ -130,14 +138,6 @@ export default function RealQuiz() {
                   highlight={picked !== null && q.actions[0]!.a === `d:${q.dr}`} /></>
             )}
           </div>
-          {(q.m.length > 0 || q.b.length > 0) && (
-            <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pt-1 border-t">
-              {q.b.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
-              {q.m.map((m, i) => (
-                <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m[1] === 1} />)}</span>
-              ))}
-            </div>
-          )}
           {q.k !== 'discard' && (
             <div className="flex flex-wrap gap-2">
               {q.actions.map((a) => (
