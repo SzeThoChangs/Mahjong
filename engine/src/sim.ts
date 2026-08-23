@@ -1,8 +1,6 @@
 /** Simulator: play N hands, rotate the dealer, report aggregate stats. */
 import { Wall, makeRng } from './wall.js';
 import { playGame, type Bot } from './game.js';
-import { loadTableConfig } from './config.node.js';
-import { IsolationBot, RandomBot } from './bots.js';
 import type { TableConfig } from './payout.js';
 
 export interface SimStats {
@@ -53,15 +51,3 @@ export function formatStats(st: SimStats, label: string): string {
   return lines.join('\n');
 }
 
-// CLI: tsx src/sim.ts [games] [bot]
-if (process.argv[1] && /sim\.(ts|js)$/.test(process.argv[1])) {
-  const n = Number(process.argv[2] ?? 2000);
-  const which = process.argv[3] ?? 'isolation';
-  const cfg = loadTableConfig();
-  const mk = (rng: () => number) => [0, 1, 2, 3].map(() => which === 'random' ? new RandomBot(rng) : new IsolationBot(rng));
-  const t0 = Date.now();
-  const st = runSim(n, mk, cfg);
-  console.log(formatStats(st, `${which} bots, MF${cfg.minimum_fan}/limit${cfg.fan_limit}/selfdraw${cfg.self_draw_minimum_fan}`));
-  console.log(`Book reference (MF2, equal players): win ~21-25% per seat (E highest), draws 14%, ~48 Player Turns, E +1.0 / N -1.1 chips`);
-  console.log(`(${((Date.now() - t0) / 1000).toFixed(1)}s)`);
-}

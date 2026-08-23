@@ -2,3 +2,5 @@ packages:
   - engine
   - solver
   - web
+allowBuilds:
+  esbuild: set this to true or false

@@ -3,5 +3,8 @@ export * from './wall.js';
 export * from './decompose.js';
 export * from './score.js';
 export * from './payout.js';
+export * from './game.js';
+export * from './bots.js';
+export * from './sim.js';
 // node-only: import from 'sg-mahjong-engine/node'
 // export * from './config.node.js';

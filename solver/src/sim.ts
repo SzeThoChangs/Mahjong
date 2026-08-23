@@ -1,0 +1,13 @@
+import { runSim, formatStats, IsolationBot, makeRng } from 'sg-mahjong-engine';
+import { loadTableConfig } from 'sg-mahjong-engine/node';
+import { CoachBot } from './bot.js';
+const n = Number(process.argv[2] ?? 1000);
+const cfg = loadTableConfig();
+const t0 = Date.now();
+const coach = runSim(n, () => [0,1,2,3].map(() => new CoachBot()), cfg, 11);
+console.log(formatStats(coach, 'coach x4'));
+const mixed = runSim(n, (rng) => [new CoachBot(), new IsolationBot(rng), new IsolationBot(rng), new IsolationBot(rng)], cfg, 11);
+console.log(formatStats(mixed, 'coach (East) vs 3 isolation bots'));
+const mixed2 = runSim(n, (rng) => [new IsolationBot(rng), new IsolationBot(rng), new IsolationBot(rng), new CoachBot()], cfg, 11);
+console.log(formatStats(mixed2, 'coach (North) vs 3 isolation bots'));
+console.log(`(${((Date.now() - t0) / 1000).toFixed(1)}s)`);
