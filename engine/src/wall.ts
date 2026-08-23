@@ -36,6 +36,12 @@ export class Wall {
     this.unplayable = unplayable;
     this.back = t.length - 1;
   }
+  /** Rebuild a wall from a snapshot (ground truth) or from an explicit order. */
+  static fromSnapshot(s: { order: TileInstance[]; front: number; back: number; unplayable: number }): Wall {
+    const w = new Wall(() => 0, s.unplayable);
+    w.tiles = [...s.order]; w.front = s.front; w.back = s.back;
+    return w;
+  }
 
   /** Tiles still drawable from the front (excludes the unplayable reserve). */
   get remaining(): number {

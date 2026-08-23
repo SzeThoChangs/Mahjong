@@ -10,15 +10,18 @@ import { KIND, countsOf, fanInHand, isHonour, isSuited, rankOf, suitOf, isTermin
 
 type Outcome = [sets: number, partials: number, pairs: number];   // pairs = complete pairs available (eye or pong-partial)
 
-const suitMemo = new Map<string, Outcome[]>();
-function suitOutcomes(c: number[]): Outcome[] {
-  const key = c.join('');
+const suitMemo = new Map<number, Outcome[]>();
+const scratch = new Array<number>(9).fill(0);
+/** outcomes for one suit; `counts` read at offset `off`; key is the base-5 integer of the 9 counts */
+function suitOutcomesAt(counts: Uint8Array, off: number): Outcome[] {
+  let key = 0;
+  for (let i = 0; i < 9; i++) key = key * 5 + counts[off + i]!;
   const hit = suitMemo.get(key); if (hit) return hit;
-  const res = new Set<string>(); const out: Outcome[] = [];
+  const c = scratch; for (let i = 0; i < 9; i++) c[i] = counts[off + i]!;
+  const res = new Set<number>(); const out: Outcome[] = [];
   const walk = (i: number, s: number, p: number, pr: number) => {
     while (i < 9 && c[i] === 0) i++;
-    if (i >= 9) { const k = `${s},${p},${pr}`; if (!res.has(k)) { res.add(k); out.push([s, p, pr]); } return; }
-    // leave as single
+    if (i >= 9) { const k = s * 100 + p * 10 + pr; if (!res.has(k)) { res.add(k); out.push([s, p, pr]); } return; }
     c[i]!--; walk(i, s, p, pr); c[i]!++;
     if (c[i]! >= 3) { c[i]! -= 3; walk(i, s + 1, p, pr); c[i]! += 3; }
     if (c[i]! >= 2) { c[i]! -= 2; walk(i, s, p, pr + 1); c[i]! += 2; }
@@ -27,7 +30,6 @@ function suitOutcomes(c: number[]): Outcome[] {
     if (i <= 6 && c[i + 2]! > 0) { c[i]!--; c[i + 2]!--; walk(i, s, p + 1, pr); c[i]!++; c[i + 2]!++; }
   };
   walk(0, 0, 0, 0);
-  // prune dominated outcomes
   const kept = out.filter((o) => !out.some((q) => q !== o && q[0] >= o[0] && q[1] >= o[1] && q[2] >= o[2] && (q[0] > o[0] || q[1] > o[1] || q[2] > o[2])));
   suitMemo.set(key, kept);
   return kept;
@@ -36,24 +38,21 @@ function suitOutcomes(c: number[]): Outcome[] {
 /** Standard-form shanten for `need` sets + eye from concealed counts. -1 = complete, 0 = calling. */
 export function shantenStandard(counts: Uint8Array, melds: number): number {
   const need = 4 - melds;
-  const suits: Outcome[][] = [];
-  for (let s = 0; s < 3; s++) suits.push(suitOutcomes(Array.from(counts.slice(s * 9, s * 9 + 9))));
+  const A = suitOutcomesAt(counts, 0), B = suitOutcomesAt(counts, 9), C = suitOutcomesAt(counts, 18);
   let hs = 0, hp = 0; // honours: sets and pairs
   for (let k = 27; k < 34; k++) { const n = counts[k]!; if (n >= 3) hs++; else if (n === 2) hp++; }
   let best = 99;
-  for (const a of suits[0]!) for (const b of suits[1]!) for (const c of suits[2]!) {
-    const S = a[0] + b[0] + c[0] + hs;
-    const pairs = a[2] + b[2] + c[2] + hp;
-    const P = a[1] + b[1] + c[1];
-    // choose whether one pair is the eye; remaining pairs act as partials
-    for (const eye of pairs > 0 ? [1, 0] : [0]) {
-      const partials = P + (pairs - eye);
-      const S2 = Math.min(S, need);
-      const P2 = Math.min(partials, need - S2);
-      const sh = 2 * need - 2 * S2 - P2 - eye;   // 8-2S-P-eye when need=4
-      if (sh < best) best = sh;
-    }
-  }
+  for (let ia = 0; ia < A.length; ia++) { const a = A[ia]!;
+    for (let ib = 0; ib < B.length; ib++) { const b = B[ib]!;
+      for (let ic = 0; ic < C.length; ic++) { const c = C[ic]!;
+        const S = a[0] + b[0] + c[0] + hs;
+        const pairs = a[2] + b[2] + c[2] + hp;
+        const P = a[1] + b[1] + c[1];
+        // eye from a pair if available; remaining pairs act as partials
+        const S2 = S < need ? S : need;
+        if (pairs > 0) { const P2 = Math.min(P + pairs - 1, need - S2); const sh = 2 * need - 2 * S2 - P2 - 1; if (sh < best) best = sh; }
+        { const P2 = Math.min(P + pairs, need - S2); const sh = 2 * need - 2 * S2 - P2; if (sh < best) best = sh; }
+      } } }
   return best;
 }
 export function shantenThirteen(counts: Uint8Array): number {

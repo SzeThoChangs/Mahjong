@@ -5,6 +5,7 @@ export * from './score.js';
 export * from './rules.js';
 export * from './payout.js';
 export * from './game.js';
+export * from './state.js';
 export * from './bots.js';
 export * from './sim.js';
 // node-only: import from 'sg-mahjong-engine/node'
