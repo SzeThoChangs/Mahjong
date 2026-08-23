@@ -55,7 +55,8 @@ export class HeuristicBot implements Bot {
   constructor(readonly type: Exclude<BotType, 'random'>, private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS) {}
 
   private valueTile(v: PlayerView) {
-    return (k: TileKind) => k >= 31 || k === 27 + v.seat || k === 27 + v.prevailingWind;
+    const role = (v.seat - v.dealer + 4) % 4;              // the host is East; winds rotate with the deal
+    return (k: TileKind) => k >= 31 || k === 27 + role || k === 27 + v.prevailingWind;
   }
 
   chooseDiscard(v: PlayerView): TileInstance {

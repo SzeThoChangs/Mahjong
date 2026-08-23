@@ -36,7 +36,7 @@ const chosen = [...meaty.slice(0, Math.floor(maxQ * 0.75)), ...rest.slice(0, Mat
 const byHand = new Map<string, typeof chosen>();
 for (const c of chosen) { const k = `${c.e.g}:${c.e.h}`; (byHand.get(k) ?? byHand.set(k, []).get(k)!).push(c); }
 
-interface Q { id: string; k: string; seat: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number }[] }
+interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 for (const [key, list] of byHand) {
@@ -45,10 +45,10 @@ for (const [key, list] of byHand) {
   for (const { e, spread } of list) {
     const d = decs.find((x) => x.d === e.d); if (!d) continue;
     const melds: Meld[] = d.me.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-    const fih = fanInHand({ melds, bonus: d.me.b, seat: d.p, prevailingWind: d.w });
+    const fih = fanInHand({ melds, bonus: d.me.b, seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w });
     const last = d.pub.dl[d.pub.dl.length - 1];
     questions.push({
-      id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, w: d.w, t: d.t, fih,
+      id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
       bot: e.bot, spread: Number(spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,

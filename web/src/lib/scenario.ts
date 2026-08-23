@@ -19,7 +19,7 @@ export const CONFIG: TableConfig = {
 export interface Scenario {
   id: number;
   phase: Exclude<Phase, 'any'>;
-  seat: number; prevailingWind: number; playerTurns: number;
+  seat: number; dealer: number; prevailingWind: number; playerTurns: number;
   hand: TileKind[];          // 14 concealed, drawn tile last if any
   drawn: TileKind | null;
   melds: Meld[];
@@ -62,13 +62,13 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const hand = view.hand.map(kindOf);
     const melds: Meld[] = view.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
     const bonus = view.bonus.map(kindOf);
-    const ctx: Context = { seat: view.seat, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan };
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan };
     const ranking = rankDiscards(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);
     const hasWrongAnswers = ranking.options.some((o) => o.verdict === 'mistake' || o.verdict === 'blunder');
     const interesting = hasWrongAnswers && (naivePick !== ranking.best.tile || ranking.best.target.id !== 'chicken');
-    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, naivePick };
+    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, naivePick };
     if (!wantInteresting) return sc;
     if (interesting) return sc;
     fallback ??= sc;

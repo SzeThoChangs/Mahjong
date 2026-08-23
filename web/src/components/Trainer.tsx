@@ -77,25 +77,24 @@ export default function Trainer() {
         {/* context */}
         <Card>
           <CardContent className="pt-5 !flex !flex-row flex-wrap items-center justify-start gap-x-6 gap-y-3 text-sm">
-            <div><span className="text-muted-foreground">You are</span> <b>{WIND_NAME[scenario.seat]}</b></div>
-            <div><span className="text-muted-foreground">Round</span> <b>{WIND_NAME[scenario.prevailingWind]}圈</b></div>
-            <div><b>第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡</b> <span className="text-muted-foreground">({scenario.phase} game · {scenario.playerTurns} moves)</span></div>
+            {(() => { const role = (scenario.seat - scenario.dealer + 4) % 4; const dbl = role === scenario.prevailingWind; return (<>
+            <div>Seat <b>{scenario.seat + 1}</b> · you are <b>{WIND_NAME[role]}</b></div>
+            <div><span className="text-muted-foreground">Host: seat</span> <b>{scenario.dealer + 1}</b>{scenario.dealer === scenario.seat ? ' (you)' : ''}</div>
+            <div><span className="text-muted-foreground">Round</span> <b>{WIND_NAME[scenario.prevailingWind]}</b></div>
+            <div className="flex items-center gap-1"><span className="text-muted-foreground">tai winds</span>
+              <Tile kind={27 + scenario.prevailingWind} size="sm" /><Tile kind={27 + role} size="sm" className={dbl ? '-ml-4' : ''} />
+              {dbl && <span className="text-xs text-muted-foreground">double!</span>}
+            </div>
+            </>); })()}
+            <div><b>第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡</b> <span className="text-muted-foreground">({scenario.phase} game)</span></div>
             <div><span className="text-muted-foreground">Fan in hand</span> <b>{fan}</b>{fan < CONFIG.minimum_fan && <span className="text-muted-foreground"> — need {CONFIG.minimum_fan} to win on a discard</span>}</div>
-            {scenario.bonus.length > 0 && (
-              <div className="flex items-center gap-1"><span className="text-muted-foreground mr-1">Flowers/animals</span>{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="sm" />)}</div>
-            )}
-            {scenario.melds.length > 0 && (
-              <div className="flex items-center gap-3"><span className="text-muted-foreground">Exposed</span>
-                {scenario.melds.map((m, i) => <div key={i} className="flex gap-0.5">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="sm" dim={m.concealed} />)}</div>)}
-              </div>
-            )}
           </CardContent>
         </Card>
 
         {/* hand */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>
-          <CardContent>
+          <CardContent className="@container">
             <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
               {sortedHand.map((k, i) => (
                 <Tile key={i} kind={k} size="md" fluid onClick={pick === null ? () => choose(k) : undefined}
@@ -109,6 +108,14 @@ export default function Trainer() {
                 </>
               )}
             </div>
+            {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
+              <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pt-2 mt-2 border-t">
+                {scenario.bonus.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
+                {scenario.melds.map((m, i) => (
+                  <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m.concealed} />)}</span>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

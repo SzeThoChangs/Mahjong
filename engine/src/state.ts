@@ -112,14 +112,14 @@ export class GameState {
     if (this.rules.money) {         // ---- real-money bites ----
       const m = this.rules.money;
       const amount = fromInitial ? m.bite_hidden : m.bite_open;
-      // flower-number pairs: flower n + season n. Own number: everyone pays. Another player's number: only that seat pays.
+      // flower-number pairs: flower n + season n. Own number: everyone pays. Another player's number: only the seat holding that role pays.
       for (let n = 0; n < 4; n++) {
         const id = `bite_flowers_${n}`;
         if (e.has(id)) continue;
         if (kinds.includes(34 + n) && kinds.includes(38 + n)) {
           e.add(id);
-          if (n === p.seat) this.payAllOpponents(p.seat, amount);
-          else this.pay(n, p.seat, amount);
+          if (n === this.role(p.seat)) this.payAllOpponents(p.seat, amount);
+          else this.pay((this.dealer + n) % 4, p.seat, amount);
           this.L(`seat${p.seat} bite flowers#${n + 1} ${fromInitial ? 'hidden' : 'open'} $${amount}`);
         }
       }
@@ -131,7 +131,7 @@ export class GameState {
       return;
     }
     const animals = kinds.filter(isAnimal), flowers = kinds.filter(isFlower), seasons = kinds.filter(isSeason);
-    const ownPair = kinds.filter((k) => (isFlower(k) || isSeason(k)) && bonusSeat(k) === p.seat).length >= 2;
+    const ownPair = kinds.filter((k) => (isFlower(k) || isSeason(k)) && bonusSeat(k) === this.role(p.seat)).length >= 2;
     const animalPair = kinds.some((k) => isAnimal(k) && kinds.includes(animalPartner(k) as TileKind));
     const fire = (id: string, kind: Parameters<typeof immediatePayout>[0]) => {
       if (e.has(id)) return; e.add(id);
@@ -179,13 +179,16 @@ export class GameState {
     };
   }
   truth = (): GroundTruth => ({ hands: this.players.map((p) => [...p.hand]), wall: this.wall.snapshot(), dealer: this.dealer, prevailingWind: this.prevailingWind });
+  /** Wind ROLE of a seat: the host (dealer) is always East, the next seat South, and the seat flowers follow.
+   *  All scoring uses roles, so moving the dealership rotates everyone's winds exactly as at a real table. */
+  role(seat: number): number { return (seat - this.dealer + 4) % 4; }
   private record(kind: DecisionKind, seat: number, v: PlayerView, legal: LegalAction[], selected: LegalAction, drawn: TileInstance | null) {
     this.counts.decisions++;
     if (!legal.some((l) => JSON.stringify(l) === JSON.stringify(selected))) this.counts.illegal++;
     this.opts.recorder?.record({ kind, seat, view: v, legal, selected, drawn, truth: this.truth });
   }
   private score(p: PlayerState, concealed: TileKind[], winningTile: TileKind, selfDraw: boolean, extra: { replacementWin?: boolean; lastTile?: boolean; robbingKong?: boolean }) {
-    return scoreHand({ concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: p.seat, prevailingWind: this.prevailingWind, winningTile, selfDraw, ...extra }, this.rules);
+    return scoreHand({ concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: this.role(p.seat), prevailingWind: this.prevailingWind, winningTile, selfDraw, ...extra }, this.rules);
   }
   private tilesAccounted() { return this.players.reduce((a, p) => a + p.hand.length + p.bonus.length + p.discards.length + p.melds.reduce((b, m) => b + m.instances.length, 0), 0); }
   private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null): GameResult {
@@ -372,7 +375,7 @@ export class GameState {
     if (isDragon(dk) && b.dragon_set_feed && dragons === 3) { this.liable[q.seat] = from; return; }
     if (isWind(dk) && b.wind_set_feed && winds === 4) { this.liable[q.seat] = from; return; }
     if (b.fan_limit_feed && isHonour(dk)) {
-      const exposedFan = fanInHand({ melds: q.melds, bonus: q.bonus.map(kindOf), seat: q.seat, prevailingWind: this.prevailingWind });
+      const exposedFan = fanInHand({ melds: q.melds, bonus: q.bonus.map(kindOf), seat: this.role(q.seat), prevailingWind: this.prevailingWind });
       if (exposedFan >= this.cfg.fan_limit) this.liable[q.seat] = from;        // each player carries at most one such infraction; later replaces earlier
     }
   }

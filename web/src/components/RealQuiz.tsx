@@ -14,7 +14,7 @@ const WIND = ['東', '南', '西', '北'];
 
 interface PackIx { id: string; money: boolean; unit: string; questions: number }
 interface Action { a: string; ev: number; win: number; dealin: number; draw: number }
-interface Q { id: string; k: string; seat: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
+interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 
 const VERDICT_STYLE: Record<Verdict, string> = {
@@ -88,12 +88,24 @@ export default function RealQuiz() {
 
       <Card>
         <CardContent className="pt-4 !flex !flex-row flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          <span>You are <b>{WIND[q.seat]}</b></span>
-          <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}圈</b></span>
-          <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b> <span title="each 巡 = one go-around of the table">({q.t} moves played)</span></span>
+          {q.dl !== undefined ? (() => { const role = (q.seat - q.dl! + 4) % 4; const doubleWind = role === q.w; return (
+            <>
+              <span>Seat <b>{q.seat + 1}</b> · you are <b>{WIND[role]}</b></span>
+              <span className="text-muted-foreground">Host: seat <b className="text-foreground">{q.dl! + 1}</b>{q.dl === q.seat ? ' (you)' : ''}</span>
+              <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}</b></span>
+              <span className="flex items-center gap-1 text-muted-foreground">tai winds:
+                <Tile kind={27 + q.w} size="sm" /><Tile kind={27 + role} size="sm" className={cn(doubleWind && '-ml-4')} />
+                {doubleWind && <Badge variant="outline">double!</Badge>}
+              </span>
+            </>
+          ); })() : (
+            <>
+              <span>You are <b>{WIND[q.seat]}</b></span>
+              <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}</b></span>
+            </>
+          )}
+          <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b></span>
           <span className="text-muted-foreground">Tai in hand <b className="text-foreground">{q.fih}</b></span>
-          {q.b.length > 0 && <span className="flex items-center gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="sm" />)}</span>}
-          {q.m.length > 0 && <span className="flex items-center gap-2">{q.m.map((m, i) => <span key={i} className="flex gap-0.5">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="sm" dim={m[1] === 1} />)}</span>)}</span>}
           <span className="ml-auto text-xs text-muted-foreground">a real position · {q.n} play-outs per move</span>
         </CardContent>
       </Card>
@@ -102,7 +114,7 @@ export default function RealQuiz() {
         <CardHeader className="pb-2"><CardTitle className="text-base">
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 @container">
           <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
             {handTiles.map((k, i) => (
               <Tile key={i} kind={k} size="md" fluid
@@ -118,6 +130,14 @@ export default function RealQuiz() {
                   highlight={picked !== null && q.actions[0]!.a === `d:${q.dr}`} /></>
             )}
           </div>
+          {(q.m.length > 0 || q.b.length > 0) && (
+            <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pt-1 border-t">
+              {q.b.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
+              {q.m.map((m, i) => (
+                <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m[1] === 1} />)}</span>
+              ))}
+            </div>
+          )}
           {q.k !== 'discard' && (
             <div className="flex flex-wrap gap-2">
               {q.actions.map((a) => (
