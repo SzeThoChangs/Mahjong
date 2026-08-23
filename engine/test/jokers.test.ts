@@ -10,7 +10,7 @@ import { ShantenBot, RandomBot } from '../src/bots.js';
 
 const K = parseKinds;
 const JR = makeRules({ jokers: { count: 4 } });
-const base = { melds: [], bonus: [], seat: 1, prevailingWind: 2, selfDraw: true } as const;
+const base = { melds: [] as import('../src/score.js').Meld[], bonus: [] as number[], seat: 1, prevailingWind: 2, selfDraw: true };
 
 describe('jokers: completion', () => {
   it('a joker completes a chow, a pong, or an eye', () => {

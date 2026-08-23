@@ -8,7 +8,7 @@
  * EV = mean chips delta for the acting seat at the end of the hand, over n rollouts per action.
  */
 import { Worker, parentPort, workerData } from 'node:worker_threads';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
@@ -16,13 +16,13 @@ import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, ty
 import { positionAt, determinize } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
-import { loadHands } from './stats.js';
+import { loadHands, readJsonlGz } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { rulesForDir } from './tablerules.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
 
 export type Policy = 'fast' | 'shanten' | 'efficiency';
-export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean }
+export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean }
 export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number }
 // gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
@@ -113,22 +113,32 @@ export function selectDecisions(dir: string, a: EvalArgs, rules: RulesConfig): {
   return out;
 }
 
-export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { evaluated: number } {
+export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { evaluated: number; skipped: number; errors: number } {
   const rules = rulesForDir(a.dir, a.rulesOverride);
-  const out = new JsonlGzWriter(join(a.dir, `evals-w${a.workerIndex}.jsonl.gz`));
-  let n = 0;
+  const path = join(a.dir, `evals-w${a.workerIndex}.jsonl.gz`);
+  // --resume: skip decisions already on disk (selection is deterministic, so the same worker sees the same hands)
+  const done = new Set<string>();
+  if (a.resume && existsSync(path)) for (const e of readJsonlGz<EvalRecord>(path)) done.add(`${e.g}:${e.h}:${e.d}`);
+  const out = new JsonlGzWriter(path, 1 << 20, a.resume);
+  let n = 0, skipped = 0, errors = 0;
   for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {
     for (const dec of decisions) {
-      const pos = positionAt(hand, dec.d, rules, a.randomness);
-      if (!pos) continue;
-      // sanity: the reconstructed visible hand must match the record
-      const hk = pos.g.players[pos.g.pending()!.seat]!.hand.map(kindOf).sort((x, y) => x - y).join(',');
-      if (hk !== [...dec.me.h].sort((x, y) => x - y).join(',')) throw new Error(`position mismatch at ${dec.g}:${dec.h}:${dec.d}`);
-      out.write(evaluateDecision(pos.g, dec, a, rules)); n++; progress?.(n);
+      if (done.has(`${dec.g}:${dec.h}:${dec.d}`)) { skipped++; continue; }
+      try {
+        const pos = positionAt(hand, dec.d, rules, a.randomness);
+        if (!pos) continue;
+        // sanity: the reconstructed visible hand must match the record
+        const hk = pos.g.players[pos.g.pending()!.seat]!.hand.map(kindOf).sort((x, y) => x - y).join(',');
+        if (hk !== [...dec.me.h].sort((x, y) => x - y).join(',')) throw new Error(`position mismatch at ${dec.g}:${dec.h}:${dec.d}`);
+        out.write(evaluateDecision(pos.g, dec, a, rules)); n++; progress?.(n);
+      } catch (e) {
+        errors++; console.error(`[w${a.workerIndex}] decision ${dec.g}:${dec.h}:${dec.d} (${dec.k}) failed: ${(e as Error).message}`);
+        if (errors > 50) throw e;            // something systematic: stop this worker
+      }
     }
   }
   out.close();
-  return { evaluated: n };
+  return { evaluated: n, skipped, errors };
 }
 
 if (parentPort) {
@@ -141,17 +151,24 @@ if (parentPort) {
   const workers = Number(arg('workers', String(Math.max(1, Math.min(8, cpus().length - 1)))));
   const base: Omit<EvalArgs, 'workerIndex'> = {
     dir, hands: Number(arg('hands', '50')), perHand: Number(arg('per-hand', '4')), rollouts: Number(arg('rollouts', '32')),
-    mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'shanten') as Policy), seed: Number(arg('seed', '1')), workers, adaptive: process.argv.includes('--adaptive'),
+    mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'shanten') as Policy), seed: Number(arg('seed', '1')), workers, adaptive: process.argv.includes('--adaptive'), resume: process.argv.includes('--resume'),
     rulesOverride: arg('rules') ? JSON.parse(arg('rules')!) : {}, randomness: arg('randomness') ? JSON.parse(arg('randomness')!) : { ranked: [0.7, 0.15, 0.1], random: 0.05 },
   };
   mkdirSync(dir, { recursive: true });
   const t0 = Date.now(); let remaining = workers, total = 0; const prog = new Array<number>(workers).fill(0);
   for (let i = 0; i < workers; i++) {
     const w = new Worker(fileURLToPath(import.meta.url), { workerData: { ...base, workerIndex: i } });
-    w.on('message', (m: { type: string; n?: number; evaluated?: number }) => {
+    let totalSkipped = 0, totalErrors = 0, failedWorkers = 0;
+    const finishIfDone = () => {
+      if (--remaining !== 0) return;
+      const s = (Date.now() - t0) / 1000;
+      writeFileSync(join(dir, 'evals-manifest.json'), JSON.stringify({ ...base, total, skipped: totalSkipped, errors: totalErrors, failedWorkers, seconds: s }, null, 2));
+      console.log(`\n${total} decisions evaluated in ${s.toFixed(0)}s (${(total / s).toFixed(2)}/s), ${totalSkipped} skipped (resume), ${totalErrors} errors, ${failedWorkers} failed workers -> ${dir}/evals-w*.jsonl.gz`);
+    };
+    w.on('message', (m: { type: string; n?: number; evaluated?: number; skipped?: number; errors?: number }) => {
       if (m.type === 'progress') { prog[i] = m.n!; const tot = prog.reduce((x, y) => x + y, 0); if (process.stdout.isTTY) process.stdout.write(`\r${tot} decisions evaluated`); else if (tot % 50 === 0) console.log(`${tot} decisions evaluated`); }
-      if (m.type === 'done') { total += m.evaluated!; if (--remaining === 0) { const s = (Date.now() - t0) / 1000; writeFileSync(join(dir, 'evals-manifest.json'), JSON.stringify({ ...base, total, seconds: s }, null, 2)); console.log(`\n${total} decisions evaluated in ${s.toFixed(0)}s (${(total / s).toFixed(2)}/s) -> ${dir}/evals-w*.jsonl.gz`); } }
+      if (m.type === 'done') { total += m.evaluated!; totalSkipped += m.skipped ?? 0; totalErrors += m.errors ?? 0; finishIfDone(); }
     });
-    w.on('error', (e) => { console.error(e); process.exit(1); });
+    w.on('error', (e) => { console.error(`worker ${i} failed:`, e); failedWorkers++; finishIfDone(); });   // other workers keep going; rerun with --resume
   }
 }

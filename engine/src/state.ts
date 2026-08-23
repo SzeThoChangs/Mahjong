@@ -226,6 +226,11 @@ export class GameState {
   }
   /** (Re)build claim options for the given seats from their CURRENT hands, in the given order. Used after determinization. */
   rebuildClaims(firstSeat: number) {
+    if (this.pendingRob) {        // rob-the-kong claim: recompute who can rob with the re-dealt hands, acting seat first
+      const q = this.robQueue(this.pendingRob.tile, this.pendingRob.kong, this.pendingRob.from);
+      this.claimQueue = [...q.filter((e) => e.seat === firstSeat), ...q.filter((e) => e.seat !== firstSeat)]; this.wanted = [];
+      return;
+    }
     const pd = this.pendingDiscard!;
     const order = [firstSeat, ...pd.eligible.filter((s) => s !== firstSeat)].filter((s) => pd.eligible.includes(s));
     this.buildClaimQueue(order);
@@ -335,11 +340,10 @@ export class GameState {
     }
   }
   /** After a kong: can anyone win on the kong tile? (kong4 only robbable for 13 Wonders.) If so, open a claim phase; else take the replacement draw. */
-  private beginRob(tile: TileInstance, kong: 'kong1' | 'kong4', meldIndex: number) {
-    const dk = kindOf(tile);
-    this.claimQueue = []; this.wanted = [];
+  private robQueue(tile: TileInstance, kong: 'kong1' | 'kong4', from: number): { seat: number; options: ClaimOption[] }[] {
+    const dk = kindOf(tile); const out: { seat: number; options: ClaimOption[] }[] = [];
     for (let off = 1; off <= 3; off++) {
-      const s = (this.turn + off) % 4, q = this.players[s]!;
+      const s = (from + off) % 4, q = this.players[s]!;
       if (q.lastDiscardKind === dk || q.seenSinceLastDiscard.has(dk)) continue;       // same prohibition as a discard
       const withTile = [...q.hand.map(kindOf), dk];
       const cjr = countsAndJokers(withTile);
@@ -347,8 +351,12 @@ export class GameState {
       const sc = this.score(q, withTile, dk, false, { robbingKong: true });
       if (!sc.valid || !meetsMinimum(sc.fan, false, this.cfg)) continue;
       if (kong === 'kong4' && sc.combination !== 'thirteen_wonders') continue;
-      this.claimQueue.push({ seat: s, options: [{ kind: 'win', seat: s, score: sc }] });
+      out.push({ seat: s, options: [{ kind: 'win', seat: s, score: sc }] });
     }
+    return out;
+  }
+  private beginRob(tile: TileInstance, kong: 'kong1' | 'kong4', meldIndex: number) {
+    this.claimQueue = this.robQueue(tile, kong, this.turn); this.wanted = [];
     if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex }; this.phase = 'claim'; }
     else this.phase = 'replacement';
   }
