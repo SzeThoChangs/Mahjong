@@ -8,24 +8,25 @@
  * EV = mean chips delta for the acting seat at the end of the hand, over n rollouts per action.
  */
 import { Worker, parentPort, workerData } from 'node:worker_threads';
-import { readdirSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
-import { GameState, makeRng, makeRules, tableConfigOf, IsolationBot, kindOf, type Bot, type LegalAction, type RulesConfig } from 'sg-mahjong-engine';
+import { GameState, makeRng, makeRules, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type LegalAction, type RulesConfig, type Snapshot } from 'sg-mahjong-engine';
 import { positionAt, determinize } from './position.js';
+import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
-import { loadHands, readJsonlGz } from './stats.js';
+import { loadHands } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
 
-export type Policy = 'fast' | 'efficiency';
-export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig }
+export type Policy = 'fast' | 'shanten' | 'efficiency';
+export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean }
 export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number }
-export interface EvalRecord { g: number; h: number; d: number; k: string; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
+export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
 
 function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig): Bot[] {
-  return [0, 1, 2, 3].map((s) => policy === 'fast' ? new IsolationBot(makeRng(seed * 4 + s), 0.6, 0.4) : makeBot('efficiency', makeRng(seed * 4 + s), randomness));
+  return [0, 1, 2, 3].map((s) => policy === 'fast' ? new IsolationBot(makeRng(seed * 4 + s), 0.6, 0.4) : policy === 'shanten' ? new ShantenBot(makeRng(seed * 4 + s)) : makeBot('efficiency', makeRng(seed * 4 + s), randomness));
 }
 
 /** Evaluate one decision at the given live position. */
@@ -34,47 +35,69 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
   const seat = pending.seat;
   const base = g.snapshot();
   const cfg = tableConfigOf(rules);
-  const actions: ActionEval[] = [];
   // dedupe discard actions by kind (same kind, different instance are identical decisions)
   const legal: LegalAction[] = []; const seenKinds = new Set<string>();
   for (const l of pending.legal) { const k = encAction(l); if (seenKinds.has(k)) continue; seenKinds.add(k); legal.push(l); }
-  for (const act of legal) {
-    let sum = 0, sumsq = 0, win = 0, dealin = 0, draw = 0;
-    for (let i = 0; i < a.rollouts; i++) {
-      // common random numbers: the SAME hidden state and rollout seeds for every action at this decision (paired comparison)
-      const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
-      const snap = a.mode === 'sampled' ? determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)) : base;
-      const h = GameState.fromSnapshot(snap, cfg, { rules });
-      h.apply(act);
-      const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness));
-      const v = res.chipsDelta[seat]!; sum += v; sumsq += v * v;
-      if (res.winner === seat) win++; else if (res.winner === null) draw++; else if (res.discarder === seat) dealin++;
+
+  // rollout i uses hidden state i and rollout-bot seeds i for EVERY action (common random numbers)
+  const hiddenCache = new Map<number, Snapshot>();
+  const hidden = (i: number): Snapshot => {
+    if (a.mode === 'oracle') return base;
+    let h = hiddenCache.get(i);
+    if (!h) { const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`); h = determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)); hiddenCache.set(i, h); }
+    return h;
+  };
+  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0 }));
+  const roll = (x: typeof acc[number], i: number) => {
+    const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
+    const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
+    h.apply(x.act);
+    const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness));
+    const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++;
+    if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
+  };
+  if (!a.adaptive || acc.length <= 2) {
+    for (const x of acc) for (let i = 0; i < a.rollouts; i++) roll(x, i);
+  } else {
+    // successive halving: everyone gets n0; the top half gets up to 2n0; the top quarter up to 4n0 (= a.rollouts)
+    const n0 = Math.max(4, Math.ceil(a.rollouts / 4));
+    let alive = [...acc]; let target = n0;
+    while (true) {
+      for (const x of alive) for (let i = x.n; i < target; i++) roll(x, i);
+      if (alive.length <= 2 || target >= a.rollouts) break;
+      alive.sort((p, q) => q.sum / q.n - p.sum / p.n);
+      alive = alive.slice(0, Math.max(2, Math.ceil(alive.length / 2)));
+      target = Math.min(a.rollouts, target * 2);
     }
-    const n = a.rollouts, ev = sum / n;
-    actions.push({ a: encAction(act), ev, sd: Math.sqrt(Math.max(0, sumsq / n - ev * ev)), win: win / n, dealin: dealin / n, draw: draw / n, n });
   }
+  const actions: ActionEval[] = acc.map((x) => { const ev = x.sum / x.n; return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n }; });
   actions.sort((x, y) => y.ev - x.ev);
   const selEv = actions.find((x) => x.a === rec.sel)?.ev ?? NaN;
-  return { g: rec.g, h: rec.h, d: rec.d, k: rec.k, seat, bot: rec.bot, sel: rec.sel, mode: a.mode, policy: a.policy, n: a.rollouts, actions, best: actions[0]!.a, selEv, regret: actions[0]!.ev - selEv };
+  return { g: rec.g, h: rec.h, d: rec.d, k: rec.k, t: rec.t, seat, bot: rec.bot, sel: rec.sel, mode: a.mode, policy: a.policy, n: a.rollouts, actions, best: actions[0]!.a, selEv, regret: actions[0]!.ev - selEv };
 }
 
-/** Pick decisions to evaluate: `hands` sampled hands (deterministic), `perHand` decisions each (prefer discards + claims with a real choice). */
-export function selectDecisions(dir: string, a: EvalArgs): { hand: HandRecord; decisions: DecisionRecord[] }[] {
+/** All decision records of a hand, reconstructed by replaying it (no need to read the decision shards). */
+export function decisionsOfHand(hand: HandRecord, rules: RulesConfig, randomness: RandomnessConfig): DecisionRecord[] {
+  const out: DecisionRecord[] = [];
+  const scoresBefore = hand.scores.map((s, i) => s - hand.delta[i]!);
+  playHand({ sessionId: hand.g, handIdx: hand.h, seed: hand.seed, dealer: hand.dl, prevailingWind: hand.w, botTypes: hand.bots, scores: scoresBefore }, rules, randomness, { decision: (r) => out.push(r), hand: () => {} }, true);
+  return out;
+}
+
+/** Pick decisions to evaluate: `hands` sampled hands (deterministic), `perHand` decisions each, only decisions with a real choice. */
+export function selectDecisions(dir: string, a: EvalArgs, rules: RulesConfig): { hand: HandRecord; decisions: DecisionRecord[] }[] {
   const hands = loadHands(dir).filter((_, i) => i % a.workers === a.workerIndex);
   const rng = makeRng(a.seed + a.workerIndex);
   const chosen = new Map<string, HandRecord>();
   const quota = Math.ceil(a.hands / a.workers);
   while (chosen.size < Math.min(quota, hands.length)) { const h = hands[Math.floor(rng() * hands.length)]!; chosen.set(`${h.g}:${h.h}`, h); }
-  const want = new Map<string, DecisionRecord[]>(); for (const k of chosen.keys()) want.set(k, []);
-  for (const f of readdirSync(dir).filter((x) => x.startsWith('decisions-') && x.endsWith('.jsonl.gz'))) {
-    for (const d of readJsonlGz<DecisionRecord>(join(dir, f))) { const k = `${d.g}:${d.h}`; const arr = want.get(k); if (arr && d.legal.length > 1) arr.push(d); }
-  }
   const out: { hand: HandRecord; decisions: DecisionRecord[] }[] = [];
-  for (const [k, ds] of want) {
-    const pool = [...ds]; const pick: DecisionRecord[] = [];
+  for (const hand of chosen.values()) {
+    const pool = decisionsOfHand(hand, rules, a.randomness).filter((d) => d.legal.length > 1);
+    const pick: DecisionRecord[] = [];
     while (pick.length < a.perHand && pool.length) pick.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]!);
     pick.sort((x, y) => x.d - y.d);
-    out.push({ hand: chosen.get(k)!, decisions: pick });
+    out.push({ hand, decisions: pick });
   }
   return out;
 }
@@ -83,7 +106,7 @@ export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { ev
   const rules = makeRules(a.rulesOverride);
   const out = new JsonlGzWriter(join(a.dir, `evals-w${a.workerIndex}.jsonl.gz`));
   let n = 0;
-  for (const { hand, decisions } of selectDecisions(a.dir, a)) {
+  for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {
     for (const dec of decisions) {
       const pos = positionAt(hand, dec.d, rules, a.randomness);
       if (!pos) continue;
@@ -107,7 +130,7 @@ if (parentPort) {
   const workers = Number(arg('workers', String(Math.max(1, Math.min(8, cpus().length - 1)))));
   const base: Omit<EvalArgs, 'workerIndex'> = {
     dir, hands: Number(arg('hands', '50')), perHand: Number(arg('per-hand', '4')), rollouts: Number(arg('rollouts', '32')),
-    mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'fast') as Policy), seed: Number(arg('seed', '1')), workers,
+    mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'shanten') as Policy), seed: Number(arg('seed', '1')), workers, adaptive: process.argv.includes('--adaptive'),
     rulesOverride: arg('rules') ? JSON.parse(arg('rules')!) : {}, randomness: arg('randomness') ? JSON.parse(arg('randomness')!) : { ranked: [0.7, 0.15, 0.1], random: 0.05 },
   };
   mkdirSync(dir, { recursive: true });

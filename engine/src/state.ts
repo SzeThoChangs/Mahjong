@@ -17,6 +17,8 @@ import {
 import { scoreHand, type ScoreResult } from './score.js';
 import { immediatePayout, meetsMinimum, winPayments, type TableConfig } from './payout.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
+import { couldBeComplete } from './shanten.js';
+import { countsOf } from './tiles.js';
 import type {
   Bot, ClaimKind, ClaimOption, DecisionKind, DiscardEvent, GameOptions, GameResult, GroundTruth, InstMeld, LegalAction, PlayerState, PlayerView, SelfAction,
 } from './game.js';
@@ -158,8 +160,11 @@ export class GameState {
   private computeSelfOptions(): SelfAction[] {
     const p = this.players[this.turn]!, d = this.drawnInfo!;
     const options: SelfAction[] = [];
-    const sc = this.score(p, p.hand.map(kindOf), kindOf(d.tile), true, { replacementWin: d.replaced, lastTile: d.lastTile });
-    if (sc.valid && meetsMinimum(sc.fan, true, this.cfg)) options.push({ kind: 'win', score: sc });
+    const kinds = p.hand.map(kindOf);
+    if (couldBeComplete(countsOf(kinds), p.melds.length)) {
+      const sc = this.score(p, kinds, kindOf(d.tile), true, { replacementWin: d.replaced, lastTile: d.lastTile });
+      if (sc.valid && meetsMinimum(sc.fan, true, this.cfg)) options.push({ kind: 'win', score: sc });
+    }
     const byKind = new Map<TileKind, TileInstance[]>();
     for (const t of p.hand) { const k = kindOf(t); (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(t); }
     for (const [, ts] of byKind) if (ts.length === 4) options.push({ kind: 'kong4', tiles: ts });
@@ -187,8 +192,11 @@ export class GameState {
     for (const s of seats) {
       const q = this.players[s]!; const off = (s - from + 4) % 4;
       const os: ClaimOption[] = [];
-      const sc = this.score(q, [...q.hand.map(kindOf), dk], dk, false, { lastTile: lastTileDiscard });
-      if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
+      const withTile = [...q.hand.map(kindOf), dk];
+      if (couldBeComplete(countsOf(withTile), q.melds.length)) {
+        const sc = this.score(q, withTile, dk, false, { lastTile: lastTileDiscard });
+        if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
+      }
       const same = q.hand.filter((t) => kindOf(t) === dk);
       if (same.length >= 3) os.push({ kind: 'kong3', seat: s, tiles: same.slice(0, 3) });
       if (same.length >= 2) os.push({ kind: 'pong', seat: s, tiles: same.slice(0, 2) });

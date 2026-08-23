@@ -67,5 +67,14 @@ def main():
     if truth:
         pq.write_table(pa.Table.from_pylist(truth), os.path.join(d, 'parquet', 'truth.parquet'), compression='zstd'); print(f'truth: {len(truth)} rows')
 
+    evals = [r for f in sorted(glob.glob(os.path.join(d, 'evals-*.jsonl.gz'))) for r in read_jsonl_gz(f)]
+    if evals:
+        rows = []
+        for e in evals:
+            for a in e['actions']:
+                rows.append({'g': e['g'], 'h': e['h'], 'd': e['d'], 'k': e['k'], 't': e.get('t', -1), 'seat': e['seat'], 'bot': e['bot'], 'sel': e['sel'], 'mode': e['mode'], 'policy': e['policy'],
+                             'action': a['a'], 'ev': a['ev'], 'sd': a['sd'], 'win': a['win'], 'dealin': a['dealin'], 'draw': a['draw'], 'n': a['n'], 'is_best': a['a'] == e['best'], 'is_selected': a['a'] == e['sel'], 'regret_of_selected': e['regret']})
+        pq.write_table(pa.Table.from_pylist(rows), os.path.join(d, 'parquet', 'evals.parquet'), compression='zstd'); print(f'evals: {len(rows)} action rows from {len(evals)} decisions')
+
 if __name__ == '__main__':
     main()

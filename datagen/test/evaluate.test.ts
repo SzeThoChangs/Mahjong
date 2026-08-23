@@ -44,7 +44,7 @@ describe('evaluator', () => {
   it('evaluates every legal action with rollouts and reports regret', () => {
     const d = ds.find((x) => x.k === 'discard' && x.t > 10)!;
     const { g } = positionAt(hand, d.d, DEFAULT_RULES)!;
-    const ev = evaluateDecision(g, d, { dir: '', hands: 0, perHand: 0, rollouts: 6, mode: 'sampled', policy: 'fast', seed: 1, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS }, DEFAULT_RULES);
+    const ev = evaluateDecision(g, d, { dir: '', hands: 0, perHand: 0, rollouts: 6, mode: 'sampled', policy: 'shanten', seed: 1, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS }, DEFAULT_RULES);
     expect(ev.actions.length).toBe(new Set(d.me.h).size);
     expect(ev.actions.every((a) => a.n === 6 && Number.isFinite(a.ev))).toBe(true);
     expect(ev.best).toBe(ev.actions[0]!.a);

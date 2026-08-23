@@ -9,8 +9,17 @@
     "typecheck": "tsc --noEmit",
     "gen": "tsx src/generate.ts",
     "stats": "tsx src/stats.ts",
-    "replay": "tsx src/replay.ts"
+    "replay": "tsx src/replay.ts",
+    "evaluate": "tsx src/evaluate.ts",
+    "evalstats": "tsx src/evalstats.ts"
   },
-  "dependencies": { "sg-mahjong-engine": "workspace:*" },
-  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0", "tsx": "^4.19.0", "@types/node": "^22.0.0" }
+  "dependencies": {
+    "sg-mahjong-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
 }
