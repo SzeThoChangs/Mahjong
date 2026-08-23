@@ -1,0 +1,2096 @@
+{
+ "variant": "singapore",
+ "_what": "Single combined playbook. Merges a measured Singapore simulation study with heuristics adapted from a Riichi source, organised by the decision being made rather than by which book it came from.",
+ "_precedence": "When the two disagree, MEASURED wins. It is native Singapore, simulated against the actual rules, and it already corrected one factual error in the adapted material. Heuristics fill gaps where nothing was measured - mainly which tile to keep when two look equal.",
+ "_unit_note": "Fan and tai are the same unit, one doubling. Different dialects; Singapore tables use both.",
+ "_phases": {
+  "deal": "What am I playing for?",
+  "build": "Which tiles do I keep?",
+  "call": "Do I claim this tile?",
+  "read": "What are the opponents doing?",
+  "push_fold": "Am I still in this hand?",
+  "discard": "Which tile is safe to throw?",
+  "meta": "Am I judging my own play correctly?"
+ },
+ "counts": {
+  "total": 102,
+  "by_kind": {
+   "measured": 24,
+   "heuristic": 78
+  },
+  "by_phase": {
+   "deal": 6,
+   "build": 28,
+   "call": 15,
+   "read": 13,
+   "push_fold": 12,
+   "discard": 16,
+   "meta": 12
+  }
+ },
+ "rules": [
+  {
+   "id": "flower_animal_case",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Assess Flowers/Animals FIRST - the largest single predictor of value at the deal, and outside your control. Flowers worth 0 Fan (-4.3 chips) are worse than holding none (-1.0): they burn replacement draws, leak information and disqualify Ping Wu.",
+   "ai": "Branch the opening book on this before evaluating tiles at all.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Source Table 4:4 and 4:5. The single largest predictor of expected value at the deal, and entirely outside player control.",
+    "case_frequency": {
+     "none": 0.32,
+     "worth_0_fan": 0.24,
+     "worth_1_fan": 0.33,
+     "worth_2plus_fan": 0.11
+    },
+    "chips_per_game": {
+     "none": -1.0,
+     "worth_0_fan": -4.3,
+     "worth_1_fan": 0.7,
+     "worth_2plus_fan": 10.3
+    },
+    "key_finding": "Holding Flowers/Animals worth 0 Fan (-4.3) is materially WORSE than holding none at all (-1.0). They consume replacement draws and reveal information while paying nothing, and they disqualify Ping Wu, the strongest common target."
+   }
+  },
+  {
+   "id": "flowers_wont_save_you",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Do not plan on drawing Flowers to reach Minimum Fan. Chance of gaining 1+ Flower Fan is at best 48% at the deal, 35% by turn 20, 27% by turn 40. Chance of 2+ never exceeds 14%.",
+   "ai": "If the target needs Fan it does not yet hold, that Fan must come from tiles, not hope.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Chapter 11. Do not plan on Flowers to reach Minimum Fan.",
+    "chance_of_gaining_1plus_flower_fan_during_game": {
+     "start": "at best 0.48",
+     "player_turns_20": "at best 0.35",
+     "player_turns_40": "at best 0.27"
+    },
+    "chance_of_gaining_2plus": "never above 0.14 at any point",
+    "rule": "If you need two Fan, Flowers will not supply them. If you need one, they are under even money from the start and worse thereafter."
+   }
+  },
+  {
+   "id": "mf2_target_shift",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "source": "data-analytic",
+   "rule": "At Minimum Fan 2 the opening book shifts hard: Half-Color 32%, All-Chow 26%, Ping Wu 24%, All-Pong 14%, Chicken 4%. Longer games favour higher-Fan targets; Chicken is no longer a primary plan.",
+   "ai": "Load the MF2 best-combination table, not the MF1 one. Chicken survives only as the Hybrid fallback, gated on Fan already in hand.",
+   "data": {
+    "min_fan_2": {
+     "13_wonders": 0.002,
+     "chicken": 0.04,
+     "all_chow": 0.26,
+     "ping_wu": 0.24,
+     "half_color": 0.32,
+     "all_pong": 0.14
+    }
+   }
+  },
+  {
+   "id": "no_fixed_strategy",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Every fixed strategy loses: Chicken -0.9, All-Chow -2.9, All-Pong -4.4, Half-Color -4.8, Full-Color -8.8, 13 Wonders -9.1 chips/game. Selection between targets IS the skill.",
+   "ai": "Never hardcode a preferred combination. If the AI trends toward one target across many hands, that is a bug.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Chips per Game when a player commits to ONE target every hand. Every fixed strategy loses. Selection is the whole game.",
+    "chicken": -0.9,
+    "all_chow_ping_wu": -2.9,
+    "all_pong": -4.4,
+    "half_color": -4.8,
+    "full_color": -8.8,
+    "13_wonders": -9.1,
+    "never_win": -11.0
+   }
+  },
+  {
+   "id": "ping_wu_default",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "With no Flower or Animal tile - 32% of hands - play Ping Wu. Optimal ~76% of the time at every Minimum Fan setting.",
+   "ai": "Strong prior, not a rule; still confirm via the evaluators.",
+   "source": "data-analytic",
+   "data": {
+    "min_fan_0": {
+     "chicken": 0.08,
+     "ping_wu": 0.74,
+     "half_color": 0.13,
+     "all_pong": 0.05
+    },
+    "min_fan_1": {
+     "chicken": 0.03,
+     "ping_wu": 0.76,
+     "half_color": 0.15,
+     "all_pong": 0.06
+    },
+    "min_fan_2": {
+     "chicken": 0.01,
+     "ping_wu": 0.76,
+     "half_color": 0.17,
+     "all_pong": 0.06
+    },
+    "rule": "With no Flower or Animal tile, play Ping Wu. It is optimal roughly three quarters of the time at every Minimum Fan setting."
+   }
+  },
+  {
+   "id": "target_selection",
+   "phase": "deal",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Score the hand with all four evaluators, convert each to a Chips-per-Game range, take the best. There is no default target.",
+   "ai": "Core opening engine. Compute Rule 4213, Rule 961, Rule 5313 and the All-Pong ratio every deal.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Source Table 10:1. Converts each evaluation method onto a common Chips per Game scale so the four targets can be compared directly. This is the core of an opening-move engine: score the hand four ways, read off each Chips range, pick the best.",
+    "_caution": "The source labels the Ping Wu column 'Rule 5312' here but 'Rule 5313' in Chapter 7. Treat as the same method unless you find a stated difference; verify before relying on the distinction.",
+    "rows": [
+     {
+      "chips": "11 to 9",
+      "ping_wu": 14
+     },
+     {
+      "chips": "9 to 7",
+      "half_color": 28,
+      "all_pong": "1:3"
+     },
+     {
+      "chips": "7 to 5",
+      "ping_wu": 13,
+      "half_color": 27
+     },
+     {
+      "chips": "5 to 4",
+      "ping_wu": 12,
+      "13_wonders": 10
+     },
+     {
+      "chips": "4 to 3",
+      "half_color": 26
+     },
+     {
+      "chips": "3 to 2",
+      "ping_wu": 11
+     },
+     {
+      "chips": "2 to 1",
+      "half_color": 25
+     },
+     {
+      "chips": "1 to 0",
+      "ping_wu": 10,
+      "all_pong": "0:4"
+     },
+     {
+      "chips": "0 to -1",
+      "half_color": 24,
+      "all_pong": "1:2"
+     },
+     {
+      "chips": "-1 to -2",
+      "ping_wu": 9
+     },
+     {
+      "chips": "-2 to -3",
+      "half_color": 23
+     },
+     {
+      "chips": "-3 to -4",
+      "ping_wu": 8,
+      "half_color": 22
+     },
+     {
+      "chips": "-4 to -5",
+      "ping_wu": 7,
+      "half_color": 21,
+      "all_pong": "0:3"
+     },
+     {
+      "chips": "-5 to -6",
+      "ping_wu": "6,5",
+      "13_wonders": 9
+     },
+     {
+      "chips": "-6 to -7",
+      "ping_wu": 4,
+      "half_color": 20
+     },
+     {
+      "chips": "-7 to -9",
+      "half_color": 19,
+      "13_wonders": 8
+     }
+    ]
+   }
+  },
+  {
+   "id": "evaluators",
+   "phase": "build",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Four scoring functions, one per target: Rule 4213 (Chicken) 4/2/1/3; Rule 961 (Half-Color) 9/6/1 +3 calling; Rule 5313 (All-Chow) 5/3/1/3 +1 calling; All-Pong as a Triplets:Pairs ratio.",
+   "ai": "Recompute every turn for the CURRENT target. Mind the author-flagged simplifications.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Four scoring functions, one per target combination, each derived by regression against simulated outcomes. Compute all of them on the current hand and compare via the unified table below.",
+    "rule_4213_chicken": {
+     "target": "Chicken game (0 Fan)",
+     "weights": {
+      "triplet": 4,
+      "two_sided_pair": 2,
+      "one_sided_pair": 1,
+      "eye": 3
+     },
+     "notes": [
+      "Triplet means any Chow, Pong or Kong.",
+      "Group the hand to maximise the total.",
+      "Priority when choosing what to keep: Triplet > Eye > Two-Sided Pair > One-Sided Pair. Prefer a One-Sided Pair over a Two-Sided Pair when it has more Available Tiles."
+     ],
+     "win_chance_by_value": {
+      "player_turns_20": {
+       "8": 0.12,
+       "9": 0.15,
+       "10": 0.18,
+       "11": 0.22,
+       "12": 0.26,
+       "13": 0.31,
+       "14": 0.39,
+       "15": 0.47,
+       "16": 0.57,
+       "17": 0.74
+      },
+      "player_turns_40": {
+       "10": 0.05,
+       "11": 0.06,
+       "12": 0.08,
+       "13": 0.13,
+       "14": 0.19,
+       "15": 0.22,
+       "16": 0.38,
+       "17": 0.54
+      }
+     },
+     "_note": "Assumes Minimum Fan already met. Chicken awards no Fan of its own, so Chips per Game is not directly comparable to the others."
+    },
+    "rule_961_half_color": {
+     "target": "Half-Color (2 Fan)",
+     "weights": {
+      "triplet": 9,
+      "pair": 6,
+      "single": 1,
+      "calling_bonus": 3
+     },
+     "breakdown_method": [
+      "Exposed Tiles: count each Chow/Pong/Kong as a Triplet. No Pairs or Singles.",
+      "Concealed Tiles: consider only Honors plus one candidate suit. Form Triplets and Pairs using the greatest number of tiles, never reusing a tile. Remaining Honors and suit tiles are Singles.",
+      "Repeat per candidate suit; take the highest total."
+     ],
+     "caveats": [
+      "Unusable Chow Pairs (no Available Tiles to complete) must NOT be counted.",
+      "At most ONE Unusable Pong Pair may be counted.",
+      "Unusable Singles (e.g. a lone East Wind when East is already Ponged elsewhere) must not be counted and should be discarded.",
+      "Two-Sided and One-Sided Pairs are both valued 6 - a deliberate simplification. Two-Sided Pairs are genuinely better.",
+      "Concealed and Exposed Triplets are both valued 9. Concealed are genuinely better."
+     ],
+     "break_even_by_turn": {
+      "0": 23,
+      "10": 26,
+      "20": 30,
+      "30": 33,
+      "40": 35,
+      "50": 36,
+      "60": 36,
+      "70": 37
+     },
+     "chips_per_game": {
+      "player_turns_0": {
+       "17": -6,
+       "18": -5,
+       "19": -5,
+       "20": -3,
+       "21": -1,
+       "22": 0,
+       "23": 2,
+       "24": 4,
+       "25": 7,
+       "26": 10,
+       "27": 13,
+       "28": 17
+      },
+      "player_turns_20": {
+       "24": -6,
+       "25": -6,
+       "26": -5,
+       "27": -3,
+       "28": -1,
+       "29": 0,
+       "30": 2,
+       "31": 5,
+       "32": 7,
+       "33": 10,
+       "34": 15
+      },
+      "player_turns_40": {
+       "31": -6,
+       "32": -4,
+       "33": -2,
+       "34": 0,
+       "35": 2,
+       "36": 8,
+       "37": 9,
+       "39": 9,
+       "40": 27,
+       "42": 36
+      }
+     },
+     "win_chance_at_start": {
+      "17": 0.04,
+      "20": 0.08,
+      "23": 0.12,
+      "26": 0.21,
+      "28": 0.28
+     },
+     "occurrence_at_start": {
+      "17+": 0.51,
+      "19+": 0.38,
+      "21+": 0.2,
+      "23+": 0.09,
+      "25+": 0.05,
+      "27+": 0.015,
+      "30+": 0.003
+     }
+    },
+    "rule_5313_all_chow": {
+     "target": "All-Chow (1 Fan) and Ping Wu (4 Fan)",
+     "weights": {
+      "chow": 5,
+      "two_sided_pair": "3 each while (Chows + Two-Sided Pairs) <= 4; 1 each beyond that",
+      "one_sided_pair": 1,
+      "eye": 3,
+      "calling_bonus": 1
+     },
+     "notes": [
+      "At most one Eye.",
+      "Group to maximise the total: an Eye (3) beats a One-Sided Pair (1); a Chow (5) beats a One-Sided plus Two-Sided Pair combination (4).",
+      "A Two-Sided Pair is worth 3x a One-Sided Pair because the All-Chow Calling rule demands two or more unique tiles to win, which usually requires a Two-Sided Pair."
+     ],
+     "known_exception": "With no Eye, a run of four consecutive tiles is an alternate route to an Eye. Rule 5313 undervalues this; prefer the four-run shape even when it scores 1 point lower.",
+     "chips_per_game_started_with_flower_animal": {
+      "player_turns_0": {
+       "3": -7,
+       "6": -6,
+       "9": -3,
+       "11": -1,
+       "12": 0,
+       "13": 2,
+       "14": 3
+      },
+      "player_turns_20": {
+       "10": -7,
+       "13": -5,
+       "15": -3,
+       "16": -1,
+       "17": 0,
+       "18": 1,
+       "19": 6
+      },
+      "player_turns_40": {
+       "13": -8,
+       "16": -6,
+       "19": 0,
+       "20": 0,
+       "21": 9,
+       "22": 11
+      }
+     },
+     "occurrence_at_start": {
+      "5+": 0.87,
+      "8+": 0.53,
+      "10+": 0.31,
+      "11+": 0.26,
+      "13+": 0.11,
+      "14+": 0.04
+     },
+     "turn_decay": "To hold win chance constant from the start to 20 Player Turns, the value must rise by roughly 6 points."
+    },
+    "all_pong_breakdown": {
+     "target": "All-Pong (2 Fan)",
+     "format": "PongTriplets:PongPairs, computed on Concealed Tiles",
+     "caveat": "Only one Unusable Pong Pair may be counted.",
+     "chips_per_game": {
+      "player_turns_0": {
+       "0:0": -7,
+       "0:1": -6,
+       "1:0": -3,
+       "0:2": -4,
+       "1:1": -1,
+       "0:3": -1,
+       "2:0": 4,
+       "1:2": 4,
+       "0:4": 5,
+       "2:1": 9,
+       "1:3": 12,
+       "0:5": 13
+      },
+      "player_turns_20": {
+       "1:2": -4,
+       "0:4": -5,
+       "2:1": 2,
+       "1:3": -1,
+       "0:5": -2,
+       "0:6": 2,
+       "3:0": 8,
+       "2:2": 7,
+       "1:4": 6,
+       "1:5": 10,
+       "3:1": 19
+      },
+      "player_turns_40": {
+       "0:5": -9,
+       "0:6": -9,
+       "3:0": 1,
+       "2:2": -1,
+       "1:4": -5,
+       "1:5": -1,
+       "3:1": 8,
+       "2:3": 6,
+       "4:0": 26,
+       "3:2": 30
+      }
+     },
+     "occurrence_at_start": {
+      "0:0": 0.13,
+      "0:1": 0.34,
+      "1:0": 0.03,
+      "0:2": 0.31,
+      "1:1": 0.04,
+      "0:3": 0.12,
+      "1:2": 0.017,
+      "0:4": 0.018
+     },
+     "pong_pair_conversion_rates": {
+      "_note": "Chance a Pong Pair held at the start becomes a Pong by game end. Honors convert best because they are discarded most freely - the Singapore analogue of the Riichi finding that edge waits are stronger, here measured directly.",
+      "wind": 0.69,
+      "dragon": 0.66,
+      "terminal_1_9": 0.59,
+      "near_terminal_2_8": 0.48,
+      "middle_3_to_7": 0.39
+     },
+     "end_game_fresh_tile_warning": "Playing All-Pong, you Pong matching discards as they appear, so the Pong Pairs still in hand late are usually Fresh Tiles. Late in the game you will hold almost nothing safe to discard. Plan the exit before you get there."
+    },
+    "13_wonders_breakdown": {
+     "target": "13 Wonders (8 Fan)",
+     "method": "Count each distinct 13-Wonder tile held once. That count is the value; maximum 13.",
+     "chips_per_game": {
+      "player_turns_20": {
+       "8": -9,
+       "9": -8,
+       "10": -4,
+       "11": 10,
+       "12": 87,
+       "13": 182
+      },
+      "player_turns_40": {
+       "9": -10,
+       "10": -9,
+       "11": 1,
+       "12": 57,
+       "13": 159
+      }
+     },
+     "note": "Violently nonlinear: 11 is the inflection point. Below it the hand is hopeless, at 12 it is dominant. Also the most opponent-friendly hand in the game - you can form no Exposed sets, so no discard is ever useful to you until Calling, and you are forced to feed middle Suited Tiles the whole way."
+    }
+   }
+  },
+  {
+   "id": "mf2_half_color_easier",
+   "phase": "build",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "source": "data-analytic",
+   "rule": "At Minimum Fan 2, Half-Color breaks even at Rule 961 >= 21 at the deal (was 23), 29 at turn 20 (was 30), 34 at turn 40 (was 35). Same tiles win ~30% more often because opponents take longer to reach 2 Fan.",
+   "ai": "Use the MF2 break-even row. Half-Color is still the hand with no fallback - the bar is lower, the trap is the same.",
+   "data": {
+    "break_even_mf2": {
+     "0": 21,
+     "20": 29,
+     "40": 34
+    },
+    "break_even_mf1": {
+     "0": 23,
+     "20": 30,
+     "40": 35
+    }
+   }
+  },
+  {
+   "id": "pong_pair_quality",
+   "phase": "build",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Pairs do not convert equally. Measured conversion to a Pong by game end: Wind 69%, Dragon 66%, terminal 59%, 2/8 48%, middle 39%.",
+   "ai": "Weight pair value by tile type. Independently confirms the Riichi edge-tile heuristics.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Chance a Pong Pair held at the start becomes a Pong by game end. Honors convert best because they are discarded most freely - the Singapore analogue of the Riichi finding that edge waits are stronger, here measured directly.",
+    "wind": 0.69,
+    "dragon": 0.66,
+    "terminal_1_9": 0.59,
+    "near_terminal_2_8": 0.48,
+    "middle_3_to_7": 0.39
+   }
+  },
+  {
+   "id": "threshold_rises",
+   "phase": "build",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Break-even rises as the game runs. Half-Color needs Rule 961 >= 23 at the deal, >= 30 by turn 20, >= 35 by turn 40. A strong hand that stops improving quietly becomes a weak one.",
+   "ai": "Compare the evaluator against a turn-indexed threshold, never a constant. The single most implementable idea in the analytic source.",
+   "source": "data-analytic",
+   "data": {
+    "0": 23,
+    "10": 26,
+    "20": 30,
+    "30": 33,
+    "40": 35,
+    "50": 36,
+    "60": 36,
+    "70": 37
+   }
+  },
+  {
+   "id": "bad_wait_ranking",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "wait_quality",
+   "rule": "Bad waits are not equal. Terminal/honour double-pair waits approach two-sided quality because opponents release those tiles freely. Middle-tile double-pair waits are the worst. Among middle waits, 2-4 and 6-8 (waiting 3 or 7) beat 4-6 (waiting 5).",
+   "ai": "Ship this as a lookup table of wait quality by tile position and wait type. || CONFIRMED. Same ordering appears in the Singapore data via Pong Pair conversion rates and Chow Combinational Value (terminal 16, 2/8 32, middle 48, Honor 0).",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "break_mediocre_ready",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "A weak ready hand is worth breaking when the alternative opens materially more upgrade paths. Count them; do not eyeball it.",
+   "ai": "Compare improvement-tile-type counts explicitly before keeping a bad tenpai.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "count_your_outs",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "wait_quality",
+   "rule": "Track how many of your winning tiles are visible. Once 4 of a two-sided wait's 8 outs are gone, it is roughly a middle wait. That is the moment to call rather than hold out.",
+   "ai": "Recompute live outs every discard; drive the call decision off it.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "edge_waits_stronger",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "wait_quality",
+   "rule": "Between two two-sided waits, the one waiting on tiles nearer the edge wins. Opponents discard edge tiles more readily and hold central tiles longer.",
+   "ai": "Weight wait value by expected opponent release rate per tile position. || CONFIRMED with Singapore numbers. Measured Pong Pair conversion rates: Wind 69%, Dragon 66%, terminal 59%, 2/8 48%, middle 39%. The Riichi intuition and the Singapore simulation agree, and now there is a table.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "escape_single_waits",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Breaking an already-complete shape to escape a lone single-tile wait is often correct. A completed pattern that traps you on a tanki is a liability.",
+   "ai": "Penalise tanki terminal states heavily in shape search.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "five_blocks",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "A hand needs 4 sets + 1 pair. Track block count explicitly; early game, maximise acceptance rather than committing.",
+   "ai": "Maintain block inventory each draw; shanten alone hides block surplus/deficit.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "flush_decided_early",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "hand_shape",
+   "rule": "Commit to Half Flush from the starting hand: 10+ tiles of one suit plus honours, and no promising normal route. Deciding late wastes the turns that make it work. Worth 2 tai, and it enables free calling.",
+   "ai": "Evaluate the flush branch once at deal, then again only if the count crosses threshold.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "four_tile_ranking",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Among four-tile shapes: extended sequence (2345) and bulging sequence (3445) are near-equal; pair-attached (2334-type) is clearly weakest. Break the pair-attached one first.",
+   "ai": "Static lookup table, no search needed.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "full_hand_over_partial",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "hand_shape",
+   "rule": "Whole-hand patterns (Half Flush 2 tai, Full Flush 4, All Pungs 2, Ping Hu 1) are stable and shape-compatible. Part-hand patterns (a dragon pung, seat wind, 1 tai each) depend on one block surviving. Prefer whole-hand targets when both are live.",
+   "ai": "Classify tai targets as whole-hand vs part-hand; prefer whole-hand under equal expected tai.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "isolate_triplet",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "To read a complex multi-sided wait, pull the triplet out and re-read the hand twice: once with it as a set, once with one tile of it as the pair.",
+   "ai": "Canonical decomposition step for wait enumeration; prevents miscounted waits.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "keep_floaters",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Do not lock into a maximum-acceptance double-pair wait if its key tile is likely to be taken. A floater preserving upgrade paths often beats raw ukeire.",
+   "ai": "Discount ukeire by the live count of the tiles it depends on.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "linked_blocks",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "A middle-wait block attached to a completed run carries hidden upgrades to three-sided waits. Prefer it over an unattached block with equal immediate acceptance.",
+   "ai": "Score blocks on upgrade paths, not just current ukeire.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "narrow_can_beat_wide",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "wait_quality",
+   "rule": "With a minimum-tai requirement, a wider wait can be worse: winning tiles that leave you below minimum tai are dead tiles. Prefer the narrower wait where every out actually scores.",
+   "ai": "Filter the wait set by 'does this tile produce a legal win at min_tai' BEFORE comparing widths. Direct consequence of Singapore's minimum. || CONFIRMED with a concrete mechanism: All-Chow requires two or more unique winning tiles to be Calling, which is exactly why a Two-Sided Pair is worth 3x a One-Sided Pair in Rule 5313.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "pair_rule",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Fix one pair, keep two pairs, break three pairs. Three pairs overlap in their shanpon outs, so each does less work.",
+   "ai": "Count pairs; if 3+, discard from the pair whose tile has fewest live copies.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "perfect_one_away",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Two two-sided waits plus a pair, one away from ready, is the widest one-away shape. Do not break it to 'tidy' the hand.",
+   "ai": "Detect and protect this shape; it dominates alternatives with equal shanten.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "project_bad_draws",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Before discarding, project the worst draw you could take next turn. Prefer breaks where a later unlucky draw still fits somewhere.",
+   "ai": "One-ply lookahead over regret, not just expected ukeire.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "reset_via_runs",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Continuous-sequence shapes let you break ready and re-form it on a better wait cheaply. Count the improvement tiles before deciding.",
+   "ai": "Evaluate break-and-reform as a real option, not a last resort.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "sandwich",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "A run-plus-adjacent-tiles cluster yields one set AND the pair from a single block. Recognising it tells you which other block must serve as the pair.",
+   "ai": "Pattern-match before assigning the pair role.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "six_blocks_ok",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Holding six blocks is correct when your two weakest are both middle waits. Delaying the choice keeps you open to whichever fills first.",
+   "ai": "Suppress forced five-block reduction when the two weakest blocks are both kanchan.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "stepping_stones",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "In a pairless hand, extended-sequence shapes are latent pairs. A tile bridging two blocks works harder than it looks; do not cut it reflexively.",
+   "ai": "Detect pairless state and up-weight bridging tiles.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "sticky_one_away",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Three sets + a pair + floaters improves by attaching to the floaters. Easy to miss; check for it whenever the third set completes.",
+   "ai": "Trigger a shape re-scan on every set completion.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "threes_and_sevens",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "wait_quality",
+   "rule": "3s and 7s are the strongest floaters: they build toward edge-facing two-sided waits. Equal acceptance counts hide this difference.",
+   "ai": "Tie-break floater discards by resulting wait position. || CONSISTENT with Chow Combinational Value: 3-7 all carry the maximum CCV of 48, making them the most connective and also the most dangerous to discard.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "triplet_adjacency",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "Tiles adjacent to a triplet you already hold are weak: you hold three copies, so fewer remain to connect. Prefer an isolated tile with full live count.",
+   "ai": "Weight floater value by live copies of its connectors, not by apparent connectedness.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "weak_start_pivot",
+   "phase": "build",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "hand_shape",
+   "rule": "A scattered starting hand with no good block should pivot immediately: toward a flush, or toward defense. Start banking safe tiles early rather than drifting.",
+   "ai": "Classify the starting hand; a 'behind' classification changes the objective, not just the aggression level.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "hybrid_fallback",
+   "phase": "call",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Playing All-Pong or All-Chow, keep Chicken alive as a fallback and take the Chicken win the moment it appears. Worth +3.4 chips/game. Hybrid players win more Chicken games than primary-target games and still finish ahead.",
+   "ai": "Track a primary AND a fallback target. Half-Color CANNOT do this - it discards two suits, so it has no exit. That is what makes it the most dangerous commitment on the board.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "The single largest strategic finding in the book.",
+    "rule": "When playing All-Pong or All-Chow, keep Chicken alive as a secondary target. Retain Chows and Chow Pairs in Concealed Tiles for as long as they are not needed, and take a Chicken win the moment it is available (Minimum Fan permitting).",
+    "value": "+3.4 Chips per Game over a pure All-Pong strategy.",
+    "surprising_consequence": "A Hybrid All-Pong player wins more Chicken games than All-Pong games. Chips arrive from three streams: All-Pong wins, Chicken wins, and immediate Kong payouts.",
+    "exceptions": "Forgo the Chicken win only when the All-Pong Breakdown is 2:3, 4:0 or 3:2 AND fewer than 20 Player Turns have passed. Roughly 1 game in 2300 - in practice, always take the Chicken win.",
+    "secondary_benefit": "Higher overall win rate shortens games, which itself defends against opponents building large-Fan hands.",
+    "not_available_in_half_color": "Half-Color discards the other two suits, so a fallback Chicken win is nearly impossible. This makes Half-Color a far harder commitment than All-Pong or All-Chow - if it fails, there is no exit."
+   }
+  },
+  {
+   "id": "mf2_kongs_pay_double",
+   "phase": "call",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "source": "data-analytic",
+   "rule": "At Minimum Fan 2 immediate payouts double: Kong-1/Kong-3 pay 4 from each opponent, Kong-4 pays 8, Animal or Flower sets pay 8, pairs pay 4. A Kong-4 is 24 chips on the spot - more than a 2-Fan discard win.",
+   "ai": "Immediate payouts are config-driven (table.config.json multiplier). At x2 they dominate many call decisions; never leave a Kong undeclared without a reason.",
+   "data": {
+    "multiplier": 2,
+    "kong_1_3": 4,
+    "kong_4": 8,
+    "set": 8,
+    "pair": 4
+   }
+  },
+  {
+   "id": "turn_theft",
+   "phase": "call",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Pong and Kong skip the players between you and the discarder. With ~11 turns per player per game, that tempo is worth real chips beyond the tile itself.",
+   "ai": "Add a tempo term to call scoring, separate from shanten and value.",
+   "source": "data-analytic",
+   "data": {
+    "average_turns_per_player": 11,
+    "implication": "One turn is about 9% of your entire game. There is no such thing as a spare turn.",
+    "turn_theft": "Pong and Kong skip the players between you and the discarder. Beyond the tile and the immediate payout, this is a tempo gain that does not appear in any Fan count."
+   }
+  },
+  {
+   "id": "all_pungs_needs_value",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "calling",
+   "rule": "All Pungs (2 tai) has two structural costs: calling shortens your hand and guts your defense, and the final wait is always a single-tile or double-pair wait. Only commit when it comes with additional tai (dragons, seat wind, flush potential, animals).",
+   "ai": "Require projected tai >= 3 before steering into All Pungs. || CONFIRMED and improved. All-Pong is 2 Fan and loses 4.4 chips/game as a pure strategy. The fix is the Hybrid strategy - keep Chicken alive as a fallback, worth +3.4 chips/game. See hybrid_strategy.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "call_necessity",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "The only question that matters is whether this specific call helps this specific hand. Call frequency is not a target in either direction.",
+   "ai": "No global call-rate tuning parameter. Decide per hand state.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "call_to_skip_draw",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "Calling consumes your own draw. When the wall is dangerous and you want to preserve a ready hand without touching a live tile, a call that keeps your shape intact is a defensive move.",
+   "ai": "Expose 'call to skip draw' as an explicit defensive action, not only an offensive one. || CONFIRMED and strengthened. Calls also skip the players between you and the discarder, a tempo gain worth real chips given players average only 11 turns per game.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "call_to_upgrade",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "Being ready is not a reason to stop calling. Calls that reshape a middle wait into a three-sided wait are frequently available and routinely missed.",
+   "ai": "Keep evaluating calls in the ready state, scoring on wait improvement rather than shanten.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "middle_tile_hands_undefended",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "A hand made only of middle tiles holds no safe tiles. When someone commits, you can neither push confidently nor fold. Factor this cost in at call time, not when the attack arrives.",
+   "ai": "Score defensive reserve (count of honours/terminals held) as a call cost. || CONFIRMED with a Singapore-specific twist: an All-Pong player's remaining Pong Pairs late in the game are usually Fresh Tiles, and discarding a Fresh Tile near the wall's end can trigger Pay All liability. See all_pong_breakdown.end_game_fresh_tile_warning.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "never_break_your_pair",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "A call that destroys your only pair has not advanced the hand, it has traded a real problem for a worse one. Passing and drawing naturally is often better.",
+   "ai": "Hard veto on pair-breaking calls unless the call completes the hand.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "pon_over_chii",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "calling",
+   "rule": "Default to pon over chii: ponning leaves the run intact in hand, which preserves both flexibility and safe tiles. Take chii instead when the pair is the tile carrying your tai.",
+   "ai": "Default preference with an explicit value-tile exception.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "rebuild_waits",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "A dead double-pair wait can often be rebuilt via calls into a live wait rather than abandoned. Learn the recovery patterns.",
+   "ai": "Search call sequences that transform a dead wait, before deciding to fold.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "speed_value_safety",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "calling",
+   "rule": "Judge every call on three axes: Speed (does it reach or approach ready), Value (does it secure tai worth having), Safety (do you retain defensive tiles). Two of three, call. Zero, pass. One, let hand shape decide.",
+   "ai": "Primary call-decision gate. In Singapore, Value is easier to satisfy than in Riichi because dragons and seat winds are 1 tai each and there is no closed-hand bonus to forfeit.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "take_ready_under_pressure",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "calling",
+   "rule": "When an opponent is visibly committed, take ready immediately even if cheap. A minimum-tai good-shape ready beats a big hand still one away. Being not-ready against a ready opponent is the losing side of the trade.",
+   "ai": "Threat detection flips the objective from value to speed. Singapore signal is meld pattern and discard tempo, not a riichi declaration.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "third_call_test",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "calling",
+   "rule": "Before the third call, ask whether the hand can actually fight: three melds leave four tiles in hand and effectively no defense. Require a good wait or real value. Symmetrically, an opponent who has called three times early is a threat to respect.",
+   "ai": "Gate the third call on wait quality OR tai threshold. Use opponent meld count as a primary threat signal.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "widen_when_folding",
+   "phase": "call",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "calling",
+   "rule": "When every opponent is clearly folding, winning by discard becomes unlikely. Widen the wait to maximise Self-Draw chances. CORRECTION: this is NOT free. Singapore does have a locked-discard rule - you may not claim a tile matching your own last discard, nor any tile discarded by anyone after your last discard. It is rolling rather than permanent (it clears when you discard again), so the cost is smaller than Riichi's furiten but it is not zero.",
+   "ai": "Implement the rolling prohibition as real state; do not treat Singapore as furiten-free. Corrected against the Singapore rulebook - an earlier version of this entry asserted no such rule exists.",
+   "source": "riichi-adapted",
+   "corrected": true
+  },
+  {
+   "id": "calling_by_exposed_sets",
+   "phase": "read",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Calling chance climbs steeply with Exposed Sets: three at 40 Player Turns is ~83% likely to be Calling. Cautious opponents run ABOVE these rates, since they only commit with strong tiles.",
+   "ai": "Primary threat signal. Quantifies the Riichi two_set_gap heuristic.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "How to tell an opponent is one tile from winning.",
+    "by_exposed_sets": "Calling chance rises sharply with Exposed Sets. An opponent with three Exposed Sets at 40 Player Turns playing Chicken is 83% likely to be Calling. Zero Exposed Sets means relatively low Calling chance.",
+    "half_color_tell": {
+     "_note": "The strongest single read in the book, and the measured version of the Riichi source's flush traffic-light heuristic.",
+     "principle": "A player collecting a suit does not normally discard that suit. When they start doing so, they are near or at Calling.",
+     "base_rate": "64% of Half-Color winners discarded one or more tiles of their own suit before winning.",
+     "calling_chance": {
+      "one_suit_tile_discarded": {
+       "exposed_sets_0": 0.25,
+       "exposed_sets_1": 0.36,
+       "exposed_sets_2": 0.51,
+       "exposed_sets_3": 0.73,
+       "overall": 0.52
+      },
+      "two_suit_tiles_discarded": {
+       "exposed_sets_0": 0.44,
+       "exposed_sets_1": 0.56,
+       "exposed_sets_2": 0.7,
+       "exposed_sets_3": 0.86,
+       "overall": 0.73
+      }
+     },
+     "worked_example": "West has two Exposed Sets at 40 Player Turns playing Bamboo Half-Color and has discarded no Bamboo: 32% Calling. West then discards one Bamboo: 51% Calling."
+    },
+    "conservative_opponents": "Cautious players commit to All-Pong and Half-Color only with strong tiles, so their Calling chances run ABOVE these tables."
+   }
+  },
+  {
+   "id": "half_color_tell",
+   "phase": "read",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "A player collecting a suit does not discard that suit. When they start, they are near Calling: one own-suit discard puts them at 25-73% depending on Exposed Sets, two at 44-86%. 64% of Half-Color winners discard their own suit before winning.",
+   "ai": "Track own-suit discard count per opponent. The strongest single read available.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "The strongest single read in the book, and the measured version of the Riichi source's flush traffic-light heuristic.",
+    "principle": "A player collecting a suit does not normally discard that suit. When they start doing so, they are near or at Calling.",
+    "base_rate": "64% of Half-Color winners discarded one or more tiles of their own suit before winning.",
+    "calling_chance": {
+     "one_suit_tile_discarded": {
+      "exposed_sets_0": 0.25,
+      "exposed_sets_1": 0.36,
+      "exposed_sets_2": 0.51,
+      "exposed_sets_3": 0.73,
+      "overall": 0.52
+     },
+     "two_suit_tiles_discarded": {
+      "exposed_sets_0": 0.44,
+      "exposed_sets_1": 0.56,
+      "exposed_sets_2": 0.7,
+      "exposed_sets_3": 0.86,
+      "overall": 0.73
+     }
+    },
+    "worked_example": "West has two Exposed Sets at 40 Player Turns playing Bamboo Half-Color and has discarded no Bamboo: 32% Calling. West then discards one Bamboo: 51% Calling."
+   }
+  },
+  {
+   "id": "concealed_kong_signal",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "reading",
+   "rule": "A concealed kong means a developed, committed hand and pays out immediately. Treat the declarer as a live threat and start banking safe tiles. Do not import Riichi's kan-dora fears; Singapore's kong economics are different and mostly favour the declarer.",
+   "ai": "Threat flag, not a value-inflation flag.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "discard_provenance",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "Discarding the tile just drawn says only 'not useful'. Discarding from hand says 'this was useful and no longer is', which is far more informative. Default to draw-discards; use a deliberate hand-discard to reset what opponents believe is safe.",
+   "ai": "Track draw-vs-hand discard per tile as an observation channel. Works identically in any variant.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "discarded_value_pair",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "reading",
+   "rule": "A player who sheds a pair of dragons or their seat wind has given up 1 tai on purpose. That means the rest of the hand is strong enough not to need it.",
+   "ai": "Raise the value estimate on that opponent, and mark adjacent honours as relatively safe.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "fear_the_chaser",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "A player who pushes into a visible threat is telling you their hand is strong: nobody takes that risk with a weak one. Fear the second committer more than the first.",
+   "ai": "Weight threat by whether commitment happened before or after another player's commitment.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "flush_traffic_light",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "reading",
+   "rule": "Read a developing flush in three stages. GREEN: their discards are ordinary off-suit tiles, they are not close, so push your weak shapes out now while it is cheap. YELLOW: they begin shedding honours including unplayed ones, they are near ready, continue only if your own hand is genuinely big. RED: their discards are dominated by the target suit, assume ready, stop feeding that suit entirely.",
+   "ai": "Three-state classifier per opponent. High value in Singapore where Half and Full Flush are 2 and 4 tai. || NOW QUANTIFIED. See defense.calling_detection.half_color_tell: one own-suit discard puts a Half-Color player at 25-73% Calling depending on Exposed Sets; two puts them at 44-86%. 64% of Half-Color winners discard their own suit before winning. Use the measured table, not the three-colour approximation.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "pair_discards_rule_out",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "When a player sheds a pair from hand, the tile just outside it becomes near-safe: every wait pattern that would make it dangerous requires an implausible discard order. Exception: a 2 or 8 pair drop leaves a terminal double-pair wait live.",
+   "ai": "Deduction rule with an explicit terminal-tile carve-out.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "reads_need_basis",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "A read is an inference from visible information: discards, calls, melds, tile counts. Anything based on streaks, momentum or 'flow' is not a read.",
+   "ai": "Core design constraint. Every AI inference must cite the observation that produced it, or it does not run.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "second_copy_call",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "reading",
+   "rule": "Watch WHICH copy of a value tile gets called. If the first dragon or wind is discarded and nobody claims it, then the second copy comes out and a player pons it, read that hand as cheap but assembled. A player holding real value (flush shape, a second dragon pung, animals, seat flowers) would have grabbed the first copy even with an awkward shape. A player who is both cheap and badly shaped would have passed the second too and kept it as a safe tile. Calling only the second copy means neither: low tai, but likely ready or a good one-away with wide waits.",
+   "ai": "Track call-vs-pass per copy index for every honour, not just the fact of a call. Yields a value estimate that meld count alone cannot: pair it with two_set_gap, which measures tempo but says nothing about how much the hand is worth. Fires often in Singapore because dragons and seat winds are 1 tai each and hands open early.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "two_discard_piles",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "An open hand has a second, invisible discard pile: everything the player declined to call. If a tile that would obviously complete their visible shape passed uncalled, they do not have that shape. Watch the player who feeds them.",
+   "ai": "Log every uncalled tile per opponent. In Singapore this is the single richest read available, because hands open early and often.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "value_from_melds",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "reading",
+   "rule": "Estimate opponent value from their melds before worrying about their wait. A dragon or seat-wind pung is 1 tai; a flush pattern is 2 or 4; visible animals and seat flowers each add 1. Distinguish a cheap hand you can afford to feed from one that ends the round.",
+   "ai": "Run a per-opponent tai estimator off exposed melds and bonus tiles. Fully re-derived for the tai table; the Riichi arithmetic does not carry over.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "wall_reading",
+   "phase": "read",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "reading",
+   "rule": "An early discard implies its neighbours are absent from that player's hand, which means those neighbours are more likely still in the wall. Use this both to pick which blocks to build and to bank safe tiles.",
+   "ai": "Maintain a per-opponent inferred-absence map from early discards.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "hard_hands_help_opponents",
+   "phase": "push_fold",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Committing to a low-percentage hand pays your opponents. An East player on a weak Half-Color drops from 23% to 5% while every opponent RISES - the right-hand opponent most, because a two-suit discarder cannot control tiles.",
+   "ai": "Push/fold EV must include the cost of prolonging the game, not just your own win chance.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Table 5:7. Committing to a low-percentage hand does not merely cost you - it pays your opponents.",
+    "all_equal": {
+     "east": 0.23,
+     "south": 0.23,
+     "west": 0.23,
+     "north": 0.23
+    },
+    "east_mid_half_color": {
+     "east": 0.12,
+     "south": 0.28,
+     "west": 0.25,
+     "north": 0.24
+    },
+    "east_low_half_color": {
+     "east": 0.05,
+     "south": 0.29,
+     "west": 0.27,
+     "north": 0.26
+    },
+    "implication": "Your right-hand opponent benefits most, because a Half-Color player discarding two whole suits cannot control tiles. Lengthening the game gives everyone else more draws."
+   }
+  },
+  {
+   "id": "binary_commitment",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "Push or fold, and commit. Trying to develop a hand while discarding only safe tiles is the worst of both: you neither defend properly nor win. Half-measures are how points leak.",
+   "ai": "Model as a mode flag with an explicit switch cost. Do not blend the two objectives.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "folding_always_loses_slowly",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "push_fold",
+   "rule": "Folding every hand still bleeds points to opponents' self-draws. Prefer pushing a genuine ready hand. NOTE: weaker here than in Riichi, since most Singapore tables have no penalty for ending not-ready. Verify against your table before tuning.",
+   "ai": "Bounded by table rules. Set the fold-cost parameter from config, not from Riichi defaults. || WEAKENED as flagged. The Singapore ruleset has no penalty for ending a hand not ready, so the Riichi incentive to force a ready hand does not apply. Draw rate is 8% at Minimum Fan 1, 14% at Minimum Fan 2.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "no_phantom_hands",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "Do not steer toward an unconfirmed pattern. Count the exact tiles that would confirm it; two tile types out of the live wall is a poor reason to give up a confirmed path.",
+   "ai": "Require enumerated upgrade counts before pattern-chasing.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "not_the_third_fighter",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "With a borderline hand, ask whether anyone else is already pushing. A third fighter takes high risk for low return. If both opponents are folding, your push is far better than it looks.",
+   "ai": "Count active pushers; it should shift the push threshold substantially in both directions.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "one_turn_is_not_the_fight",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "Do not trade a wide wait for a narrow one to buy one turn of safety. The fight runs many turns and eight outs against four compounds over all of them.",
+   "ai": "Evaluate push/fold over remaining turns, not the current discard in isolation.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "own_hand_first",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "When threatened, the first question is 'push or fold', not 'what are they waiting on'. Your own hand value decides; their exact wait is a refinement.",
+   "ai": "Order the decision: evaluate own hand, then threat magnitude, then tile selection.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "push_early_fold_late",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "Early, an unsafe tile is roughly a 1-in-18 risk against a two-sided wait, and you still have turns to win; push. Late, the safe lines are used up, each remaining tile is far riskier, and your win chance is low; fold. Turn count is the deciding variable.",
+   "ai": "Make deal-in probability a function of turn number and lines already cleared, not a constant.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "push_only_if_it_matters",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "push_fold",
+   "rule": "Enumerate outcomes for push and for fold before committing. Singapore's tai cap means value beyond the cap is wasted entirely, so a bigger hand is often worth nothing extra. Re-derive this for money-per-hand play rather than importing placement logic.",
+   "ai": "Clamp hand value at max_tai_cap when computing push EV. This is the Singapore-specific correction. || CONFIRMED. Fan Limit is typically 5 and is exceeded 15% of the time on Half-Color wins alone - value above the cap is genuinely discarded.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "risk_early_with_value",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "Holding a big hand you cannot fold, cut the dangerous tile now. Opponents are less likely to be ready early, and you will have to release it eventually anyway.",
+   "ai": "When fold is ruled out, schedule dangerous discards as early as possible.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "self_draw_one_fan",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "house_rule",
+   "source": "table-rule",
+   "rule": "On this table a Self-Draw wins with 1 Fan. A hand at exactly 1 Fan is therefore alive but Self-Draw-only: it cannot win on a discard. For such hands, wait width is everything. A bare All-Chow is the clearest case - legal on Self-Draw, and the All-Chow discard restriction never applied to Self-Draw anyway.",
+   "ai": "Track fan_in_hand. If fan_in_hand == 1: disable discard-win detection, enable Self-Draw-only win detection, and switch wait scoring to pure width. Not in the source - house rule; quantify by simulation later."
+  },
+  {
+   "id": "two_set_gap",
+   "phase": "push_fold",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "push_fold",
+   "rule": "If an opponent has completed three sets and you have one, you are far enough behind that pushing wins roughly 1 time in 10 while dealing in around 3. Fold. The same applies at two sets against none.",
+   "ai": "Cheap, powerful threat heuristic: compare completed-set counts. Especially valuable in Singapore, where melds are visible constantly. || NOW QUANTIFIED for Singapore. An opponent with three Exposed Sets at 40 Player Turns is ~83% likely to be Calling. Exposed-set count is the primary threat signal here too.",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "chow_danger",
+   "phase": "discard",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Only the RIGHT-hand opponent can Chow you. Three ranked methods: tiles they discarded themselves (safest); tiles they declined to Chow (safety decays each turn); otherwise Chow Combinational Value - terminals max 16, 2/8 max 32, middle max 48, Honors 0.",
+   "ai": "CCV is cheap and gives a full safety ordering when no direct evidence exists.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Only the player to your RIGHT can Chow your discard. Three methods, strongest first.",
+    "method_1_opponent_discard_evaluation": {
+     "rule": "A tile that opponent has themselves discarded is safe against them.",
+     "strength": "strongest available signal",
+     "exception": "see one_sided_chow_unsafe_logic"
+    },
+    "method_2_discard_reject_evaluation": {
+     "rule": "A tile that opponent declined to Chow is comparatively safe, but the safety decays every turn.",
+     "chance_of_chow_by_opponent_turns_since_rejection": {
+      "player_turns_20": {
+       "1": 0.025,
+       "2": 0.046,
+       "3": 0.065,
+       "4": 0.082,
+       "5": 0.095,
+       "6": 0.105
+      },
+      "player_turns_40": {
+       "1": 0.019,
+       "2": 0.041,
+       "3": 0.058,
+       "4": 0.074,
+       "5": 0.091,
+       "6": 0.108,
+       "7": 0.122,
+       "8": 0.137
+      },
+      "player_turns_60": {
+       "1": 0.018,
+       "2": 0.036,
+       "3": 0.054,
+       "4": 0.072,
+       "5": 0.093,
+       "6": 0.108,
+       "7": 0.114,
+       "8": 0.144
+      }
+     },
+     "strength": "clearly weaker than method 1 - the source measures higher Chow rates here"
+    },
+    "method_3_chow_combinational_value": {
+     "rule": "Fallback when neither method above applies. For a tile, sum the Chow combinations formable from Available Tiles across its left, middle and right Chow. Lower is safer.",
+     "computation": "each Chow's value = (Available Tiles of partner A) x (Available Tiles of partner B)",
+     "maximum_by_tile_type": {
+      "terminal_1_9": 16,
+      "near_terminal_2_8": 32,
+      "middle_3_to_7": 48,
+      "honor": 0
+     },
+     "chance_right_opponent_chows": {
+      "_note": "by CCV range and Player Turns; opponent assumed to be playing Chicken or All-Chow",
+      "0": {
+       "20": 0.0,
+       "40": 0.0,
+       "60": 0.0
+      },
+      "1_to_2": {
+       "20": 0.01,
+       "40": 0.02,
+       "60": 0.05
+      },
+      "3_to_4": {
+       "20": 0.02,
+       "40": 0.05,
+       "60": 0.11
+      },
+      "5_to_8": {
+       "20": 0.06,
+       "40": 0.09,
+       "60": 0.19
+      },
+      "9_to_16": {
+       "20": 0.1,
+       "40": 0.16,
+       "60": 0.3
+      },
+      "17_to_24": {
+       "20": 0.15,
+       "40": 0.24,
+       "60": 0.39
+      },
+      "25_to_32": {
+       "20": 0.21,
+       "40": 0.3,
+       "60": 0.43
+      },
+      "33_to_40": {
+       "20": 0.23,
+       "40": 0.34,
+       "60": 0.47
+      },
+      "41_to_48": {
+       "20": 0.28,
+       "40": 0.38,
+       "60": 0.5
+      }
+     }
+    },
+    "one_sided_chow_unsafe_logic": {
+     "_note": "The exception that breaks method 1. An opponent who Chows using a One-Sided Chow Pair may convert a Concealed Chow into a Two-Sided Chow Pair, leaving them Calling on the very tile they just discarded.",
+     "conditions_all_required": [
+      "opponent is playing Ping Wu",
+      "opponent performs an Exposed Chow using a One-Sided Chow Pair",
+      "immediately after, the opponent plausibly Calling",
+      "the discard following that Exposed Chow is a Suited Tile"
+     ],
+     "consequence": "That discarded tile is safe only until the opponent's next turn, then becomes very unsafe. Tiles 3 and 6 above and below it in the same suit become very unsafe immediately. All remain unsafe until another Exposed Chow or other clearing event.",
+     "hit_rate_by_player_turns": {
+      "10": 0.0007,
+      "20": 0.01,
+      "30": 0.04,
+      "40": 0.1,
+      "50": 0.26,
+      "60": 0.23
+     }
+    }
+   }
+  },
+  {
+   "id": "fresh_tile_endgame",
+   "phase": "discard",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Late in an All-Pong hand your remaining Pong Pairs are usually Fresh Tiles, so you hold almost nothing safe - and discarding a Fresh Tile near the wall end can trigger Pay All liability. Plan the exit before you arrive there.",
+   "ai": "Model Fresh Tile status explicitly; it interacts with the Pay All rules.",
+   "source": "data-analytic",
+   "data": "Playing All-Pong, you Pong matching discards as they appear, so the Pong Pairs still in hand late are usually Fresh Tiles. Late in the game you will hold almost nothing safe to discard. Plan the exit before you get there."
+  },
+  {
+   "id": "one_sided_chow_trap",
+   "phase": "discard",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Exception to \"their own discard is safe\": a Ping Wu player who Chows with a One-Sided Chow Pair can end up Calling on the tile they just discarded. That tile, and tiles 3 and 6 above and below in the same suit, turn very unsafe after their next turn.",
+   "ai": "Four conditions must all hold. Rare early (0.07% at turn 10), 26% by turn 50.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "The exception that breaks method 1. An opponent who Chows using a One-Sided Chow Pair may convert a Concealed Chow into a Two-Sided Chow Pair, leaving them Calling on the very tile they just discarded.",
+    "conditions_all_required": [
+     "opponent is playing Ping Wu",
+     "opponent performs an Exposed Chow using a One-Sided Chow Pair",
+     "immediately after, the opponent plausibly Calling",
+     "the discard following that Exposed Chow is a Suited Tile"
+    ],
+    "consequence": "That discarded tile is safe only until the opponent's next turn, then becomes very unsafe. Tiles 3 and 6 above and below it in the same suit become very unsafe immediately. All remain unsafe until another Exposed Chow or other clearing event.",
+    "hit_rate_by_player_turns": {
+     "10": 0.0007,
+     "20": 0.01,
+     "30": 0.04,
+     "40": 0.1,
+     "50": 0.26,
+     "60": 0.23
+    }
+   }
+  },
+  {
+   "id": "pong_danger",
+   "phase": "discard",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "ANY opponent can Pong. Risk depends on their target and the turn: an Honor discard at turn 40 is 16% against Chicken, 23% against All-Pong, 29% against Half-Color. Holding two copies instead of one drops it from 3% to 1%.",
+   "ai": "Honor discards matter most - they trigger Pay All Fan Limit liability.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Any opponent can Pong. Honor discards matter most because they are what trigger Pay All Fan Limit liability.",
+    "single_tile_held_three_available": {
+     "honor_discards": {
+      "chicken": {
+       "0": 0.03,
+       "10": 0.05,
+       "20": 0.08,
+       "30": 0.12,
+       "40": 0.16,
+       "50": 0.2,
+       "60": 0.25
+      },
+      "all_pong": {
+       "10": 0.1,
+       "20": 0.14,
+       "30": 0.19,
+       "40": 0.23,
+       "50": 0.29,
+       "60": 0.38
+      },
+      "half_color": {
+       "10": 0.13,
+       "20": 0.17,
+       "30": 0.23,
+       "40": 0.29,
+       "50": 0.34,
+       "60": 0.42
+      }
+     },
+     "suited_discards": {
+      "chicken": {
+       "0": 0.03,
+       "10": 0.04,
+       "20": 0.05,
+       "30": 0.05,
+       "40": 0.06,
+       "50": 0.07,
+       "60": 0.09
+      },
+      "all_pong": {
+       "10": 0.12,
+       "20": 0.14,
+       "30": 0.17,
+       "40": 0.22,
+       "50": 0.29,
+       "60": 0.4
+      },
+      "half_color": {
+       "10": 0.09,
+       "20": 0.11,
+       "30": 0.13,
+       "40": 0.15,
+       "50": 0.18,
+       "60": 0.18
+      }
+     },
+     "_note": "Half-Color column refers to tiles in the suit the opponent is collecting."
+    },
+    "holding_two_copies": "Holding two of the Honor instead of one drops an individual opponent's Pong chance from 3% to 1% at the start of a game.",
+    "previously_discarded_tile": "A tile already discarded once (two Available Tiles) is very safe against Chicken and All-Pong players - under 1% to 2% - and stays under 10% even against Half-Color."
+   }
+  },
+  {
+   "id": "check_your_spares",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Compare the safety of your spare tiles before discarding out of habit. An honour is not automatically safer than a number tile once copies are accounted for.",
+   "ai": "Never allow a habitual-discard shortcut to bypass the danger scorer.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "count_wait_types",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Rank danger by how many wait patterns a tile can lose to. A terminal can only be hit by a two-sided, double-pair or single-tile wait: three patterns. A middle tile adds middle waits and a second two-sided line: five. Fewer patterns, lower risk.",
+   "ai": "Primary danger score. Pure combinatorics, no tuning required. || Singapore analogue is Chow Combinational Value plus the Pong tables. Use CCV for Chow risk (right-hand opponent only) and defense.preventing_pongs for Pong risk (all opponents).",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "last_chance_timing",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "When three copies are visible, the fourth is only dangerous if that specific opponent holds it. Early, it is probably still in the wall and safe. Late, the odds it is in a hand rise sharply. Same tile, opposite verdicts.",
+   "ai": "Make last-chance safety a function of remaining wall size.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "last_tile_shift",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "safety",
+   "rule": "A call late in the hand changes who receives the final draw. Use it to deny a threatening player their last chance, or to force a struggling player to take a live tile. Singapore scores winning on the last tile at 1 tai, so denial has direct value.",
+   "ai": "Endgame-only call motive, evaluated separately from hand advancement.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "live_honour_pairs",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Honours are generally safer than numbers, and discarding from a live honour pair is efficient: if the first passes, the second buys another turn.",
+   "ai": "Prefer paired honours in the fold ordering.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "locate_the_fourth",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Among equally-safe-looking tiles, ask where the missing copy most plausibly sits. If the threatening player discarded one early and nobody has released another since, assume they hold it.",
+   "ai": "Per-tile location posterior across opponents and wall.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "no_chance_tiles",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "When all four copies of a tile are visible, its neighbours can no longer form the waits that depended on it and become materially safer.",
+   "ai": "Recompute the no-chance set on every discard; it is cheap and it prunes the danger table hard.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "relative_not_exact",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Defense is ranking the tiles in your hand by relative safety and releasing the safest, not identifying the winning tile exactly. Attempting pinpoint reads produces confident wrong answers.",
+   "ai": "Output a ranked ordering, never a single 'their wait is X' commitment.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "squeeze_the_caller",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "safety",
+   "rule": "To slow a caller, feed tiles they cannot use. Play moves counterclockwise, so only the opponent to your RIGHT can Chow your discard - target them. Prefer: tiles they have already discarded (strongest signal); tiles they declined to Chow, though that safety decays measurably each turn; Honor tiles, which have zero Chow potential by construction; and terminals over middle tiles. Against a Half-Color player, anything outside their suit.",
+   "ai": "Direction CONFIRMED: right-hand opponent. Use Chow Combinational Value as the ranking function - see strategy.dataanalytic.json defense.preventing_chows for the measured Chow rates by CCV and turn.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "terminal_triplet_release",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "With no safe tile, discard from a terminal triplet you hold. It cannot be hit by a middle or edge wait, and holding all three copies means it cannot be hit by a double-pair wait either. It also buys you three turns instead of one.",
+   "ai": "High-priority fallback in the fold routine.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "wind_discard_order",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Among winds you do not need, release first the one belonging to the player immediately before you in turn order. If they pon it, the two players between you are skipped and you gain relative draws. A pon by the player after you gains you nothing.",
+   "ai": "Direction CONFIRMED: play proceeds counterclockwise (to each player's right), so the target is the opponent immediately before you. Note Honors cannot be Chowed at all, so a wind discard is only ever a Pong risk - see defense.preventing_pongs for measured Pong rates by turn.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "withhold_safe_tiles",
+   "phase": "discard",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "safety",
+   "rule": "Holding the fourth copy of an already-proven-safe tile, do not release it casually. Discarding it hands every opponent a safe tile and lets the whole table fold comfortably. Keep it; make them find their own outs.",
+   "ai": "Information-denial term in discard scoring. Cheap to implement, genuinely strong.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "game_length",
+   "phase": "meta",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Wins peak around turn 40. Draw rate 8% at Minimum Fan 1, 14% at Minimum Fan 2. Equal players win ~23% each.",
+   "ai": "Calibration baseline: an AI far off 23% against equal opponents is mis-tuned.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Distribution of the winning turn, Minimum Fan 2, Fan Limit 5. Draw games are 14% and excluded.",
+    "distribution": {
+     "10": 0.01,
+     "15": 0.02,
+     "20": 0.04,
+     "25": 0.07,
+     "30": 0.09,
+     "35": 0.11,
+     "40": 0.12,
+     "45": 0.11,
+     "50": 0.09,
+     "55": 0.07,
+     "60": 0.06,
+     "65": 0.04,
+     "70": 0.03
+    },
+    "draw_rate": {
+     "min_fan_1": 0.08,
+     "min_fan_2": 0.14
+    },
+    "baseline_win_rate": "23% each when all four players are equally skilled at Minimum Fan 1"
+   }
+  },
+  {
+   "id": "mf2_longer_games",
+   "phase": "meta",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "source": "data-analytic",
+   "rule": "At Minimum Fan 2 games average ~48 Player Turns (was 43), 14% end drawn (was 8%), and per-round score variance is wider. Turn-indexed thresholds shift right by ~5 turns; a bad night needs more rounds before it means anything.",
+   "ai": "Calibration baselines for this table: ~23% win rate, 14% draws, average game 48 Player Turns.",
+   "data": {
+    "avg_player_turns": 48,
+    "draw_rate": 0.14
+   }
+  },
+  {
+   "id": "seat_advantage",
+   "phase": "meta",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Turn order alone produces a real spread: East +1.0 chips / 24.7% win, North -1.1 / 21.3%, identical logic in every seat.",
+   "ai": "Any AI benchmark MUST control for seat or it measures turn order instead of skill.",
+   "source": "data-analytic",
+   "data": {
+    "_note": "Table 13:3, all four players running identical logic. Turn order alone produces this spread.",
+    "east": {
+     "chips_per_game": 1.0,
+     "win_rate": 0.247
+    },
+    "south": {
+     "chips_per_game": 0.4,
+     "win_rate": 0.238
+    },
+    "west": {
+     "chips_per_game": -0.3,
+     "win_rate": 0.227
+    },
+    "north": {
+     "chips_per_game": -1.1,
+     "win_rate": 0.213
+    },
+    "implication": "East to North is a 3.4 point win-rate gap and 2.1 chips purely from acting first. Any AI benchmark must control for seat."
+   }
+  },
+  {
+   "id": "turn_scarcity",
+   "phase": "meta",
+   "kind": "measured",
+   "confidence": "measured",
+   "topic": "analytic",
+   "rule": "Players average ~11 turns per game. One turn is ~9% of everything you do. There is no spare turn.",
+   "ai": "Frames every decision as expensive. Also the honest answer to \"why did I lose\" - variance over 11 decisions is large.",
+   "source": "data-analytic",
+   "data": {
+    "average_turns_per_player": 11,
+    "implication": "One turn is about 9% of your entire game. There is no such thing as a spare turn.",
+    "turn_theft": "Pong and Kong skip the players between you and the discarder. Beyond the tile and the immediate payout, this is a tempo gain that does not appear in any Fan count."
+   }
+  },
+  {
+   "id": "behind_is_not_a_reason",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "meta",
+   "rule": "Pushing because you are behind means accepting worse odds for a smaller reward. If the hand were worth pushing you would push it while even.",
+   "ai": "Score must not feed back into the push threshold except through genuine end-conditions.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "do_not_dwell",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "meta",
+   "rule": "Tracking grievances consumes the attention you need for tile counting, discard reading and threat assessment. Every player is unlucky about equally often; you only observe your own.",
+   "ai": "Human-facing. Mirrored in the AI by keeping state strictly observational.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "favourable_non_wins",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "meta",
+   "rule": "Before committing to a hopeless push, ask which non-winning outcomes actually suit you, and whether you can nudge toward one. Not winning and not losing much is a real result.",
+   "ai": "Fold routine should optimise over outcome distribution, not merely minimise immediate deal-in.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "play_normally_when_cold",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "meta",
+   "rule": "When luck turns, keep playing your normal game. Deliberately playing 'differently because it is not working' is how a bad run becomes a bad session.",
+   "ai": "No streak-based state anywhere in the AI. This is also the correct human advice.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "process_goals",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "direct",
+   "topic": "meta",
+   "rule": "Set goals you control: fold cleanly when threatened, take the wider wait, count outs every turn. Outcome goals produce tilt because the outcome is not yours to decide.",
+   "ai": "Also the right frame for evaluating the AI: measure decision quality, not win rate.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "scoring_is_the_compass",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "meta",
+   "rule": "Know the tai table cold. Nearly every push, fold and call decision resolves into 'what is this hand worth against what is theirs', and you cannot answer that without the numbers. In Singapore this includes the cap: tai above it is worth nothing.",
+   "ai": "Scorer must be callable mid-hand for hypothetical states, not only at win time. || Now backed by real tables. See data/scoring.singapore.json for Fan values and the chip payout curve (2^Fan, doubled for the discarder or on Self-Draw).",
+   "source": "riichi-adapted",
+   "cross_checked": true
+  },
+  {
+   "id": "spread_not_rate",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "retuned",
+   "topic": "meta",
+   "rule": "Do not target a deal-in rate. A player who never deals in but rarely wins loses to one who does both freely. What matters is the spread between how often you win and how often you feed. Track the gap, never either number alone, and never let a recent run of either steer an in-the-moment decision: hand value decides that, not your season statistics.",
+   "ai": "Correct evaluation metric for the AI too: score win-minus-deal-in, not deal-in alone, or the optimiser converges on a bot that folds everything. Re-derive the healthy spread for Singapore before using any threshold. The source's numbers assume a not-ready penalty, riichi sticks and placement scoring, none of which apply to money-per-hand play.",
+   "source": "riichi-adapted"
+  },
+  {
+   "id": "who_may_win",
+   "phase": "meta",
+   "kind": "heuristic",
+   "confidence": "weak",
+   "topic": "meta",
+   "rule": "You win roughly one hand in four, so how you play the other three decides your session. When you cannot win, some opponents winning hurts you far less than others; steer toward the cheap outcome. Re-derive for money-per-hand play: the Riichi placement logic does not carry over.",
+   "ai": "Needs a Singapore-specific payoff model before this is worth implementing.",
+   "source": "riichi-adapted"
+  }
+ ],
+ "decision_procedure": {
+  "_note": "Neither source states this end to end. It is the merge: measured selection and risk on the skeleton, heuristics filling the tile-level choices. Rule ids in brackets.",
+  "at_the_deal": [
+   {
+    "step": 1,
+    "do": "Count Flowers and Animals, convert to Fan, classify: none / worth 0 Fan / worth 1 Fan / worth 2+ Fan.",
+    "why": "Largest predictor of value and it gates everything below.",
+    "rules": [
+     "flower_animal_case"
+    ]
+   },
+   {
+    "step": 2,
+    "do": "If no Flower or Animal: default to Ping Wu unless an evaluator strongly says otherwise.",
+    "why": "Optimal ~76% of such hands.",
+    "rules": [
+     "ping_wu_default"
+    ]
+   },
+   {
+    "step": 3,
+    "do": "Score the hand with all four evaluators. Convert each to a Chips-per-Game range and rank them.",
+    "why": "No target is right by default; every fixed strategy loses.",
+    "rules": [
+     "target_selection",
+     "no_fixed_strategy",
+     "evaluators",
+     "mf2_target_shift"
+    ]
+   },
+   {
+    "step": 4,
+    "do": "Set a PRIMARY target and a FALLBACK. Fallback is Chicken - but on this table it is only ARMED when you already hold 2 Fan (or 1 Fan, Self-Draw only). Half-Color has no fallback at all.",
+    "why": "The Hybrid fallback is worth +3.4 chips/game. Half-Color throws away two suits and cannot bail out.",
+    "rules": [
+     "hybrid_fallback",
+     "self_draw_one_fan"
+    ]
+   },
+   {
+    "step": 5,
+    "do": "Sanity-check: does the target need Fan the hand does not hold and cannot reliably build?",
+    "why": "Flowers will not supply it - under even money at the deal, worse after.",
+    "rules": [
+     "flowers_wont_save_you"
+    ]
+   },
+   {
+    "step": 6,
+    "do": "Apply shape heuristics to the opening discards: fix one pair, keep two, break three; drop unusable singles.",
+    "why": "The analytic source ranks targets but says little about which tile to release.",
+    "rules": [
+     "pair_rule",
+     "five_blocks",
+     "weak_start_pivot"
+    ]
+   }
+  ],
+  "each_turn": [
+   {
+    "step": 1,
+    "do": "Increment Player Turns (discards + exposed sets). Every threshold below is indexed on it.",
+    "why": "Same tiles get weaker as the game runs.",
+    "rules": [
+     "threshold_rises",
+     "turn_scarcity"
+    ]
+   },
+   {
+    "step": 2,
+    "do": "Recompute the evaluator for the current target; compare against the break-even for THIS turn count.",
+    "why": "A hand that stops improving becomes a losing hand without changing.",
+    "rules": [
+     "threshold_rises",
+     "evaluators",
+     "mf2_half_color_easier"
+    ]
+   },
+   {
+    "step": 3,
+    "do": "If below break-even: switch target, drop to the fallback, or fold. Do not continue on inertia.",
+    "why": "Committing to a low-percentage hand actively pays your opponents.",
+    "rules": [
+     "hard_hands_help_opponents",
+     "no_phantom_hands",
+     "break_mediocre_ready"
+    ]
+   },
+   {
+    "step": 4,
+    "do": "Threat scan per opponent: Exposed Set count, own-suit discards if they look Half-Color, uncalled tiles, draw-vs-hand discards.",
+    "why": "Three Exposed Sets at turn 40 is ~83% Calling; one own-suit discard from a Half-Color player is 25-73%.",
+    "rules": [
+     "calling_by_exposed_sets",
+     "half_color_tell",
+     "two_discard_piles",
+     "discard_provenance",
+     "second_copy_call"
+    ]
+   },
+   {
+    "step": 5,
+    "do": "Decide PUSH or FOLD. Binary - never develop a hand while discarding only safe tiles.",
+    "why": "Half-measures are the worst of both. Assess your own hand value before reading their wait.",
+    "rules": [
+     "binary_commitment",
+     "own_hand_first",
+     "not_the_third_fighter",
+     "push_early_fold_late",
+     "two_set_gap"
+    ]
+   },
+   {
+    "step": 6,
+    "do": "PUSHING: rank candidate discards by shape value, then filter by measured risk and take the best survivor.",
+    "why": "This is the merge - heuristics propose, measured data disposes.",
+    "rules": [
+     "chow_danger",
+     "pong_danger",
+     "count_your_outs",
+     "keep_floaters",
+     "pong_pair_quality"
+    ]
+   },
+   {
+    "step": 7,
+    "do": "FOLDING: ignore shape entirely. Order purely by safety - their own discards, then previously-discarded tiles, then low Chow Combinational Value, then Honors you hold two of.",
+    "why": "Defence is a relative ranking, not a wait read.",
+    "rules": [
+     "relative_not_exact",
+     "chow_danger",
+     "pong_danger",
+     "terminal_triplet_release",
+     "no_chance_tiles",
+     "withhold_safe_tiles"
+    ]
+   },
+   {
+    "step": 8,
+    "do": "Evaluate calls: does it advance the target, secure Fan, or steal tempo? Never break your only pair. Before a third call, ask whether the hand can still fight.",
+    "why": "Calls skip intervening players; with ~11 turns each that tempo is worth chips.",
+    "rules": [
+     "turn_theft",
+     "never_break_your_pair",
+     "speed_value_safety",
+     "third_call_test",
+     "call_to_upgrade",
+     "pon_over_chii",
+     "mf2_kongs_pay_double"
+    ]
+   },
+   {
+    "step": 9,
+    "do": "If the fallback win is available, take it.",
+    "why": "Forgo it only at All-Pong breakdowns 2:3, 4:0 or 3:2 before turn 20 - about 1 game in 2300.",
+    "rules": [
+     "hybrid_fallback"
+    ]
+   }
+  ],
+  "endgame": [
+   {
+    "step": 1,
+    "do": "Watch Fresh Tiles as the wall empties. Under ~4-8 remaining (table dependent) a Fresh Tile discard that wins triggers Pay All.",
+    "why": "One discard can carry three players liability.",
+    "rules": [
+     "fresh_tile_endgame"
+    ]
+   },
+   {
+    "step": 2,
+    "do": "On All-Pong specifically, expect to hold nothing safe late. Bank a safe tile earlier than feels necessary.",
+    "why": "You Ponged every matching discard, so your remaining pairs are Fresh by construction.",
+    "rules": [
+     "fresh_tile_endgame",
+     "weak_start_pivot"
+    ]
+   },
+   {
+    "step": 3,
+    "do": "No penalty for ending not-ready, so there is no reason to force a bad ready hand at the close.",
+    "why": "Directly unlike Riichi; the imported instinct is wrong here.",
+    "rules": [
+     "folding_always_loses_slowly"
+    ]
+   }
+  ],
+  "evaluating_the_ai": [
+   {
+    "do": "Control for seat. East +1.0 chips / 24.7%, North -1.1 / 21.3% on identical logic.",
+    "rules": [
+     "seat_advantage"
+    ]
+   },
+   {
+    "do": "Target ~23% win rate, 14% draws, ~48 Player Turns per game on this table (Minimum Fan 2).",
+    "rules": [
+     "mf2_longer_games",
+     "game_length"
+    ]
+   },
+   {
+    "do": "Score win-rate MINUS deal-in rate. Optimising deal-in alone converges on a bot that folds everything.",
+    "rules": [
+     "spread_not_rate"
+    ]
+   },
+   {
+    "do": "Check target distribution across many hands. Trending toward one combination is a bug, not a style.",
+    "rules": [
+     "no_fixed_strategy"
+    ]
+   }
+  ]
+ },
+ "table_profile": {
+  "_source": "data/table.config.json",
+  "minimum_fan": 2,
+  "fan_limit": 5,
+  "self_draw_minimum_fan": 1,
+  "what_changes": [
+   "Chicken is nearly dead as a primary target: optimal in 4% of deals (was 20% at MF1). A 0-Fan hand needs 2 Fan from elsewhere to win on discard, 1 on Self-Draw.",
+   "Half-Color becomes the most common best target: 32% of deals (was 25%). Its break-even drops to Rule 961 >= 21 at the deal, 29 at turn 20, 34 at turn 40, and win chances run ~30% higher for the same tiles because games last longer.",
+   "All-Chow rises to 26% (was 22%) - and on this table the 1-Fan Self-Draw exemption makes a bare All-Chow a LEGAL Self-Draw win, which the MF2 tables do not credit. All-Chow is better here than the numbers say.",
+   "All-Pong rises to 14% (was 9%). Longer games favour it.",
+   "Ping Wu holds steady at ~24%; its break-evens barely move (11 / 16 / 19).",
+   "Games run ~48 Player Turns on average (was 43) and 14% end in a draw (was 8%). Turn-indexed thresholds shift right by roughly 5 turns.",
+   "Immediate payouts DOUBLE: Kong-1/3 pay 4, Kong-4 pays 8, Animal/Flower set pays 8, pair pays 4. Kongs are worth chasing.",
+   "Score variance per round is higher. Expect bigger swings; judge yourself over more rounds."
+  ],
+  "hybrid_fallback_on_this_table": "The Chicken fallback is weaker than at MF1 but NOT dead. It is live whenever you already hold 2 Fan from flowers/animals/honour pongs, or 1 Fan and you Self-Draw. Track 'Fan in hand' explicitly and treat the fallback as armed or disarmed by it.",
+  "self_draw_exemption_implications": [
+   "Any hand sitting at exactly 1 Fan is a Self-Draw-only hand. That is a narrower path, so for such hands weight wait WIDTH above everything - you cannot win on a discard, you need the tile to come to you.",
+   "All-Chow at 1 Fan is the big winner: its discard-win restriction (need 2+ unique winning tiles) does not apply to Self-Draw anyway, so a bare All-Chow Self-Draw is both legal and unrestricted.",
+   "Self-Draw pays doubled from all three opponents: a 1-Fan Self-Draw pays 4+4+4 = 12, versus a 2-Fan discard win 8+4+4 = 16. Not that far apart - a 1-Fan hand is worth holding onto.",
+   "The source does not measure Self-Draw share of wins, so the exact value of this exemption is not quantified. Treat it as a moderate boost to every 1-Fan target and re-measure once the engine can simulate it."
+  ]
+ }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "sg-mahjong-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Singapore Mahjong rules engine - tiles, wall, win detection, Fan scoring, payouts. UI-free.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "sim": "tsx src/sim.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

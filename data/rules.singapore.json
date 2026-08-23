@@ -1,0 +1,82 @@
+{
+  "variant": "singapore",
+  "_source": "A Data Analytic Evaluation of Singapore Mahjong, Chapter 2 (rules) and Section 2.6 (variation survey).",
+
+  "turn_order": {
+    "direction": "counterclockwise, which from a seated player is to their RIGHT",
+    "seats": ["East", "South", "West", "North"],
+    "_note": "The player to your RIGHT plays after you. East (Banker) has the first turn.",
+    "right_opponent": "the player immediately after you; the ONLY opponent who may Chow your discard",
+    "left_opponent": "the player immediately before you; you may Chow THEIR discards",
+    "engine_warning": "Handedness is the opposite of Japanese convention. Verify seat direction in code rather than porting any seat-name-based heuristic."
+  },
+
+  "mahjong": {
+    "definition": "One Eye plus four sets (Chow, Pong or Kong)",
+    "eye_constraint": "The Eye must be formed from Concealed Tiles only"
+  },
+
+  "kongs": {
+    "kong_4": "Four matching tiles declared from Concealed Tiles",
+    "kong_3": "Claiming a Discarded Tile to extend three matching Concealed Tiles",
+    "kong_1": "Adding a drawn tile to an already Exposed Pong",
+    "replacement_draw": true,
+    "robbing": "Permitted on Kong-1. Also permitted on Kong-4, but only for a 13 Wonders win."
+  },
+
+  "move_priority": ["Win", "Kong-3", "Pong", "Chow"],
+  "tie_break": "nearest player counterclockwise (to the right) of the discarder",
+
+  "prohibited_discard_use": {
+    "_note": "Singapore's analogue of a temporary furiten. Contradicts the common claim that Singapore has no such rule.",
+    "rules": [
+      "You may not claim a Discarded Tile identical to your own most recent discard.",
+      "You may not claim (for Pong or to Win) a Discarded Tile identical to any tile discarded by anyone AFTER your own last discard."
+    ],
+    "character": "rolling - it clears once you discard again, unlike Riichi's permanent furiten"
+  },
+
+  "unplayable_tiles": {
+    "count": 15,
+    "meaning": "The last 15 tiles of the wall cannot be drawn and yield no replacement tiles.",
+    "_variants": {"15": "67% of tables", "1_to_14": "25%", "0": "8%"}
+  },
+
+  "all_chow_restrictions": [
+    "The Eye may not be a Dragon, the Player's Wind, or the Prevailing Wind.",
+    "Winning with only two Concealed Tiles cannot be All-Chow.",
+    "Winning on a Discarded Tile requires that you needed two or more unique tiles to win. This restriction does not apply to a Self-Draw."
+  ],
+
+  "pay_all": {
+    "_note": "The 'Offending Player' pays every opponent's share. Structurally unlike anything in Japanese mahjong: one discard can carry three players' liability.",
+    "scenarios": [
+      {"id": "fan_limit", "desc": "Discarding a Dragon, Prevailing Wind or Player's Wind that an opponent Pongs/Kongs, bringing their exposed Fan to the Fan Limit, and they then win.", "note": "Each player may hold only ONE such infraction against them at a time; a later one replaces the earlier. All infractions clear at end of game."},
+      {"id": "full_color",   "desc": "Opponent has 3-4 Exposed Sets all in one suit or all Honors, and you discard the winning tile."},
+      {"id": "dragon_set",   "desc": "Opponent has two Dragon sets exposed and you discard the third."},
+      {"id": "wind_set",     "desc": "Opponent has three Wind sets exposed and you discard the fourth."},
+      {"id": "all_terminal", "desc": "Opponent has 3-4 Exposed Sets all Terminals and you discard the winning tile."},
+      {"id": "fresh_tile",   "desc": "Discarding a Fresh Tile (one not already in the Discarded Tile Area) when fewer than 4 valid tiles remain, and it wins."},
+      {"id": "kong_fresh_tile", "desc": "Discarding a Fresh Tile with fewer than 7 valid tiles remaining that causes a Kong-3; additional liability if they win on the replacement."},
+      {"id": "eight_flower_concealed", "desc": "Concealing the eighth Flower Tile."}
+    ]
+  },
+
+  "house_variations": {
+    "_note": "Percentages are from the source's survey of real tables. Everything here should be config, not constants.",
+    "items": [
+      {"id": "animal_flower_pair_payout", "desc": "Immediate payout for an Animal Pair or Flower Pair", "not_recognised_by": "9% of tables"},
+      {"id": "unplayable_tiles",  "desc": "Number of unplayable tiles at the wall's end", "distribution": {"15": "67%", "1-14": "25%", "0": "8%"}},
+      {"id": "kong_payout_amounts", "desc": "Immediate Kong payout values vary by table"},
+      {"id": "concealed_selfdraw_bonus", "desc": "Some tables award +1 Fan for a fully concealed Self-Draw win"},
+      {"id": "selfdraw_bonus", "desc": "Some tables award +1 Fan for any Self-Draw"},
+      {"id": "pay_all_fresh_tile", "desc": "Pay All Fresh Tile rule", "not_recognised_by": "16% of tables", "threshold_range": "3 to 8 remaining tiles", "fresh_definition_split": "50% count exposed tiles, 50% count discards only"},
+      {"id": "last_tile_fan", "desc": "Fan for winning on the last valid tile", "not_awarded_by": "7% of tables"},
+      {"id": "discard_after_last_tile", "desc": "Whether a discard is required after the last valid tile", "required_by": "13% of tables", "of_the_rest": "50% allow that discard to win; 40% forbid a Kong after the last valid tile"},
+      {"id": "verbal_pay_all", "desc": "Some tables require Pay All conditions to be announced aloud"},
+      {"id": "seven_pairs", "desc": "Some tables recognise a Hong Kong style seven-pairs hand"}
+    ]
+  },
+
+  "digital_implementation_note": "Sections 2.4 and 2.5 of the source cover table etiquette and remedies for irregular play - misdeals, exposed tiles, incorrect declarations, wrong tile counts. The source states these cannot occur in a computer implementation. Skip them; they are the largest block of rules text with the least relevance to a digital game."
+}

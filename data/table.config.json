@@ -1,0 +1,16 @@
+{
+  "_what": "House rules for the table you actually play at. Everything in the engine and the playbook should read from here, never from constants.",
+  "minimum_fan": 2,
+  "fan_limit": 5,
+  "self_draw_minimum_fan": 1,
+  "_self_draw_note": "A Self-Draw (zi mo) may win with 1 Fan. A win on an opponent's discard still needs 2. This is a house rule NOT in the analytic source - every Minimum-Fan-2 table below assumes 2 Fan for every win, so treat them as slightly pessimistic for hands sitting at exactly 1 Fan.",
+  "immediate_payouts_multiplier": 2,
+  "_payout_note": "Source states its immediate-payout values assume Minimum Fan 1 and DOUBLE at Minimum Fan 2. So on this table: Kong-1/Kong-3 = 4, Kong-4 = 8, Animal or Flower set = 8, Animal or Flower pair = 4, all doubled again if obtained from the initial 13 tiles.",
+  "unconfirmed": {
+    "unplayable_tiles": "15 is the 67% default - confirm",
+    "pay_all_fresh_tile_threshold": "3 to 8 remaining; confirm the number and whether 'fresh' counts exposed tiles or discards only",
+    "self_draw_bonus_fan": "some tables add +1 Fan for a Self-Draw - confirm whether yours does on top of the 1-Fan exemption",
+    "animal_flower_pair_payout": "recognised by 91% of tables - confirm",
+    "seven_pairs": "some tables allow a Hong Kong style seven-pairs hand - confirm"
+  }
+}

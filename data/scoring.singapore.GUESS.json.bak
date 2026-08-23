@@ -1,0 +1,74 @@
+{
+  "variant": "singapore",
+  "unit": "tai",
+  "_note": "Singapore mahjong is heavily house-ruled. Every value here is a common default, not a universal truth. Treat this file as config, not constants.",
+
+  "table_rules": {
+    "min_tai_to_win": 1,
+    "max_tai_cap": 5,
+    "payout_formula": "base * (2 ^ tai)",
+    "chicken_hand_allowed": false,
+    "_variants": {
+      "min_tai_to_win": [0, 1],
+      "max_tai_cap": [3, 4, 5, 10],
+      "chicken_hand_allowed": "if true, a 0-tai hand may win for the base stake"
+    }
+  },
+
+  "payment": {
+    "self_draw": "all three opponents pay full",
+    "discard": "discarder pays full, others pay nothing",
+    "_variants": {
+      "discard": ["discarder pays all (common)", "discarder pays double, others pay single"]
+    }
+  },
+
+  "instant_payouts": {
+    "_note": "Paid immediately when the event happens, independent of who eventually wins.",
+    "animal_drawn": 1,
+    "seat_flower_or_season_drawn": 1,
+    "exposed_kong": 1,
+    "concealed_kong": 2,
+    "_variants": { "seat_flower_or_season_drawn": "some tables pay on any flower, not just seat-matching" }
+  },
+
+  "tai": [
+    { "id": "ping_hu",            "tai": 1, "name": "Ping Hu",              "zh": "平胡",   "desc": "All sequences, non-scoring pair, open-ended wait" },
+    { "id": "seat_wind_pung",     "tai": 1, "name": "Seat Wind Pung",       "zh": "門風",   "desc": "Triplet of your own seat wind" },
+    { "id": "round_wind_pung",    "tai": 1, "name": "Round Wind Pung",      "zh": "圈風",   "desc": "Triplet of the prevailing wind" },
+    { "id": "dragon_pung",        "tai": 1, "name": "Dragon Pung",          "zh": "三元",   "desc": "Triplet of any dragon", "repeatable": true },
+    { "id": "seat_flower",        "tai": 1, "name": "Seat Flower/Season",   "zh": "正花",   "desc": "Flower or season matching your seat", "repeatable": true },
+    { "id": "animal",             "tai": 1, "name": "Animal",               "zh": "動物",   "desc": "Each animal held at win", "repeatable": true },
+    { "id": "robbing_kong",       "tai": 1, "name": "Robbing the Kong",     "zh": "搶槓",   "desc": "Win on a tile someone added to a melded pung" },
+    { "id": "kong_bloom",         "tai": 1, "name": "Kong Bloom",           "zh": "槓上開花", "desc": "Win on a kong or flower replacement draw" },
+    { "id": "last_tile",          "tai": 1, "name": "Last Tile",            "zh": "海底撈月", "desc": "Win on the final tile of the wall" },
+
+    { "id": "all_pungs",          "tai": 2, "name": "All Pungs",            "zh": "對對胡", "desc": "Four triplets/kongs plus a pair" },
+    { "id": "half_flush",         "tai": 2, "name": "Half Flush",           "zh": "混一色", "desc": "One suit plus honours" },
+    { "id": "three_concealed",    "tai": 2, "name": "Three Concealed Pungs","zh": "三暗刻", "desc": "Three triplets formed without claiming" },
+    { "id": "animal_pair",        "tai": 2, "name": "Animal Pair",          "zh": "動物對", "desc": "Cat+Mouse, or Rooster+Centipede", "repeatable": true },
+    { "id": "complete_flowers",   "tai": 2, "name": "Complete Flower Set",  "zh": "齊花",   "desc": "All four flowers, or all four seasons", "repeatable": true },
+
+    { "id": "full_flush",         "tai": 4, "name": "Full Flush",           "zh": "清一色", "desc": "Single suit, no honours" },
+    { "id": "four_concealed",     "tai": 4, "name": "Four Concealed Pungs", "zh": "四暗刻", "desc": "Four triplets formed without claiming" },
+
+    { "id": "thirteen_wonders",   "tai": 5, "name": "Thirteen Wonders",     "zh": "十三幺", "limit": true },
+    { "id": "great_dragons",      "tai": 5, "name": "Great Three Dragons",  "zh": "大三元", "limit": true },
+    { "id": "great_winds",        "tai": 5, "name": "Great Four Winds",     "zh": "大四喜", "limit": true },
+    { "id": "all_honours",        "tai": 5, "name": "All Honours",          "zh": "字一色", "limit": true },
+    { "id": "heavenly_hand",      "tai": 5, "name": "Heavenly Hand",        "zh": "天胡",   "limit": true, "desc": "Dealer wins on the opening hand" },
+    { "id": "earthly_hand",       "tai": 5, "name": "Earthly Hand",         "zh": "地胡",   "limit": true, "desc": "Win on the dealer's first discard" },
+    { "id": "all_flowers",        "tai": 5, "name": "All Eight Bonus",      "zh": "八仙過海", "limit": true, "desc": "All four flowers and all four seasons" },
+    { "id": "all_animals",        "tai": 5, "name": "All Four Animals",     "zh": "四動物", "limit": true, "_variants": "many tables treat this as an instant win, not a scored hand" }
+  ],
+
+  "liability": {
+    "_note": "'Bao' / 'ho bao' - the feeder pays for everyone. Presence and scope vary widely by table.",
+    "rules": [
+      { "id": "bao_dragons", "desc": "Discarding the tile that completes a third dragon pung" },
+      { "id": "bao_winds",   "desc": "Discarding the tile that completes a fourth wind pung" },
+      { "id": "bao_animals", "desc": "Dealing the fourth animal" },
+      { "id": "bao_kong",    "desc": "Feeding a kong whose replacement draw wins the hand" }
+    ]
+  }
+}

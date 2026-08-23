@@ -1,0 +1,1210 @@
+{
+ "variant": "singapore",
+ "_source": "A Data Analytic Evaluation of Singapore Mahjong. All figures derived from the author's computer simulations (millions of games). Unless stated, tables assume Minimum Fan 1 and Fan Limit 5.",
+ "_character": "Unlike the Riichi source, this is native Singapore material with measured numbers rather than transferable principles. Values are directly implementable; they are not heuristics awaiting calibration.",
+ "tile_evaluation": {
+  "_note": "Four scoring functions, one per target combination, each derived by regression against simulated outcomes. Compute all of them on the current hand and compare via the unified table below.",
+  "rule_4213_chicken": {
+   "target": "Chicken game (0 Fan)",
+   "weights": {
+    "triplet": 4,
+    "two_sided_pair": 2,
+    "one_sided_pair": 1,
+    "eye": 3
+   },
+   "notes": [
+    "Triplet means any Chow, Pong or Kong.",
+    "Group the hand to maximise the total.",
+    "Priority when choosing what to keep: Triplet > Eye > Two-Sided Pair > One-Sided Pair. Prefer a One-Sided Pair over a Two-Sided Pair when it has more Available Tiles."
+   ],
+   "win_chance_by_value": {
+    "player_turns_20": {
+     "8": 0.12,
+     "9": 0.15,
+     "10": 0.18,
+     "11": 0.22,
+     "12": 0.26,
+     "13": 0.31,
+     "14": 0.39,
+     "15": 0.47,
+     "16": 0.57,
+     "17": 0.74
+    },
+    "player_turns_40": {
+     "10": 0.05,
+     "11": 0.06,
+     "12": 0.08,
+     "13": 0.13,
+     "14": 0.19,
+     "15": 0.22,
+     "16": 0.38,
+     "17": 0.54
+    }
+   },
+   "_note": "Assumes Minimum Fan already met. Chicken awards no Fan of its own, so Chips per Game is not directly comparable to the others."
+  },
+  "rule_961_half_color": {
+   "target": "Half-Color (2 Fan)",
+   "weights": {
+    "triplet": 9,
+    "pair": 6,
+    "single": 1,
+    "calling_bonus": 3
+   },
+   "breakdown_method": [
+    "Exposed Tiles: count each Chow/Pong/Kong as a Triplet. No Pairs or Singles.",
+    "Concealed Tiles: consider only Honors plus one candidate suit. Form Triplets and Pairs using the greatest number of tiles, never reusing a tile. Remaining Honors and suit tiles are Singles.",
+    "Repeat per candidate suit; take the highest total."
+   ],
+   "caveats": [
+    "Unusable Chow Pairs (no Available Tiles to complete) must NOT be counted.",
+    "At most ONE Unusable Pong Pair may be counted.",
+    "Unusable Singles (e.g. a lone East Wind when East is already Ponged elsewhere) must not be counted and should be discarded.",
+    "Two-Sided and One-Sided Pairs are both valued 6 - a deliberate simplification. Two-Sided Pairs are genuinely better.",
+    "Concealed and Exposed Triplets are both valued 9. Concealed are genuinely better."
+   ],
+   "break_even_by_turn": {
+    "0": 23,
+    "10": 26,
+    "20": 30,
+    "30": 33,
+    "40": 35,
+    "50": 36,
+    "60": 36,
+    "70": 37
+   },
+   "chips_per_game": {
+    "player_turns_0": {
+     "17": -6,
+     "18": -5,
+     "19": -5,
+     "20": -3,
+     "21": -1,
+     "22": 0,
+     "23": 2,
+     "24": 4,
+     "25": 7,
+     "26": 10,
+     "27": 13,
+     "28": 17
+    },
+    "player_turns_20": {
+     "24": -6,
+     "25": -6,
+     "26": -5,
+     "27": -3,
+     "28": -1,
+     "29": 0,
+     "30": 2,
+     "31": 5,
+     "32": 7,
+     "33": 10,
+     "34": 15
+    },
+    "player_turns_40": {
+     "31": -6,
+     "32": -4,
+     "33": -2,
+     "34": 0,
+     "35": 2,
+     "36": 8,
+     "37": 9,
+     "39": 9,
+     "40": 27,
+     "42": 36
+    }
+   },
+   "win_chance_at_start": {
+    "17": 0.04,
+    "20": 0.08,
+    "23": 0.12,
+    "26": 0.21,
+    "28": 0.28
+   },
+   "occurrence_at_start": {
+    "17+": 0.51,
+    "19+": 0.38,
+    "21+": 0.2,
+    "23+": 0.09,
+    "25+": 0.05,
+    "27+": 0.015,
+    "30+": 0.003
+   }
+  },
+  "rule_5313_all_chow": {
+   "target": "All-Chow (1 Fan) and Ping Wu (4 Fan)",
+   "weights": {
+    "chow": 5,
+    "two_sided_pair": "3 each while (Chows + Two-Sided Pairs) <= 4; 1 each beyond that",
+    "one_sided_pair": 1,
+    "eye": 3,
+    "calling_bonus": 1
+   },
+   "notes": [
+    "At most one Eye.",
+    "Group to maximise the total: an Eye (3) beats a One-Sided Pair (1); a Chow (5) beats a One-Sided plus Two-Sided Pair combination (4).",
+    "A Two-Sided Pair is worth 3x a One-Sided Pair because the All-Chow Calling rule demands two or more unique tiles to win, which usually requires a Two-Sided Pair."
+   ],
+   "known_exception": "With no Eye, a run of four consecutive tiles is an alternate route to an Eye. Rule 5313 undervalues this; prefer the four-run shape even when it scores 1 point lower.",
+   "chips_per_game_started_with_flower_animal": {
+    "player_turns_0": {
+     "3": -7,
+     "6": -6,
+     "9": -3,
+     "11": -1,
+     "12": 0,
+     "13": 2,
+     "14": 3
+    },
+    "player_turns_20": {
+     "10": -7,
+     "13": -5,
+     "15": -3,
+     "16": -1,
+     "17": 0,
+     "18": 1,
+     "19": 6
+    },
+    "player_turns_40": {
+     "13": -8,
+     "16": -6,
+     "19": 0,
+     "20": 0,
+     "21": 9,
+     "22": 11
+    }
+   },
+   "occurrence_at_start": {
+    "5+": 0.87,
+    "8+": 0.53,
+    "10+": 0.31,
+    "11+": 0.26,
+    "13+": 0.11,
+    "14+": 0.04
+   },
+   "turn_decay": "To hold win chance constant from the start to 20 Player Turns, the value must rise by roughly 6 points."
+  },
+  "all_pong_breakdown": {
+   "target": "All-Pong (2 Fan)",
+   "format": "PongTriplets:PongPairs, computed on Concealed Tiles",
+   "caveat": "Only one Unusable Pong Pair may be counted.",
+   "chips_per_game": {
+    "player_turns_0": {
+     "0:0": -7,
+     "0:1": -6,
+     "1:0": -3,
+     "0:2": -4,
+     "1:1": -1,
+     "0:3": -1,
+     "2:0": 4,
+     "1:2": 4,
+     "0:4": 5,
+     "2:1": 9,
+     "1:3": 12,
+     "0:5": 13
+    },
+    "player_turns_20": {
+     "1:2": -4,
+     "0:4": -5,
+     "2:1": 2,
+     "1:3": -1,
+     "0:5": -2,
+     "0:6": 2,
+     "3:0": 8,
+     "2:2": 7,
+     "1:4": 6,
+     "1:5": 10,
+     "3:1": 19
+    },
+    "player_turns_40": {
+     "0:5": -9,
+     "0:6": -9,
+     "3:0": 1,
+     "2:2": -1,
+     "1:4": -5,
+     "1:5": -1,
+     "3:1": 8,
+     "2:3": 6,
+     "4:0": 26,
+     "3:2": 30
+    }
+   },
+   "occurrence_at_start": {
+    "0:0": 0.13,
+    "0:1": 0.34,
+    "1:0": 0.03,
+    "0:2": 0.31,
+    "1:1": 0.04,
+    "0:3": 0.12,
+    "1:2": 0.017,
+    "0:4": 0.018
+   },
+   "pong_pair_conversion_rates": {
+    "_note": "Chance a Pong Pair held at the start becomes a Pong by game end. Honors convert best because they are discarded most freely - the Singapore analogue of the Riichi finding that edge waits are stronger, here measured directly.",
+    "wind": 0.69,
+    "dragon": 0.66,
+    "terminal_1_9": 0.59,
+    "near_terminal_2_8": 0.48,
+    "middle_3_to_7": 0.39
+   },
+   "end_game_fresh_tile_warning": "Playing All-Pong, you Pong matching discards as they appear, so the Pong Pairs still in hand late are usually Fresh Tiles. Late in the game you will hold almost nothing safe to discard. Plan the exit before you get there."
+  },
+  "13_wonders_breakdown": {
+   "target": "13 Wonders (8 Fan)",
+   "method": "Count each distinct 13-Wonder tile held once. That count is the value; maximum 13.",
+   "chips_per_game": {
+    "player_turns_20": {
+     "8": -9,
+     "9": -8,
+     "10": -4,
+     "11": 10,
+     "12": 87,
+     "13": 182
+    },
+    "player_turns_40": {
+     "9": -10,
+     "10": -9,
+     "11": 1,
+     "12": 57,
+     "13": 159
+    }
+   },
+   "note": "Violently nonlinear: 11 is the inflection point. Below it the hand is hopeless, at 12 it is dominant. Also the most opponent-friendly hand in the game - you can form no Exposed sets, so no discard is ever useful to you until Calling, and you are forced to feed middle Suited Tiles the whole way."
+  }
+ },
+ "unified_decision_table": {
+  "_note": "Source Table 10:1. Converts each evaluation method onto a common Chips per Game scale so the four targets can be compared directly. This is the core of an opening-move engine: score the hand four ways, read off each Chips range, pick the best.",
+  "_caution": "The source labels the Ping Wu column 'Rule 5312' here but 'Rule 5313' in Chapter 7. Treat as the same method unless you find a stated difference; verify before relying on the distinction.",
+  "rows": [
+   {
+    "chips": "11 to 9",
+    "ping_wu": 14
+   },
+   {
+    "chips": "9 to 7",
+    "half_color": 28,
+    "all_pong": "1:3"
+   },
+   {
+    "chips": "7 to 5",
+    "ping_wu": 13,
+    "half_color": 27
+   },
+   {
+    "chips": "5 to 4",
+    "ping_wu": 12,
+    "13_wonders": 10
+   },
+   {
+    "chips": "4 to 3",
+    "half_color": 26
+   },
+   {
+    "chips": "3 to 2",
+    "ping_wu": 11
+   },
+   {
+    "chips": "2 to 1",
+    "half_color": 25
+   },
+   {
+    "chips": "1 to 0",
+    "ping_wu": 10,
+    "all_pong": "0:4"
+   },
+   {
+    "chips": "0 to -1",
+    "half_color": 24,
+    "all_pong": "1:2"
+   },
+   {
+    "chips": "-1 to -2",
+    "ping_wu": 9
+   },
+   {
+    "chips": "-2 to -3",
+    "half_color": 23
+   },
+   {
+    "chips": "-3 to -4",
+    "ping_wu": 8,
+    "half_color": 22
+   },
+   {
+    "chips": "-4 to -5",
+    "ping_wu": 7,
+    "half_color": 21,
+    "all_pong": "0:3"
+   },
+   {
+    "chips": "-5 to -6",
+    "ping_wu": "6,5",
+    "13_wonders": 9
+   },
+   {
+    "chips": "-6 to -7",
+    "ping_wu": 4,
+    "half_color": 20
+   },
+   {
+    "chips": "-7 to -9",
+    "half_color": 19,
+    "13_wonders": 8
+   }
+  ]
+ },
+ "opening_book": {
+  "best_combination_at_start": {
+   "_note": "Share of starting hands for which each target is the optimal choice. Fan Limit 5.",
+   "min_fan_0": {
+    "13_wonders": 0.001,
+    "chicken": 0.34,
+    "all_chow": 0.15,
+    "ping_wu": 0.23,
+    "half_color": 0.21,
+    "all_pong": 0.07
+   },
+   "min_fan_1": {
+    "13_wonders": 0.002,
+    "chicken": 0.2,
+    "all_chow": 0.22,
+    "ping_wu": 0.24,
+    "half_color": 0.25,
+    "all_pong": 0.09
+   },
+   "min_fan_2": {
+    "13_wonders": 0.002,
+    "chicken": 0.04,
+    "all_chow": 0.26,
+    "ping_wu": 0.24,
+    "half_color": 0.32,
+    "all_pong": 0.14
+   }
+  },
+  "flower_animal_dominates": {
+   "_note": "Source Table 4:4 and 4:5. The single largest predictor of expected value at the deal, and entirely outside player control.",
+   "case_frequency": {
+    "none": 0.32,
+    "worth_0_fan": 0.24,
+    "worth_1_fan": 0.33,
+    "worth_2plus_fan": 0.11
+   },
+   "chips_per_game": {
+    "none": -1.0,
+    "worth_0_fan": -4.3,
+    "worth_1_fan": 0.7,
+    "worth_2plus_fan": 10.3
+   },
+   "key_finding": "Holding Flowers/Animals worth 0 Fan (-4.3) is materially WORSE than holding none at all (-1.0). They consume replacement draws and reveal information while paying nothing, and they disqualify Ping Wu, the strongest common target."
+  },
+  "best_when_no_flower_animal": {
+   "min_fan_0": {
+    "chicken": 0.08,
+    "ping_wu": 0.74,
+    "half_color": 0.13,
+    "all_pong": 0.05
+   },
+   "min_fan_1": {
+    "chicken": 0.03,
+    "ping_wu": 0.76,
+    "half_color": 0.15,
+    "all_pong": 0.06
+   },
+   "min_fan_2": {
+    "chicken": 0.01,
+    "ping_wu": 0.76,
+    "half_color": 0.17,
+    "all_pong": 0.06
+   },
+   "rule": "With no Flower or Animal tile, play Ping Wu. It is optimal roughly three quarters of the time at every Minimum Fan setting."
+  },
+  "best_when_flower_animal_worth_0_fan": {
+   "min_fan_0": {
+    "chicken": 0.47,
+    "all_chow": 0.16,
+    "half_color": 0.28,
+    "all_pong": 0.09
+   },
+   "min_fan_1": {
+    "chicken": 0.14,
+    "all_chow": 0.34,
+    "half_color": 0.4,
+    "all_pong": 0.12
+   },
+   "min_fan_2": {
+    "chicken": 0.01,
+    "all_chow": 0.18,
+    "half_color": 0.6,
+    "all_pong": 0.21
+   }
+  },
+  "best_when_flower_animal_worth_1_fan": {
+   "min_fan_0": {
+    "chicken": 0.44,
+    "all_chow": 0.24,
+    "half_color": 0.24,
+    "all_pong": 0.08
+   },
+   "min_fan_1": {
+    "chicken": 0.33,
+    "all_chow": 0.29,
+    "half_color": 0.28,
+    "all_pong": 0.1
+   },
+   "min_fan_2": {
+    "chicken": 0.04,
+    "all_chow": 0.47,
+    "half_color": 0.32,
+    "all_pong": 0.17
+   }
+  },
+  "best_when_flower_animal_worth_2plus_fan": {
+   "min_fan_0": {
+    "chicken": 0.5,
+    "all_chow": 0.3,
+    "half_color": 0.15,
+    "all_pong": 0.05
+   },
+   "min_fan_1": {
+    "chicken": 0.38,
+    "all_chow": 0.35,
+    "half_color": 0.18,
+    "all_pong": 0.09
+   },
+   "min_fan_2": {
+    "chicken": 0.19,
+    "all_chow": 0.47,
+    "half_color": 0.19,
+    "all_pong": 0.15
+   }
+  },
+  "focused_strategy_baselines": {
+   "_note": "Chips per Game when a player commits to ONE target every hand. Every fixed strategy loses. Selection is the whole game.",
+   "chicken": -0.9,
+   "all_chow_ping_wu": -2.9,
+   "all_pong": -4.4,
+   "half_color": -4.8,
+   "full_color": -8.8,
+   "13_wonders": -9.1,
+   "never_win": -11.0
+  },
+  "reference_strategies": {
+   "beginners": {
+    "win_rate": 0.26,
+    "chips_per_game": -0.7,
+    "decision_tree": [
+     "No Flower/Animal AND no Fan from Pongs/Kongs -> play Ping Wu.",
+     "Has Flower/Animal, has not met Minimum Fan, and no pair convertible to a Fan-scoring Pong -> play All-Chow.",
+     "Otherwise -> play Chicken."
+    ]
+   },
+   "builders": {
+    "win_rate": 0.14,
+    "chips_per_game": -1.8,
+    "note": "Chases higher-Fan hands. Loses more than the simple tree despite bigger wins."
+   }
+  },
+  "min_fan_effect": "Raising Minimum Fan prolongs games, which favours higher-Fan targets. Same tile set at Rule 961 = 23: 11% win at MF 0, 12% at MF 1, 16% at MF 2."
+ },
+ "hybrid_strategy": {
+  "_note": "The single largest strategic finding in the book.",
+  "rule": "When playing All-Pong or All-Chow, keep Chicken alive as a secondary target. Retain Chows and Chow Pairs in Concealed Tiles for as long as they are not needed, and take a Chicken win the moment it is available (Minimum Fan permitting).",
+  "value": "+3.4 Chips per Game over a pure All-Pong strategy.",
+  "surprising_consequence": "A Hybrid All-Pong player wins more Chicken games than All-Pong games. Chips arrive from three streams: All-Pong wins, Chicken wins, and immediate Kong payouts.",
+  "exceptions": "Forgo the Chicken win only when the All-Pong Breakdown is 2:3, 4:0 or 3:2 AND fewer than 20 Player Turns have passed. Roughly 1 game in 2300 - in practice, always take the Chicken win.",
+  "secondary_benefit": "Higher overall win rate shortens games, which itself defends against opponents building large-Fan hands.",
+  "not_available_in_half_color": "Half-Color discards the other two suits, so a fallback Chicken win is nearly impossible. This makes Half-Color a far harder commitment than All-Pong or All-Chow - if it fails, there is no exit."
+ },
+ "defense": {
+  "_note": "Chapter 12, Tile Controlling. The material the Riichi source had no Singapore equivalent for, and it is measured rather than heuristic.",
+  "preventing_chows": {
+   "_note": "Only the player to your RIGHT can Chow your discard. Three methods, strongest first.",
+   "method_1_opponent_discard_evaluation": {
+    "rule": "A tile that opponent has themselves discarded is safe against them.",
+    "strength": "strongest available signal",
+    "exception": "see one_sided_chow_unsafe_logic"
+   },
+   "method_2_discard_reject_evaluation": {
+    "rule": "A tile that opponent declined to Chow is comparatively safe, but the safety decays every turn.",
+    "chance_of_chow_by_opponent_turns_since_rejection": {
+     "player_turns_20": {
+      "1": 0.025,
+      "2": 0.046,
+      "3": 0.065,
+      "4": 0.082,
+      "5": 0.095,
+      "6": 0.105
+     },
+     "player_turns_40": {
+      "1": 0.019,
+      "2": 0.041,
+      "3": 0.058,
+      "4": 0.074,
+      "5": 0.091,
+      "6": 0.108,
+      "7": 0.122,
+      "8": 0.137
+     },
+     "player_turns_60": {
+      "1": 0.018,
+      "2": 0.036,
+      "3": 0.054,
+      "4": 0.072,
+      "5": 0.093,
+      "6": 0.108,
+      "7": 0.114,
+      "8": 0.144
+     }
+    },
+    "strength": "clearly weaker than method 1 - the source measures higher Chow rates here"
+   },
+   "method_3_chow_combinational_value": {
+    "rule": "Fallback when neither method above applies. For a tile, sum the Chow combinations formable from Available Tiles across its left, middle and right Chow. Lower is safer.",
+    "computation": "each Chow's value = (Available Tiles of partner A) x (Available Tiles of partner B)",
+    "maximum_by_tile_type": {
+     "terminal_1_9": 16,
+     "near_terminal_2_8": 32,
+     "middle_3_to_7": 48,
+     "honor": 0
+    },
+    "chance_right_opponent_chows": {
+     "_note": "by CCV range and Player Turns; opponent assumed to be playing Chicken or All-Chow",
+     "0": {
+      "20": 0.0,
+      "40": 0.0,
+      "60": 0.0
+     },
+     "1_to_2": {
+      "20": 0.01,
+      "40": 0.02,
+      "60": 0.05
+     },
+     "3_to_4": {
+      "20": 0.02,
+      "40": 0.05,
+      "60": 0.11
+     },
+     "5_to_8": {
+      "20": 0.06,
+      "40": 0.09,
+      "60": 0.19
+     },
+     "9_to_16": {
+      "20": 0.1,
+      "40": 0.16,
+      "60": 0.3
+     },
+     "17_to_24": {
+      "20": 0.15,
+      "40": 0.24,
+      "60": 0.39
+     },
+     "25_to_32": {
+      "20": 0.21,
+      "40": 0.3,
+      "60": 0.43
+     },
+     "33_to_40": {
+      "20": 0.23,
+      "40": 0.34,
+      "60": 0.47
+     },
+     "41_to_48": {
+      "20": 0.28,
+      "40": 0.38,
+      "60": 0.5
+     }
+    }
+   },
+   "one_sided_chow_unsafe_logic": {
+    "_note": "The exception that breaks method 1. An opponent who Chows using a One-Sided Chow Pair may convert a Concealed Chow into a Two-Sided Chow Pair, leaving them Calling on the very tile they just discarded.",
+    "conditions_all_required": [
+     "opponent is playing Ping Wu",
+     "opponent performs an Exposed Chow using a One-Sided Chow Pair",
+     "immediately after, the opponent plausibly Calling",
+     "the discard following that Exposed Chow is a Suited Tile"
+    ],
+    "consequence": "That discarded tile is safe only until the opponent's next turn, then becomes very unsafe. Tiles 3 and 6 above and below it in the same suit become very unsafe immediately. All remain unsafe until another Exposed Chow or other clearing event.",
+    "hit_rate_by_player_turns": {
+     "10": 0.0007,
+     "20": 0.01,
+     "30": 0.04,
+     "40": 0.1,
+     "50": 0.26,
+     "60": 0.23
+    }
+   }
+  },
+  "preventing_pongs": {
+   "_note": "Any opponent can Pong. Honor discards matter most because they are what trigger Pay All Fan Limit liability.",
+   "single_tile_held_three_available": {
+    "honor_discards": {
+     "chicken": {
+      "0": 0.03,
+      "10": 0.05,
+      "20": 0.08,
+      "30": 0.12,
+      "40": 0.16,
+      "50": 0.2,
+      "60": 0.25
+     },
+     "all_pong": {
+      "10": 0.1,
+      "20": 0.14,
+      "30": 0.19,
+      "40": 0.23,
+      "50": 0.29,
+      "60": 0.38
+     },
+     "half_color": {
+      "10": 0.13,
+      "20": 0.17,
+      "30": 0.23,
+      "40": 0.29,
+      "50": 0.34,
+      "60": 0.42
+     }
+    },
+    "suited_discards": {
+     "chicken": {
+      "0": 0.03,
+      "10": 0.04,
+      "20": 0.05,
+      "30": 0.05,
+      "40": 0.06,
+      "50": 0.07,
+      "60": 0.09
+     },
+     "all_pong": {
+      "10": 0.12,
+      "20": 0.14,
+      "30": 0.17,
+      "40": 0.22,
+      "50": 0.29,
+      "60": 0.4
+     },
+     "half_color": {
+      "10": 0.09,
+      "20": 0.11,
+      "30": 0.13,
+      "40": 0.15,
+      "50": 0.18,
+      "60": 0.18
+     }
+    },
+    "_note": "Half-Color column refers to tiles in the suit the opponent is collecting."
+   },
+   "holding_two_copies": "Holding two of the Honor instead of one drops an individual opponent's Pong chance from 3% to 1% at the start of a game.",
+   "previously_discarded_tile": "A tile already discarded once (two Available Tiles) is very safe against Chicken and All-Pong players - under 1% to 2% - and stays under 10% even against Half-Color."
+  },
+  "calling_detection": {
+   "_note": "How to tell an opponent is one tile from winning.",
+   "by_exposed_sets": "Calling chance rises sharply with Exposed Sets. An opponent with three Exposed Sets at 40 Player Turns playing Chicken is 83% likely to be Calling. Zero Exposed Sets means relatively low Calling chance.",
+   "half_color_tell": {
+    "_note": "The strongest single read in the book, and the measured version of the Riichi source's flush traffic-light heuristic.",
+    "principle": "A player collecting a suit does not normally discard that suit. When they start doing so, they are near or at Calling.",
+    "base_rate": "64% of Half-Color winners discarded one or more tiles of their own suit before winning.",
+    "calling_chance": {
+     "one_suit_tile_discarded": {
+      "exposed_sets_0": 0.25,
+      "exposed_sets_1": 0.36,
+      "exposed_sets_2": 0.51,
+      "exposed_sets_3": 0.73,
+      "overall": 0.52
+     },
+     "two_suit_tiles_discarded": {
+      "exposed_sets_0": 0.44,
+      "exposed_sets_1": 0.56,
+      "exposed_sets_2": 0.7,
+      "exposed_sets_3": 0.86,
+      "overall": 0.73
+     }
+    },
+    "worked_example": "West has two Exposed Sets at 40 Player Turns playing Bamboo Half-Color and has discarded no Bamboo: 32% Calling. West then discards one Bamboo: 51% Calling."
+   },
+   "conservative_opponents": "Cautious players commit to All-Pong and Half-Color only with strong tiles, so their Calling chances run ABOVE these tables."
+  },
+  "flower_animal_denial": {
+   "_note": "Chapter 11. Do not plan on Flowers to reach Minimum Fan.",
+   "chance_of_gaining_1plus_flower_fan_during_game": {
+    "start": "at best 0.48",
+    "player_turns_20": "at best 0.35",
+    "player_turns_40": "at best 0.27"
+   },
+   "chance_of_gaining_2plus": "never above 0.14 at any point",
+   "rule": "If you need two Fan, Flowers will not supply them. If you need one, they are under even money from the start and worse thereafter."
+  }
+ },
+ "seat_and_tempo": {
+  "seat_advantage": {
+   "_note": "Table 13:3, all four players running identical logic. Turn order alone produces this spread.",
+   "east": {
+    "chips_per_game": 1.0,
+    "win_rate": 0.247
+   },
+   "south": {
+    "chips_per_game": 0.4,
+    "win_rate": 0.238
+   },
+   "west": {
+    "chips_per_game": -0.3,
+    "win_rate": 0.227
+   },
+   "north": {
+    "chips_per_game": -1.1,
+    "win_rate": 0.213
+   },
+   "implication": "East to North is a 3.4 point win-rate gap and 2.1 chips purely from acting first. Any AI benchmark must control for seat."
+  },
+  "turn_scarcity": {
+   "average_turns_per_player": 11,
+   "implication": "One turn is about 9% of your entire game. There is no such thing as a spare turn.",
+   "turn_theft": "Pong and Kong skip the players between you and the discarder. Beyond the tile and the immediate payout, this is a tempo gain that does not appear in any Fan count."
+  },
+  "game_length": {
+   "_note": "Distribution of the winning turn, Minimum Fan 2, Fan Limit 5. Draw games are 14% and excluded.",
+   "distribution": {
+    "10": 0.01,
+    "15": 0.02,
+    "20": 0.04,
+    "25": 0.07,
+    "30": 0.09,
+    "35": 0.11,
+    "40": 0.12,
+    "45": 0.11,
+    "50": 0.09,
+    "55": 0.07,
+    "60": 0.06,
+    "65": 0.04,
+    "70": 0.03
+   },
+   "draw_rate": {
+    "min_fan_1": 0.08,
+    "min_fan_2": 0.14
+   },
+   "baseline_win_rate": "23% each when all four players are equally skilled at Minimum Fan 1"
+  },
+  "playing_a_hard_hand_helps_opponents": {
+   "_note": "Table 5:7. Committing to a low-percentage hand does not merely cost you - it pays your opponents.",
+   "all_equal": {
+    "east": 0.23,
+    "south": 0.23,
+    "west": 0.23,
+    "north": 0.23
+   },
+   "east_mid_half_color": {
+    "east": 0.12,
+    "south": 0.28,
+    "west": 0.25,
+    "north": 0.24
+   },
+   "east_low_half_color": {
+    "east": 0.05,
+    "south": 0.29,
+    "west": 0.27,
+    "north": 0.26
+   },
+   "implication": "Your right-hand opponent benefits most, because a Half-Color player discarding two whole suits cannot control tiles. Lengthening the game gives everyone else more draws."
+  }
+ },
+ "minimum_fan_2_overlay": {
+  "_note": "Tables for Minimum Fan 2, Fan Limit 5. Source sections 5.5, 7.6, 8.3, 9.4, 13.3. Where the source gives only win chance (not chips) it is because a Chicken/All-Chow win at MF2 presupposes the Minimum Fan was met by other means, so chips are not comparable.",
+  "game_length": {
+   "average_player_turns_incl_draws": 48,
+   "vs_min_fan_1": 43,
+   "draw_rate": 0.14,
+   "score_variance": "higher than MF1 - Figure 13:4 spreads -400 to +500 per round"
+  },
+  "best_combination_at_start": {
+   "13_wonders": 0.002,
+   "chicken": 0.04,
+   "all_chow": 0.26,
+   "ping_wu": 0.24,
+   "half_color": 0.32,
+   "all_pong": 0.14
+  },
+  "half_color_rule_961": {
+   "_note": "chance / chips. Compare MF1 break-even: 23 at turn 0, 30 at turn 20, 35 at turn 40. At MF2 break-even drops to 21 / 29 / 34 and win chances run ~30% higher for the same tiles.",
+   "player_turns_0": {
+    "17": [
+     0.06,
+     -6
+    ],
+    "18": [
+     0.07,
+     -6
+    ],
+    "19": [
+     0.08,
+     -5
+    ],
+    "20": [
+     0.1,
+     -3
+    ],
+    "21": [
+     0.12,
+     0
+    ],
+    "22": [
+     0.14,
+     2
+    ],
+    "23": [
+     0.16,
+     4
+    ],
+    "24": [
+     0.18,
+     6
+    ],
+    "25": [
+     0.22,
+     9
+    ],
+    "26": [
+     0.25,
+     12
+    ],
+    "27": [
+     0.28,
+     15
+    ],
+    "28": [
+     0.33,
+     20
+    ]
+   },
+   "player_turns_20": {
+    "24": [
+     0.06,
+     -7
+    ],
+    "25": [
+     0.07,
+     -6
+    ],
+    "26": [
+     0.08,
+     -5
+    ],
+    "27": [
+     0.09,
+     -3
+    ],
+    "28": [
+     0.11,
+     -1
+    ],
+    "29": [
+     0.13,
+     1
+    ],
+    "30": [
+     0.15,
+     4
+    ],
+    "31": [
+     0.19,
+     7
+    ],
+    "32": [
+     0.22,
+     11
+    ],
+    "33": [
+     0.24,
+     13
+    ],
+    "34": [
+     0.31,
+     19
+    ]
+   },
+   "player_turns_40": {
+    "31": [
+     0.06,
+     -6
+    ],
+    "32": [
+     0.08,
+     -4
+    ],
+    "33": [
+     0.09,
+     -2
+    ],
+    "34": [
+     0.13,
+     1
+    ],
+    "35": [
+     0.15,
+     4
+    ],
+    "36": [
+     0.22,
+     11
+    ],
+    "37": [
+     0.23,
+     13
+    ],
+    "39": [
+     0.23,
+     13
+    ],
+    "40": [
+     0.4,
+     32
+    ],
+    "42": [
+     0.48,
+     41
+    ]
+   },
+   "break_even": {
+    "0": 21,
+    "20": 29,
+    "40": 34
+   }
+  },
+  "ping_wu_rule_5313": {
+   "_note": "chance / chips. Break-even at MF2: 11 at turn 0, 16 at turn 20, 19 at turn 40 - essentially unchanged from MF1.",
+   "player_turns_0": {
+    "3": [
+     0.03,
+     -7
+    ],
+    "4": [
+     0.04,
+     -7
+    ],
+    "5": [
+     0.05,
+     -7
+    ],
+    "6": [
+     0.05,
+     -6
+    ],
+    "7": [
+     0.06,
+     -5
+    ],
+    "8": [
+     0.07,
+     -4
+    ],
+    "9": [
+     0.09,
+     -3
+    ],
+    "10": [
+     0.11,
+     -1
+    ],
+    "11": [
+     0.12,
+     1
+    ],
+    "12": [
+     0.13,
+     2
+    ],
+    "13": [
+     0.14,
+     3
+    ],
+    "14": [
+     0.19,
+     8
+    ]
+   },
+   "player_turns_20": {
+    "10": [
+     0.05,
+     -10
+    ],
+    "11": [
+     0.05,
+     -9
+    ],
+    "12": [
+     0.07,
+     -7
+    ],
+    "13": [
+     0.09,
+     -5
+    ],
+    "14": [
+     0.1,
+     -5
+    ],
+    "15": [
+     0.14,
+     -1
+    ],
+    "16": [
+     0.18,
+     3
+    ],
+    "17": [
+     0.19,
+     4
+    ],
+    "18": [
+     0.22,
+     7
+    ],
+    "19": [
+     0.32,
+     17
+    ]
+   },
+   "player_turns_40": {
+    "14": [
+     0.03,
+     -12
+    ],
+    "15": [
+     0.05,
+     -11
+    ],
+    "16": [
+     0.09,
+     -6
+    ],
+    "17": [
+     0.09,
+     -5
+    ],
+    "18": [
+     0.1,
+     -5
+    ],
+    "19": [
+     0.17,
+     3
+    ],
+    "20": [
+     0.2,
+     4
+    ],
+    "21": [
+     0.4,
+     24
+    ],
+    "22": [
+     0.45,
+     28
+    ]
+   }
+  },
+  "all_chow_rule_5313_win_chance": {
+   "_note": "MF2 win chance only, assumes Minimum Fan already met. Notably HIGHER than MF0 for the same value because games run longer.",
+   "player_turns_0": {
+    "3": 0.03,
+    "4": 0.04,
+    "5": 0.05,
+    "6": 0.05,
+    "7": 0.06,
+    "8": 0.07,
+    "9": 0.09,
+    "10": 0.11,
+    "11": 0.12,
+    "12": 0.13,
+    "13": 0.14,
+    "14": 0.19
+   },
+   "player_turns_40": {
+    "14": 0.06,
+    "15": 0.09,
+    "16": 0.15,
+    "17": 0.15,
+    "18": 0.16,
+    "19": 0.25,
+    "20": 0.27,
+    "21": 0.55,
+    "22": 0.59
+   }
+  },
+  "chicken_rule_4213_win_chance": {
+   "_note": "MF2 win chance, assumes Minimum Fan already met. Consistently ~4-5 points above MF0 at turn 0 and 20; converges by turn 40.",
+   "player_turns_0": {
+    "3": 0.2,
+    "4": 0.23,
+    "5": 0.26,
+    "6": 0.3,
+    "7": 0.34,
+    "8": 0.38,
+    "9": 0.42,
+    "10": 0.47,
+    "11": 0.52,
+    "12": 0.57
+   },
+   "player_turns_20": {
+    "8": 0.16,
+    "9": 0.19,
+    "10": 0.23,
+    "11": 0.26,
+    "12": 0.31,
+    "13": 0.37,
+    "14": 0.44,
+    "15": 0.52,
+    "16": 0.63,
+    "17": 0.78
+   },
+   "player_turns_40": {
+    "10": 0.06,
+    "11": 0.08,
+    "12": 0.11,
+    "13": 0.16,
+    "14": 0.22,
+    "15": 0.25,
+    "16": 0.44,
+    "17": 0.6
+   }
+  },
+  "thirteen_wonders": {
+   "player_turns_0": {
+    "7": [
+     0.005,
+     -12
+    ],
+    "8": [
+     0.014,
+     -10
+    ],
+    "9": [
+     0.04,
+     -5
+    ],
+    "10": [
+     0.1,
+     8
+    ],
+    "11": [
+     0.28,
+     43
+    ],
+    "12": [
+     0.77,
+     144
+    ],
+    "13": [
+     0.999,
+     192
+    ]
+   },
+   "_note": "MF2 slightly kinder to 13 Wonders than MF1 (10 is now +8 not +5) because games run longer. Inflection still at 11."
+  },
+  "all_pong": {
+   "_gap": "Section 6.5 (All-Pong at MF0/MF2, pages ~130-134) was NOT in the capture set. Use the MF1 tables with the general MF2 adjustment: longer games favour higher-Fan targets, so All-Pong is somewhat better than MF1 tables show. Worth recapturing."
+  },
+  "flower_animal_fan_chance": {
+   "_note": "Section 11.1 says MF setting has only a small effect on these tables; the MF1 values stand."
+  }
+ }
+}

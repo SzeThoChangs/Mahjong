@@ -1,0 +1,11 @@
+{
+  "name": "sg-mahjong",
+  "private": true,
+  "scripts": {
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "sim": "pnpm -C engine sim",
+    "dev": "pnpm -C web dev",
+    "build": "pnpm -C web build"
+  }
+}

@@ -1,0 +1,499 @@
+{
+ "variant": "singapore",
+ "provenance": "Concepts re-derived for Singapore rules from a Riichi-oriented source. Game mechanics and probability facts only; no source text reproduced. Every entry is restated in Singapore terms and re-tuned where the scoring system changes the answer.",
+ "confidence_key": {
+  "direct": "Pure shape/probability/turn-order logic. True in any 4-player mahjong. Port as-is.",
+  "retuned": "Sound idea, but the threshold or payoff changes under tai scoring. Numbers below are re-derived, not inherited.",
+  "weak": "Principle survives, worked example does not. Use as a prior, not a rule."
+ },
+ "hand_shape": [
+  {
+   "id": "five_blocks",
+   "conf": "direct",
+   "rule": "A hand needs 4 sets + 1 pair. Track block count explicitly; early game, maximise acceptance rather than committing.",
+   "ai": "Maintain block inventory each draw; shanten alone hides block surplus/deficit."
+  },
+  {
+   "id": "pair_rule",
+   "conf": "direct",
+   "rule": "Fix one pair, keep two pairs, break three pairs. Three pairs overlap in their shanpon outs, so each does less work.",
+   "ai": "Count pairs; if 3+, discard from the pair whose tile has fewest live copies."
+  },
+  {
+   "id": "perfect_one_away",
+   "conf": "direct",
+   "rule": "Two two-sided waits plus a pair, one away from ready, is the widest one-away shape. Do not break it to 'tidy' the hand.",
+   "ai": "Detect and protect this shape; it dominates alternatives with equal shanten."
+  },
+  {
+   "id": "sticky_one_away",
+   "conf": "direct",
+   "rule": "Three sets + a pair + floaters improves by attaching to the floaters. Easy to miss; check for it whenever the third set completes.",
+   "ai": "Trigger a shape re-scan on every set completion."
+  },
+  {
+   "id": "triplet_adjacency",
+   "conf": "direct",
+   "rule": "Tiles adjacent to a triplet you already hold are weak: you hold three copies, so fewer remain to connect. Prefer an isolated tile with full live count.",
+   "ai": "Weight floater value by live copies of its connectors, not by apparent connectedness."
+  },
+  {
+   "id": "linked_blocks",
+   "conf": "direct",
+   "rule": "A middle-wait block attached to a completed run carries hidden upgrades to three-sided waits. Prefer it over an unattached block with equal immediate acceptance.",
+   "ai": "Score blocks on upgrade paths, not just current ukeire."
+  },
+  {
+   "id": "four_tile_ranking",
+   "conf": "direct",
+   "rule": "Among four-tile shapes: extended sequence (2345) and bulging sequence (3445) are near-equal; pair-attached (2334-type) is clearly weakest. Break the pair-attached one first.",
+   "ai": "Static lookup table, no search needed."
+  },
+  {
+   "id": "sandwich",
+   "conf": "direct",
+   "rule": "A run-plus-adjacent-tiles cluster yields one set AND the pair from a single block. Recognising it tells you which other block must serve as the pair.",
+   "ai": "Pattern-match before assigning the pair role."
+  },
+  {
+   "id": "stepping_stones",
+   "conf": "direct",
+   "rule": "In a pairless hand, extended-sequence shapes are latent pairs. A tile bridging two blocks works harder than it looks; do not cut it reflexively.",
+   "ai": "Detect pairless state and up-weight bridging tiles."
+  },
+  {
+   "id": "six_blocks_ok",
+   "conf": "direct",
+   "rule": "Holding six blocks is correct when your two weakest are both middle waits. Delaying the choice keeps you open to whichever fills first.",
+   "ai": "Suppress forced five-block reduction when the two weakest blocks are both kanchan."
+  },
+  {
+   "id": "keep_floaters",
+   "conf": "direct",
+   "rule": "Do not lock into a maximum-acceptance double-pair wait if its key tile is likely to be taken. A floater preserving upgrade paths often beats raw ukeire.",
+   "ai": "Discount ukeire by the live count of the tiles it depends on."
+  },
+  {
+   "id": "reset_via_runs",
+   "conf": "direct",
+   "rule": "Continuous-sequence shapes let you break ready and re-form it on a better wait cheaply. Count the improvement tiles before deciding.",
+   "ai": "Evaluate break-and-reform as a real option, not a last resort."
+  },
+  {
+   "id": "isolate_triplet",
+   "conf": "direct",
+   "rule": "To read a complex multi-sided wait, pull the triplet out and re-read the hand twice: once with it as a set, once with one tile of it as the pair.",
+   "ai": "Canonical decomposition step for wait enumeration; prevents miscounted waits."
+  },
+  {
+   "id": "full_hand_over_partial",
+   "conf": "retuned",
+   "rule": "Whole-hand patterns (Half Flush 2 tai, Full Flush 4, All Pungs 2, Ping Hu 1) are stable and shape-compatible. Part-hand patterns (a dragon pung, seat wind, 1 tai each) depend on one block surviving. Prefer whole-hand targets when both are live.",
+   "ai": "Classify tai targets as whole-hand vs part-hand; prefer whole-hand under equal expected tai."
+  },
+  {
+   "id": "flush_decided_early",
+   "conf": "retuned",
+   "rule": "Commit to Half Flush from the starting hand: 10+ tiles of one suit plus honours, and no promising normal route. Deciding late wastes the turns that make it work. Worth 2 tai, and it enables free calling.",
+   "ai": "Evaluate the flush branch once at deal, then again only if the count crosses threshold."
+  },
+  {
+   "id": "project_bad_draws",
+   "conf": "direct",
+   "rule": "Before discarding, project the worst draw you could take next turn. Prefer breaks where a later unlucky draw still fits somewhere.",
+   "ai": "One-ply lookahead over regret, not just expected ukeire."
+  },
+  {
+   "id": "break_mediocre_ready",
+   "conf": "direct",
+   "rule": "A weak ready hand is worth breaking when the alternative opens materially more upgrade paths. Count them; do not eyeball it.",
+   "ai": "Compare improvement-tile-type counts explicitly before keeping a bad tenpai."
+  },
+  {
+   "id": "escape_single_waits",
+   "conf": "direct",
+   "rule": "Breaking an already-complete shape to escape a lone single-tile wait is often correct. A completed pattern that traps you on a tanki is a liability.",
+   "ai": "Penalise tanki terminal states heavily in shape search."
+  },
+  {
+   "id": "weak_start_pivot",
+   "conf": "direct",
+   "rule": "A scattered starting hand with no good block should pivot immediately: toward a flush, or toward defense. Start banking safe tiles early rather than drifting.",
+   "ai": "Classify the starting hand; a 'behind' classification changes the objective, not just the aggression level."
+  }
+ ],
+ "wait_quality": [
+  {
+   "id": "bad_wait_ranking",
+   "conf": "direct",
+   "rule": "Bad waits are not equal. Terminal/honour double-pair waits approach two-sided quality because opponents release those tiles freely. Middle-tile double-pair waits are the worst. Among middle waits, 2-4 and 6-8 (waiting 3 or 7) beat 4-6 (waiting 5).",
+   "ai": "Ship this as a lookup table of wait quality by tile position and wait type. || CONFIRMED. Same ordering appears in the Singapore data via Pong Pair conversion rates and Chow Combinational Value (terminal 16, 2/8 32, middle 48, Honor 0).",
+   "_cross_checked": true
+  },
+  {
+   "id": "edge_waits_stronger",
+   "conf": "direct",
+   "rule": "Between two two-sided waits, the one waiting on tiles nearer the edge wins. Opponents discard edge tiles more readily and hold central tiles longer.",
+   "ai": "Weight wait value by expected opponent release rate per tile position. || CONFIRMED with Singapore numbers. Measured Pong Pair conversion rates: Wind 69%, Dragon 66%, terminal 59%, 2/8 48%, middle 39%. The Riichi intuition and the Singapore simulation agree, and now there is a table.",
+   "_cross_checked": true
+  },
+  {
+   "id": "threes_and_sevens",
+   "conf": "direct",
+   "rule": "3s and 7s are the strongest floaters: they build toward edge-facing two-sided waits. Equal acceptance counts hide this difference.",
+   "ai": "Tie-break floater discards by resulting wait position. || CONSISTENT with Chow Combinational Value: 3-7 all carry the maximum CCV of 48, making them the most connective and also the most dangerous to discard.",
+   "_cross_checked": true
+  },
+  {
+   "id": "count_your_outs",
+   "conf": "direct",
+   "rule": "Track how many of your winning tiles are visible. Once 4 of a two-sided wait's 8 outs are gone, it is roughly a middle wait. That is the moment to call rather than hold out.",
+   "ai": "Recompute live outs every discard; drive the call decision off it."
+  },
+  {
+   "id": "narrow_can_beat_wide",
+   "conf": "retuned",
+   "rule": "With a minimum-tai requirement, a wider wait can be worse: winning tiles that leave you below minimum tai are dead tiles. Prefer the narrower wait where every out actually scores.",
+   "ai": "Filter the wait set by 'does this tile produce a legal win at min_tai' BEFORE comparing widths. Direct consequence of Singapore's minimum. || CONFIRMED with a concrete mechanism: All-Chow requires two or more unique winning tiles to be Calling, which is exactly why a Two-Sided Pair is worth 3x a One-Sided Pair in Rule 5313.",
+   "_cross_checked": true
+  }
+ ],
+ "calling": [
+  {
+   "id": "never_break_your_pair",
+   "conf": "direct",
+   "rule": "A call that destroys your only pair has not advanced the hand, it has traded a real problem for a worse one. Passing and drawing naturally is often better.",
+   "ai": "Hard veto on pair-breaking calls unless the call completes the hand."
+  },
+  {
+   "id": "speed_value_safety",
+   "conf": "retuned",
+   "rule": "Judge every call on three axes: Speed (does it reach or approach ready), Value (does it secure tai worth having), Safety (do you retain defensive tiles). Two of three, call. Zero, pass. One, let hand shape decide.",
+   "ai": "Primary call-decision gate. In Singapore, Value is easier to satisfy than in Riichi because dragons and seat winds are 1 tai each and there is no closed-hand bonus to forfeit."
+  },
+  {
+   "id": "third_call_test",
+   "conf": "direct",
+   "rule": "Before the third call, ask whether the hand can actually fight: three melds leave four tiles in hand and effectively no defense. Require a good wait or real value. Symmetrically, an opponent who has called three times early is a threat to respect.",
+   "ai": "Gate the third call on wait quality OR tai threshold. Use opponent meld count as a primary threat signal."
+  },
+  {
+   "id": "pon_over_chii",
+   "conf": "retuned",
+   "rule": "Default to pon over chii: ponning leaves the run intact in hand, which preserves both flexibility and safe tiles. Take chii instead when the pair is the tile carrying your tai.",
+   "ai": "Default preference with an explicit value-tile exception."
+  },
+  {
+   "id": "call_to_upgrade",
+   "conf": "direct",
+   "rule": "Being ready is not a reason to stop calling. Calls that reshape a middle wait into a three-sided wait are frequently available and routinely missed.",
+   "ai": "Keep evaluating calls in the ready state, scoring on wait improvement rather than shanten."
+  },
+  {
+   "id": "call_to_skip_draw",
+   "conf": "direct",
+   "rule": "Calling consumes your own draw. When the wall is dangerous and you want to preserve a ready hand without touching a live tile, a call that keeps your shape intact is a defensive move.",
+   "ai": "Expose 'call to skip draw' as an explicit defensive action, not only an offensive one. || CONFIRMED and strengthened. Calls also skip the players between you and the discarder, a tempo gain worth real chips given players average only 11 turns per game.",
+   "_cross_checked": true
+  },
+  {
+   "id": "all_pungs_needs_value",
+   "conf": "retuned",
+   "rule": "All Pungs (2 tai) has two structural costs: calling shortens your hand and guts your defense, and the final wait is always a single-tile or double-pair wait. Only commit when it comes with additional tai (dragons, seat wind, flush potential, animals).",
+   "ai": "Require projected tai >= 3 before steering into All Pungs. || CONFIRMED and improved. All-Pong is 2 Fan and loses 4.4 chips/game as a pure strategy. The fix is the Hybrid strategy - keep Chicken alive as a fallback, worth +3.4 chips/game. See hybrid_strategy.",
+   "_cross_checked": true
+  },
+  {
+   "id": "middle_tile_hands_undefended",
+   "conf": "direct",
+   "rule": "A hand made only of middle tiles holds no safe tiles. When someone commits, you can neither push confidently nor fold. Factor this cost in at call time, not when the attack arrives.",
+   "ai": "Score defensive reserve (count of honours/terminals held) as a call cost. || CONFIRMED with a Singapore-specific twist: an All-Pong player's remaining Pong Pairs late in the game are usually Fresh Tiles, and discarding a Fresh Tile near the wall's end can trigger Pay All liability. See all_pong_breakdown.end_game_fresh_tile_warning.",
+   "_cross_checked": true
+  },
+  {
+   "id": "take_ready_under_pressure",
+   "conf": "retuned",
+   "rule": "When an opponent is visibly committed, take ready immediately even if cheap. A minimum-tai good-shape ready beats a big hand still one away. Being not-ready against a ready opponent is the losing side of the trade.",
+   "ai": "Threat detection flips the objective from value to speed. Singapore signal is meld pattern and discard tempo, not a riichi declaration."
+  },
+  {
+   "id": "rebuild_waits",
+   "conf": "direct",
+   "rule": "A dead double-pair wait can often be rebuilt via calls into a live wait rather than abandoned. Learn the recovery patterns.",
+   "ai": "Search call sequences that transform a dead wait, before deciding to fold."
+  },
+  {
+   "id": "call_necessity",
+   "conf": "direct",
+   "rule": "The only question that matters is whether this specific call helps this specific hand. Call frequency is not a target in either direction.",
+   "ai": "No global call-rate tuning parameter. Decide per hand state."
+  },
+  {
+   "id": "widen_when_folding",
+   "conf": "retuned",
+   "rule": "When every opponent is clearly folding, winning by discard becomes unlikely. Widen the wait to maximise Self-Draw chances. CORRECTION: this is NOT free. Singapore does have a locked-discard rule - you may not claim a tile matching your own last discard, nor any tile discarded by anyone after your last discard. It is rolling rather than permanent (it clears when you discard again), so the cost is smaller than Riichi's furiten but it is not zero.",
+   "ai": "Implement the rolling prohibition as real state; do not treat Singapore as furiten-free. Corrected against the Singapore rulebook - an earlier version of this entry asserted no such rule exists.",
+   "_corrected": true
+  }
+ ],
+ "push_fold": [
+  {
+   "id": "binary_commitment",
+   "conf": "direct",
+   "rule": "Push or fold, and commit. Trying to develop a hand while discarding only safe tiles is the worst of both: you neither defend properly nor win. Half-measures are how points leak.",
+   "ai": "Model as a mode flag with an explicit switch cost. Do not blend the two objectives."
+  },
+  {
+   "id": "push_early_fold_late",
+   "conf": "direct",
+   "rule": "Early, an unsafe tile is roughly a 1-in-18 risk against a two-sided wait, and you still have turns to win; push. Late, the safe lines are used up, each remaining tile is far riskier, and your win chance is low; fold. Turn count is the deciding variable.",
+   "ai": "Make deal-in probability a function of turn number and lines already cleared, not a constant."
+  },
+  {
+   "id": "own_hand_first",
+   "conf": "direct",
+   "rule": "When threatened, the first question is 'push or fold', not 'what are they waiting on'. Your own hand value decides; their exact wait is a refinement.",
+   "ai": "Order the decision: evaluate own hand, then threat magnitude, then tile selection."
+  },
+  {
+   "id": "not_the_third_fighter",
+   "conf": "direct",
+   "rule": "With a borderline hand, ask whether anyone else is already pushing. A third fighter takes high risk for low return. If both opponents are folding, your push is far better than it looks.",
+   "ai": "Count active pushers; it should shift the push threshold substantially in both directions."
+  },
+  {
+   "id": "one_turn_is_not_the_fight",
+   "conf": "direct",
+   "rule": "Do not trade a wide wait for a narrow one to buy one turn of safety. The fight runs many turns and eight outs against four compounds over all of them.",
+   "ai": "Evaluate push/fold over remaining turns, not the current discard in isolation."
+  },
+  {
+   "id": "risk_early_with_value",
+   "conf": "direct",
+   "rule": "Holding a big hand you cannot fold, cut the dangerous tile now. Opponents are less likely to be ready early, and you will have to release it eventually anyway.",
+   "ai": "When fold is ruled out, schedule dangerous discards as early as possible."
+  },
+  {
+   "id": "two_set_gap",
+   "conf": "direct",
+   "rule": "If an opponent has completed three sets and you have one, you are far enough behind that pushing wins roughly 1 time in 10 while dealing in around 3. Fold. The same applies at two sets against none.",
+   "ai": "Cheap, powerful threat heuristic: compare completed-set counts. Especially valuable in Singapore, where melds are visible constantly. || NOW QUANTIFIED for Singapore. An opponent with three Exposed Sets at 40 Player Turns is ~83% likely to be Calling. Exposed-set count is the primary threat signal here too.",
+   "_cross_checked": true
+  },
+  {
+   "id": "folding_always_loses_slowly",
+   "conf": "retuned",
+   "rule": "Folding every hand still bleeds points to opponents' self-draws. Prefer pushing a genuine ready hand. NOTE: weaker here than in Riichi, since most Singapore tables have no penalty for ending not-ready. Verify against your table before tuning.",
+   "ai": "Bounded by table rules. Set the fold-cost parameter from config, not from Riichi defaults. || WEAKENED as flagged. The Singapore ruleset has no penalty for ending a hand not ready, so the Riichi incentive to force a ready hand does not apply. Draw rate is 8% at Minimum Fan 1, 14% at Minimum Fan 2.",
+   "_cross_checked": true
+  },
+  {
+   "id": "no_phantom_hands",
+   "conf": "direct",
+   "rule": "Do not steer toward an unconfirmed pattern. Count the exact tiles that would confirm it; two tile types out of the live wall is a poor reason to give up a confirmed path.",
+   "ai": "Require enumerated upgrade counts before pattern-chasing."
+  },
+  {
+   "id": "push_only_if_it_matters",
+   "conf": "retuned",
+   "rule": "Enumerate outcomes for push and for fold before committing. Singapore's tai cap means value beyond the cap is wasted entirely, so a bigger hand is often worth nothing extra. Re-derive this for money-per-hand play rather than importing placement logic.",
+   "ai": "Clamp hand value at max_tai_cap when computing push EV. This is the Singapore-specific correction. || CONFIRMED. Fan Limit is typically 5 and is exceeded 15% of the time on Half-Color wins alone - value above the cap is genuinely discarded.",
+   "_cross_checked": true
+  }
+ ],
+ "reading": [
+  {
+   "id": "reads_need_basis",
+   "conf": "direct",
+   "rule": "A read is an inference from visible information: discards, calls, melds, tile counts. Anything based on streaks, momentum or 'flow' is not a read.",
+   "ai": "Core design constraint. Every AI inference must cite the observation that produced it, or it does not run."
+  },
+  {
+   "id": "wall_reading",
+   "conf": "direct",
+   "rule": "An early discard implies its neighbours are absent from that player's hand, which means those neighbours are more likely still in the wall. Use this both to pick which blocks to build and to bank safe tiles.",
+   "ai": "Maintain a per-opponent inferred-absence map from early discards."
+  },
+  {
+   "id": "two_discard_piles",
+   "conf": "direct",
+   "rule": "An open hand has a second, invisible discard pile: everything the player declined to call. If a tile that would obviously complete their visible shape passed uncalled, they do not have that shape. Watch the player who feeds them.",
+   "ai": "Log every uncalled tile per opponent. In Singapore this is the single richest read available, because hands open early and often."
+  },
+  {
+   "id": "value_from_melds",
+   "conf": "retuned",
+   "rule": "Estimate opponent value from their melds before worrying about their wait. A dragon or seat-wind pung is 1 tai; a flush pattern is 2 or 4; visible animals and seat flowers each add 1. Distinguish a cheap hand you can afford to feed from one that ends the round.",
+   "ai": "Run a per-opponent tai estimator off exposed melds and bonus tiles. Fully re-derived for the tai table; the Riichi arithmetic does not carry over."
+  },
+  {
+   "id": "flush_traffic_light",
+   "conf": "retuned",
+   "rule": "Read a developing flush in three stages. GREEN: their discards are ordinary off-suit tiles, they are not close, so push your weak shapes out now while it is cheap. YELLOW: they begin shedding honours including unplayed ones, they are near ready, continue only if your own hand is genuinely big. RED: their discards are dominated by the target suit, assume ready, stop feeding that suit entirely.",
+   "ai": "Three-state classifier per opponent. High value in Singapore where Half and Full Flush are 2 and 4 tai. || NOW QUANTIFIED. See defense.calling_detection.half_color_tell: one own-suit discard puts a Half-Color player at 25-73% Calling depending on Exposed Sets; two puts them at 44-86%. 64% of Half-Color winners discard their own suit before winning. Use the measured table, not the three-colour approximation.",
+   "_cross_checked": true
+  },
+  {
+   "id": "fear_the_chaser",
+   "conf": "direct",
+   "rule": "A player who pushes into a visible threat is telling you their hand is strong: nobody takes that risk with a weak one. Fear the second committer more than the first.",
+   "ai": "Weight threat by whether commitment happened before or after another player's commitment."
+  },
+  {
+   "id": "pair_discards_rule_out",
+   "conf": "direct",
+   "rule": "When a player sheds a pair from hand, the tile just outside it becomes near-safe: every wait pattern that would make it dangerous requires an implausible discard order. Exception: a 2 or 8 pair drop leaves a terminal double-pair wait live.",
+   "ai": "Deduction rule with an explicit terminal-tile carve-out."
+  },
+  {
+   "id": "discard_provenance",
+   "conf": "direct",
+   "rule": "Discarding the tile just drawn says only 'not useful'. Discarding from hand says 'this was useful and no longer is', which is far more informative. Default to draw-discards; use a deliberate hand-discard to reset what opponents believe is safe.",
+   "ai": "Track draw-vs-hand discard per tile as an observation channel. Works identically in any variant."
+  },
+  {
+   "id": "concealed_kong_signal",
+   "conf": "retuned",
+   "rule": "A concealed kong means a developed, committed hand and pays out immediately. Treat the declarer as a live threat and start banking safe tiles. Do not import Riichi's kan-dora fears; Singapore's kong economics are different and mostly favour the declarer.",
+   "ai": "Threat flag, not a value-inflation flag."
+  },
+  {
+   "id": "discarded_value_pair",
+   "conf": "retuned",
+   "rule": "A player who sheds a pair of dragons or their seat wind has given up 1 tai on purpose. That means the rest of the hand is strong enough not to need it.",
+   "ai": "Raise the value estimate on that opponent, and mark adjacent honours as relatively safe."
+  },
+  {
+   "id": "second_copy_call",
+   "conf": "retuned",
+   "rule": "Watch WHICH copy of a value tile gets called. If the first dragon or wind is discarded and nobody claims it, then the second copy comes out and a player pons it, read that hand as cheap but assembled. A player holding real value (flush shape, a second dragon pung, animals, seat flowers) would have grabbed the first copy even with an awkward shape. A player who is both cheap and badly shaped would have passed the second too and kept it as a safe tile. Calling only the second copy means neither: low tai, but likely ready or a good one-away with wide waits.",
+   "ai": "Track call-vs-pass per copy index for every honour, not just the fact of a call. Yields a value estimate that meld count alone cannot: pair it with two_set_gap, which measures tempo but says nothing about how much the hand is worth. Fires often in Singapore because dragons and seat winds are 1 tai each and hands open early."
+  }
+ ],
+ "safety": [
+  {
+   "id": "count_wait_types",
+   "conf": "direct",
+   "rule": "Rank danger by how many wait patterns a tile can lose to. A terminal can only be hit by a two-sided, double-pair or single-tile wait: three patterns. A middle tile adds middle waits and a second two-sided line: five. Fewer patterns, lower risk.",
+   "ai": "Primary danger score. Pure combinatorics, no tuning required. || Singapore analogue is Chow Combinational Value plus the Pong tables. Use CCV for Chow risk (right-hand opponent only) and defense.preventing_pongs for Pong risk (all opponents).",
+   "_cross_checked": true
+  },
+  {
+   "id": "terminal_triplet_release",
+   "conf": "direct",
+   "rule": "With no safe tile, discard from a terminal triplet you hold. It cannot be hit by a middle or edge wait, and holding all three copies means it cannot be hit by a double-pair wait either. It also buys you three turns instead of one.",
+   "ai": "High-priority fallback in the fold routine."
+  },
+  {
+   "id": "last_chance_timing",
+   "conf": "direct",
+   "rule": "When three copies are visible, the fourth is only dangerous if that specific opponent holds it. Early, it is probably still in the wall and safe. Late, the odds it is in a hand rise sharply. Same tile, opposite verdicts.",
+   "ai": "Make last-chance safety a function of remaining wall size."
+  },
+  {
+   "id": "locate_the_fourth",
+   "conf": "direct",
+   "rule": "Among equally-safe-looking tiles, ask where the missing copy most plausibly sits. If the threatening player discarded one early and nobody has released another since, assume they hold it.",
+   "ai": "Per-tile location posterior across opponents and wall."
+  },
+  {
+   "id": "no_chance_tiles",
+   "conf": "direct",
+   "rule": "When all four copies of a tile are visible, its neighbours can no longer form the waits that depended on it and become materially safer.",
+   "ai": "Recompute the no-chance set on every discard; it is cheap and it prunes the danger table hard."
+  },
+  {
+   "id": "withhold_safe_tiles",
+   "conf": "direct",
+   "rule": "Holding the fourth copy of an already-proven-safe tile, do not release it casually. Discarding it hands every opponent a safe tile and lets the whole table fold comfortably. Keep it; make them find their own outs.",
+   "ai": "Information-denial term in discard scoring. Cheap to implement, genuinely strong."
+  },
+  {
+   "id": "relative_not_exact",
+   "conf": "direct",
+   "rule": "Defense is ranking the tiles in your hand by relative safety and releasing the safest, not identifying the winning tile exactly. Attempting pinpoint reads produces confident wrong answers.",
+   "ai": "Output a ranked ordering, never a single 'their wait is X' commitment."
+  },
+  {
+   "id": "check_your_spares",
+   "conf": "direct",
+   "rule": "Compare the safety of your spare tiles before discarding out of habit. An honour is not automatically safer than a number tile once copies are accounted for.",
+   "ai": "Never allow a habitual-discard shortcut to bypass the danger scorer."
+  },
+  {
+   "id": "live_honour_pairs",
+   "conf": "direct",
+   "rule": "Honours are generally safer than numbers, and discarding from a live honour pair is efficient: if the first passes, the second buys another turn.",
+   "ai": "Prefer paired honours in the fold ordering."
+  },
+  {
+   "id": "squeeze_the_caller",
+   "conf": "retuned",
+   "rule": "To slow a caller, feed tiles they cannot use. Play moves counterclockwise, so only the opponent to your RIGHT can Chow your discard - target them. Prefer: tiles they have already discarded (strongest signal); tiles they declined to Chow, though that safety decays measurably each turn; Honor tiles, which have zero Chow potential by construction; and terminals over middle tiles. Against a Half-Color player, anything outside their suit.",
+   "ai": "Direction CONFIRMED: right-hand opponent. Use Chow Combinational Value as the ranking function - see strategy.dataanalytic.json defense.preventing_chows for the measured Chow rates by CCV and turn."
+  },
+  {
+   "id": "last_tile_shift",
+   "conf": "retuned",
+   "rule": "A call late in the hand changes who receives the final draw. Use it to deny a threatening player their last chance, or to force a struggling player to take a live tile. Singapore scores winning on the last tile at 1 tai, so denial has direct value.",
+   "ai": "Endgame-only call motive, evaluated separately from hand advancement."
+  },
+  {
+   "id": "wind_discard_order",
+   "conf": "direct",
+   "rule": "Among winds you do not need, release first the one belonging to the player immediately before you in turn order. If they pon it, the two players between you are skipped and you gain relative draws. A pon by the player after you gains you nothing.",
+   "ai": "Direction CONFIRMED: play proceeds counterclockwise (to each player's right), so the target is the opponent immediately before you. Note Honors cannot be Chowed at all, so a wind discard is only ever a Pong risk - see defense.preventing_pongs for measured Pong rates by turn."
+  }
+ ],
+ "meta": [
+  {
+   "id": "scoring_is_the_compass",
+   "conf": "retuned",
+   "rule": "Know the tai table cold. Nearly every push, fold and call decision resolves into 'what is this hand worth against what is theirs', and you cannot answer that without the numbers. In Singapore this includes the cap: tai above it is worth nothing.",
+   "ai": "Scorer must be callable mid-hand for hypothetical states, not only at win time. || Now backed by real tables. See data/scoring.singapore.json for Fan values and the chip payout curve (2^Fan, doubled for the discarder or on Self-Draw).",
+   "_cross_checked": true
+  },
+  {
+   "id": "play_normally_when_cold",
+   "conf": "direct",
+   "rule": "When luck turns, keep playing your normal game. Deliberately playing 'differently because it is not working' is how a bad run becomes a bad session.",
+   "ai": "No streak-based state anywhere in the AI. This is also the correct human advice."
+  },
+  {
+   "id": "do_not_dwell",
+   "conf": "direct",
+   "rule": "Tracking grievances consumes the attention you need for tile counting, discard reading and threat assessment. Every player is unlucky about equally often; you only observe your own.",
+   "ai": "Human-facing. Mirrored in the AI by keeping state strictly observational."
+  },
+  {
+   "id": "process_goals",
+   "conf": "direct",
+   "rule": "Set goals you control: fold cleanly when threatened, take the wider wait, count outs every turn. Outcome goals produce tilt because the outcome is not yours to decide.",
+   "ai": "Also the right frame for evaluating the AI: measure decision quality, not win rate."
+  },
+  {
+   "id": "behind_is_not_a_reason",
+   "conf": "direct",
+   "rule": "Pushing because you are behind means accepting worse odds for a smaller reward. If the hand were worth pushing you would push it while even.",
+   "ai": "Score must not feed back into the push threshold except through genuine end-conditions."
+  },
+  {
+   "id": "who_may_win",
+   "conf": "weak",
+   "rule": "You win roughly one hand in four, so how you play the other three decides your session. When you cannot win, some opponents winning hurts you far less than others; steer toward the cheap outcome. Re-derive for money-per-hand play: the Riichi placement logic does not carry over.",
+   "ai": "Needs a Singapore-specific payoff model before this is worth implementing."
+  },
+  {
+   "id": "favourable_non_wins",
+   "conf": "direct",
+   "rule": "Before committing to a hopeless push, ask which non-winning outcomes actually suit you, and whether you can nudge toward one. Not winning and not losing much is a real result.",
+   "ai": "Fold routine should optimise over outcome distribution, not merely minimise immediate deal-in."
+  },
+  {
+   "id": "spread_not_rate",
+   "conf": "retuned",
+   "rule": "Do not target a deal-in rate. A player who never deals in but rarely wins loses to one who does both freely. What matters is the spread between how often you win and how often you feed. Track the gap, never either number alone, and never let a recent run of either steer an in-the-moment decision: hand value decides that, not your season statistics.",
+   "ai": "Correct evaluation metric for the AI too: score win-minus-deal-in, not deal-in alone, or the optimiser converges on a bot that folds everything. Re-derive the healthy spread for Singapore before using any threshold. The source's numbers assume a not-ready penalty, riichi sticks and placement scoring, none of which apply to money-per-hand play."
+  }
+ ]
+}

@@ -1,0 +1,1479 @@
+{
+  "variant": "singapore",
+  "total": 148,
+  "counts": {
+    "suit": 108,
+    "honour": 28,
+    "bonus": 12
+  },
+  "tiles": [
+    {
+      "id": 0,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 1,
+      "name": "1 Million",
+      "glyph": "1萬",
+      "terminal": true
+    },
+    {
+      "id": 1,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 1,
+      "name": "1 Million",
+      "glyph": "1萬",
+      "terminal": true
+    },
+    {
+      "id": 2,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 1,
+      "name": "1 Million",
+      "glyph": "1萬",
+      "terminal": true
+    },
+    {
+      "id": 3,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 1,
+      "name": "1 Million",
+      "glyph": "1萬",
+      "terminal": true
+    },
+    {
+      "id": 4,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 2,
+      "name": "2 Million",
+      "glyph": "2萬",
+      "terminal": false
+    },
+    {
+      "id": 5,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 2,
+      "name": "2 Million",
+      "glyph": "2萬",
+      "terminal": false
+    },
+    {
+      "id": 6,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 2,
+      "name": "2 Million",
+      "glyph": "2萬",
+      "terminal": false
+    },
+    {
+      "id": 7,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 2,
+      "name": "2 Million",
+      "glyph": "2萬",
+      "terminal": false
+    },
+    {
+      "id": 8,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 3,
+      "name": "3 Million",
+      "glyph": "3萬",
+      "terminal": false
+    },
+    {
+      "id": 9,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 3,
+      "name": "3 Million",
+      "glyph": "3萬",
+      "terminal": false
+    },
+    {
+      "id": 10,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 3,
+      "name": "3 Million",
+      "glyph": "3萬",
+      "terminal": false
+    },
+    {
+      "id": 11,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 3,
+      "name": "3 Million",
+      "glyph": "3萬",
+      "terminal": false
+    },
+    {
+      "id": 12,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 4,
+      "name": "4 Million",
+      "glyph": "4萬",
+      "terminal": false
+    },
+    {
+      "id": 13,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 4,
+      "name": "4 Million",
+      "glyph": "4萬",
+      "terminal": false
+    },
+    {
+      "id": 14,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 4,
+      "name": "4 Million",
+      "glyph": "4萬",
+      "terminal": false
+    },
+    {
+      "id": 15,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 4,
+      "name": "4 Million",
+      "glyph": "4萬",
+      "terminal": false
+    },
+    {
+      "id": 16,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 5,
+      "name": "5 Million",
+      "glyph": "5萬",
+      "terminal": false
+    },
+    {
+      "id": 17,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 5,
+      "name": "5 Million",
+      "glyph": "5萬",
+      "terminal": false
+    },
+    {
+      "id": 18,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 5,
+      "name": "5 Million",
+      "glyph": "5萬",
+      "terminal": false
+    },
+    {
+      "id": 19,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 5,
+      "name": "5 Million",
+      "glyph": "5萬",
+      "terminal": false
+    },
+    {
+      "id": 20,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 6,
+      "name": "6 Million",
+      "glyph": "6萬",
+      "terminal": false
+    },
+    {
+      "id": 21,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 6,
+      "name": "6 Million",
+      "glyph": "6萬",
+      "terminal": false
+    },
+    {
+      "id": 22,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 6,
+      "name": "6 Million",
+      "glyph": "6萬",
+      "terminal": false
+    },
+    {
+      "id": 23,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 6,
+      "name": "6 Million",
+      "glyph": "6萬",
+      "terminal": false
+    },
+    {
+      "id": 24,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 7,
+      "name": "7 Million",
+      "glyph": "7萬",
+      "terminal": false
+    },
+    {
+      "id": 25,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 7,
+      "name": "7 Million",
+      "glyph": "7萬",
+      "terminal": false
+    },
+    {
+      "id": 26,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 7,
+      "name": "7 Million",
+      "glyph": "7萬",
+      "terminal": false
+    },
+    {
+      "id": 27,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 7,
+      "name": "7 Million",
+      "glyph": "7萬",
+      "terminal": false
+    },
+    {
+      "id": 28,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 8,
+      "name": "8 Million",
+      "glyph": "8萬",
+      "terminal": false
+    },
+    {
+      "id": 29,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 8,
+      "name": "8 Million",
+      "glyph": "8萬",
+      "terminal": false
+    },
+    {
+      "id": 30,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 8,
+      "name": "8 Million",
+      "glyph": "8萬",
+      "terminal": false
+    },
+    {
+      "id": 31,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 8,
+      "name": "8 Million",
+      "glyph": "8萬",
+      "terminal": false
+    },
+    {
+      "id": 32,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 9,
+      "name": "9 Million",
+      "glyph": "9萬",
+      "terminal": true
+    },
+    {
+      "id": 33,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 9,
+      "name": "9 Million",
+      "glyph": "9萬",
+      "terminal": true
+    },
+    {
+      "id": 34,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 9,
+      "name": "9 Million",
+      "glyph": "9萬",
+      "terminal": true
+    },
+    {
+      "id": 35,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "wan",
+      "rank": 9,
+      "name": "9 Million",
+      "glyph": "9萬",
+      "terminal": true
+    },
+    {
+      "id": 36,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 1,
+      "name": "1 Circle",
+      "glyph": "1筒",
+      "terminal": true
+    },
+    {
+      "id": 37,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 1,
+      "name": "1 Circle",
+      "glyph": "1筒",
+      "terminal": true
+    },
+    {
+      "id": 38,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 1,
+      "name": "1 Circle",
+      "glyph": "1筒",
+      "terminal": true
+    },
+    {
+      "id": 39,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 1,
+      "name": "1 Circle",
+      "glyph": "1筒",
+      "terminal": true
+    },
+    {
+      "id": 40,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 2,
+      "name": "2 Circle",
+      "glyph": "2筒",
+      "terminal": false
+    },
+    {
+      "id": 41,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 2,
+      "name": "2 Circle",
+      "glyph": "2筒",
+      "terminal": false
+    },
+    {
+      "id": 42,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 2,
+      "name": "2 Circle",
+      "glyph": "2筒",
+      "terminal": false
+    },
+    {
+      "id": 43,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 2,
+      "name": "2 Circle",
+      "glyph": "2筒",
+      "terminal": false
+    },
+    {
+      "id": 44,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 3,
+      "name": "3 Circle",
+      "glyph": "3筒",
+      "terminal": false
+    },
+    {
+      "id": 45,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 3,
+      "name": "3 Circle",
+      "glyph": "3筒",
+      "terminal": false
+    },
+    {
+      "id": 46,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 3,
+      "name": "3 Circle",
+      "glyph": "3筒",
+      "terminal": false
+    },
+    {
+      "id": 47,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 3,
+      "name": "3 Circle",
+      "glyph": "3筒",
+      "terminal": false
+    },
+    {
+      "id": 48,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 4,
+      "name": "4 Circle",
+      "glyph": "4筒",
+      "terminal": false
+    },
+    {
+      "id": 49,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 4,
+      "name": "4 Circle",
+      "glyph": "4筒",
+      "terminal": false
+    },
+    {
+      "id": 50,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 4,
+      "name": "4 Circle",
+      "glyph": "4筒",
+      "terminal": false
+    },
+    {
+      "id": 51,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 4,
+      "name": "4 Circle",
+      "glyph": "4筒",
+      "terminal": false
+    },
+    {
+      "id": 52,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 5,
+      "name": "5 Circle",
+      "glyph": "5筒",
+      "terminal": false
+    },
+    {
+      "id": 53,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 5,
+      "name": "5 Circle",
+      "glyph": "5筒",
+      "terminal": false
+    },
+    {
+      "id": 54,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 5,
+      "name": "5 Circle",
+      "glyph": "5筒",
+      "terminal": false
+    },
+    {
+      "id": 55,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 5,
+      "name": "5 Circle",
+      "glyph": "5筒",
+      "terminal": false
+    },
+    {
+      "id": 56,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 6,
+      "name": "6 Circle",
+      "glyph": "6筒",
+      "terminal": false
+    },
+    {
+      "id": 57,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 6,
+      "name": "6 Circle",
+      "glyph": "6筒",
+      "terminal": false
+    },
+    {
+      "id": 58,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 6,
+      "name": "6 Circle",
+      "glyph": "6筒",
+      "terminal": false
+    },
+    {
+      "id": 59,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 6,
+      "name": "6 Circle",
+      "glyph": "6筒",
+      "terminal": false
+    },
+    {
+      "id": 60,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 7,
+      "name": "7 Circle",
+      "glyph": "7筒",
+      "terminal": false
+    },
+    {
+      "id": 61,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 7,
+      "name": "7 Circle",
+      "glyph": "7筒",
+      "terminal": false
+    },
+    {
+      "id": 62,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 7,
+      "name": "7 Circle",
+      "glyph": "7筒",
+      "terminal": false
+    },
+    {
+      "id": 63,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 7,
+      "name": "7 Circle",
+      "glyph": "7筒",
+      "terminal": false
+    },
+    {
+      "id": 64,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 8,
+      "name": "8 Circle",
+      "glyph": "8筒",
+      "terminal": false
+    },
+    {
+      "id": 65,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 8,
+      "name": "8 Circle",
+      "glyph": "8筒",
+      "terminal": false
+    },
+    {
+      "id": 66,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 8,
+      "name": "8 Circle",
+      "glyph": "8筒",
+      "terminal": false
+    },
+    {
+      "id": 67,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 8,
+      "name": "8 Circle",
+      "glyph": "8筒",
+      "terminal": false
+    },
+    {
+      "id": 68,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 9,
+      "name": "9 Circle",
+      "glyph": "9筒",
+      "terminal": true
+    },
+    {
+      "id": 69,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 9,
+      "name": "9 Circle",
+      "glyph": "9筒",
+      "terminal": true
+    },
+    {
+      "id": 70,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 9,
+      "name": "9 Circle",
+      "glyph": "9筒",
+      "terminal": true
+    },
+    {
+      "id": 71,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "tong",
+      "rank": 9,
+      "name": "9 Circle",
+      "glyph": "9筒",
+      "terminal": true
+    },
+    {
+      "id": 72,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 1,
+      "name": "1 Bamboo",
+      "glyph": "1索",
+      "terminal": true
+    },
+    {
+      "id": 73,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 1,
+      "name": "1 Bamboo",
+      "glyph": "1索",
+      "terminal": true
+    },
+    {
+      "id": 74,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 1,
+      "name": "1 Bamboo",
+      "glyph": "1索",
+      "terminal": true
+    },
+    {
+      "id": 75,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 1,
+      "name": "1 Bamboo",
+      "glyph": "1索",
+      "terminal": true
+    },
+    {
+      "id": 76,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 2,
+      "name": "2 Bamboo",
+      "glyph": "2索",
+      "terminal": false
+    },
+    {
+      "id": 77,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 2,
+      "name": "2 Bamboo",
+      "glyph": "2索",
+      "terminal": false
+    },
+    {
+      "id": 78,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 2,
+      "name": "2 Bamboo",
+      "glyph": "2索",
+      "terminal": false
+    },
+    {
+      "id": 79,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 2,
+      "name": "2 Bamboo",
+      "glyph": "2索",
+      "terminal": false
+    },
+    {
+      "id": 80,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 3,
+      "name": "3 Bamboo",
+      "glyph": "3索",
+      "terminal": false
+    },
+    {
+      "id": 81,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 3,
+      "name": "3 Bamboo",
+      "glyph": "3索",
+      "terminal": false
+    },
+    {
+      "id": 82,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 3,
+      "name": "3 Bamboo",
+      "glyph": "3索",
+      "terminal": false
+    },
+    {
+      "id": 83,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 3,
+      "name": "3 Bamboo",
+      "glyph": "3索",
+      "terminal": false
+    },
+    {
+      "id": 84,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 4,
+      "name": "4 Bamboo",
+      "glyph": "4索",
+      "terminal": false
+    },
+    {
+      "id": 85,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 4,
+      "name": "4 Bamboo",
+      "glyph": "4索",
+      "terminal": false
+    },
+    {
+      "id": 86,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 4,
+      "name": "4 Bamboo",
+      "glyph": "4索",
+      "terminal": false
+    },
+    {
+      "id": 87,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 4,
+      "name": "4 Bamboo",
+      "glyph": "4索",
+      "terminal": false
+    },
+    {
+      "id": 88,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 5,
+      "name": "5 Bamboo",
+      "glyph": "5索",
+      "terminal": false
+    },
+    {
+      "id": 89,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 5,
+      "name": "5 Bamboo",
+      "glyph": "5索",
+      "terminal": false
+    },
+    {
+      "id": 90,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 5,
+      "name": "5 Bamboo",
+      "glyph": "5索",
+      "terminal": false
+    },
+    {
+      "id": 91,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 5,
+      "name": "5 Bamboo",
+      "glyph": "5索",
+      "terminal": false
+    },
+    {
+      "id": 92,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 6,
+      "name": "6 Bamboo",
+      "glyph": "6索",
+      "terminal": false
+    },
+    {
+      "id": 93,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 6,
+      "name": "6 Bamboo",
+      "glyph": "6索",
+      "terminal": false
+    },
+    {
+      "id": 94,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 6,
+      "name": "6 Bamboo",
+      "glyph": "6索",
+      "terminal": false
+    },
+    {
+      "id": 95,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 6,
+      "name": "6 Bamboo",
+      "glyph": "6索",
+      "terminal": false
+    },
+    {
+      "id": 96,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 7,
+      "name": "7 Bamboo",
+      "glyph": "7索",
+      "terminal": false
+    },
+    {
+      "id": 97,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 7,
+      "name": "7 Bamboo",
+      "glyph": "7索",
+      "terminal": false
+    },
+    {
+      "id": 98,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 7,
+      "name": "7 Bamboo",
+      "glyph": "7索",
+      "terminal": false
+    },
+    {
+      "id": 99,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 7,
+      "name": "7 Bamboo",
+      "glyph": "7索",
+      "terminal": false
+    },
+    {
+      "id": 100,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 8,
+      "name": "8 Bamboo",
+      "glyph": "8索",
+      "terminal": false
+    },
+    {
+      "id": 101,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 8,
+      "name": "8 Bamboo",
+      "glyph": "8索",
+      "terminal": false
+    },
+    {
+      "id": 102,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 8,
+      "name": "8 Bamboo",
+      "glyph": "8索",
+      "terminal": false
+    },
+    {
+      "id": 103,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 8,
+      "name": "8 Bamboo",
+      "glyph": "8索",
+      "terminal": false
+    },
+    {
+      "id": 104,
+      "copy": 0,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 9,
+      "name": "9 Bamboo",
+      "glyph": "9索",
+      "terminal": true
+    },
+    {
+      "id": 105,
+      "copy": 1,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 9,
+      "name": "9 Bamboo",
+      "glyph": "9索",
+      "terminal": true
+    },
+    {
+      "id": 106,
+      "copy": 2,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 9,
+      "name": "9 Bamboo",
+      "glyph": "9索",
+      "terminal": true
+    },
+    {
+      "id": 107,
+      "copy": 3,
+      "kind": "suit",
+      "suit": "sok",
+      "rank": 9,
+      "name": "9 Bamboo",
+      "glyph": "9索",
+      "terminal": true
+    },
+    {
+      "id": 108,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "east",
+      "seat_index": 0,
+      "name": "East Wind",
+      "glyph": "東"
+    },
+    {
+      "id": 109,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "east",
+      "seat_index": 0,
+      "name": "East Wind",
+      "glyph": "東"
+    },
+    {
+      "id": 110,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "east",
+      "seat_index": 0,
+      "name": "East Wind",
+      "glyph": "東"
+    },
+    {
+      "id": 111,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "east",
+      "seat_index": 0,
+      "name": "East Wind",
+      "glyph": "東"
+    },
+    {
+      "id": 112,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "south",
+      "seat_index": 1,
+      "name": "South Wind",
+      "glyph": "南"
+    },
+    {
+      "id": 113,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "south",
+      "seat_index": 1,
+      "name": "South Wind",
+      "glyph": "南"
+    },
+    {
+      "id": 114,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "south",
+      "seat_index": 1,
+      "name": "South Wind",
+      "glyph": "南"
+    },
+    {
+      "id": 115,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "south",
+      "seat_index": 1,
+      "name": "South Wind",
+      "glyph": "南"
+    },
+    {
+      "id": 116,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "west",
+      "seat_index": 2,
+      "name": "West Wind",
+      "glyph": "西"
+    },
+    {
+      "id": 117,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "west",
+      "seat_index": 2,
+      "name": "West Wind",
+      "glyph": "西"
+    },
+    {
+      "id": 118,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "west",
+      "seat_index": 2,
+      "name": "West Wind",
+      "glyph": "西"
+    },
+    {
+      "id": 119,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "west",
+      "seat_index": 2,
+      "name": "West Wind",
+      "glyph": "西"
+    },
+    {
+      "id": 120,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "north",
+      "seat_index": 3,
+      "name": "North Wind",
+      "glyph": "北"
+    },
+    {
+      "id": 121,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "north",
+      "seat_index": 3,
+      "name": "North Wind",
+      "glyph": "北"
+    },
+    {
+      "id": 122,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "north",
+      "seat_index": 3,
+      "name": "North Wind",
+      "glyph": "北"
+    },
+    {
+      "id": 123,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "wind",
+      "wind": "north",
+      "seat_index": 3,
+      "name": "North Wind",
+      "glyph": "北"
+    },
+    {
+      "id": 124,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "red",
+      "name": "Red Dragon",
+      "glyph": "中"
+    },
+    {
+      "id": 125,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "red",
+      "name": "Red Dragon",
+      "glyph": "中"
+    },
+    {
+      "id": 126,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "red",
+      "name": "Red Dragon",
+      "glyph": "中"
+    },
+    {
+      "id": 127,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "red",
+      "name": "Red Dragon",
+      "glyph": "中"
+    },
+    {
+      "id": 128,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "green",
+      "name": "Green Dragon",
+      "glyph": "發"
+    },
+    {
+      "id": 129,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "green",
+      "name": "Green Dragon",
+      "glyph": "發"
+    },
+    {
+      "id": 130,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "green",
+      "name": "Green Dragon",
+      "glyph": "發"
+    },
+    {
+      "id": 131,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "green",
+      "name": "Green Dragon",
+      "glyph": "發"
+    },
+    {
+      "id": 132,
+      "copy": 0,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "white",
+      "name": "White Dragon",
+      "glyph": "白"
+    },
+    {
+      "id": 133,
+      "copy": 1,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "white",
+      "name": "White Dragon",
+      "glyph": "白"
+    },
+    {
+      "id": 134,
+      "copy": 2,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "white",
+      "name": "White Dragon",
+      "glyph": "白"
+    },
+    {
+      "id": 135,
+      "copy": 3,
+      "kind": "honour",
+      "honour": "dragon",
+      "dragon": "white",
+      "name": "White Dragon",
+      "glyph": "白"
+    },
+    {
+      "id": 136,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "flower",
+      "flower": "plum",
+      "seat_index": 0,
+      "name": "Flower: Plum",
+      "glyph": "梅"
+    },
+    {
+      "id": 137,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "flower",
+      "flower": "orchid",
+      "seat_index": 1,
+      "name": "Flower: Orchid",
+      "glyph": "蘭"
+    },
+    {
+      "id": 138,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "flower",
+      "flower": "chrysanthemum",
+      "seat_index": 2,
+      "name": "Flower: Chrysanthemum",
+      "glyph": "菊"
+    },
+    {
+      "id": 139,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "flower",
+      "flower": "bamboo",
+      "seat_index": 3,
+      "name": "Flower: Bamboo",
+      "glyph": "竹"
+    },
+    {
+      "id": 140,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "season",
+      "season": "spring",
+      "seat_index": 0,
+      "name": "Season: Spring",
+      "glyph": "春"
+    },
+    {
+      "id": 141,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "season",
+      "season": "summer",
+      "seat_index": 1,
+      "name": "Season: Summer",
+      "glyph": "夏"
+    },
+    {
+      "id": 142,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "season",
+      "season": "autumn",
+      "seat_index": 2,
+      "name": "Season: Autumn",
+      "glyph": "秋"
+    },
+    {
+      "id": 143,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "season",
+      "season": "winter",
+      "seat_index": 3,
+      "name": "Season: Winter",
+      "glyph": "冬"
+    },
+    {
+      "id": 144,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "animal",
+      "animal": "cat",
+      "partner": "mouse",
+      "name": "Animal: Cat",
+      "glyph": "猫"
+    },
+    {
+      "id": 145,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "animal",
+      "animal": "mouse",
+      "partner": "cat",
+      "name": "Animal: Mouse",
+      "glyph": "老鼠"
+    },
+    {
+      "id": 146,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "animal",
+      "animal": "rooster",
+      "partner": "centipede",
+      "name": "Animal: Rooster",
+      "glyph": "公鷄"
+    },
+    {
+      "id": 147,
+      "copy": 0,
+      "kind": "bonus",
+      "bonus": "animal",
+      "animal": "centipede",
+      "partner": "rooster",
+      "name": "Animal: Centipede",
+      "glyph": "蜈蚣"
+    }
+  ]
+}

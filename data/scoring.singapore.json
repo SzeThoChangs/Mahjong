@@ -1,0 +1,286 @@
+{
+  "variant": "singapore",
+  "unit": "Fan",
+  "_source": "A Data Analytic Evaluation of Singapore Mahjong (259pp). Replaces an earlier table whose VALUES were guessed and wrong - 13 Wonders had 5 instead of 8, everything was capped at 5 when All-Terminal is 9 and All-Kong is 14, and Ping Wu was missing entirely. The unit name was not the problem. Old file kept as scoring.singapore.GUESS.json.bak - do not use.",
+  "_note": "This is one documented ruleset. Section 2.6 of the source surveys real-table variation; see rules.singapore.json -> house_variations.",
+  "table_rules": {
+    "minimum_fan": 1,
+    "fan_limit": 5,
+    "_variants": {
+      "minimum_fan": [
+        0,
+        1,
+        2
+      ],
+      "fan_limit": [
+        3,
+        4,
+        5,
+        6,
+        "none"
+      ]
+    }
+  },
+  "payout": {
+    "formula": "chips = 2 ^ min(fan, fan_limit)",
+    "doubled_for": [
+      "the Offending Player (discarder)",
+      "every opponent when the win is a Self-Draw"
+    ],
+    "table": [
+      {
+        "fan": 0,
+        "standard": 1,
+        "offender_or_selfdraw": 2
+      },
+      {
+        "fan": 1,
+        "standard": 2,
+        "offender_or_selfdraw": 4
+      },
+      {
+        "fan": 2,
+        "standard": 4,
+        "offender_or_selfdraw": 8
+      },
+      {
+        "fan": 3,
+        "standard": 8,
+        "offender_or_selfdraw": 16
+      },
+      {
+        "fan": 4,
+        "standard": 16,
+        "offender_or_selfdraw": 32
+      },
+      {
+        "fan": 5,
+        "standard": 32,
+        "offender_or_selfdraw": 64
+      },
+      {
+        "fan": 6,
+        "standard": 64,
+        "offender_or_selfdraw": 128
+      }
+    ],
+    "_note": "On a discard, only the discarder pays the doubled amount; the other two pay standard. On a Self-Draw all three pay doubled. 13 Wonders always pays as a Self-Draw."
+  },
+  "combinations": [
+    {
+      "id": "chicken",
+      "fan": 0,
+      "name": "Chicken",
+      "desc": "Mahjong with none of All-Pong, All-Chow, Ping Wu, Half-Color or Full-Color"
+    },
+    {
+      "id": "all_chow",
+      "fan": 1,
+      "name": "All-Chow",
+      "desc": "Four Chows plus an Eye, with restrictions - see rules.singapore.json"
+    },
+    {
+      "id": "all_pong",
+      "fan": 2,
+      "name": "All-Pong",
+      "desc": "Four Pongs/Kongs plus an Eye"
+    },
+    {
+      "id": "half_color",
+      "fan": 2,
+      "name": "Half-Color",
+      "desc": "One suit plus Honor Tiles"
+    },
+    {
+      "id": "half_terminal",
+      "fan": 2,
+      "name": "Half-Terminal",
+      "desc": "Every set contains a Terminal or Honor"
+    },
+    {
+      "id": "ping_wu",
+      "fan": 4,
+      "name": "Ping Wu",
+      "desc": "All-Chow AND no Flower or Animal Tiles held"
+    },
+    {
+      "id": "full_color",
+      "fan": 4,
+      "name": "Full-Color",
+      "desc": "Single suit, no Honors"
+    },
+    {
+      "id": "dragon_set",
+      "fan": 7,
+      "name": "Dragon Set",
+      "desc": "Three Dragon sets. Wins WITHOUT Mahjong"
+    },
+    {
+      "id": "concealed_all_pong",
+      "fan": 7,
+      "name": "Concealed All-Pong",
+      "desc": "All-Pong with every Pong concealed"
+    },
+    {
+      "id": "13_wonders",
+      "fan": 8,
+      "name": "13 Wonders",
+      "desc": "Wins WITHOUT Mahjong. Always paid as Self-Draw"
+    },
+    {
+      "id": "all_terminal",
+      "fan": 9,
+      "name": "All-Terminal",
+      "desc": "Every set is Terminals or Honors. Stacks with All-Pong for 11"
+    },
+    {
+      "id": "eight_flower",
+      "fan": 12,
+      "name": "Eight Flower",
+      "desc": "Wins WITHOUT Mahjong. Concealing the eighth triggers a Pay All Penalty"
+    },
+    {
+      "id": "wind_set",
+      "fan": 12,
+      "name": "Wind Set",
+      "desc": "Four Wind sets. Stacks with All-Pong for 14"
+    },
+    {
+      "id": "all_kong",
+      "fan": 14,
+      "name": "All-Kong",
+      "desc": "Four Kongs plus an Eye"
+    }
+  ],
+  "events": [
+    {
+      "id": "win_replacement_tile",
+      "fan": 1,
+      "name": "Win with a Replacement Tile"
+    },
+    {
+      "id": "win_last_valid_tile",
+      "fan": 1,
+      "name": "Win with the Last Valid Tile"
+    },
+    {
+      "id": "robbing_the_kong",
+      "fan": 1,
+      "name": "Robbing the Kong"
+    }
+  ],
+  "tiles_and_sets": [
+    {
+      "id": "animal_each",
+      "fan": 1,
+      "name": "Each Animal Tile",
+      "repeatable": true
+    },
+    {
+      "id": "animal_set",
+      "fan": 1,
+      "name": "Animal Tile Set (all four)"
+    },
+    {
+      "id": "flower_own",
+      "fan": 1,
+      "name": "Each Flower/Season matching the Player's Number",
+      "repeatable": true
+    },
+    {
+      "id": "flower_set",
+      "fan": 1,
+      "name": "Each complete Flower Set or Season Set",
+      "repeatable": true
+    },
+    {
+      "id": "dragon_pong",
+      "fan": 1,
+      "name": "Each Pong/Kong of a Dragon",
+      "repeatable": true
+    },
+    {
+      "id": "prevailing_wind",
+      "fan": 1,
+      "name": "Pong/Kong of the Prevailing Wind"
+    },
+    {
+      "id": "player_wind",
+      "fan": 1,
+      "name": "Pong/Kong of the Player's Wind"
+    },
+    {
+      "id": "seven_flower",
+      "fan": 10,
+      "name": "Seven Flower Game",
+      "_note": "individual Flower Fan does not also add"
+    },
+    {
+      "id": "two_dragons_eye",
+      "fan": 1,
+      "name": "Two Dragons and an Eye",
+      "_note": "the two Dragon Pong Fan DO add, so 3 total"
+    },
+    {
+      "id": "three_winds_eye",
+      "fan": 4,
+      "name": "Three Winds and an Eye",
+      "_note": "Wind Pong Fan already included; does not add again"
+    }
+  ],
+  "stacking": {
+    "additive": true,
+    "_note": "Fan is additive except where an entry says otherwise.",
+    "mutually_exclusive": [
+      [
+        "all_chow",
+        "all_pong"
+      ]
+    ],
+    "common_stacks": [
+      {
+        "combo": [
+          "all_pong",
+          "half_color"
+        ],
+        "fan": 4
+      },
+      {
+        "combo": [
+          "all_terminal",
+          "all_pong"
+        ],
+        "fan": 11
+      },
+      {
+        "combo": [
+          "wind_set",
+          "all_pong"
+        ],
+        "fan": 14
+      },
+      {
+        "combo": [
+          "full_color",
+          "all_chow"
+        ],
+        "fan": 5
+      }
+    ]
+  },
+  "immediate_payouts": {
+    "_note": "Paid on the spot by every opponent, independent of who wins. Values below assume Minimum Fan 1: halve them at Minimum Fan 0, double them at Minimum Fan 2. DOUBLE again if obtained from the initial 13 tiles before any replacement.",
+    "kong_1": 2,
+    "kong_3": 2,
+    "kong_4": 4,
+    "animal_set": 4,
+    "flower_set_or_season_set": 4,
+    "animal_pair": 2,
+    "flower_pair": 2,
+    "_definitions": {
+      "animal_pair": "Cat + Mouse, or Chicken + Centipede",
+      "flower_pair": "two Flower Tiles matching the Player's Flower Number"
+    }
+  },
+  "_unit_note": "Fan (番) and tai (台) are the same unit - one doubling. Different dialects: fan is Mandarin/Cantonese, tai is Hokkien. Singapore tables use both names interchangeably. This file says Fan only because the source does."
+}
