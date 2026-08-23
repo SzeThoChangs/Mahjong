@@ -44,6 +44,10 @@ export class Wall {
   get isExhausted(): boolean { return this.remaining <= 0; }
   /** Every tile still in the wall, reserve included. For conservation checks. */
   get totalLeft(): number { return this.back - this.front + 1; }
+  /** Ground truth: full shuffled order and the live cursors. Never expose to a player-visible state. */
+  snapshot(): { order: TileInstance[]; front: number; back: number; unplayable: number } {
+    return { order: [...this.tiles], front: this.front, back: this.back, unplayable: this.unplayable };
+  }
 
   draw(): TileInstance | null {
     if (this.isExhausted) return null;

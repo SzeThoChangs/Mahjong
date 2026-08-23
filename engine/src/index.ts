@@ -2,6 +2,7 @@ export * from './tiles.js';
 export * from './wall.js';
 export * from './decompose.js';
 export * from './score.js';
+export * from './rules.js';
 export * from './payout.js';
 export * from './game.js';
 export * from './bots.js';

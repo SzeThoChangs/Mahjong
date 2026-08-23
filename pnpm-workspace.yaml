@@ -2,5 +2,6 @@ packages:
   - engine
   - solver
   - web
+  - datagen
 allowBuilds:
   esbuild: true
