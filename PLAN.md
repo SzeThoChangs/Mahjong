@@ -124,5 +124,7 @@ The trainer plan above still stands; the project also now carries the three-laye
 | 2 — Evaluator (`datagen/src/evaluate.ts`) | **Running at scale**: `data/gen/run100k-table` = 100k hands under the confirmed table rules (jokers, shooter-pays, pay-all, 8-flower) with **99,980 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy); 82% of decisions have a clear best action. Resumable, crash-tolerant. |
 | 3 — Model | Not started. |
 
+Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
+
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).
