@@ -43,8 +43,10 @@ outer: while (selected.length < Math.min(maxHands, pool.length)) {
 mkdirSync(out, { recursive: true });
 interface Row { d: number; k: string; t: number; p: number; sel: string; legal: string[]; h: number[]; dr: number | null; b: number[]; m4?: number[][][]; ch?: number[]; f?: unknown; ev?: unknown }
 const index: unknown[] = [];
+let drifted = 0;
 for (const hr of selected) {
   const decs = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS);
+  if (!decs) { drifted++; continue; }
   const evs = new Map((evalsByHand.get(`${hr.g}:${hr.h}`) ?? []).map((e) => [e.d, e]));
   let lastM = '', lastCh = '';
   const rows: Row[] = decs.map((r) => {
@@ -75,4 +77,4 @@ const runs = readdirSync(runsRoot).filter((d) => existsSync(join(runsRoot, d, 'i
   return { id: d, money: ix.money, unit: ix.unit, hands: ix.hands.length };
 });
 writeFileSync(join(runsRoot, 'index.json'), JSON.stringify({ runs }));
-console.log(`exported ${index.length} hands (${[...evalsByHand.keys()].length} evaluated available) -> ${out}`);
+console.log(`exported ${index.length} hands (${[...evalsByHand.keys()].length} evaluated available, ${drifted} drifted skipped) -> ${out}`);

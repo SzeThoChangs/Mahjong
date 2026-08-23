@@ -45,7 +45,7 @@ export default function Trainer() {
     return h;
   }, [scenario]);
 
-  const fan = fanInHand({ melds: scenario.melds, bonus: scenario.bonus, seat: scenario.seat, prevailingWind: scenario.prevailingWind });
+  const fan = fanInHand({ melds: scenario.melds, bonus: scenario.bonus, seat: (scenario.seat - scenario.dealer + 4) % 4, prevailingWind: scenario.prevailingWind });
   const picked: DiscardOption | undefined = pick === null ? undefined : scenario.ranking.options.find((o) => o.tile === pick);
 
   const choose = (k: TileKind) => {

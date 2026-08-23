@@ -39,11 +39,14 @@ for (const c of chosen) { const k = `${c.e.g}:${c.e.h}`; (byHand.get(k) ?? byHan
 interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number }[] }
 const questions: Q[] = [];
 let handsDone = 0;
+let drifted = 0, mismatched = 0;
 for (const [key, list] of byHand) {
   const hr = hands.get(key) as HandRecord | undefined; if (!hr) continue;
   const decs = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS);
+  if (!decs) { drifted++; continue; }
   for (const { e, spread } of list) {
     const d = decs.find((x) => x.d === e.d); if (!d) continue;
+    if (d.k !== e.k || d.p !== e.seat || d.sel !== e.sel || d.t !== e.t) { mismatched++; continue; }   // eval and replay must describe the same position
     const melds: Meld[] = d.me.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
     const fih = fanInHand({ melds, bonus: d.me.b, seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w });
     const last = d.pub.dl[d.pub.dl.length - 1];
@@ -64,5 +67,5 @@ const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'in
   return { id: f.replace('.json', ''), money: p.money, unit: p.unit, questions: p.questions.length };
 });
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
-console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'})`);
+console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
 void existsSync;

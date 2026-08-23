@@ -35,7 +35,7 @@ export interface Snapshot {
   drawnInfo: { tile: TileInstance; replaced: boolean; lastTile: boolean } | null;
   pendingDiscard: { tile: TileInstance; from: number; lastTileDiscard: boolean; eligible: number[] } | null;
   /** a kong in progress that opponents may rob; `kongKind` tells how to complete it if nobody does */
-  pendingRob: { tile: TileInstance; from: number; kong: 'kong1' | 'kong4'; meldIndex: number } | null;
+  pendingRob: { tile: TileInstance; from: number; kong: 'kong1' | 'kong4'; meldIndex: number; feeEach: number } | null;
   /** Pay-All liability: seat -> the seat that must pay for everyone if this seat wins (null = none) */
   liable: (number | null)[];
   paidEvents: string[][];
@@ -191,10 +191,10 @@ export class GameState {
     return scoreHand({ concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: this.role(p.seat), prevailingWind: this.prevailingWind, winningTile, selfDraw, ...extra }, this.rules);
   }
   private tilesAccounted() { return this.players.reduce((a, p) => a + p.hand.length + p.bonus.length + p.discards.length + p.melds.reduce((b, m) => b + m.instances.length, 0), 0); }
-  private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null): GameResult {
+  private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null, robbed = false): GameResult {
     if (winner !== null && sc) {
       let liable: number | null = this.rules.bao.enabled ? this.liable[winner]! : null;
-      if (this.rules.bao.enabled && discarder !== null && liable === null) {
+      if (this.rules.bao.enabled && discarder !== null && liable === null && !robbed) {   // fed-colour and fresh-tile bao apply to genuine discards only
         const b = this.rules.bao; const w = this.players[winner]!;
         const exposed = w.melds.length;
         const suits = new Set(w.melds.flatMap((m) => m.tiles).filter(isSuited).map(suitOf));
@@ -342,30 +342,29 @@ export class GameState {
       const o = this.selfOptions.find((x) => x.kind === 'kong4' && kindOf(x.tiles[0]!) === action.kind) as Extract<SelfAction, { kind: 'kong4' }>;
       p.hand = p.hand.filter((t) => !o.tiles.includes(t));
       p.melds.push({ type: 'kong', tiles: o.tiles.map(kindOf), concealed: true, instances: o.tiles });
-      this.kongPayment(this.turn, null); this.counts.kong++;
-      this.beginRob(o.tiles[0]!, 'kong4', p.melds.length - 1); return;
+      const fee4 = this.kongPayment(this.turn, null, 'kong_4'); this.counts.kong++;
+      this.beginRob(o.tiles[0]!, 'kong4', p.melds.length - 1, fee4); return;
     }
     if (action.a === 'kong1') {
       const o = this.selfOptions.find((x) => x.kind === 'kong1' && kindOf(x.tile) === action.kind) as Extract<SelfAction, { kind: 'kong1' }>;
       p.hand = p.hand.filter((t) => t !== o.tile);
       o.meld.type = 'kong'; o.meld.tiles.push(kindOf(o.tile)); o.meld.instances.push(o.tile);
-      this.kongPayment(this.turn, null); this.counts.kong++;
-      this.beginRob(o.tile, 'kong1', p.melds.indexOf(o.meld)); return;
+      const fee1 = this.kongPayment(this.turn, null, 'kong_1'); this.counts.kong++;
+      this.beginRob(o.tile, 'kong1', p.melds.indexOf(o.meld), fee1); return;
     }
     this.phase = 'discard';
   }
-  /** Kong side payment. `feeder` = the discarder for a fed kong (kong3), null for a self-made kong. */
-  private kongPayment(to: number, feeder: number | null) {
+  /** Kong side payment. `feeder` = the discarder for a fed kong (kong3), null for a self-made kong.
+   *  Returns the per-opponent amount paid (for a refund if the kong is robbed). */
+  private kongPayment(to: number, feeder: number | null, kind: 'kong_1' | 'kong_3' | 'kong_4'): number {
     const m = this.rules.money;
     if (m) {
-      if (feeder !== null) this.pay(feeder, to, m.kong_fed_total);
-      else this.payAllOpponents(to, m.kong_each);
-      return;
+      if (feeder !== null) { this.pay(feeder, to, m.kong_fed_total); return m.kong_fed_total / 3; }
+      this.payAllOpponents(to, m.kong_each); return m.kong_each;
     }
-    // chips mode keeps the book's per-type amounts; the caller tells us only fed vs self-made, so look at the last meld
-    const p = this.players[to]!; const last = p.melds[p.melds.length - 1];
-    const kind = feeder !== null ? 'kong_3' : last && last.concealed ? 'kong_4' : 'kong_1';
-    this.payAllOpponents(to, immediatePayout(kind, this.cfg, false, this.rules));
+    const each = immediatePayout(kind, this.cfg, false, this.rules);
+    if (feeder !== null) { this.payAllOpponents(to, each); return each; }
+    this.payAllOpponents(to, each); return each;
   }
   /** Pay-All: after seat `q` claims an honour set from `from`, does `from` become liable for q's eventual win? */
   private noteLiability(q: PlayerState, from: number, dk: TileKind) {
@@ -395,9 +394,9 @@ export class GameState {
     }
     return out;
   }
-  private beginRob(tile: TileInstance, kong: 'kong1' | 'kong4', meldIndex: number) {
+  private beginRob(tile: TileInstance, kong: 'kong1' | 'kong4', meldIndex: number, feeEach: number) {
     this.claimQueue = this.robQueue(tile, kong, this.turn); this.wanted = [];
-    if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex }; this.phase = 'claim'; }
+    if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex, feeEach }; this.phase = 'claim'; }
     else this.phase = 'replacement';
   }
   private applyDiscard(action: LegalAction) {
@@ -440,8 +439,10 @@ export class GameState {
         if (rob.kong === 'kong1') { m.type = 'pong'; m.tiles.pop(); m.instances = m.instances.filter((t) => t !== rob.tile); }
         else { p.melds.splice(rob.meldIndex, 1); for (const t of m.instances) if (t !== rob.tile) p.hand.push(t); }
         this.counts.kong--;
+        // the kong never stood: refund its immediate payment (house-rule assumption, flagged in docs)
+        for (let s2 = 0; s2 < 4; s2++) if (s2 !== from) this.pay(from, s2, rob.feeEach);
         this.L(`seat${taken.seat} robs the kong of seat${from}`);
-        this.finish(taken.seat, false, from, taken.score!); return;
+        this.finish(taken.seat, false, from, taken.score!, true); return;
       }
       this.phase = 'replacement'; return;
     }
@@ -466,7 +467,7 @@ export class GameState {
     this.noteLiability(q, from, kindOf(d));
     this.playerTurns++;
     this.turn = taken.seat;
-    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from); this.phase = 'replacement'; }
+    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from, 'kong_3'); this.phase = 'replacement'; }
     else { this.phase = 'discard'; this.drawnInfo = null; }
   }
 

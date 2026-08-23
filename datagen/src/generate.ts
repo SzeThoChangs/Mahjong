@@ -28,7 +28,7 @@ mkdirSync(out, { recursive: true });
 const t0 = Date.now();
 const quota = (i: number) => Math.floor(hands / workers) + (i < hands % workers ? 1 : 0);
 type Shard = { worker: number; hands: number; sessions: number; decisions: number };
-const manifest = { hands, workers, baseSeed, truth, decisions, maxHands, randomness, rulesOverride, rules, startedAt: new Date().toISOString(), shards: [] as Shard[] };
+const manifest = { hands, workers, baseSeed, truth, decisions, maxHands, randomness, rulesOverride, rules, conventions: { winds_rotate_with_dealer: true, engine_semantics: 2 }, startedAt: new Date().toISOString(), shards: [] as Shard[] };
 
 if (workers <= 1) {
   const res = runWorker({ workerIndex: 0, workers: 1, handQuota: hands, out, baseSeed, truth, rulesOverride, rules, randomness, maxHands, decisions }, (n) => { if (n % 1000 === 0) process.stdout.write(`\r${n}/${hands} hands`); });
