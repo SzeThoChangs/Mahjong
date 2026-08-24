@@ -65,19 +65,55 @@ export const shootTotal = (c: MoneyConfig, tai: number): number => {
   return sp.discarder + 2 * sp.other;
 };
 
-// ---- strategy profile: measured hand-type frequencies from the generated dataset ----
+export const COMBO_LABEL: Record<string, string> = {
+  chicken: '雞胡 (no value)',
+  chou_ping_hu: '臭平胡 all chows, with a flower/animal',
+  peng_peng_hu: '碰碰胡 all pongs',
+  ban_se: '半色 mixed suit',
+  xiao_si_xi: '小四喜 little four winds',
+  hun_lao_tou: '混老头 mixed terminals & honours',
+  qi_dui: '对对胡 seven pairs',
+  xiao_san_yuan: '小三元 little three dragons',
+  ping_hu: '平胡 all chows, no flower/animal',
+  qing_yi_se: '清一色 pure suit',
+  tian_hu: '天和 heavenly / four wildcards',
+  di_hu: '地和 earthly',
+  shi_san_yao: '十三幺 thirteen wonders',
+  da_si_xi: '大四喜 big four winds',
+  da_san_yuan: '大三元 big three dragons',
+  zi_yi_se: '字一色 all honours',
+  lv_yi_se: '绿一色 all green',
+  quan_yao_jiu: '全幺九 all terminals',
+  si_an_ke: '四暗刻 four concealed pongs (自摸)',
+  shi_ba_luo_han: '十八罗汉 all kongs',
+  gang_shang_gang: '杠上杠和 kong on kong',
+  qi_qiang_yi: '七抢一 robbing the flower',
+  hua_hu: '八仙过海 eight immortals',
+  jiu_lian: '九连宝灯 nine gates',
+};
+export const ITEM_LABEL: Record<string, string> = {
+  own_flower: '正花 seat flower', flower_set: '花杠加台 flower set', season_set: '花杠加台 season set',
+  animal: '动物加台 animal', animal_set: '动物杠加台 animal set',
+  dragon_pong: '箭刻 dragon pong', seat_wind: '门风刻 seat wind', prevailing_wind: '圈风刻 round wind',
+  replacement_win: '杠上开花 / 花上自摸', last_tile: '海底捞月 last tile', robbing_kong: '抢杠 robbing the kong',
+  men_qing: '门清 concealed self-draw', four_jokers: 'four wildcards', jokers_used: 'wildcards used',
+};
+
+// ---------------------------------------------------------------------------
+// Strategy profile: measured hand-type frequencies from the generated dataset
+// ---------------------------------------------------------------------------
 export interface Profile {
   run: string; hands: number; draws: number; avgTurns: number; kongsPerHand: number; sidePerHand: number;
   minimumTai: number; maximumTai: number;
   drawsPerHand?: number; claimsPerHand?: number; blockedPerHand?: number;
   avgReadyTurn?: number; readyRate?: number;
-  unitsPerHand?: number[];            // [kong暗, kong明, kongFed, 花H, 花O, animalH, animalO] received per hand
+  unitsPerHand?: number[];
   winTiles?: Record<string, number>;
   combos: { id: string; wins: number; avgTurns: number; fan: Record<string, { sd: number; disc: number }> }[];
 }
 export interface ComboValue { id: string; wins: number; per1000: number; avgWin: number; avgTai: number; per1000Value: number; avgTurns: number }
 
-/** Re-price every hand type under a money config. Exact for win payments; side payments are reported separately. */
+/** Re-price every hand type under a money config. Exact for win payments. */
 export function priceProfile(p: Profile, c: MoneyConfig): ComboValue[] {
   const out: ComboValue[] = [];
   for (const combo of p.combos) {
@@ -93,43 +129,7 @@ export function priceProfile(p: Profile, c: MoneyConfig): ComboValue[] {
   }
   return out.sort((a, b) => b.per1000Value - a.per1000Value);
 }
-export const COMBO_LABEL: Record<string, string> = {
-  chicken: 'Chicken (雞胡)', all_chow: 'All-Chow (平胡)', ping_wu: 'Ping Wu (平和)', all_pong: 'All-Pong (對對胡)',
-  half_color: 'Half-Color (混一色)', full_color: 'Full-Color (清一色)', half_terminal: 'Half-Terminal', all_terminal: 'All-Terminal',
-  thirteen_wonders: '13 Wonders (十三幺)', four_jokers: 'Four Jokers', concealed_all_pong: 'Concealed All-Pong', dragon_set: 'Dragon Set (大三元)', eight_flower: 'Eight Flower (八仙)',
-};
 
-// ---------------------------------------------------------------------------
-// Re-pricing measured decisions under any money schedule
-// ---------------------------------------------------------------------------
-/** Outcome mix recorded by the evaluator for one action (see datagen/src/evaluate.ts). */
-export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number, number] }
-
-/** value to the acting seat of one hand outcome: role letter + tai */
-export function outcomeValue(role: string, tai: number, c: MoneyConfig): number {
-  const sp = shootSplit(c, tai);
-  switch (role) {
-    case 'W': return zmTotal(c, tai);                 // won by self-draw (or 13 wonders)
-    case 'D': return shootTotal(c, tai);              // won off a discard
-    case 'z': return -(base(c, tai) + c.zm);          // someone else self-drew
-    case 's': return -sp.discarder;                   // we fed the winner
-    case 'o': return -sp.other;                       // someone else fed them
-    case 'l': return -(sp.discarder + 2 * sp.other);  // pay-all landed on us
-    default: return 0;                                // 'n' pays nothing, 'd' draw
-  }
-}
-/** EV of an action in dollars under `c`, from the outcome mix. Exact - no re-simulation. */
-export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
-  let total = 0;
-  for (const [key, count] of Object.entries(mix.w)) total += count * outcomeValue(key[0]!, Number(key.slice(1)), c);
-  const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
-  for (let i = 0; i < amt.length; i++) total += (mix.led[i] ?? 0) * amt[i]!;
-  return total / Math.max(1, n);
-}
-
-// ---------------------------------------------------------------------------
-// "What does this table reward?"
-// ---------------------------------------------------------------------------
 export interface TaiBand { tai: number; wins: number; per1000: number; avgWin: number; value: number }
 /** Value by tai level, across all hand types - where the money actually is. */
 export function taiBands(p: Profile, c: MoneyConfig): TaiBand[] {
@@ -144,25 +144,41 @@ export function taiBands(p: Profile, c: MoneyConfig): TaiBand[] {
     .sort((a, b) => a.tai - b.tai);
 }
 
-export interface SideEconomics {
-  perHandTable: number;      // all side money moving per hand, across the table
-  perDraw: number;           // expected side income per tile you draw
-  perSeatPerHand: number;
-  callCost: number;          // what one call costs you in forgone side income
-  kongBonus: number;         // what declaring a kong pays you, plus the extra draw it buys
-}
+export interface SideEconomics { perHandTable: number; perDraw: number; perSeatPerHand: number; callCost: number; kongBonus: number }
 /** Side-payment economics: what a draw is worth, and therefore what calling costs. */
 export function sideEconomics(p: Profile, c: MoneyConfig): SideEconomics | null {
   const u = p.unitsPerHand, draws = p.drawsPerHand;
   if (!u || !draws) return null;
   const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
   const perHandTable = u.reduce((a, v, i) => a + v * (amt[i] ?? 0), 0);
-  // bites come only from drawing; kongs come from drawing the 4th tile (or claiming one)
   const biteMoney = u.slice(3).reduce((a, v, i) => a + v * (amt[i + 3] ?? 0), 0);
   const perDraw = biteMoney / draws;
-  return {
-    perHandTable, perDraw, perSeatPerHand: perHandTable / 4,
-    callCost: perDraw,                                     // a call takes a discard instead of drawing: one draw forgone
-    kongBonus: 3 * c.kongExposed + perDraw,                // the kong pays, and buys you a replacement draw
-  };
+  return { perHandTable, perDraw, perSeatPerHand: perHandTable / 4, callCost: perDraw, kongBonus: 3 * c.kongExposed + perDraw };
+}
+
+// ---------------------------------------------------------------------------
+// Re-pricing measured decisions under any money schedule
+// ---------------------------------------------------------------------------
+export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number, number] }
+
+/** value to the acting seat of one hand outcome: role letter + tai */
+export function outcomeValue(role: string, tai: number, c: MoneyConfig): number {
+  const sp = shootSplit(c, tai);
+  switch (role) {
+    case 'W': return zmTotal(c, tai);
+    case 'D': return shootTotal(c, tai);
+    case 'z': return -(base(c, tai) + c.zm);
+    case 's': return -sp.discarder;
+    case 'o': return -sp.other;
+    case 'l': return -(sp.discarder + 2 * sp.other);
+    default: return 0;
+  }
+}
+/** EV of an action in dollars under `c`, from the outcome mix. Exact - no re-simulation. */
+export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
+  let total = 0;
+  for (const [key, count] of Object.entries(mix.w)) total += count * outcomeValue(key[0]!, Number(key.slice(1)), c);
+  const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
+  for (let i = 0; i < amt.length; i++) total += (mix.led[i] ?? 0) * amt[i]!;
+  return total / Math.max(1, n);
 }

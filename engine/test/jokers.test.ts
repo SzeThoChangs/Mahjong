@@ -36,9 +36,9 @@ describe('jokers: completion', () => {
 });
 
 describe('jokers: scoring', () => {
-  it('scores as the substituted tiles (Ping Wu through a joker)', () => {
+  it('scores as the substituted tiles (平胡 through a joker)', () => {
     const r = scoreHand({ ...base, concealed: K('1w 2w J 4t 5t 6t 7s 8s 9s 2s 3s 4s 5w 5w'), winningTile: 4 }, JR);
-    expect(r.valid).toBe(true); expect(r.combination).toBe('ping_wu'); expect(r.items.map((i) => i.id)).toContain('jokers_used');
+    expect(r.valid).toBe(true); expect(r.combination).toBe('ping_hu'); expect(r.items.map((i) => i.id)).toContain('jokers_used');
   });
   it('picks the best assignment (joker as a dragon to make the pong)', () => {
     const r = scoreHand({ ...base, concealed: K('1w 2w 3w 4t 5t 6t 7s 8s 9s R R J 5w 5w'), winningTile: 31 }, JR);
@@ -46,7 +46,7 @@ describe('jokers: scoring', () => {
   });
   it('all four jokers in a complete hand is worth the table value (5)', () => {
     const r = scoreHand({ ...base, concealed: K('1w 2w 3w 4t 5t 6t 7s 8s 9s 5w J J J J'), winningTile: 46 }, JR);
-    expect(r.valid).toBe(true); expect(r.fan).toBe(5); expect(r.items.map((i) => i.id)).toContain('four_jokers');
+    expect(r.valid).toBe(true); expect(r.fan).toBe(5); expect(r.items.map((i) => i.id)).toContain('tian_hu');
   });
   it('all-joker groups take no honour value', () => {
     const r = scoreHand({ ...base, concealed: K('1w 2w 3w 4t 5t 6t 7s 8s 9s 2s 3s 4s J J'), winningTile: 46 }, JR);   // JJ = eye
@@ -88,8 +88,8 @@ describe('jokers: play', () => {
       return GameState.fromSnapshot(snap, cfg, { rules: JR, dealer });
     };
     const g0 = mk(0); g0.advance();                      // dealer = seat 0: wins on its first draw
-    expect(g0.finished).toBe(true); expect(g0.result!.winner).toBe(0); expect(g0.result!.score!.combination).toBe('four_jokers');
+    expect(g0.finished).toBe(true); expect(g0.result!.winner).toBe(0); expect(g0.result!.score!.combination).toBe('tian_hu');
     const g1 = mk(1); g1.step([0, 1, 2, 3].map((i) => new ShantenBot(makeRng(i)))); g1.step([0, 1, 2, 3].map((i) => new ShantenBot(makeRng(i))));
-    expect(g1.result?.score?.combination).not.toBe('four_jokers');
+    expect(g1.result?.score?.combination).not.toBe('tian_hu');
   });
 });

@@ -55,6 +55,7 @@ export class GameState {
   log: string[] = []; result: GameResult | null = null;
   ledger: Ledger[] = [0, 1, 2, 3].map(emptyLedger);
   draws = [0, 0, 0, 0]; blockedWins = [0, 0, 0, 0]; readyTurn = [-1, -1, -1, -1]; winTile = -1;
+  private consecutiveKongs = 0;
   private lastLiable: number | null = null;
   private selfOptions: SelfAction[] = [];
   private claimQueue: { seat: number; options: ClaimOption[] }[] = []; private wanted: ClaimOption[] = [];
@@ -158,18 +159,18 @@ export class GameState {
     const jr = this.rules.jokers;
     if (jr.count < 4 || !jr.dealer_all_four_instant_win || p.seat !== this.dealer) return null;
     if (p.hand.filter((t) => isJoker(kindOf(t))).length < 4) return null;
-    return { fan: jr.all_four_tai, items: [{ id: 'four_jokers', fan: jr.all_four_tai }], combination: 'four_jokers', valid: true };
+    return { fan: jr.all_four_tai, items: [{ id: 'tian_hu', fan: jr.all_four_tai }], combination: 'tian_hu', valid: true };   // 天和: four wildcards for the host
   }
   /** instant wins on bonus tiles (config-gated): Eight Flower, all four animals */
   private specialBonusWin(p: PlayerState): ScoreResult | null {
     const kinds = p.bonus.map(kindOf);
     const fs = kinds.filter((k) => isFlower(k) || isSeason(k)).length, an = kinds.filter(isAnimal).length;
     const items: { id: string; fan: number }[] = [];
-    if (fs === 8 && this.rules.special_hands.eight_flower_instant_win) items.push({ id: 'eight_flower', fan: this.rules.flower_scoring.eight_flower });
+    if (fs === 8 && this.rules.special_hands.eight_flower_instant_win) items.push({ id: 'hua_hu', fan: this.rules.combination_tai.hua_hu });
     else if (an === 4 && this.rules.special_hands.all_animals_instant_win) items.push({ id: 'animal', fan: this.rules.animal_scoring.each * 4 }, { id: 'animal_set', fan: this.rules.animal_scoring.set });
     else return null;
     if (items[0]!.id === 'eight_flower') { for (let i = 0; i < an; i++) items.push({ id: 'animal', fan: this.rules.animal_scoring.each }); if (an === 4) items.push({ id: 'animal_set', fan: this.rules.animal_scoring.set }); }
-    return { fan: items.reduce((a, i) => a + i.fan, 0), items, combination: items[0]!.id === 'eight_flower' ? 'eight_flower' : 'all_animals', valid: true };
+    return { fan: items.reduce((a, i) => a + i.fan, 0), items, combination: items[0]!.id === 'hua_hu' ? 'hua_hu' : 'all_animals', valid: true };
   }
   private absorb(p: PlayerState, t: TileInstance | null, fromInitial: boolean): { tile: TileInstance | null; replaced: boolean; special?: ScoreResult } {
     let replaced = false;
@@ -199,7 +200,16 @@ export class GameState {
     this.opts.recorder?.record({ kind, seat, view: v, legal, selected, drawn, truth: this.truth });
   }
   private score(p: PlayerState, concealed: TileKind[], winningTile: TileKind, selfDraw: boolean, extra: { replacementWin?: boolean; lastTile?: boolean; robbingKong?: boolean }) {
-    return scoreHand({ concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: this.role(p.seat), prevailingWind: this.prevailingWind, winningTile, selfDraw, ...extra }, this.rules);
+    const noDiscardsYet = this.discardLog.length === 0;
+    return scoreHand({
+      concealed, melds: p.melds, bonus: p.bonus.map(kindOf), seat: this.role(p.seat), prevailingWind: this.prevailingWind, winningTile, selfDraw,
+      isDealer: p.seat === this.dealer,
+      firstDraw: selfDraw && noDiscardsYet && this.draws[p.seat]! <= 1,
+      firstDiscard: !selfDraw && this.discardLog.length === 1 && this.discardLog[0]!.seat === this.dealer,
+      kongOnKong: !!extra.replacementWin && this.consecutiveKongs >= 2,
+      jokersUsed: concealed.filter(isJoker).length,
+      ...extra,
+    }, this.rules);
   }
   private tilesAccounted() { return this.players.reduce((a, p) => a + p.hand.length + p.bonus.length + p.discards.length + p.melds.reduce((b, m) => b + m.instances.length, 0), 0); }
   private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null, robbed = false): GameResult {
@@ -217,10 +227,10 @@ export class GameState {
           if (!seenBefore) liable = discarder;
         }
       }
-      const asSelfDraw = discarder === null || sc.combination === 'thirteen_wonders';
+      const asSelfDraw = discarder === null || sc.combination === 'shi_san_yao';
       const pays = this.rules.money
         ? winPaymentsMoney(sc.fan, winner, asSelfDraw ? null : discarder, this.rules.money, liable, this.rules)
-        : winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'thirteen_wonders', rules: this.rules });
+        : winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'shi_san_yao', rules: this.rules });
       if (!this.rules.money && liable !== null && liable !== winner) { const total = pays.reduce((a, b) => a + b, 0); this.pay(liable, winner, total); }
       else for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
     }
@@ -355,14 +365,14 @@ export class GameState {
       const o = this.selfOptions.find((x) => x.kind === 'kong4' && kindOf(x.tiles[0]!) === action.kind) as Extract<SelfAction, { kind: 'kong4' }>;
       p.hand = p.hand.filter((t) => !o.tiles.includes(t));
       p.melds.push({ type: 'kong', tiles: o.tiles.map(kindOf), concealed: true, instances: o.tiles });
-      const fee4 = this.kongPayment(this.turn, null, 'kong_4'); this.counts.kong++;
+      const fee4 = this.kongPayment(this.turn, null, 'kong_4'); this.counts.kong++; this.consecutiveKongs++;
       this.beginRob(o.tiles[0]!, 'kong4', p.melds.length - 1, fee4); return;
     }
     if (action.a === 'kong1') {
       const o = this.selfOptions.find((x) => x.kind === 'kong1' && kindOf(x.tile) === action.kind) as Extract<SelfAction, { kind: 'kong1' }>;
       p.hand = p.hand.filter((t) => t !== o.tile);
       o.meld.type = 'kong'; o.meld.tiles.push(kindOf(o.tile)); o.meld.instances.push(o.tile);
-      const fee1 = this.kongPayment(this.turn, null, 'kong_1'); this.counts.kong++;
+      const fee1 = this.kongPayment(this.turn, null, 'kong_1'); this.counts.kong++; this.consecutiveKongs++;
       this.beginRob(o.tile, 'kong1', p.melds.indexOf(o.meld), fee1); return;
     }
     this.phase = 'discard';
@@ -404,7 +414,7 @@ export class GameState {
       if (!couldBeComplete(cjr.counts, q.melds.length, cjr.jokers)) continue;
       const sc = this.score(q, withTile, dk, false, { robbingKong: true });
       if (!sc.valid || !meetsMinimum(sc.fan, false, this.cfg)) continue;
-      if (kong === 'kong4' && sc.combination !== 'thirteen_wonders') continue;
+      if (kong === 'kong4' && sc.combination !== 'shi_san_yao') continue;
       out.push({ seat: s, options: [{ kind: 'win', seat: s, score: sc }] });
     }
     return out;
@@ -420,6 +430,7 @@ export class GameState {
     const idx = p.hand.indexOf(action.tile);
     if (idx < 0) { this.counts.illegal++; throw new Error(`seat ${this.turn} discarded a tile it does not hold`); }
     this.record('discard', this.turn, v, p.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
+    this.consecutiveKongs = 0;                     // a discard breaks the kong chain
     p.hand.splice(idx, 1); p.discards.push(action.tile);
     if (this.readyTurn[this.turn] === -1 && shanten(p.hand.map(kindOf), p.melds.length) <= 0) this.readyTurn[this.turn] = this.playerTurns;
     const dk = kindOf(action.tile);
@@ -484,7 +495,7 @@ export class GameState {
     this.noteLiability(q, from, kindOf(d));
     this.playerTurns++;
     this.turn = taken.seat;
-    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from, 'kong_3'); this.phase = 'replacement'; }
+    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from, 'kong_3'); this.consecutiveKongs++; this.phase = 'replacement'; }
     else { this.phase = 'discard'; this.drawnInfo = null; }
   }
 

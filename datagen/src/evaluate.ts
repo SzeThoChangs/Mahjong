@@ -69,9 +69,9 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     x.mix.led[3] += L.biteFlowerHidden; x.mix.led[4] += L.biteFlowerOpen; x.mix.led[5] += L.biteAnimalHidden; x.mix.led[6] += L.biteAnimalOpen;
     let role: string;
     if (res.winner === null) role = 'd';
-    else if (res.winner === seat) role = res.selfDraw || res.score?.combination === 'thirteen_wonders' ? 'W' : 'D';
+    else if (res.winner === seat) role = res.selfDraw || res.score?.combination === 'shi_san_yao' ? 'W' : 'D';
     else if (res.liable !== null) role = res.liable === seat ? 'l' : 'n';
-    else if (res.selfDraw || res.score?.combination === 'thirteen_wonders') role = 'z';
+    else if (res.selfDraw || res.score?.combination === 'shi_san_yao') role = 'z';
     else role = res.discarder === seat ? 's' : 'o';
     const key = role + (res.score?.fan ?? 0);
     x.mix.w[key] = (x.mix.w[key] ?? 0) + 1;

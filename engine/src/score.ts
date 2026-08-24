@@ -8,7 +8,7 @@ import {
   isTerminalOrHonour, isWind, suitOf, windKind, type TileKind,
 } from './tiles.js';
 import { decompose, isThirteenWonders, winningKinds, jokerCompletions, thirteenWithJokers, type ConcealedSet } from './decompose.js';
-import { countsAndJokers, isJoker } from './tiles.js';
+import { countsAndJokers, isJoker, rankOf } from './tiles.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 
 export type MeldType = 'chow' | 'pong' | 'kong';
@@ -31,6 +31,12 @@ export interface WinContext {
   replacementWin?: boolean;  // won on a kong/flower replacement draw
   lastTile?: boolean;        // won on the last valid tile
   robbingKong?: boolean;
+  firstDraw?: boolean;       // 天和: dealer, opening hand, nothing discarded yet
+  firstDiscard?: boolean;    // 地和: won on the dealer's very first discard
+  kongOnKong?: boolean;      // 杠上杠和: replacement of a second consecutive kong
+  robbedFlower?: boolean;    // 七抢一: held seven flowers and took the eighth
+  isDealer?: boolean;
+  jokersUsed?: number;
 }
 
 export interface FanItem { id: string; fan: number; }
@@ -48,12 +54,14 @@ function fanTable(r: RulesConfig): FanTable {
   return {
     ...r.combination_tai,
     animal: r.animal_scoring.each, animal_set: r.animal_scoring.set,
-    own_flower: r.flower_scoring.own_flower, flower_set: r.flower_scoring.flower_set, season_set: r.flower_scoring.season_set, seven_flower: r.flower_scoring.seven_flower, eight_flower: r.flower_scoring.eight_flower,
+    own_flower: r.flower_scoring.own_flower, flower_set: r.flower_scoring.flower_set, season_set: r.flower_scoring.season_set,
+    seven_flower: r.flower_scoring.seven_flower, eight_flower: r.flower_scoring.eight_flower,
     dragon_pong: r.honour_scoring.dragon_pong, prevailing_wind: r.honour_scoring.prevailing_wind, seat_wind: r.honour_scoring.seat_wind,
-    two_dragons_eye: r.honour_scoring.two_dragons_eye, three_winds_eye: r.honour_scoring.three_winds_eye,
     replacement_win: r.event_scoring.replacement_win, last_tile: r.event_scoring.last_tile, robbing_kong: r.event_scoring.robbing_kong,
+    men_qing: r.special_hands.men_qing_tai, four_jokers: r.jokers.all_four_tai,
   };
 }
+
 const DEFAULT_FAN: FanTable = fanTable(DEFAULT_RULES);
 let FAN: FanTable = DEFAULT_FAN;
 
@@ -89,7 +97,7 @@ export function scoreHand(ctx: WinContext, rules: RulesConfig = DEFAULT_RULES): 
     if (!best || r.fan > best.fan) best = r;
   }
   if (!best) return { fan: 0, items: [], combination: 'none', valid: false, reason: 'no joker assignment completes the hand' };
-  if (jokers === 4 && best.fan < rules.jokers.all_four_tai) { best.items.push({ id: 'four_jokers', fan: rules.jokers.all_four_tai - best.fan }); best.fan = rules.jokers.all_four_tai; }
+  if (jokers >= 4 && best.fan < rules.jokers.all_four_tai) { best.items.push({ id: 'tian_hu', fan: rules.jokers.all_four_tai - best.fan }); best.fan = rules.jokers.all_four_tai; best.combination = 'tian_hu'; }
   best.items.push({ id: 'jokers_used', fan: 0 });
   return best;
 }
@@ -100,10 +108,10 @@ function scoreStandard(ctx: WinContext, _rules: RulesConfig, withJokers: boolean
 
   // ---- 13 Wonders (only possible fully concealed) -------------------------
   if (ctx.melds.length === 0 && isThirteenWonders(counts)) {
-    const items: FanItem[] = [{ id: 'thirteen_wonders', fan: FAN['thirteen_wonders']! }];
+    const items: FanItem[] = [{ id: 'shi_san_yao', fan: FAN['shi_san_yao'] ?? 5 }];
     items.push(...bonusItems(ctx));
     items.push(...eventItems(ctx));
-    return finish(items, 'thirteen_wonders');
+    return finish(items, 'shi_san_yao');
   }
 
   const decs = decompose(counts, needSets);
@@ -111,95 +119,107 @@ function scoreStandard(ctx: WinContext, _rules: RulesConfig, withJokers: boolean
 
   let best: ScoreResult | null = null;
   for (const d of decs) {
-    const r = scoreDecomposition(ctx, d.sets, d.eye, withJokers);
+    const r = scoreDecomposition(ctx, d.sets, d.eye, withJokers, _rules);
     if (!r.valid) continue;
     if (!best || r.fan > best.fan) best = r;
   }
   return best ?? { fan: 0, items: [], combination: 'none', valid: false, reason: 'no valid decomposition' };
 }
 
-function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye: TileKind, withJokers = false): ScoreResult {
+function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye: TileKind, withJokers = false, rules: RulesConfig = DEFAULT_RULES): ScoreResult {
   const sets: SetView[] = [
     ...ctx.melds.map((m) => ({ type: m.type, kind: m.tiles[0]!, tiles: m.tiles, concealed: m.concealed })),
     ...concealedSets.map((s) => ({ type: s.type, kind: s.tiles[0]!, tiles: s.tiles, concealed: true })),
   ];
   const items: FanItem[] = [];
   const pongLike = (s: SetView) => s.type !== 'chow';
-  const allPong = sets.every(pongLike);
-  const allChow = sets.every((s) => s.type === 'chow');
+  const allPong = sets.every(pongLike), allChow = sets.every((s) => s.type === 'chow');
   const allKong = sets.every((s) => s.type === 'kong');
+  const allConcealedPong = allPong && sets.every((s) => s.concealed);
   const allTiles: TileKind[] = [eye, eye, ...sets.flatMap((s) => s.tiles)];
   const suits = new Set(allTiles.filter(isSuited).map((k) => suitOf(k)!));
-  const hasHonour = allTiles.some(isHonour);
-  const hasBonus = ctx.bonus.length > 0;
-
-  // ---- All-Chow validity (source: All-Chow restrictions) ------------------
-  if (allChow) {
-    if (isDragon(eye) || eye === windKind(ctx.seat) || eye === windKind(ctx.prevailingWind))
-      return invalid('all_chow eye may not be a dragon, seat wind or prevailing wind');
-    if (ctx.concealed.length <= 2)
-      return invalid('all_chow cannot win with only two concealed tiles');
-    if (!ctx.selfDraw && !withJokers) {     // with jokers the wait set is not well defined; restriction not applied (assumption)
-      const before = countsOf(ctx.concealed);
-      before[ctx.winningTile] = before[ctx.winningTile]! - 1;
-      const outs = winningKinds(before, 4 - ctx.melds.length);
-      if (outs.length < 2) return invalid('all_chow discard win needs two or more unique winning tiles');
-    }
-  }
-
-  // ---- Combinations ---------------------------------------------------------
-  let combination = 'chicken';
+  const hasHonour = allTiles.some(isHonour), hasBonus = ctx.bonus.length > 0;
+  const allHonours = allTiles.every(isHonour);
+  const allTerminals = allTiles.every((k) => isSuited(k) && (rankOf(k) === 1 || rankOf(k) === 9));
+  const GREEN = new Set([19, 20, 21, 23, 25, 32]);                 // 2,3,4,6,8 sok + 發
+  const allGreen = allTiles.every((k) => GREEN.has(k));
   const windPongs = sets.filter((s) => pongLike(s) && isWind(s.kind));
   const dragonPongs = sets.filter((s) => pongLike(s) && isDragon(s.kind));
 
-  if (allKong) { items.push({ id: 'all_kong', fan: FAN['all_kong']! }); combination = 'all_kong'; }
-  else if (windPongs.length === 4) {
-    items.push({ id: 'wind_set', fan: FAN['wind_set']! }); combination = 'wind_set';
-    if (allPong) items.push({ id: 'all_pong', fan: FAN['all_pong']! });
-  }
-  else if (allPong && sets.every((s) => isTerminalOrHonour(s.kind)) && isTerminalOrHonour(eye)) {
-    items.push({ id: 'all_terminal', fan: FAN['all_terminal']! }, { id: 'all_pong', fan: FAN['all_pong']! });
-    combination = 'all_terminal';
-  }
-  else {
-    if (allPong) {
-      const concealedAll = sets.every((s) => s.concealed) ;
-      if (concealedAll) { items.push({ id: 'concealed_all_pong', fan: FAN['concealed_all_pong']! }); combination = 'concealed_all_pong'; }
-      else { items.push({ id: 'all_pong', fan: FAN['all_pong']! }); combination = 'all_pong'; }
-    } else if (allChow) {
-      if (!hasBonus) { items.push({ id: 'ping_wu', fan: FAN['ping_wu']! }); combination = 'ping_wu'; }
-      else { items.push({ id: 'all_chow', fan: FAN['all_chow']! }); combination = 'all_chow'; }
-    }
-    // colour
-    if (suits.size === 1 && !hasHonour) { items.push({ id: 'full_color', fan: FAN['full_color']! }); if (combination === 'chicken') combination = 'full_color'; }
-    else if (suits.size === 1 && hasHonour) { items.push({ id: 'half_color', fan: FAN['half_color']! }); if (combination === 'chicken') combination = 'half_color'; }
-    else if (suits.size === 0) { /* all honours: covered by all_terminal branch above */ }
-    // half-terminal: every set AND the eye touches a terminal or honour
-    const touches = (s: SetView) => s.tiles.some(isTerminalOrHonour);
-    if (!allPong && sets.every(touches) && isTerminalOrHonour(eye)) {
-      items.push({ id: 'half_terminal', fan: FAN['half_terminal']! }); if (combination === 'chicken') combination = 'half_terminal';
+  // ---- 平胡/臭平胡 validity (all-chow restrictions) ----
+  if (allChow) {
+    if (isDragon(eye) || eye === windKind(ctx.seat) || eye === windKind(ctx.prevailingWind))
+      return invalid('all-chow eye may not be a dragon, seat wind or round wind');
+    if (ctx.concealed.length <= 2) return invalid('all-chow cannot win with only two concealed tiles');
+    if (!ctx.selfDraw && !withJokers) {
+      const before = countsOf(ctx.concealed.filter((k) => !isJoker(k)));
+      before[ctx.winningTile] = before[ctx.winningTile]! - 1;
+      if (winningKinds(before, 4 - ctx.melds.length).length < 2) return invalid('all-chow discard win needs two or more unique winning tiles');
     }
   }
 
-  // ---- Honour sets ------------------------------------------------------------
-  if (dragonPongs.length === 3) {
-    items.push({ id: 'dragon_set', fan: FAN['dragon_set']! }); if (combination === 'chicken') combination = 'dragon_set';
-  } else {
-    for (const _ of dragonPongs) items.push({ id: 'dragon_pong', fan: FAN['dragon_pong']! });
-    if (dragonPongs.length === 2 && isDragon(eye)) items.push({ id: 'two_dragons_eye', fan: FAN['two_dragons_eye']! });
+  const F = (k: string) => FAN[k] ?? 0;
+  const limit = (id: string): ScoreResult => {
+    const li: FanItem[] = [{ id, fan: F(id) }, ...bonusItems(ctx), ...eventItems(ctx)];
+    return { fan: li.reduce((a, i) => a + i.fan, 0), items: li, combination: id, valid: true };
+  };
+
+  // ---- 5 fan: the limit hands ----
+  if (ctx.firstDraw && ctx.isDealer) return limit('tian_hu');
+  if (ctx.firstDiscard && !ctx.isDealer) return limit('di_hu');
+  if (ctx.robbedFlower) return limit('qi_qiang_yi');
+  if (ctx.kongOnKong) return limit('gang_shang_gang');
+  if ((ctx.jokersUsed ?? 0) >= 4) return limit('tian_hu');          // four wildcards in a completed hand
+  if (windPongs.length === 4) return limit('da_si_xi');
+  if (dragonPongs.length === 3) return limit('da_san_yuan');
+  if (allHonours) return limit('zi_yi_se');
+  if (allTerminals && allPong) return limit('quan_yao_jiu');
+  if (allKong) return limit('shi_ba_luo_han');
+  if (allConcealedPong && ctx.selfDraw) return limit('si_an_ke');
+  if (rules.special_hands.all_green && allGreen) return limit('lv_yi_se');
+  if (suits.size === 1 && !hasHonour && ctx.melds.length === 0 && isNineGates(allTiles)) return limit('jiu_lian');
+
+  // ---- shape (mutually exclusive) ----
+  let combination = 'chicken';
+  if (allPong) { items.push({ id: 'peng_peng_hu', fan: F('peng_peng_hu') }); combination = 'peng_peng_hu'; }
+  else if (allChow) {
+    if (hasBonus) { items.push({ id: 'chou_ping_hu', fan: F('chou_ping_hu') }); combination = 'chou_ping_hu'; }
+    else { items.push({ id: 'ping_hu', fan: F('ping_hu') }); combination = 'ping_hu'; }
   }
-  if (windPongs.length === 3 && isWind(eye)) {
-    items.push({ id: 'three_winds_eye', fan: FAN['three_winds_eye']! }); // includes the wind pong fan
-  } else if (windPongs.length < 4) {
-    for (const s of windPongs) {
-      if (s.kind === windKind(ctx.prevailingWind)) items.push({ id: 'prevailing_wind', fan: FAN['prevailing_wind']! });
-      if (s.kind === windKind(ctx.seat)) items.push({ id: 'seat_wind', fan: FAN['seat_wind']! });
-    }
+  // ---- colour (mutually exclusive) ----
+  if (suits.size === 1 && !hasHonour) { items.push({ id: 'qing_yi_se', fan: F('qing_yi_se') }); if (combination === 'chicken') combination = 'qing_yi_se'; }
+  else if (suits.size === 1 && hasHonour) { items.push({ id: 'ban_se', fan: F('ban_se') }); if (combination === 'chicken') combination = 'ban_se'; }
+  // ---- 混老头: every set a pong of terminals or honours ----
+  if (allPong && sets.every((s) => isTerminalOrHonour(s.kind)) && isTerminalOrHonour(eye) && !allHonours && !allTerminals) {
+    items.push({ id: 'hun_lao_tou', fan: F('hun_lao_tou') }); if (combination === 'chicken') combination = 'hun_lao_tou';
   }
+  // ---- honour part-hands ----
+  if (dragonPongs.length === 2 && isDragon(eye)) { items.push({ id: 'xiao_san_yuan', fan: F('xiao_san_yuan') }); if (combination === 'chicken') combination = 'xiao_san_yuan'; }
+  else for (const _ of dragonPongs) items.push({ id: 'dragon_pong', fan: F('dragon_pong') });
+  if (windPongs.length === 3 && isWind(eye)) { items.push({ id: 'xiao_si_xi', fan: F('xiao_si_xi') }); if (combination === 'chicken') combination = 'xiao_si_xi'; }
+  else for (const s of windPongs) {
+    if (s.kind === windKind(ctx.prevailingWind)) items.push({ id: 'prevailing_wind', fan: F('prevailing_wind') });
+    if (s.kind === windKind(ctx.seat)) items.push({ id: 'seat_wind', fan: F('seat_wind') });
+  }
+  // ---- 门清: fully concealed and self-drawn ----
+  if (rules.special_hands.men_qing && ctx.melds.length === 0 && ctx.selfDraw) items.push({ id: 'men_qing', fan: F('men_qing') });
 
   items.push(...bonusItems(ctx));
   items.push(...eventItems(ctx));
   return finish(items, combination);
+}
+
+/** 九连宝灯: a concealed single-suit hand of 1112345678999 plus one duplicate. */
+function isNineGates(tiles: TileKind[]): boolean {
+  if (tiles.length !== 14) return false;
+  const base = Math.floor(tiles[0]! / 9) * 9;
+  if (!tiles.every((k) => k >= base && k < base + 9)) return false;
+  const c = new Array(9).fill(0);
+  for (const k of tiles) c[k - base]++;
+  const need = [3, 1, 1, 1, 1, 1, 1, 1, 3];
+  let extra = 0;
+  for (let i = 0; i < 9; i++) { const d = c[i] - need[i]!; if (d < 0) return false; extra += d; }
+  return extra === 1;
 }
 
 function bonusItems(ctx: WinContext): FanItem[] {

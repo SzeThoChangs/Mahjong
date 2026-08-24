@@ -4,9 +4,36 @@
  * House rules vary between groups - every value here is a default to confirm.
  */
 export interface CombinationTai {
-  all_chow: number; all_pong: number; half_color: number; half_terminal: number; ping_wu: number; full_color: number;
-  dragon_set: number; concealed_all_pong: number; thirteen_wonders: number; all_terminal: number; wind_set: number; all_kong: number;
+  // --- 1 fan ---
+  chou_ping_hu: number;      // 臭平胡  all chows, but holding a flower or animal
+  // --- 2 fan ---
+  peng_peng_hu: number;      // 碰碰胡  all pongs/kongs + eye
+  ban_se: number;            // 半色    one suit + honours (mixed suit)
+  xiao_si_xi: number;        // 小四喜  three wind pongs + a wind pair
+  hun_lao_tou: number;       // 混老头  every set a pong of terminals or honours
+  qi_dui: number;            // 对对胡  seven pairs - NOT allowed by default (special_hands.seven_pairs)
+  // --- 3 fan ---
+  xiao_san_yuan: number;     // 小三元  two dragon pongs + a dragon pair
+  // --- 4 fan ---
+  ping_hu: number;           // 平胡    all chows with NO flower or animal
+  qing_yi_se: number;        // 清一色  pure suit
+  // --- 5 fan (the limit) ---
+  tian_hu: number;           // 天和    dealer wins on the opening hand (also: four wildcards)
+  di_hu: number;             // 地和    non-dealer wins on the dealer's first discard
+  shi_san_yao: number;       // 十三幺  thirteen wonders
+  da_si_xi: number;          // 大四喜  four wind pongs
+  da_san_yuan: number;       // 大三元  three dragon pongs
+  zi_yi_se: number;          // 字一色  all honours
+  lv_yi_se: number;          // 绿一色  all green - off by default
+  quan_yao_jiu: number;      // 全幺九/清老头  all terminals
+  si_an_ke: number;          // 四暗刻/坎坎和  four concealed pongs, SELF-DRAWN only
+  shi_ba_luo_han: number;    // 杠杠和/十八罗汉  four kongs
+  gang_shang_gang: number;   // 杠上杠和  win on the replacement of a second consecutive kong
+  qi_qiang_yi: number;       // 七抢一  holding seven flowers, rob the eighth
+  hua_hu: number;            // 花和/八仙过海  all eight flowers
+  jiu_lian: number;          // 九连宝灯  nine gates
 }
+
 export interface FlowerScoring { own_flower: number; flower_set: number; season_set: number; seven_flower: number; eight_flower: number; }
 export interface AnimalScoring { each: number; set: number; }
 export interface HonourScoring { dragon_pong: number; prevailing_wind: number; seat_wind: number; two_dragons_eye: number; three_winds_eye: number; }
@@ -21,7 +48,17 @@ export interface KongScoring {
 }
 export interface BaoRules { enabled: boolean; fan_limit_feed: boolean; dragon_set_feed: boolean; wind_set_feed: boolean; fresh_tile_threshold: number | null; }
 export interface DealerRules { retain_on_win: boolean; retain_on_draw: boolean; hands_per_wind: number; }
-export interface SpecialHands { seven_pairs: boolean; eight_flower_instant_win: boolean; all_animals_instant_win: boolean; }
+export interface SpecialHands {
+  /** 对对胡 seven pairs - most houses do NOT allow it */
+  seven_pairs: boolean;
+  /** 绿一色 all green - off at most tables */
+  all_green: boolean;
+  /** 门清 fully concealed AND self-drawn scores an extra fan - some houses */
+  men_qing: boolean;
+  men_qing_tai: number;
+  eight_flower_instant_win: boolean;
+  all_animals_instant_win: boolean;
+}
 /** Real-money payout schedule (e.g. the "3/6, shooter pay, ZM +$2" table). When set, it replaces the 2^tai chip formula entirely. */
 export interface MoneyRules {
   /** per-person base amount by tai (values above the highest key use the highest) */
@@ -85,7 +122,14 @@ export interface RulesConfig {
 
 export const DEFAULT_RULES: RulesConfig = {
   minimum_tai: 2, maximum_tai: 5, self_draw_minimum_tai: 1, unplayable_tiles: 15,
-  combination_tai: { all_chow: 1, all_pong: 2, half_color: 2, half_terminal: 2, ping_wu: 4, full_color: 4, dragon_set: 7, concealed_all_pong: 7, thirteen_wonders: 8, all_terminal: 9, wind_set: 12, all_kong: 14 },
+  combination_tai: {
+    chou_ping_hu: 1,
+    peng_peng_hu: 2, ban_se: 2, xiao_si_xi: 2, hun_lao_tou: 2, qi_dui: 2,
+    xiao_san_yuan: 3,
+    ping_hu: 4, qing_yi_se: 4,
+    tian_hu: 5, di_hu: 5, shi_san_yao: 5, da_si_xi: 5, da_san_yuan: 5, zi_yi_se: 5, lv_yi_se: 5,
+    quan_yao_jiu: 5, si_an_ke: 5, shi_ba_luo_han: 5, gang_shang_gang: 5, qi_qiang_yi: 5, hua_hu: 5, jiu_lian: 5,
+  },
   flower_scoring: { own_flower: 1, flower_set: 1, season_set: 1, seven_flower: 10, eight_flower: 12 },
   animal_scoring: { each: 1, set: 1 },
   honour_scoring: { dragon_pong: 1, prevailing_wind: 1, seat_wind: 1, two_dragons_eye: 1, three_winds_eye: 4 },
@@ -95,7 +139,7 @@ export const DEFAULT_RULES: RulesConfig = {
   discard_win_payment: 'discarder_double',
   bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, fresh_tile_threshold: 4 },
   dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
-  special_hands: { seven_pairs: false, eight_flower_instant_win: false, all_animals_instant_win: false },
+  special_hands: { seven_pairs: false, all_green: false, men_qing: false, men_qing_tai: 1, eight_flower_instant_win: false, all_animals_instant_win: false },
   jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, claimable_when_discarded: false, usable_in_exposed_melds: false },
   money: null,
 };

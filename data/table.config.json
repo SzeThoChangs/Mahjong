@@ -16,9 +16,12 @@
       "fresh_tile_threshold": 8
     },
     "special_hands": {
+      "seven_pairs": false,
+      "all_green": false,
+      "men_qing": false,
+      "men_qing_tai": 1,
       "eight_flower_instant_win": true,
-      "all_animals_instant_win": false,
-      "seven_pairs": false
+      "all_animals_instant_win": false
     },
     "jokers": {
       "count": 4,
@@ -56,6 +59,6 @@
     "unplayable_tiles": "15 is the 67% default - confirm",
     "self_draw_bonus_fan": "some tables add +1 Fan for a self-draw - confirm whether yours does on top of the 1-Fan exemption",
     "joker_assumptions": "a discarded joker is dead (not claimable); jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
-    "animal_pair_bite_payers": "assumed ALL three pay for cat+mouse / rooster+centipede bites (animals have no seat) - confirm"
+    "peng_peng_hu": "\u78b0\u78b0\u80e1 (all pongs) set to 2 fan - inferred from your \u56db\u6697\u523b answer; confirm"
   }
 }

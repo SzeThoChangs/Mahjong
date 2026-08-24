@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Wall, makeRng } from '../src/wall.js';
 import { GameState } from '../src/state.js';
 import { makeRules, tableConfigOf } from '../src/rules.js';
-import { parseKinds, kindOf, INSTANCE_KIND, KIND, type TileKind, type TileInstance } from '../src/tiles.js';
+import { parseKinds, kindOf, INSTANCE_KIND, KIND, TOTAL_TILES, type TileKind, type TileInstance } from '../src/tiles.js';
 import { scoreHand } from '../src/score.js';
 import type { Bot, ClaimOption, PlayerView, SelfAction } from '../src/game.js';
 
@@ -11,13 +11,15 @@ function instances(kinds: TileKind[], used: Set<TileInstance>): TileInstance[] {
   return kinds.map((k) => { for (let t = 0; t < INSTANCE_KIND.length; t++) if (INSTANCE_KIND[t] === k && !used.has(t)) { used.add(t); return t; } throw new Error('out of copies for ' + k); });
 }
 /** wall whose deal gives `hands[seat]` (13 kinds each, dealer 0) and whose next draws are `next` */
-function craftedWall(hands: string[], next: string, unplayable = 15): Wall {
+/** `jokers` = how many wildcards this game uses; without it the wall is the plain 148-tile set. */
+function craftedWall(hands: string[], next: string, unplayable = 15, jokers = 0): Wall {
   const used = new Set<TileInstance>();
   const H = hands.map((h) => instances(parseKinds(h), used));
   const order: TileInstance[] = [];
   for (let i = 0; i < 13; i++) for (let s = 0; s < 4; s++) order.push(H[s]![i]!);
   for (const t of instances(parseKinds(next), used)) order.push(t);
-  for (let t = 0; t < INSTANCE_KIND.length; t++) if (!used.has(t)) order.push(t);
+  const limit = jokers > 0 ? INSTANCE_KIND.length : TOTAL_TILES;
+  for (let t = 0; t < limit; t++) if (!used.has(t)) order.push(t);
   return Wall.fromSnapshot({ order, front: 0, back: order.length - 1, unplayable });
 }
 /** scripted bot: discards from a queue of kinds (else first tile), takes self actions / claims by preference */
@@ -41,7 +43,7 @@ describe('robbing the kong', () => {
     const g = GameState.deal(cfg, wall, { rules, log: true });
     const res = g.run([new ScriptBot([], ['win', 'kong4']), new ScriptBot(), new ScriptBot(), new ScriptBot()]);
     expect(res.winner).toBe(1); expect(res.discarder).toBe(0);
-    expect(res.score!.combination).toBe('thirteen_wonders');
+    expect(res.score!.combination).toBe('shi_san_yao');
     expect(res.score!.items.map((i) => i.id)).toContain('robbing_kong');
     expect(res.counts.kong).toBe(0);                               // the kong was undone
     expect(g.players[0]!.hand.filter((t) => kindOf(t) === KIND.WIND).length).toBe(3);   // three E back in hand
@@ -103,8 +105,8 @@ describe('flower specials', () => {
       return g;
     };
     const g = mk(true);
-    expect(g.finished).toBe(true); expect(g.result!.winner).toBe(0); expect(g.result!.score!.combination).toBe('eight_flower');
-    expect(g.result!.score!.items.find((i) => i.id === 'eight_flower')!.fan).toBe(12); expect(g.result!.score!.fan).toBeGreaterThanOrEqual(12);
+    expect(g.finished).toBe(true); expect(g.result!.winner).toBe(0); expect(g.result!.score!.combination).toBe('hua_hu');
+    expect(g.result!.score!.items.find((i) => i.id === 'hua_hu')!.fan).toBe(5); expect(g.result!.score!.fan).toBeGreaterThanOrEqual(5);
     const g2 = mk(false);
     expect(g2.finished).toBe(false); expect(g2.players[0]!.bonus.length).toBeGreaterThanOrEqual(8);   // keeps drawing replacements (and collects the animals too)
   });
@@ -130,7 +132,7 @@ describe('Pay-All (bao)', () => {
   it('feeding the third dragon set makes the feeder pay for everyone', () => {
     const res = build(makeRules({ bao: { enabled: true } })).run(bots());
     expect(res.winner).toBe(1); expect(res.discarder).toBe(2);
-    expect(res.score!.items.map((i) => i.id)).toContain('dragon_set');
+    expect(res.score!.combination).toBe('da_san_yuan');
     // 7 fan capped at 5 -> base 32; discarder double 64 + 32 + 32 = 128, ALL paid by the feeder (seat 0)
     expect(res.chipsDelta).toEqual([-128, 128, 0, 0]);
   });

@@ -32,7 +32,7 @@ describe('ledger re-pricing', () => {
     for (let seed = 1; seed <= 200; seed++) {
       const g = GameState.deal(cfg, new Wall(makeRng(seed), 15, 4), { rules: RULES });
       const r = g.run([0, 1, 2, 3].map((i) => (seed % 3 ? new ShantenBot(makeRng(seed * 4 + i)) : new RandomBot(makeRng(seed * 4 + i)))));
-      const priced = priceFromLedger(r.ledger, { winner: r.winner, selfDraw: r.selfDraw, discarder: r.discarder, fan: r.score?.fan ?? 0, liable: r.liable, thirteen: r.score?.combination === 'thirteen_wonders' }, MONEY);
+      const priced = priceFromLedger(r.ledger, { winner: r.winner, selfDraw: r.selfDraw, discarder: r.discarder, fan: r.score?.fan ?? 0, liable: r.liable, thirteen: r.score?.combination === 'shi_san_yao' }, MONEY);
       expect(priced).toEqual(r.chipsDelta);
       checked++;
       if (r.ledger.some((l) => Object.values(l).some((v) => v !== 0))) withSide++;
@@ -45,7 +45,7 @@ describe('ledger re-pricing', () => {
     const cfg = tableConfigOf(RULES);
     const g = GameState.deal(cfg, new Wall(makeRng(7), 15, 4), { rules: RULES });
     const r = g.run([0, 1, 2, 3].map((i) => new ShantenBot(makeRng(7 * 4 + i))));
-    const other = priceFromLedger(r.ledger, { winner: r.winner, selfDraw: r.selfDraw, discarder: r.discarder, fan: r.score?.fan ?? 0, liable: r.liable, thirteen: r.score?.combination === 'thirteen_wonders' }, DOUBLE);
+    const other = priceFromLedger(r.ledger, { winner: r.winner, selfDraw: r.selfDraw, discarder: r.discarder, fan: r.score?.fan ?? 0, liable: r.liable, thirteen: r.score?.combination === 'shi_san_yao' }, DOUBLE);
     expect(other.reduce((a, b) => a + b, 0)).toBe(0);                    // still zero-sum
     // and it must equal an engine run under those same rules
     const RULES2 = makeRules({ money: DOUBLE, jokers: { count: 4 }, discard_win_payment: 'ladder_split' });
