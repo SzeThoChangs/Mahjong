@@ -2,11 +2,30 @@
  * Convert evaluator values to chips-per-game for each target at the current
  * Player Turns, using the book's tables. Picks the best target.
  */
-import { fanInHand, isAnimal, isFlower, isSeason, type TileKind } from 'sg-mahjong-engine';
+import { fanInHand, isAnimal, isDragon, isFlower, isSeason, windKind, type TileKind } from 'sg-mahjong-engine';
 import { TABLES } from './tables.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, thirteenBreakdown, type HandInput } from './evaluators.js';
 
 export type TargetId = 'ping_wu' | 'all_chow' | 'half_color' | 'all_pong' | 'chicken' | 'thirteen';
+
+/** Fan you do not hold yet but can reach by ponging a value pair already in hand.
+ *  A pair of your seat wind in your own round is a DOUBLE - one pong is worth two fan,
+ *  which is often the whole difference between a hand that can win and one that cannot. */
+export interface FanRoute { tile: TileKind; fan: number; double: boolean }
+export function fanRoutes(concealed: TileKind[], ctx: Context): FanRoute[] {
+  const count = new Map<TileKind, number>();
+  for (const k of concealed) count.set(k, (count.get(k) ?? 0) + 1);
+  const routes: FanRoute[] = [];
+  for (const [k, n] of count) {
+    if (n < 2) continue;                                    // need a pair to be one tile from the pong
+    let fan = 0;
+    if (isDragon(k)) fan = 1;
+    if (k === windKind(ctx.seat)) fan += 1;
+    if (k === windKind(ctx.prevailingWind)) fan += 1;
+    if (fan > 0) routes.push({ tile: k, fan, double: fan >= 2 });
+  }
+  return routes.sort((a, b) => b.fan - a.fan);
+}
 export interface TargetEval { id: TargetId; value: number | string; chips: number; armed: boolean; note?: string; suit?: string }
 export interface Context { seat: number; prevailingWind: number; bonus: TileKind[]; playerTurns: number; minimumFan: 1 | 2; selfDrawMinimumFan: number }
 
@@ -76,13 +95,23 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
     out.push({ id: 'all_pong', value: ap.key, armed: true, chips });
   }
 
-  // Chicken: only if the fallback is armed
+  // Chicken: viable only if the hand can actually reach the table minimum
   const ch = rule4213(h);
   const chance = byTurn(T.chicken_chance![mf]!, ctx.playerTurns, ch.value);
   const chickenChips = (chance - 0.31) * 26;    // fit to Table 10:3 (see PLAN.md)
+  const routes = fanRoutes(h.concealed, ctx);
+  const best = routes[0];
+  const reachable = fan + (best?.fan ?? 0);
   if (fan >= ctx.minimumFan) out.push({ id: 'chicken', value: ch.value, armed: true, chips: chickenChips });
+  else if (reachable >= ctx.minimumFan && best) {
+    // one pong away from a legal hand - a real plan, just not armed yet
+    out.push({ id: 'chicken', value: ch.value, armed: true, chips: chickenChips * 0.8 - 0.3,
+      note: `needs the ${tileName(best.tile)} pong first${best.double ? ' (double wind: 2 fan in one call)' : ''}` });
+  }
   else if (fan >= ctx.selfDrawMinimumFan) out.push({ id: 'chicken', value: ch.value, armed: true, chips: chickenChips * 0.45 - 0.5, note: 'self-draw only' });
   else out.push({ id: 'chicken', value: ch.value, armed: false, chips: -9, note: `needs ${ctx.minimumFan - fan} more Fan` });
+  // All-Pong gets the same credit: a value pair is both a set and the tai the hand needs
+  if (best) { const ap = out.find((x) => x.id === 'all_pong'); if (ap) ap.chips += best.fan * 1.2; }
 
   // 13 Wonders (only when plausible)
   const tw = thirteenBreakdown(h);
@@ -90,6 +119,13 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
 
   return out.sort((a, b) => b.chips - a.chips);
 }
+
+const tileName = (k: TileKind): string => {
+  const N = ['\u6771', '\u5357', '\u897f', '\u5317'];
+  if (k >= 27 && k < 31) return N[k - 27]!;
+  if (k === 31) return '\u4e2d'; if (k === 32) return '\u767c'; if (k === 33) return '\u767d';
+  return String(k);
+};
 
 export function handValue(h: HandInput, ctx: Context): { chips: number; best: TargetEval; all: TargetEval[] } {
   const all = evaluateTargets(h, ctx);

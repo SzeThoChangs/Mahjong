@@ -1,8 +1,8 @@
 /** Rank the 14 possible discards and explain the choice in plain language. */
 import {
-  isDragon, isHonour, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
+  fanInHand, isDragon, isHonour, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
-import { handValue, type Context, type TargetEval } from './targets.js';
+import { handValue, fanRoutes, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
@@ -15,8 +15,11 @@ export interface Ranking {
   plan: string;                        // one-line plan statement
   planDetail: string[];                // bullet lines
   best: DiscardOption;
+  /** tiles that are equal-best within noise - naming one of them as 'the' answer would be arbitrary */
+  tied: TileKind[];
 }
 
+const WIND_OR_DRAGON: Record<number, string> = { 27: '\u6771', 28: '\u5357', 29: '\u897f', 30: '\u5317', 31: '\u4e2d', 32: '\u767c', 33: '\u767d' };
 const SUIT_NAME = { wan: '萬', tong: '筒', sok: '條' } as const;
 const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All-Chow', half_color: 'Half-Color', all_pong: 'All-Pong', chicken: 'Chicken', thirteen: '13 Wonders' };
 
@@ -82,7 +85,19 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   if (second) detail.push(`Next best plan: ${TARGET_NAME[second.id]}${second.suit ? ` in ${SUIT_NAME[second.suit as keyof typeof SUIT_NAME]}` : ''} (${fmt(second.chips)}).`);
   const chicken = hvAll.find((x) => x.id === 'chicken');
   if (chicken && t.id !== 'chicken') detail.push(chicken.armed ? `Chicken fallback is armed${chicken.note ? ` (${chicken.note})` : ''}.` : `Chicken fallback NOT armed — ${chicken.note}.`);
-  return { options: opts, plan, planDetail: detail, best: top };
+  // if the hand cannot legally win yet, say plainly how it gets there
+  const fih = fanInHand({ melds, bonus: ctx.bonus, seat: ctx.seat, prevailingWind: ctx.prevailingWind });
+  if (fih < ctx.minimumFan) {
+    const routes = fanRoutes(concealed, ctx);
+    if (routes.length) {
+      const r = routes[0]!;
+      detail.push(`You are ${ctx.minimumFan - fih} tai short. Your ${WIND_OR_DRAGON[r.tile] ?? ''} pair is the way out — ponging it is worth ${r.fan} tai${r.double ? ' (門風 + 圈風 double)' : ''}, which arms the hand.`);
+    } else {
+      detail.push(`You are ${ctx.minimumFan - fih} tai short and hold no value pair — the tai has to come from a flower, an animal, or a colour hand.`);
+    }
+  }
+  const tied = opts.filter((o) => o.delta > -0.05).map((o) => o.tile);
+  return { options: opts, plan, planDetail: detail, best: top, tied };
 }
 
 /** copies of each kind not visible in your own hand or any meld (a rough "still out there" count) */
@@ -107,17 +122,11 @@ function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Cont
     if (count === 2) r.push(`pair — ${left} left to make the pong`);
     else if (count === 1) r.push(left <= 1 ? `single, only ${left} left — it will not pair up` : `single — needs ${left > 0 ? left : 0} more, and neighbours do not help in a pong hand`);
     if (isHonour(k) && count === 1) r.push('lone honour');
-    if (isDragon(k)) r.push('dragon — worth 1 Fan as a pong');
-    if (k === windKind(ctx.seat)) r.push('your seat wind — worth 1 Fan as a pong');
-    if (k === windKind(ctx.prevailingWind)) r.push('round wind — worth 1 Fan as a pong');
+    r.push(...valueTileReasons(k, count, ctx));
     return r;
   }
-  if (isHonour(k)) {
-    if (count === 1) r.push('lone honour');
-    if (isDragon(k)) r.push('dragon — worth 1 Fan as a pong');
-    if (k === windKind(ctx.seat)) r.push('your seat wind — worth 1 Fan as a pong');
-    if (k === windKind(ctx.prevailingWind)) r.push('prevailing wind — worth 1 Fan as a pong');
-  }
+  if (isHonour(k) && count === 1) r.push('lone honour');
+  r.push(...valueTileReasons(k, count, ctx));
   if (isSuited(k)) {
     const rk = rankOf(k), su = suitOf(k);
     const near = concealed.filter((x) => x !== k && suitOf(x) === su && Math.abs(rankOf(x) - rk) <= 2).length;
@@ -129,6 +138,16 @@ function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Cont
   }
   if (melds.length) { /* nothing extra for now */ }
   return r;
+}
+/** why an honour matters here: dragons, your seat wind, the round wind - and the double when they coincide */
+function valueTileReasons(k: TileKind, count: number, ctx: Context): string[] {
+  const isSeat = k === windKind(ctx.seat), isRound = k === windKind(ctx.prevailingWind);
+  const out: string[] = [];
+  if (isSeat && isRound) out.push(count >= 2 ? 'your DOUBLE wind (門風 + 圈風) — pong it for 2 fan and the hand is armed' : 'your double wind — a pong here is worth 2 fan');
+  else if (isSeat) out.push(count >= 2 ? 'seat wind pair — one more is 1 fan' : 'your seat wind — 1 fan as a pong');
+  else if (isRound) out.push(count >= 2 ? 'round wind pair — one more is 1 fan' : 'round wind — 1 fan as a pong');
+  else if (isDragon(k)) out.push(count >= 2 ? 'dragon pair — one more is 1 fan' : 'dragon — 1 fan as a pong');
+  return out;
 }
 const fmt = (x: number) => (x >= 0 ? '+' : '') + x.toFixed(1);
 export { kindName };

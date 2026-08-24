@@ -17,6 +17,7 @@ const VERDICT_STYLE: Record<Verdict, string> = {
   mistake: 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50', blunder: 'bg-red-600 text-white',
 };
 const VERDICT_TEXT: Record<Verdict, string> = { best: 'Best', fine: 'Also fine', mistake: 'Mistake', blunder: 'Big mistake' };
+const EQUAL_TEXT = 'Equal best';
 
 type Score = { best: number; fine: number; mistake: number; blunder: number; streak: number };
 
@@ -124,10 +125,13 @@ export default function Trainer() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center gap-3">
-                <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[picked.verdict])}>{VERDICT_TEXT[picked.verdict]}</Badge>
+                <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[scenario.ranking.tied.length > 1 && scenario.ranking.tied.includes(picked.tile) ? 'best' : picked.verdict])}>{scenario.ranking.tied.length > 1 && scenario.ranking.tied.includes(picked.tile) ? EQUAL_TEXT : VERDICT_TEXT[picked.verdict]}</Badge>
                 <div className="text-sm">
                   You discarded <b>{tileLabel(picked.tile)}</b>.{' '}
-                  {picked.verdict === 'best' ? 'Same as the coach.' : <>Coach discards <b>{tileLabel(scenario.ranking.best.tile)}</b>{picked.delta < 0 && <span className="text-muted-foreground"> ({picked.delta.toFixed(1)} chips/game)</span>}.</>}
+                  {scenario.ranking.tied.length > 1 && scenario.ranking.tied.includes(picked.tile)
+                    ? <>Equal best — {scenario.ranking.tied.map(tileLabel).join(', ')} are all the same here, so pick whichever you like.</>
+                    : picked.verdict === 'best' ? 'Same as the coach.'
+                    : <>Coach discards <b>{tileLabel(scenario.ranking.best.tile)}</b>{picked.delta < 0 && <span className="text-muted-foreground"> ({picked.delta.toFixed(1)} chips/game)</span>}.</>}
                 </div>
               </div>
             </CardHeader>
