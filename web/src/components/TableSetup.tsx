@@ -5,9 +5,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, COMBO_LABEL, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
+import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, taiBands, sideEconomics, COMBO_LABEL, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
 
 const KEY = 'mahjong.money.config';
 export function loadConfig(): MoneyConfig {
@@ -104,6 +105,8 @@ export default function TableSetup() {
         </CardContent>
       </Card>
 
+      {profile && <Advice profile={profile} cfg={cfg} rows={rows} />}
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">What pays best at this table</CardTitle>
@@ -178,5 +181,73 @@ function Takeaways({ rows, otherById, otherName, profile, cfg }: { rows: ComboVa
         <br />Frequencies come from simple bots, so they are a floor: a strong player converts more of the harder hands than these numbers show. The ranking by value is what matters.
       </div>
     </div>
+  );
+}
+
+function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; rows: ComboValue[] }) {
+  const bands = taiBands(profile, cfg).filter((b) => b.tai >= cfg.minTai || b.wins > 0);
+  const econ = sideEconomics(profile, cfg);
+  const peak = bands.reduce((a, b) => (b.value > a.value ? b : a), bands[0] ?? { tai: 0, value: 0, per1000: 0, avgWin: 0, wins: 0 });
+  const maxBand = Math.max(1, ...bands.map((b) => b.value));
+  const chase = rows.filter((r) => r.per1000Value >= rows[0]!.per1000Value * 0.08);
+  const avoid = rows.filter((r) => r.per1000Value < rows[0]!.per1000Value * 0.01 && r.avgTai >= 5);
+  return (
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-base">What this table rewards</CardTitle></CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div>
+          <div className="font-medium mb-1">Sweet spot: <b>{peak.tai} tai</b> — where the most money actually is</div>
+          <div className="space-y-0.5">
+            {bands.map((b) => (
+              <div key={b.tai} className="flex items-center gap-2 text-xs">
+                <span className="w-14 text-muted-foreground">{b.tai} tai</span>
+                <div className="h-3 rounded bg-primary/70" style={{ width: `${Math.max(2, (b.value / maxBand) * 260)}px` }} />
+                <span className="w-16 tabular-nums">{money(Math.round(b.value))}</span>
+                <span className="text-muted-foreground">{b.per1000.toFixed(b.per1000 < 1 ? 2 : 0)} wins / 1,000 × {money(b.avgWin)}</span>
+                {b.tai === peak.tai && <Badge className="bg-emerald-600 text-white">most value</Badge>}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Hands at {peak.tai} tai carry more total value than any other level here — not because they pay most, but because they pay decently <i>and</i> happen often.
+          </p>
+        </div>
+
+        <Separator />
+        <div>
+          <div className="font-medium">Chase: {chase.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', ')}</div>
+          {avoid.length > 0 && <div className="text-muted-foreground">Avoid steering toward: {avoid.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', ')} — they pay well but land under once per {Math.round(1000 / Math.max(0.001, avoid[0]!.per1000)).toLocaleString()} hands, so the tiles you spend chasing them cost more than they return.</div>}
+        </div>
+
+        {econ && (
+          <>
+            <Separator />
+            <div className="space-y-1">
+              <div className="font-medium">Draw or call?</div>
+              <div>Flowers, animals and kongs move <b>{money(econ.perHandTable)}</b> per hand across the table — about <b>{money(econ.perSeatPerHand)}</b> a hand each, and <b>{money(econ.perDraw)}</b> for every tile you personally draw.</div>
+              <div>
+                A chow or pong takes a discard <i>instead of</i> drawing, so each call quietly costs you about <b>{money(econ.callCost)}</b> in forgone flowers and animals.{' '}
+                {econ.perDraw >= 0.25
+                  ? <>At these bite prices that is real money — <b>lean toward drawing</b> and only call when it genuinely speeds the hand up.</>
+                  : econ.perDraw >= 0.1
+                    ? <>That is small but not nothing — call when it helps the hand, do not call just to be busy.</>
+                    : <>That is negligible here, so call freely whenever it improves the hand.</>}
+              </div>
+              <div>A kong runs the other way: it pays <b>{money(3 * cfg.kongExposed)}</b> ({money(cfg.kongConcealed * 3)} concealed) <i>and</i> buys you a replacement draw worth another {money(econ.perDraw)} — <b>declare kongs whenever the hand allows</b>.</div>
+            </div>
+          </>
+        )}
+
+        {profile.blockedPerHand !== undefined && profile.blockedPerHand > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-1">
+              <div className="font-medium">The minimum is costing you hands</div>
+              <div>Across the table, <b>{profile.blockedPerHand.toFixed(2)} complete hands per hand</b> could not be declared because they were under the {profile.minimumTai}-tai minimum{profile.avgReadyTurn !== undefined && profile.avgReadyTurn > 0 ? <>, and a seat reaches one-away at 第{Math.max(1, Math.round(profile.avgReadyTurn / 4))}巡 on average</> : null}. Build a tai <i>before</i> you build a shape: a flower, a dragon pair, your own wind — otherwise you finish the hand and cannot say 胡.</div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

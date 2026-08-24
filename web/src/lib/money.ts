@@ -69,6 +69,10 @@ export const shootTotal = (c: MoneyConfig, tai: number): number => {
 export interface Profile {
   run: string; hands: number; draws: number; avgTurns: number; kongsPerHand: number; sidePerHand: number;
   minimumTai: number; maximumTai: number;
+  drawsPerHand?: number; claimsPerHand?: number; blockedPerHand?: number;
+  avgReadyTurn?: number; readyRate?: number;
+  unitsPerHand?: number[];            // [kong暗, kong明, kongFed, 花H, 花O, animalH, animalO] received per hand
+  winTiles?: Record<string, number>;
   combos: { id: string; wins: number; avgTurns: number; fan: Record<string, { sd: number; disc: number }> }[];
 }
 export interface ComboValue { id: string; wins: number; per1000: number; avgWin: number; avgTai: number; per1000Value: number; avgTurns: number }
@@ -121,4 +125,44 @@ export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
   const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
   for (let i = 0; i < amt.length; i++) total += (mix.led[i] ?? 0) * amt[i]!;
   return total / Math.max(1, n);
+}
+
+// ---------------------------------------------------------------------------
+// "What does this table reward?"
+// ---------------------------------------------------------------------------
+export interface TaiBand { tai: number; wins: number; per1000: number; avgWin: number; value: number }
+/** Value by tai level, across all hand types - where the money actually is. */
+export function taiBands(p: Profile, c: MoneyConfig): TaiBand[] {
+  const byTai = new Map<number, { wins: number; total: number }>();
+  for (const combo of p.combos) for (const [fanStr, { sd, disc }] of Object.entries(combo.fan)) {
+    const tai = Number(fanStr);
+    const e = byTai.get(tai) ?? { wins: 0, total: 0 };
+    e.wins += sd + disc; e.total += sd * zmTotal(c, tai) + disc * shootTotal(c, tai);
+    byTai.set(tai, e);
+  }
+  return [...byTai.entries()].map(([tai, e]) => ({ tai, wins: e.wins, per1000: (e.wins / p.hands) * 1000, avgWin: e.total / e.wins, value: (e.wins / p.hands) * 1000 * (e.total / e.wins) }))
+    .sort((a, b) => a.tai - b.tai);
+}
+
+export interface SideEconomics {
+  perHandTable: number;      // all side money moving per hand, across the table
+  perDraw: number;           // expected side income per tile you draw
+  perSeatPerHand: number;
+  callCost: number;          // what one call costs you in forgone side income
+  kongBonus: number;         // what declaring a kong pays you, plus the extra draw it buys
+}
+/** Side-payment economics: what a draw is worth, and therefore what calling costs. */
+export function sideEconomics(p: Profile, c: MoneyConfig): SideEconomics | null {
+  const u = p.unitsPerHand, draws = p.drawsPerHand;
+  if (!u || !draws) return null;
+  const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
+  const perHandTable = u.reduce((a, v, i) => a + v * (amt[i] ?? 0), 0);
+  // bites come only from drawing; kongs come from drawing the 4th tile (or claiming one)
+  const biteMoney = u.slice(3).reduce((a, v, i) => a + v * (amt[i + 3] ?? 0), 0);
+  const perDraw = biteMoney / draws;
+  return {
+    perHandTable, perDraw, perSeatPerHand: perHandTable / 4,
+    callCost: perDraw,                                     // a call takes a discard instead of drawing: one draw forgone
+    kongBonus: 3 * c.kongExposed + perDraw,                // the kong pays, and buys you a replacement draw
+  };
 }
