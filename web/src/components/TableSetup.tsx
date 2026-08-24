@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { PRESETS, base, zmTotal, shootTotal, priceProfile, COMBO_LABEL, type MoneyConfig, type Profile, type ComboValue } from '@/lib/money';
+import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, COMBO_LABEL, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
 
 const KEY = 'mahjong.money.config';
 export function loadConfig(): MoneyConfig {
@@ -44,14 +44,21 @@ export default function TableSetup() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {PRESETS.map((p) => (
-              <Button key={p.name} size="sm" variant={p.name === cfg.name ? 'default' : 'outline'} onClick={() => setCfg({ ...p })}>{p.name}</Button>
+              <Button key={p.name} size="sm" variant={p.name === cfg.name ? 'default' : 'outline'} onClick={() => setCfg({ ...p, payMode: cfg.payMode })}>{p.name}</Button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">On a discard win, who pays?</span>
+            {([['shooter', '打出者包 — shooter pays all'], ['everyone', '三家均攤 — everyone pays'], ['shooter_double', 'Shooter pays double, others single']] as [PayMode, string][]).map(([m, label]) => (
+              <Button key={m} size="sm" variant={cfg.payMode === m ? 'default' : 'outline'} onClick={() => setCfg({ ...cfg, payMode: m })}>{label}</Button>
             ))}
           </div>
 
           <div className="overflow-x-auto">
             <table className="text-sm w-full min-w-[34rem]">
               <thead className="text-muted-foreground">
-                <tr><th className="text-left font-normal py-1">Tai</th><th className="text-left font-normal">Base ($ each)</th><th className="text-left font-normal">自摸 ZM — each pays</th><th className="text-left font-normal">Shoot — shooter pays</th><th className="text-left font-normal">Winner collects (ZM)</th></tr>
+                <tr><th className="text-left font-normal py-1">Tai</th><th className="text-left font-normal">Base ($ each)</th><th className="text-left font-normal">自摸 ZM — each pays</th><th className="text-left font-normal">On a discard win</th><th className="text-left font-normal">Winner collects (ZM)</th></tr>
               </thead>
               <tbody>
                 {taiKeys.map((t) => (
@@ -59,7 +66,7 @@ export default function TableSetup() {
                     <td className="py-1">{t}{t === cfg.maxTai ? ' (max)' : ''}</td>
                     <td><input type="number" min={0} value={cfg.ladder[t]} onChange={(e) => setLadder(t, Number(e.target.value))} className="w-20 rounded border bg-background px-2 py-0.5" /></td>
                     <td className="tabular-nums">{money(base(cfg, t) + cfg.zm)}</td>
-                    <td className="tabular-nums">{t < cfg.minTai ? '—' : money(shootTotal(cfg, t))}</td>
+                    <td className="tabular-nums">{t < cfg.minTai ? '—' : (() => { const sp = shootSplit(cfg, t); return cfg.payMode === 'shooter' ? `${money(sp.discarder)} — shooter alone` : `${money(sp.discarder)} + ${money(sp.other)} × 2 = ${money(shootTotal(cfg, t))}`; })()}</td>
                     <td className="tabular-nums text-muted-foreground">{money(zmTotal(cfg, t))}</td>
                   </tr>
                 ))}
@@ -85,7 +92,10 @@ export default function TableSetup() {
             </label>
             {cfg.jokers > 0 && <label>how many <Num v={cfg.jokers} on={(v) => setCfg({ ...cfg, jokers: v })} /></label>}
           </div>
-          <p className="text-xs text-muted-foreground">Shoot amounts follow the house rule <b>shooter pays base(tai) + 2 × base(tai−1)</b> — verified exactly against your table ($7 / $11 / $20 / $40). Edit the base column and everything re-prices instantly.</p>
+          <p className="text-xs text-muted-foreground">{cfg.payMode === 'shooter'
+            ? <>Shooter-pays follows the house rule <b>base(tai) + 2 × base(tai−1)</b> — verified exactly against your table ($7 / $11 / $20 / $40).</>
+            : cfg.payMode === 'everyone' ? <>Everyone pays one share, so a discard win collects <b>3 × base</b> — the same as a 自摸 without the bonus.</>
+            : <>The discarder pays two shares and the others one each, so a discard win collects <b>4 × base</b>.</>} Edit the base column and everything re-prices instantly.</p>
           <p className="text-xs text-muted-foreground"><b>Amounts</b> (ladder, 自摸 bonus, kongs, bites) re-price the table below straight away. <b>Min tai and wildcards</b> change how hands actually play out, so the numbers below still reflect the recorded rules until the dataset is regenerated — run <code>pnpm -C datagen gen</code> then <code>tsx src/profile.ts</code>.</p>
         </CardContent>
       </Card>
@@ -158,6 +168,7 @@ function Takeaways({ rows, otherById, otherName, profile, cfg }: { rows: ComboVa
       {biggestGain && biggestLoss && biggestGain.ratio / biggestLoss.ratio > 1.05 && (
         <div><b>Versus {otherName}:</b> {COMBO_LABEL[biggestGain.r.id] ?? biggestGain.r.id} is worth {biggestGain.ratio.toFixed(2)}× here, while {COMBO_LABEL[biggestLoss.r.id] ?? biggestLoss.r.id} is {(1 / biggestLoss.ratio).toFixed(2)}× better there. Same tiles, different plan.</div>
       )}
+      <div><b>自摸 vs winning off a discard:</b> at {cfg.maxTai} tai a self-draw collects {money(zmTotal(cfg, cfg.maxTai))} but a discard win collects {money(shootTotal(cfg, cfg.maxTai))} — {zmTotal(cfg, cfg.maxTai) > shootTotal(cfg, cfg.maxTai) * 1.15 ? <>self-draw is worth <b>{(zmTotal(cfg, cfg.maxTai) / shootTotal(cfg, cfg.maxTai)).toFixed(1)}×</b> more, so waits you can draw yourself are worth a lot more than waits you must be fed.</> : shootTotal(cfg, cfg.maxTai) > zmTotal(cfg, cfg.maxTai) * 1.15 ? <>the discard win is worth more here, so a wide wait others may feed is worth more than a self-draw-only shape.</> : <>they are close, so the wait type matters less here than at tables with a big gap.</>}</div>
       <div className="text-muted-foreground text-xs">
         Also moving on every hand: kongs and bites, about {money(profile.sidePerHand)} per hand at the recorded amounts (kong {money(cfg.kongEach)} each, flower bites {money(cfg.flowerBiteHidden)}/{money(cfg.flowerBiteOpen)}, animal bites {money(cfg.animalBiteHidden)}/{money(cfg.animalBiteOpen)}) — combination-independent, so it does not change which plan to pick, but it does reward declaring kongs.
         <br />Frequencies come from simple bots, so they are a floor: a strong player converts more of the harder hands than these numbers show. The ranking by value is what matters.
