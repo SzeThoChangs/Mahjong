@@ -1,1 +1,1 @@
-{"packs":[{"id":"table","money":false,"unit":"chips","questions":4000}]}
+{"packs":[{"id":"money","money":true,"unit":"$","questions":5000}]}
