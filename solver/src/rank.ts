@@ -3,7 +3,7 @@ import {
   isDragon, isHonour, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
 import { handValue, type Context, type TargetEval } from './targets.js';
-import { rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
+import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -20,11 +20,14 @@ export interface Ranking {
 const SUIT_NAME = { wan: '萬', tong: '筒', sok: '條' } as const;
 const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All-Chow', half_color: 'Half-Color', all_pong: 'All-Pong', chicken: 'Chicken', thirteen: '13 Wonders' };
 
-/** how many tile kinds (weighted by copies left) would raise the best target's evaluator */
+/** How many tile kinds (weighted by copies left) would improve the hand FOR THE PLAN IT IS PLAYING.
+ *  Using the wrong evaluator here silently applies chow logic to a pong hand (and vice versa),
+ *  which shows up as a phantom preference between tiles the plan values identically. */
 function acceptance(h: HandInput, best: TargetEval): number {
   const evalFor = (x: HandInput): number => {
     if (best.id === 'half_color') return rule961(x).value;
     if (best.id === 'ping_wu' || best.id === 'all_chow') return rule5313(x).value;
+    if (best.id === 'all_pong') { const b = allPongBreakdown(x); return b.triplets * 10 + b.pairs * 3; }
     return rule4213(x).value;
   };
   const base = evalFor(h);
@@ -62,7 +65,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   for (const o of opts) {
     o.delta = o.chips - top.chips;
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
-    o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target);
+    o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds));
   }
   const t = top.target;
   const where = t.suit ? ` in ${SUIT_NAME[t.suit as keyof typeof SUIT_NAME]}` : '';
@@ -82,12 +85,33 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   return { options: opts, plan, planDetail: detail, best: top };
 }
 
-function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Context, target: TargetEval): string[] {
+/** copies of each kind not visible in your own hand or any meld (a rough "still out there" count) */
+function unseenOf(concealed: TileKind[], melds: Meld[]): number[] {
+  const u = new Array(34).fill(4);
+  for (const k of concealed) if (k < 34) u[k]--;
+  for (const m of melds) for (const k of m.tiles) if (k < 34) u[k]--;
+  return u;
+}
+// only All-Pong forbids sequences; Half-Color is one suit + honours and may still chow, so neighbours matter there
+const PONG_PLAN = (id: string) => id === 'all_pong';
+
+function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Context, target: TargetEval, unseen: number[]): string[] {
   const r: string[] = [];
   const count = concealed.filter((x) => x === k).length;
   const pairs = new Set(concealed.filter((x) => concealed.filter((y) => y === x).length === 2));
   if (count === 2 && pairs.size === 1) r.push('breaks your only pair');
   if (count >= 3) r.push('breaks a completed set');
+  if (PONG_PLAN(target.id)) {
+    // in an All-Pong plan neighbours are worthless: what matters is whether a tile can still become a set
+    const left = k < 34 ? unseen[k]! : 0;
+    if (count === 2) r.push(`pair — ${left} left to make the pong`);
+    else if (count === 1) r.push(left <= 1 ? `single, only ${left} left — it will not pair up` : `single — needs ${left > 0 ? left : 0} more, and neighbours do not help in a pong hand`);
+    if (isHonour(k) && count === 1) r.push('lone honour');
+    if (isDragon(k)) r.push('dragon — worth 1 Fan as a pong');
+    if (k === windKind(ctx.seat)) r.push('your seat wind — worth 1 Fan as a pong');
+    if (k === windKind(ctx.prevailingWind)) r.push('round wind — worth 1 Fan as a pong');
+    return r;
+  }
   if (isHonour(k)) {
     if (count === 1) r.push('lone honour');
     if (isDragon(k)) r.push('dragon — worth 1 Fan as a pong');
