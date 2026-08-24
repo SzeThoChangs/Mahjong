@@ -282,13 +282,13 @@ function Reads() {
         </div>
         <Separator />
         <div>
-          <div className="font-medium mb-1">The silent suit is the dangerous one</div>
+          <div className="font-medium mb-1">How strong is the silent-suit read?</div>
           <div className="space-y-1 text-xs">
             {(['0', '1', '2', '3'] as const).map((n) => (
               <div key={n} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">threw {n} of a suit by 第10巡</span>{bar(d.suitTell, `${n}|40`)}<span className="text-muted-foreground">actually collecting it (7+ tiles)</span></div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Backwards from what most players watch. To collect one suit you must throw the other two — so a seat's discards are a list of what they do NOT want. The suit missing from their discards is the one they are hoarding.</p>
+          <p className="text-xs text-muted-foreground mt-1">You already know the silent suit is the one to fear — this is how much. Even a suit they have never touched is only about a 1-in-5 read, so respect it without folding a good hand over it. Three discards of a suit drops them to 7%, which is close to safe.</p>
         </div>
         <Separator />
         <div>
