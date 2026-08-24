@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
+import { CONFIG } from '@/lib/scenario';
+import { rankDiscards, handValue, type Context } from 'sg-mahjong-solver';
+import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
 
@@ -56,6 +59,24 @@ export default function RealQuiz() {
 
   const filtered = useMemo(() => order.filter((i) => mode === 'all' || (mode === 'discard' ? qs[i]!.k === 'discard' : qs[i]!.k !== 'discard')), [order, qs, mode]);
   const q = qs[filtered[pos % Math.max(1, filtered.length)] ?? 0];
+  // The coach (book heuristics) explains the position; the measured EVs above remain the authority.
+  const coach = useMemo(() => {
+    if (!q) return null;
+    try {
+      const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+      const ctx: Context = {
+        seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
+        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+      };
+      if (q.k === 'discard' && q.h.length % 3 === 2) {
+        const r = rankDiscards(q.h, melds, ctx);
+        return { plan: r.plan, detail: r.planDetail, best: r.best.tile, reasonFor: (k: number) => r.options.find((o) => o.tile === k)?.reasons ?? [] };
+      }
+      const hv = handValue({ concealed: q.h, melds }, ctx);
+      return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, reasonFor: () => [] as string[] };
+    } catch { return null; }
+  }, [q]);
+
   const fmt = (x: number) => `${x < 0 ? '−' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}${unit === '$' ? '' : ''}`;
 
   if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
@@ -175,6 +196,26 @@ export default function RealQuiz() {
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
+            {coach && (
+              <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-1">
+                <div><span className="text-muted-foreground">Coach reads this as</span> <b>{coach.plan}</b>.
+                  {coach.best !== null && bestAction.a.startsWith('d:') && (
+                    coach.best === Number(bestAction.a.slice(2))
+                      ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
+                      : <span className="text-amber-700 dark:text-amber-300"> It would throw {tileLabel(coach.best)} — the measurement disagrees, so trust the bars.</span>
+                  )}
+                </div>
+                {coach.detail.filter((l) => !/^Next best plan/.test(l)).map((l, i) => (
+                  <div key={i} className="text-muted-foreground">{l.replace(/ → about [+-]?[\d.]+ chips\/game at turn \d+\./, '.')}</div>
+                ))}
+                {bestAction.a.startsWith('d:') && coach.reasonFor(Number(bestAction.a.slice(2))).length > 0 && (
+                  <div><span className="text-muted-foreground">Why {tileLabel(Number(bestAction.a.slice(2)))}:</span> {coach.reasonFor(Number(bestAction.a.slice(2))).join(' · ')}</div>
+                )}
+                {picked !== null && picked !== bestAction.a && picked.startsWith('d:') && coach.reasonFor(Number(picked.slice(2))).length > 0 && (
+                  <div><span className="text-muted-foreground">Your {tileLabel(Number(picked.slice(2)))}:</span> {coach.reasonFor(Number(picked.slice(2))).join(' · ')}</div>
+                )}
+              </div>
+            )}
             {q.actions.map((a) => {
               const isBest = a.a === bestAction.a, isPick = a.a === picked;
               const min = Math.min(...q.actions.map((x) => x.ev), 0), max = Math.max(...q.actions.map((x) => x.ev), 0), span = Math.max(1e-6, max - min);
