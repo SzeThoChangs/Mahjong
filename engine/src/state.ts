@@ -111,22 +111,23 @@ export class GameState {
     const kinds = p.bonus.map(kindOf), e = this.paidEvents[p.seat]!;
     if (this.rules.money) {         // ---- real-money bites ----
       const m = this.rules.money;
-      const amount = fromInitial ? m.bite_hidden : m.bite_open;
+      const flowerAmt = fromInitial ? m.bite_flower_hidden : m.bite_flower_open;
+      const animalAmt = fromInitial ? m.bite_animal_hidden : m.bite_animal_open;
       // flower-number pairs: flower n + season n. Own number: everyone pays. Another player's number: only the seat holding that role pays.
       for (let n = 0; n < 4; n++) {
         const id = `bite_flowers_${n}`;
         if (e.has(id)) continue;
         if (kinds.includes(34 + n) && kinds.includes(38 + n)) {
           e.add(id);
-          if (n === this.role(p.seat)) this.payAllOpponents(p.seat, amount);
-          else this.pay((this.dealer + n) % 4, p.seat, amount);
-          this.L(`seat${p.seat} bite flowers#${n + 1} ${fromInitial ? 'hidden' : 'open'} $${amount}`);
+          if (n === this.role(p.seat)) this.payAllOpponents(p.seat, flowerAmt);
+          else this.pay((this.dealer + n) % 4, p.seat, flowerAmt);
+          this.L(`seat${p.seat} bite flowers#${n + 1} ${fromInitial ? 'hidden' : 'open'} $${flowerAmt}`);
         }
       }
       // animal pairs: cat+mouse, rooster+centipede - everyone pays (assumption: animals belong to no seat)
       for (const [id, a, b] of [['bite_cat_mouse', 42, 43], ['bite_rooster_centipede', 44, 45]] as const) {
         if (e.has(id)) continue;
-        if (kinds.includes(a) && kinds.includes(b)) { e.add(id); this.payAllOpponents(p.seat, amount); this.L(`seat${p.seat} ${id} ${fromInitial ? 'hidden' : 'open'} $${amount}`); }
+        if (kinds.includes(a) && kinds.includes(b)) { e.add(id); this.payAllOpponents(p.seat, animalAmt); this.L(`seat${p.seat} ${id} ${fromInitial ? 'hidden' : 'open'} $${animalAmt}`); }
       }
       return;
     }

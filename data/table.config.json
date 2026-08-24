@@ -45,8 +45,10 @@
       },
       "kong_each": 2,
       "kong_fed_total": 6,
-      "bite_hidden": 4,
-      "bite_open": 2
+      "bite_flower_hidden": 4,
+      "bite_flower_open": 2,
+      "bite_animal_hidden": 4,
+      "bite_animal_open": 2
     }
   },
   "unconfirmed": {

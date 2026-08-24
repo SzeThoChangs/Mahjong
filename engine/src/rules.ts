@@ -34,10 +34,10 @@ export interface MoneyRules {
   kong_each: number;
   /** fed kong (claimed from a discard): the feeder alone pays this */
   kong_fed_total: number;
-  /** bite completed during the opening deal replacements */
-  bite_hidden: number;
-  /** bite completed during play */
-  bite_open: number;
+  /** flower-pair bite completed during the opening deal replacements / during play */
+  bite_flower_hidden: number; bite_flower_open: number;
+  /** animal-pair bite (cat+mouse, rooster+centipede) hidden / open */
+  bite_animal_hidden: number; bite_animal_open: number;
 }
 export interface JokerRules {
   /** number of joker (wild) tiles shuffled into the wall; 0 = the standard 148-tile game */
