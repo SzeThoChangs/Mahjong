@@ -106,6 +106,7 @@ export default function TableSetup() {
       </Card>
 
       {profile && <Advice profile={profile} cfg={cfg} rows={rows} />}
+      <Reads />
 
       <Card>
         <CardHeader className="pb-2">
@@ -247,6 +248,62 @@ function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; ro
             </div>
           </>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ReadCell { p: number; n: number }
+interface ReadsData { hands: number; sampled: number; ready: Record<string, ReadCell>; suitTell: Record<string, ReadCell>; danger: Record<string, ReadCell>; dangerSafe: Record<string, ReadCell> }
+
+function Reads() {
+  const [d, setD] = useState<ReadsData | null>(null);
+  useEffect(() => { fetch('/reads/money.json').then((r) => r.json()).then(setD).catch(() => setD(null)); }, []);
+  if (!d) return null;
+  const P = (t: Record<string, ReadCell>, k: string) => t[k] ? `${Math.round(t[k]!.p * 100)}%` : '—';
+  const bar = (t: Record<string, ReadCell>, k: string) => (
+    <div className="flex items-center gap-2"><div className="h-2.5 rounded bg-primary/70" style={{ width: `${Math.max(2, (t[k]?.p ?? 0) * 220)}px` }} /><span className="tabular-nums w-10">{P(t, k)}</span></div>
+  );
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Reading the other seats</CardTitle>
+        <p className="text-xs text-muted-foreground">Measured over {d.sampled.toLocaleString()} moments across {d.hands.toLocaleString()} recorded hands — comparing what was public with what each seat was truly holding.</p>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div>
+          <div className="font-medium mb-1">How close is a seat to winning? Count their exposed melds.</div>
+          <div className="space-y-1 text-xs">
+            {(['0', '1', '2', '3'] as const).map((m) => (
+              <div key={m} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">{m} melds, mid-game (第8巡)</span>{bar(d.ready, `${m}|30`)}<span className="text-muted-foreground">one tile away</span></div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Three exposed melds mid-game ≈ a 4-in-10 chance they are waiting. Treat their discards with respect from the third meld on.</p>
+        </div>
+        <Separator />
+        <div>
+          <div className="font-medium mb-1">The silent suit is the dangerous one</div>
+          <div className="space-y-1 text-xs">
+            {(['0', '1', '2', '3'] as const).map((n) => (
+              <div key={n} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">threw {n} of a suit by 第10巡</span>{bar(d.suitTell, `${n}|40`)}<span className="text-muted-foreground">actually collecting it (7+ tiles)</span></div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Backwards from what most players watch: a seat that has thrown NOTHING of a suit deep into the hand is the one loading up on it. Feed the suits they discard, not the one they never touch.</p>
+        </div>
+        <Separator />
+        <div>
+          <div className="font-medium mb-1">Which discards actually deal in (per tile thrown)</div>
+          <div className="grid gap-1 text-xs sm:grid-cols-2">
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">simple, mid-game</span>{bar(d.danger, 'simple|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">simple, late (第13巡+)</span>{bar(d.danger, 'simple|50')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">terminal, mid-game</span>{bar(d.danger, 'terminal|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">honour, any time</span>{bar(d.danger, 'honour|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">fresh simple, 第10巡</span>{bar(d.dangerSafe, 'simple|40|fresh')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">already-seen simple</span>{bar(d.dangerSafe, 'simple|40|seen')}</div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">At this table honours are near-zero risk all game (wildcards make sequence waits dominate), middle tiles are the danger, and a tile someone already threw is roughly a third safer than a fresh one.</p>
+        </div>
+        <p className="text-xs text-muted-foreground">Caveat: measured on the simulator's bots, who never disguise their hands. The meld and suit signals are structural and carry to humans; the exact percentages will drift against players who hide their intent.</p>
       </CardContent>
     </Card>
   );
