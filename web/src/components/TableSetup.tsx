@@ -50,7 +50,7 @@ export default function TableSetup() {
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">On a discard win, who pays?</span>
-            {([['shooter', '打出者包 — shooter pays all'], ['everyone', '三家均攤 — everyone pays'], ['shooter_double', 'Shooter pays double, others single']] as [PayMode, string][]).map(([m, label]) => (
+            {([['ladder', 'Shooter pays base(tai), others base(tai−1)'], ['shooter_all', '包 — shooter alone pays everything'], ['even', 'All three pay the same share']] as [PayMode, string][]).map(([m, label]) => (
               <Button key={m} size="sm" variant={cfg.payMode === m ? 'default' : 'outline'} onClick={() => setCfg({ ...cfg, payMode: m })}>{label}</Button>
             ))}
           </div>
@@ -66,7 +66,7 @@ export default function TableSetup() {
                     <td className="py-1">{t}{t === cfg.maxTai ? ' (max)' : ''}</td>
                     <td><input type="number" min={0} value={cfg.ladder[t]} onChange={(e) => setLadder(t, Number(e.target.value))} className="w-20 rounded border bg-background px-2 py-0.5" /></td>
                     <td className="tabular-nums">{money(base(cfg, t) + cfg.zm)}</td>
-                    <td className="tabular-nums">{t < cfg.minTai ? '—' : (() => { const sp = shootSplit(cfg, t); return cfg.payMode === 'shooter' ? `${money(sp.discarder)} — shooter alone` : `${money(sp.discarder)} + ${money(sp.other)} × 2 = ${money(shootTotal(cfg, t))}`; })()}</td>
+                    <td className="tabular-nums">{t < cfg.minTai ? '—' : (() => { const sp = shootSplit(cfg, t); return sp.other === 0 ? `${money(sp.discarder)} — shooter alone` : `${money(sp.discarder)} + ${money(sp.other)} × 2 = ${money(shootTotal(cfg, t))}`; })()}</td>
                     <td className="tabular-nums text-muted-foreground">{money(zmTotal(cfg, t))}</td>
                   </tr>
                 ))}
@@ -92,10 +92,10 @@ export default function TableSetup() {
             </label>
             {cfg.jokers > 0 && <label>how many <Num v={cfg.jokers} on={(v) => setCfg({ ...cfg, jokers: v })} /></label>}
           </div>
-          <p className="text-xs text-muted-foreground">{cfg.payMode === 'shooter'
-            ? <>Shooter-pays follows the house rule <b>base(tai) + 2 × base(tai−1)</b> — verified exactly against your table ($7 / $11 / $20 / $40).</>
-            : cfg.payMode === 'everyone' ? <>Everyone pays one share, so a discard win collects <b>3 × base</b> — the same as a 自摸 without the bonus.</>
-            : <>The discarder pays two shares and the others one each, so a discard win collects <b>4 × base</b>.</>} Edit the base column and everything re-prices instantly.</p>
+          <p className="text-xs text-muted-foreground">{cfg.payMode === 'ladder'
+            ? <>The shooter pays <b>base(tai)</b> and each other player pays <b>base(tai−1)</b> — matches your table exactly (5 tai = $20 + $10 + $10 = $40).</>
+            : cfg.payMode === 'shooter_all' ? <>包 style: the discarder alone covers the whole amount, the other two pay nothing.</>
+            : <>All three pay the same share, so a discard win collects <b>3 × base</b>.</>} Edit the base column and everything re-prices instantly.</p>
           <p className="text-xs text-muted-foreground"><b>Amounts</b> (ladder, 自摸 bonus, kongs, bites) re-price the table below straight away. <b>Min tai and wildcards</b> change how hands actually play out, so the numbers below still reflect the recorded rules until the dataset is regenerated — run <code>pnpm -C datagen gen</code> then <code>tsx src/profile.ts</code>.</p>
         </CardContent>
       </Card>

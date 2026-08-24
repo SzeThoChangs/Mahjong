@@ -10,13 +10,15 @@ import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
+import { priceMix, type OutcomeMix } from '@/lib/money';
+import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
 
 interface PackIx { id: string; money: boolean; unit: string; questions: number }
-interface Action { a: string; ev: number; win: number; dealin: number; draw: number }
+interface Action { a: string; ev: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
 interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 
@@ -82,15 +84,23 @@ export default function RealQuiz() {
   if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
   if (!q) return null;
 
-  const pickedAction = picked === null ? null : q.actions.find((a) => a.a === picked) ?? null;
-  const bestAction = q.actions[0]!;
+  // If the evaluator recorded an outcome mix, re-price every action under the table config the user set.
+  const money = useMemo(() => loadConfig(), []);
+  const actions = useMemo(() => {
+    if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];
+    return [...q.actions].map((a) => (a.mix ? { ...a, ev: priceMix(a.mix, a.n ?? 128, money) } : a)).sort((x, y) => y.ev - x.ev);
+  }, [q, money]);
+  const repriced = !!q?.actions?.some((a) => a.mix);
+
+  const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
+  const bestAction = actions[0]!;
   const regret = pickedAction ? bestAction.ev - pickedAction.ev : 0;
   const verdict = pickedAction ? verdictOf(regret, unit) : null;
 
   const choose = (a: string) => {
     if (picked !== null) return;
     setPicked(a);
-    const act = q.actions.find((x) => x.a === a)!;
+    const act = actions.find((x) => x.a === a)!;
     const v = verdictOf(bestAction.ev - act.ev, unit);
     setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
   };
@@ -139,7 +149,7 @@ export default function RealQuiz() {
           )}
           <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b></span>
           <span className="text-muted-foreground">Tai in hand <b className="text-foreground">{q.fih}</b></span>
-          <span className="ml-auto text-xs text-muted-foreground">a real position · {q.n} play-outs per move</span>
+          <span className="ml-auto text-xs text-muted-foreground">a real position · {q.n} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
         </CardContent>
       </Card>
 
@@ -216,9 +226,9 @@ export default function RealQuiz() {
                 )}
               </div>
             )}
-            {q.actions.map((a) => {
+            {actions.map((a) => {
               const isBest = a.a === bestAction.a, isPick = a.a === picked;
-              const min = Math.min(...q.actions.map((x) => x.ev), 0), max = Math.max(...q.actions.map((x) => x.ev), 0), span = Math.max(1e-6, max - min);
+              const min = Math.min(...actions.map((x) => x.ev), 0), max = Math.max(...actions.map((x) => x.ev), 0), span = Math.max(1e-6, max - min);
               return (
                 <div key={a.a} className="flex items-center gap-2 text-xs">
                   <span className="w-24 shrink-0 flex items-center gap-1">{a.a.startsWith('d:') ? <Tile kind={Number(a.a.slice(2))} size="sm" /> : <span className="font-medium">{actionText(a.a)}</span>}</span>

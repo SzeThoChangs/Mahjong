@@ -20,6 +20,7 @@ import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 import { couldBeComplete } from './shanten.js';
 import { countsAndJokers, isHonour, isDragon, isWind, isJoker } from './tiles.js';
 import { fanInHand } from './score.js';
+import { emptyLedger, type Ledger } from './game.js';
 import type {
   Bot, ClaimKind, ClaimOption, DecisionKind, DiscardEvent, GameOptions, GameResult, GroundTruth, InstMeld, LegalAction, PlayerState, PlayerView, SelfAction,
 } from './game.js';
@@ -52,6 +53,8 @@ export class GameState {
   pendingRob: Snapshot['pendingRob'] = null; liable: (number | null)[] = [null, null, null, null];
   paidEvents: Set<string>[]; counts: GameResult['counts'] = { chow: 0, pong: 0, kong: 0, flowers: 0, animals: 0, decisions: 0, illegal: 0 };
   log: string[] = []; result: GameResult | null = null;
+  ledger: Ledger[] = [0, 1, 2, 3].map(emptyLedger);
+  private lastLiable: number | null = null;
   private selfOptions: SelfAction[] = [];
   private claimQueue: { seat: number; options: ClaimOption[] }[] = []; private wanted: ClaimOption[] = [];
 
@@ -107,6 +110,11 @@ export class GameState {
   private L(s: string) { if (this.opts.log) this.log.push(s); }
   private pay(from: number, to: number, n: number) { this.players[from]!.chips -= n; this.players[to]!.chips += n; }
   private payAllOpponents(to: number, each: number) { for (let s = 0; s < 4; s++) if (s !== to) this.pay(s, to, each); }
+  /** record that `to` received `units` of amount `k` from `from` ('all' = each opponent pays one unit) */
+  private note(k: keyof Ledger, to: number, from: number | 'all') {
+    if (from === 'all') { this.ledger[to]![k] += 3; for (let s = 0; s < 4; s++) if (s !== to) this.ledger[s]![k] -= 1; }
+    else { this.ledger[to]![k] += 1; this.ledger[from]![k] -= 1; }
+  }
   private settleBonus(p: PlayerState, fromInitial: boolean) {
     const kinds = p.bonus.map(kindOf), e = this.paidEvents[p.seat]!;
     if (this.rules.money) {         // ---- real-money bites ----
@@ -119,15 +127,16 @@ export class GameState {
         if (e.has(id)) continue;
         if (kinds.includes(34 + n) && kinds.includes(38 + n)) {
           e.add(id);
-          if (n === this.role(p.seat)) this.payAllOpponents(p.seat, flowerAmt);
-          else this.pay((this.dealer + n) % 4, p.seat, flowerAmt);
+          const fk: keyof Ledger = fromInitial ? 'biteFlowerHidden' : 'biteFlowerOpen';
+          if (n === this.role(p.seat)) { this.payAllOpponents(p.seat, flowerAmt); this.note(fk, p.seat, 'all'); }
+          else { const payer = (this.dealer + n) % 4; this.pay(payer, p.seat, flowerAmt); this.note(fk, p.seat, payer); }
           this.L(`seat${p.seat} bite flowers#${n + 1} ${fromInitial ? 'hidden' : 'open'} $${flowerAmt}`);
         }
       }
       // animal pairs: cat+mouse, rooster+centipede - everyone pays (assumption: animals belong to no seat)
       for (const [id, a, b] of [['bite_cat_mouse', 42, 43], ['bite_rooster_centipede', 44, 45]] as const) {
         if (e.has(id)) continue;
-        if (kinds.includes(a) && kinds.includes(b)) { e.add(id); this.payAllOpponents(p.seat, animalAmt); this.L(`seat${p.seat} ${id} ${fromInitial ? 'hidden' : 'open'} $${animalAmt}`); }
+        if (kinds.includes(a) && kinds.includes(b)) { e.add(id); this.payAllOpponents(p.seat, animalAmt); this.note(fromInitial ? 'biteAnimalHidden' : 'biteAnimalOpen', p.seat, 'all'); this.L(`seat${p.seat} ${id} ${fromInitial ? 'hidden' : 'open'} $${animalAmt}`); }
       }
       return;
     }
@@ -209,13 +218,13 @@ export class GameState {
       }
       const asSelfDraw = discarder === null || sc.combination === 'thirteen_wonders';
       const pays = this.rules.money
-        ? winPaymentsMoney(sc.fan, winner, asSelfDraw ? null : discarder, this.rules.money, liable)
+        ? winPaymentsMoney(sc.fan, winner, asSelfDraw ? null : discarder, this.rules.money, liable, this.rules)
         : winPayments(sc.fan, winner, discarder, this.cfg, { thirteenWonders: sc.combination === 'thirteen_wonders', rules: this.rules });
       if (!this.rules.money && liable !== null && liable !== winner) { const total = pays.reduce((a, b) => a + b, 0); this.pay(liable, winner, total); }
       else for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
     }
     this.phase = 'done';
-    this.result = { winner, selfDraw, discarder, score: sc, chipsDelta: this.players.map((p) => p.chips), playerTurns: this.playerTurns, log: this.log, tilesAccounted: this.tilesAccounted(), counts: this.counts };
+    this.result = { winner, selfDraw, discarder, score: sc, chipsDelta: this.players.map((p) => p.chips), playerTurns: this.playerTurns, log: this.log, tilesAccounted: this.tilesAccounted(), counts: this.counts, liable: this.lastLiable, ledger: this.ledger.map((l) => ({ ...l })) };
     return this.result;
   }
   private legalChows(q: PlayerState, dk: TileKind): TileInstance[][] {
@@ -360,8 +369,8 @@ export class GameState {
   private kongPayment(to: number, feeder: number | null, kind: 'kong_1' | 'kong_3' | 'kong_4'): number {
     const m = this.rules.money;
     if (m) {
-      if (feeder !== null) { this.pay(feeder, to, m.kong_fed_total); return m.kong_fed_total / 3; }
-      this.payAllOpponents(to, m.kong_each); return m.kong_each;
+      if (feeder !== null) { this.pay(feeder, to, m.kong_fed_total); this.note('kongFed', to, feeder); return m.kong_fed_total / 3; }
+      this.payAllOpponents(to, m.kong_each); this.note('kongEach', to, 'all'); return m.kong_each;
     }
     const each = immediatePayout(kind, this.cfg, false, this.rules);
     if (feeder !== null) { this.payAllOpponents(to, each); return each; }

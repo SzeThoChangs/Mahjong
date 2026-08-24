@@ -47,15 +47,24 @@ export function moneyAt(table: Record<number, number>, tai: number): number {
  *  - discard win: the shooter alone pays shoot_total(tai)
  *  - a liable (Pay-All) seat takes over the whole bill
  */
-export function winPaymentsMoney(fan: number, winner: number, discarder: number | null, m: NonNullable<RulesConfig['money']>, liable: number | null = null): number[] {
+export function winPaymentsMoney(fan: number, winner: number, discarder: number | null, m: NonNullable<RulesConfig['money']>, liable: number | null = null, rules?: RulesConfig): number[] {
   const pays = [0, 0, 0, 0];
   if (discarder === null) {
     const each = moneyAt(m.ladder, fan) + m.zm_bonus_per_player;
     for (let s = 0; s < 4; s++) if (s !== winner) pays[s] = each;
     if (liable !== null && liable !== winner) { const total = each * 3; pays.fill(0); pays[liable] = total; }
+  } else if (liable !== null && liable !== winner) {
+    pays[liable] = moneyAt(m.shoot_total, fan);              // pay-all: the liable seat covers the whole bill
   } else {
-    const payer = liable !== null && liable !== winner ? liable : discarder;
-    pays[payer] = moneyAt(m.shoot_total, fan);
+    const mode = rules?.discard_win_payment ?? 'ladder_split';
+    const b = moneyAt(m.ladder, fan);
+    if (mode === 'discarder_pays_all') pays[discarder] = moneyAt(m.shoot_total, fan);
+    else if (mode === 'all_single') { for (let s = 0; s < 4; s++) if (s !== winner) pays[s] = b; }
+    else if (mode === 'discarder_double') { for (let s = 0; s < 4; s++) if (s !== winner) pays[s] = s === discarder ? b * 2 : b; }
+    else {                                                    // ladder_split (default): discarder base(tai), others base(tai-1)
+      const lower = moneyAt(m.ladder, Math.max(1, fan - 1));
+      for (let s = 0; s < 4; s++) if (s !== winner) pays[s] = s === discarder ? b : lower;
+    }
   }
   return pays;
 }

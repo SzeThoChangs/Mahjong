@@ -19,13 +19,18 @@ describe("the player's money table", () => {
     expect([1, 2, 3, 4, 5, 7].map((t) => winPaymentsMoney(t, 0, null, MONEY)[1])).toEqual([4, 5, 7, 12, 22, 22]);
     expect(winPaymentsMoney(3, 0, null, MONEY)).toEqual([0, 7, 7, 7]);
   });
-  it('shoot: the shooter alone pays 7/11/20/40 at 2-5 tai', () => {
-    expect([2, 3, 4, 5].map((t) => winPaymentsMoney(t, 0, 2, MONEY)[2])).toEqual([7, 11, 20, 40]);
-    expect(winPaymentsMoney(4, 0, 2, MONEY)).toEqual([0, 0, 20, 0]);
+  it('discard win splits as base(tai) from the shooter and base(tai-1) from each other: 5 tai = 20 + 10 + 10', () => {
+    const R = makeRules({ money: MONEY, discard_win_payment: 'ladder_split' });
+    expect(winPaymentsMoney(5, 0, 2, MONEY, null, R)).toEqual([0, 10, 20, 10]);
+    expect(winPaymentsMoney(4, 0, 2, MONEY, null, R)).toEqual([0, 5, 10, 5]);
+    expect(winPaymentsMoney(3, 0, 2, MONEY, null, R)).toEqual([0, 3, 5, 3]);
+    expect(winPaymentsMoney(2, 0, 2, MONEY, null, R)).toEqual([0, 2, 3, 2]);
+    // the totals still match the table the player quoted: 7 / 11 / 20 / 40
+    for (const t of [2, 3, 4, 5]) expect(winPaymentsMoney(t, 0, 2, MONEY, null, R).reduce((a, b) => a + b, 0)).toBe(MONEY.shoot_total[t]);
   });
   it('pay-all: the liable feeder takes over the whole bill', () => {
-    expect(winPaymentsMoney(5, 0, 2, MONEY, 3)).toEqual([0, 0, 0, 40]);          // shoot by 2, but 3 is liable
-    expect(winPaymentsMoney(5, 0, null, MONEY, 1)).toEqual([0, 66, 0, 0]);       // ZM 22x3 all on the liable seat
+    expect(winPaymentsMoney(5, 0, 2, MONEY, 3, makeRules({ money: MONEY }))).toEqual([0, 0, 0, 40]);   // shoot by 2, but 3 is liable
+    expect(winPaymentsMoney(5, 0, null, MONEY, 1, makeRules({ money: MONEY }))).toEqual([0, 66, 0, 0]);   // ZM 22x3 all on the liable seat
   });
   it('moneyAt caps above the table', () => { expect(moneyAt(MONEY.ladder, 9)).toBe(20); });
   it('full games under the money rules stay zero-sum and legal', () => {

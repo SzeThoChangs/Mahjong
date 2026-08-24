@@ -95,6 +95,14 @@ export interface Decision {
 }
 export interface Recorder { record(d: Decision): void; }
 
+/** Signed COUNT of each configurable amount a seat received (+) or paid (-).
+ *  Lets any money schedule be re-priced later without replaying the hand. */
+export interface Ledger {
+  kongEach: number; kongFed: number;
+  biteFlowerHidden: number; biteFlowerOpen: number; biteAnimalHidden: number; biteAnimalOpen: number;
+}
+export const emptyLedger = (): Ledger => ({ kongEach: 0, kongFed: 0, biteFlowerHidden: 0, biteFlowerOpen: 0, biteAnimalHidden: 0, biteAnimalOpen: 0 });
+
 export interface GameResult {
   winner: number | null;
   selfDraw: boolean;
@@ -105,6 +113,10 @@ export interface GameResult {
   log: string[];
   tilesAccounted: number;
   counts: { chow: number; pong: number; kong: number; flowers: number; animals: number; decisions: number; illegal: number };
+  /** which seat (if any) had to pay the whole bill under pay-all */
+  liable: number | null;
+  /** per seat: how many units of each configurable amount changed hands */
+  ledger: Ledger[];
 }
 
 export interface GameOptions {

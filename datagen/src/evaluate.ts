@@ -23,7 +23,13 @@ import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './record
 
 export type Policy = 'fast' | 'shanten' | 'efficiency';
 export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean }
-export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number }
+/** Outcome mix for one action, from the acting seat's point of view.
+ *  `w` keys are `<role><fan>` where role is: W self-draw win, D discard win, s pays the shooter share,
+ *  o pays the other share, z pays a self-draw share, l pays everything (pay-all), n pays nothing, d draw.
+ *  `led` is the summed ledger units (kongEach, kongFed, biteFH, biteFO, biteAH, biteAO).
+ *  Together these let any money schedule be priced later without re-simulating. */
+export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number] }
+export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number; mix?: OutcomeMix }
 // gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
 
@@ -49,7 +55,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     if (!h) { const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`); h = determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)); hiddenCache.set(i, h); }
     return h;
   };
-  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[] }));
+  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[], mix: { w: {} as Record<string, number>, led: [0, 0, 0, 0, 0, 0] as [number, number, number, number, number, number] } }));
   const roll = (x: typeof acc[number], i: number) => {
     const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
     const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
@@ -57,6 +63,18 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness));
     const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++; x.outcomes[i] = v;
     if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
+    // record the outcome in re-priceable form
+    const L = res.ledger[seat]!;
+    x.mix.led[0] += L.kongEach; x.mix.led[1] += L.kongFed;
+    x.mix.led[2] += L.biteFlowerHidden; x.mix.led[3] += L.biteFlowerOpen; x.mix.led[4] += L.biteAnimalHidden; x.mix.led[5] += L.biteAnimalOpen;
+    let role: string;
+    if (res.winner === null) role = 'd';
+    else if (res.winner === seat) role = res.selfDraw || res.score?.combination === 'thirteen_wonders' ? 'W' : 'D';
+    else if (res.liable !== null) role = res.liable === seat ? 'l' : 'n';
+    else if (res.selfDraw || res.score?.combination === 'thirteen_wonders') role = 'z';
+    else role = res.discarder === seat ? 's' : 'o';
+    const key = role + (res.score?.fan ?? 0);
+    x.mix.w[key] = (x.mix.w[key] ?? 0) + 1;
   };
   if (!a.adaptive || acc.length <= 2) {
     for (const x of acc) for (let i = 0; i < a.rollouts; i++) roll(x, i);
@@ -80,7 +98,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     let m = 0, m2 = 0, k = 0;
     for (let i = 0; i < Math.min(x.outcomes.length, bestAcc.outcomes.length); i++) { const a = bestAcc.outcomes[i], b = x.outcomes[i]; if (a === undefined || b === undefined) continue; const d = a - b; m += d; m2 += d * d; k++; }
     const gap = k ? m / k : 0, gapVar = k > 1 ? Math.max(0, m2 / k - gap * gap) / (k - 1) * k / Math.max(1, k) : 0;
-    return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n, gap, gapSe: Math.sqrt(gapVar / Math.max(1, k)) };
+    return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n, gap, gapSe: Math.sqrt(gapVar / Math.max(1, k)), mix: x.mix };
   });
   actions.sort((x, y) => y.ev - x.ev);
   const selEv = actions.find((x) => x.a === rec.sel)?.ev ?? NaN;

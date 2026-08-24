@@ -36,7 +36,7 @@ const chosen = [...meaty.slice(0, Math.floor(maxQ * 0.75)), ...rest.slice(0, Mat
 const byHand = new Map<string, typeof chosen>();
 for (const c of chosen) { const k = `${c.e.g}:${c.e.h}`; (byHand.get(k) ?? byHand.set(k, []).get(k)!).push(c); }
 
-interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number }[] }
+interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -55,7 +55,7 @@ for (const [key, list] of byHand) {
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
       bot: e.bot, spread: Number(spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,
-      actions: e.actions.map((a) => ({ a: a.a, ev: Number(a.ev.toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)) })),
+      actions: e.actions.map((a) => ({ a: a.a, ev: Number(a.ev.toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix })),
     });
   }
   if (++handsDone % 500 === 0) process.stdout.write(`\r${handsDone}/${byHand.size} hands replayed`);

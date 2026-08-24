@@ -65,8 +65,14 @@ export interface RulesConfig {
   kong_scoring: KongScoring;
   /** how a self-drawn win is paid */
   self_draw_payment: 'all_double' | 'all_single';
-  /** how a win on a discard is paid */
-  discard_win_payment: 'discarder_double' | 'discarder_pays_all' | 'all_single';
+  /**
+   * How a win on a discard is split.
+   *  'ladder_split'      - discarder pays base(tai), each other pays base(tai-1)   e.g. 5 tai = 20 + 10 + 10
+   *  'discarder_pays_all'- the discarder alone pays the whole amount
+   *  'discarder_double'  - discarder pays 2 x base, the other two pay base each
+   *  'all_single'        - all three pay base
+   */
+  discard_win_payment: 'ladder_split' | 'discarder_double' | 'discarder_pays_all' | 'all_single';
   bao: BaoRules;
   dealer_rules: DealerRules;
   special_hands: SpecialHands;
@@ -101,7 +107,26 @@ export function makeRules(over: DeepPartial<RulesConfig> = {}): RulesConfig {
     for (const [k, v] of Object.entries(o as Record<string, unknown>)) out[k] = merge((base as Record<string, unknown>)[k] as unknown, v as DeepPartial<unknown>);
     return out as T;
   };
-  return merge(DEFAULT_RULES, over);
+  const r = merge(DEFAULT_RULES, over);
+  validateRules(r);
+  return r;
+}
+
+/** Fail loudly at config time rather than deep inside a game. */
+export function validateRules(r: RulesConfig): void {
+  const m = r.money;
+  if (m) {
+    const need: (keyof MoneyRules)[] = ['ladder', 'zm_bonus_per_player', 'shoot_total', 'kong_each', 'kong_fed_total', 'bite_flower_hidden', 'bite_flower_open', 'bite_animal_hidden', 'bite_animal_open'];
+    const missing = need.filter((k) => m[k] === undefined || m[k] === null);
+    if (missing.length) throw new Error(`money config is incomplete: missing ${missing.join(', ')}. A partial money override REPLACES the whole schedule - pass every field, or omit "money" to use chips.`);
+    for (const [name, tbl] of [['ladder', m.ladder], ['shoot_total', m.shoot_total]] as const) {
+      if (typeof tbl !== 'object' || !Object.keys(tbl).length) throw new Error(`money.${name} must be a non-empty { tai: amount } map`);
+      for (const [k, v] of Object.entries(tbl)) if (!Number.isFinite(Number(k)) || !Number.isFinite(v)) throw new Error(`money.${name} has a bad entry ${k}: ${v}`);
+    }
+  }
+  if (r.minimum_tai < 0 || r.maximum_tai < r.minimum_tai) throw new Error(`minimum_tai ${r.minimum_tai} / maximum_tai ${r.maximum_tai} are inconsistent`);
+  if (r.self_draw_minimum_tai > r.minimum_tai) throw new Error(`self_draw_minimum_tai ${r.self_draw_minimum_tai} cannot exceed minimum_tai ${r.minimum_tai}`);
+  if (r.jokers.count < 0 || r.jokers.count > 8) throw new Error(`jokers.count ${r.jokers.count} out of range`);
 }
 
 /** Back-compat view used by payout/game/web: the handful of knobs they needed before the full rules layer. */
