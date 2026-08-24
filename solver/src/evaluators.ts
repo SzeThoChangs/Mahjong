@@ -8,7 +8,7 @@
  * "Available tiles" (unusable pairs) are ignored in v1 - the trainer shows no discards yet.
  */
 import {
-  KIND, isHonour, isSuited, rankOf, suitOf, countsOf, winningKinds, type TileKind, type Meld, type Counts,
+  KIND, isHonour, isJoker, isSuited, rankOf, suitOf, countsOf, countsAndJokers, shanten, winningKinds, type TileKind, type Meld, type Counts,
 } from 'sg-mahjong-engine';
 
 export interface HandInput { concealed: TileKind[]; melds: Meld[]; }
@@ -49,12 +49,24 @@ function bestBlocks(counts: Counts, score: (b: Block[]) => number, allowChows: b
 const isCalling = (h: HandInput) => {
   const total = h.concealed.length;
   if ((total - 1) % 3 !== 0) return false;           // needs 3n+1 concealed to be "one away"
-  return winningKinds(countsOf(h.concealed), 4 - h.melds.length).length > 0;
+  const { counts, jokers } = countsAndJokers(h.concealed);
+  if (jokers > 0) return shanten(h.concealed, h.melds.length) <= 0;   // the engine's shanten is joker-aware
+  return winningKinds(counts, 4 - h.melds.length).length > 0;
 };
 
+/** Split a hand into its ordinary tiles and its wildcards.
+ *  The evaluators score the ordinary tiles and then credit each wildcard with the block it can complete -
+ *  approximate, but a wildcard really is worth roughly one finished block. */
+function splitJokers(h: HandInput): { plain: HandInput; jokers: number } {
+  let jokers = 0; const plain: TileKind[] = [];
+  for (const k of h.concealed) { if (isJoker(k)) jokers++; else plain.push(k); }
+  return { plain: { concealed: plain, melds: h.melds }, jokers };
+}
+
 // ---------- Rule 4213 ------------------------------------------------------------
-export function rule4213(h: HandInput): { value: number; blocks: Block[] } {
-  const meldPts = h.melds.length * 4;
+export function rule4213(hIn: HandInput): { value: number; blocks: Block[] } {
+  const { plain: h, jokers } = splitJokers(hIn);
+  const meldPts = h.melds.length * 4 + jokers * 4;      // a wildcard completes a triplet
   const r = bestBlocks(countsOf(h.concealed), (bs) => {
     let trip = h.melds.length, two = 0, one = 0, eye = 0, v = 0;
     for (const b of bs) {
@@ -71,11 +83,12 @@ export function rule4213(h: HandInput): { value: number; blocks: Block[] } {
 }
 
 // ---------- Rule 5313 ------------------------------------------------------------
-export function rule5313(h: HandInput): { value: number; blocks: Block[]; calling: boolean } {
+export function rule5313(hIn: HandInput): { value: number; blocks: Block[]; calling: boolean } {
+  const { plain: h, jokers } = splitJokers(hIn);
   // exposed chows count 5; exposed pongs/kongs make All-Chow impossible
   if (h.melds.some((m) => m.type !== 'chow')) return { value: 0, blocks: [], calling: false };
-  const meldPts = h.melds.length * 5;
-  const calling = isCalling(h);
+  const meldPts = h.melds.length * 5 + jokers * 5;      // a wildcard completes a chow
+  const calling = isCalling(hIn);
   const r = bestBlocks(countsOf(h.concealed), (bs) => {
     let chows = h.melds.length, two = 0, v = 0, eye = 0;
     for (const b of bs) {
@@ -91,8 +104,9 @@ export function rule5313(h: HandInput): { value: number; blocks: Block[]; callin
 }
 
 // ---------- Rule 961 (per suit) -------------------------------------------------------
-export function rule961(h: HandInput): { value: number; suit: 'wan' | 'tong' | 'sok' | null; blocks: Block[]; calling: boolean } {
-  const calling = isCalling(h);
+export function rule961(hIn: HandInput): { value: number; suit: 'wan' | 'tong' | 'sok' | null; blocks: Block[]; calling: boolean } {
+  const { plain: h, jokers } = splitJokers(hIn);
+  const calling = isCalling(hIn);
   let best = { value: -Infinity, suit: null as 'wan' | 'tong' | 'sok' | null, blocks: [] as Block[] };
   for (const suit of ['wan', 'tong', 'sok'] as const) {
     // exposed melds: only those in-suit or honours count (others make half-color impossible -> heavy penalty)
@@ -111,24 +125,30 @@ export function rule961(h: HandInput): { value: number; suit: 'wan' | 'tong' | '
     // singles: tiles not in any block, 1 each
     const inBlocks = r.blocks.reduce((a, b) => a + b.tiles.length, 0);
     const singles = kinds.length - inBlocks;
-    const v = r.value + singles + meldPts;
+    const v = r.value + singles + meldPts + jokers * 9;   // a wildcard completes a triplet
     if (v > best.value) best = { value: v, suit, blocks: r.blocks };
   }
   return { ...best, value: best.value + (calling ? 3 : 0), calling };
 }
 
 // ---------- All-Pong breakdown -------------------------------------------------------
-export function allPongBreakdown(h: HandInput): { triplets: number; pairs: number; key: string; chowsExposed: boolean } {
+export function allPongBreakdown(hIn: HandInput): { triplets: number; pairs: number; key: string; chowsExposed: boolean } {
+  const { plain: h, jokers } = splitJokers(hIn);
   const chowsExposed = h.melds.some((m) => m.type === 'chow');
   let triplets = h.melds.filter((m) => m.type !== 'chow').length, pairs = 0;
   const c = countsOf(h.concealed);
   for (let k = 0; k < KIND.STANDARD_COUNT; k++) { if (c[k]! >= 3) triplets++; else if (c[k] === 2) pairs++; }
+  // each wildcard promotes a pair to a triplet, or stands alone as part of a new one
+  let j = jokers;
+  while (j > 0 && pairs > 0) { pairs--; triplets++; j--; }
+  while (j >= 1) { pairs++; j--; }
   return { triplets, pairs, key: `${triplets}:${pairs}`, chowsExposed };
 }
 
 /** 13 Wonders breakdown: distinct wonder kinds held (max 13). */
-export function thirteenBreakdown(h: HandInput): number {
+export function thirteenBreakdown(hIn: HandInput): number {
+  const { plain: h, jokers } = splitJokers(hIn);
   if (h.melds.length) return 0;
   const s = new Set(h.concealed.filter((k) => (isSuited(k) && (rankOf(k) === 1 || rankOf(k) === 9)) || isHonour(k)));
-  return s.size;
+  return Math.min(13, s.size + jokers);
 }

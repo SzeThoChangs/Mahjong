@@ -1,6 +1,6 @@
 /** Rank the 14 possible discards and explain the choice in plain language. */
 import {
-  fanInHand, isDragon, isHonour, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
+  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
@@ -55,7 +55,8 @@ function acceptance(h: HandInput, best: TargetEval): number {
 }
 
 export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context): Ranking {
-  const kinds = [...new Set(concealed)];
+  const allJokers = concealed.every(isJoker);
+  const kinds = [...new Set(concealed)].filter((k) => allJokers || !isJoker(k));   // never offer a wildcard as a discard
   const opts: DiscardOption[] = [];
   const hands = new Map<TileKind, HandInput>();
   for (const k of kinds) {
