@@ -17,7 +17,7 @@ import {
 import { scoreHand, type ScoreResult } from './score.js';
 import { immediatePayout, meetsMinimum, winPayments, winPaymentsMoney, type TableConfig } from './payout.js';
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
-import { couldBeComplete } from './shanten.js';
+import { couldBeComplete, shanten } from './shanten.js';
 import { countsAndJokers, isHonour, isDragon, isWind, isJoker } from './tiles.js';
 import { fanInHand } from './score.js';
 import { emptyLedger, type Ledger } from './game.js';
@@ -54,6 +54,7 @@ export class GameState {
   paidEvents: Set<string>[]; counts: GameResult['counts'] = { chow: 0, pong: 0, kong: 0, flowers: 0, animals: 0, decisions: 0, illegal: 0 };
   log: string[] = []; result: GameResult | null = null;
   ledger: Ledger[] = [0, 1, 2, 3].map(emptyLedger);
+  draws = [0, 0, 0, 0]; blockedWins = [0, 0, 0, 0]; readyTurn = [-1, -1, -1, -1]; winTile = -1;
   private lastLiable: number | null = null;
   private selfOptions: SelfAction[] = [];
   private claimQueue: { seat: number; options: ClaimOption[] }[] = []; private wanted: ClaimOption[] = [];
@@ -224,7 +225,7 @@ export class GameState {
       else for (let s = 0; s < 4; s++) if (pays[s]) this.pay(s, winner, pays[s]!);
     }
     this.phase = 'done';
-    this.result = { winner, selfDraw, discarder, score: sc, chipsDelta: this.players.map((p) => p.chips), playerTurns: this.playerTurns, log: this.log, tilesAccounted: this.tilesAccounted(), counts: this.counts, liable: this.lastLiable, ledger: this.ledger.map((l) => ({ ...l })) };
+    this.result = { winner, selfDraw, discarder, score: sc, chipsDelta: this.players.map((p) => p.chips), playerTurns: this.playerTurns, log: this.log, tilesAccounted: this.tilesAccounted(), counts: this.counts, liable: this.lastLiable, ledger: this.ledger.map((l) => ({ ...l })), draws: [...this.draws], blockedWins: [...this.blockedWins], readyTurn: [...this.readyTurn], winTile: this.winTile };
     return this.result;
   }
   private legalChows(q: PlayerState, dk: TileKind): TileInstance[][] {
@@ -246,6 +247,7 @@ export class GameState {
     if (couldBeComplete(cj.counts, p.melds.length, cj.jokers)) {
       const sc = this.score(p, kinds, kindOf(d.tile), true, { replacementWin: d.replaced, lastTile: d.lastTile });
       if (sc.valid && meetsMinimum(sc.fan, true, this.cfg)) options.push({ kind: 'win', score: sc });
+      else if (sc.valid) this.blockedWins[this.turn]!++;          // complete, but under the table minimum
     }
     const byKind = new Map<TileKind, TileInstance[]>();
     for (const t of p.hand) { const k = kindOf(t); if (isJoker(k)) continue; (byKind.get(k) ?? byKind.set(k, []).get(k)!).push(t); }
@@ -284,6 +286,7 @@ export class GameState {
       if (couldBeComplete(cj.counts, q.melds.length, cj.jokers)) {
         const sc = this.score(q, withTile, dk, false, { lastTile: lastTileDiscard });
         if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
+        else if (sc.valid) this.blockedWins[s]!++;                 // could have won on it, but under the minimum
       }
       const same = q.hand.filter((t) => kindOf(t) === dk);
       if (same.length >= 3) os.push({ kind: 'kong3', seat: s, tiles: same.slice(0, 3) });
@@ -323,7 +326,7 @@ export class GameState {
         const a = this.absorb(p, raw, false);
         if (a.special) { this.finish(this.turn, true, null, a.special); return; }
         if (a.tile === null) { this.finish(null, false, null, null); return; }
-        p.hand.push(a.tile);
+        p.hand.push(a.tile); this.draws[this.turn]!++;
         this.drawnInfo = { tile: a.tile, replaced: this.phase === 'replacement' || a.replaced, lastTile };
         this.playerTurns++;
         const fj = this.fourJokerWin(p); if (fj) { this.finish(this.turn, true, null, fj); return; }
@@ -347,7 +350,7 @@ export class GameState {
     const p = this.players[this.turn]!, v = this.view(this.turn, null), d = this.drawnInfo!;
     const legal = this.pending()!.legal;
     this.record('self', this.turn, v, legal, action, d.tile);
-    if (action.a === 'win') { const o = this.selfOptions.find((x) => x.kind === 'win')!; this.L(`seat${this.turn} self-draw`); this.finish(this.turn, true, null, (o as { score: ScoreResult }).score); return; }
+    if (action.a === 'win') { const o = this.selfOptions.find((x) => x.kind === 'win')!; this.winTile = kindOf(d.tile); this.L(`seat${this.turn} self-draw`); this.finish(this.turn, true, null, (o as { score: ScoreResult }).score); return; }
     if (action.a === 'kong4') {
       const o = this.selfOptions.find((x) => x.kind === 'kong4' && kindOf(x.tiles[0]!) === action.kind) as Extract<SelfAction, { kind: 'kong4' }>;
       p.hand = p.hand.filter((t) => !o.tiles.includes(t));
@@ -418,6 +421,7 @@ export class GameState {
     if (idx < 0) { this.counts.illegal++; throw new Error(`seat ${this.turn} discarded a tile it does not hold`); }
     this.record('discard', this.turn, v, p.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
     p.hand.splice(idx, 1); p.discards.push(action.tile);
+    if (this.readyTurn[this.turn] === -1 && shanten(p.hand.map(kindOf), p.melds.length) <= 0) this.readyTurn[this.turn] = this.playerTurns;
     const dk = kindOf(action.tile);
     this.pendingDiscard = { tile: action.tile, from: this.turn, lastTileDiscard: this.wall.isExhausted, eligible: [] };
     this.discardLog.push({ seat: this.turn, tile: action.tile, claimedBy: null, claimKind: null, turn: this.playerTurns });
@@ -453,6 +457,7 @@ export class GameState {
         this.counts.kong--;
         // the kong never stood: refund its immediate payment (house-rule assumption, flagged in docs)
         for (let s2 = 0; s2 < 4; s2++) if (s2 !== from) this.pay(from, s2, rob.feeEach);
+        this.winTile = kindOf(rob.tile);
         this.L(`seat${taken.seat} robs the kong of seat${from}`);
         this.finish(taken.seat, false, from, taken.score!, true); return;
       }
@@ -469,7 +474,7 @@ export class GameState {
       this.turn = (from + 1) % 4; this.phase = 'draw'; return;
     }
     ev.claimedBy = taken.seat; ev.claimKind = taken.kind;
-    if (taken.kind === 'win') { this.L(`seat${taken.seat} wins on seat${from}`); this.finish(taken.seat, false, from, taken.score!); return; }
+    if (taken.kind === 'win') { this.winTile = kindOf(d); this.L(`seat${taken.seat} wins on seat${from}`); this.finish(taken.seat, false, from, taken.score!); return; }
     const p = this.players[from]!, q = this.players[taken.seat]!;
     p.discards.pop();
     q.hand = q.hand.filter((t) => !taken.tiles!.includes(t));

@@ -43,6 +43,8 @@ export function playHand(setup: HandSetup, rules: RulesConfig, randomness: Rando
     g: setup.sessionId, h: setup.handIdx, seed: setup.seed, dl: setup.dealer, w: setup.prevailingWind, bots: setup.botTypes,
     winner: r.winner, sd: r.selfDraw, disc: r.discarder, fan: r.score?.fan ?? null, combo: r.score?.combination ?? null,
     turns: r.playerTurns, cnt: r.counts, delta: r.chipsDelta, scores: scoresAfter, acts, hash: (hash >>> 0).toString(16),
+    led: r.ledger.map((l) => [l.kongConcealed, l.kongExposed, l.kongFed, l.biteFlowerHidden, l.biteFlowerOpen, l.biteAnimalHidden, l.biteAnimalOpen]),
+    liable: r.liable, draws: r.draws, blocked: r.blockedWins, ready: r.readyTurn, wt: r.winTile,
   };
   sink?.hand(rec);
   sink?.truth?.({ g: setup.sessionId, h: setup.handIdx, seed: setup.seed, dl: setup.dealer, w: setup.prevailingWind, wall: wallOrder });

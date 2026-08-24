@@ -113,6 +113,14 @@ export interface GameResult {
   log: string[];
   tilesAccounted: number;
   counts: { chow: number; pong: number; kong: number; flowers: number; animals: number; decisions: number; illegal: number };
+  /** per seat: tiles actually drawn from the wall (calls skip your draw; kongs add one) */
+  draws: number[];
+  /** per seat: times a COMPLETE hand could not be declared because it was under the table minimum */
+  blockedWins: number[];
+  /** per seat: the turn at which the seat first became one tile from winning (-1 = never) */
+  readyTurn: number[];
+  /** the tile the winner won on (-1 if the hand was drawn) */
+  winTile: number;
   /** which seat (if any) had to pay the whole bill under pay-all */
   liable: number | null;
   /** per seat: how many units of each configurable amount changed hands */

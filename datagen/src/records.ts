@@ -62,6 +62,12 @@ export interface HandRecord {
   winner: number | null; sd: boolean; disc: number | null; fan: number | null; combo: string | null;
   turns: number; cnt: { chow: number; pong: number; kong: number; flowers: number; animals: number; decisions: number; illegal: number };
   delta: number[]; scores: number[];                       // this hand's chips delta; session scores after
+  led: number[][];                                         // per seat: [kongConcealed, kongExposed, kongFed, biteFH, biteFO, biteAH, biteAO] signed unit counts
+  liable: number | null;
+  draws: number[];                                         // tiles drawn per seat
+  blocked: number[];                                       // complete hands per seat that were under the table minimum
+  ready: number[];                                         // turn each seat first became one away (-1 never)
+  wt: number;                                              // the winning tile kind (-1 if drawn game)
   acts: Record<string, Record<string, number>>;            // bot type -> action -> count
   hash: string;                                            // FNV-1a over the decision sequence (for replay checks)
 }
