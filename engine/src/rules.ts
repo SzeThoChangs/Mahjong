@@ -30,8 +30,10 @@ export interface MoneyRules {
   zm_bonus_per_player: number;
   /** total the shooter pays on a discard win, by tai */
   shoot_total: Record<number, number>;
-  /** self-made kong (drawn 4th tile or concealed): each opponent pays this */
-  kong_each: number;
+  /** 暗槓 concealed kong (all four from hand): each opponent pays this */
+  kong_concealed_each: number;
+  /** 明槓 exposed kong (drawn 4th added to your own pong): each opponent pays this */
+  kong_exposed_each: number;
   /** fed kong (claimed from a discard): the feeder alone pays this */
   kong_fed_total: number;
   /** flower-pair bite completed during the opening deal replacements / during play */
@@ -116,7 +118,7 @@ export function makeRules(over: DeepPartial<RulesConfig> = {}): RulesConfig {
 export function validateRules(r: RulesConfig): void {
   const m = r.money;
   if (m) {
-    const need: (keyof MoneyRules)[] = ['ladder', 'zm_bonus_per_player', 'shoot_total', 'kong_each', 'kong_fed_total', 'bite_flower_hidden', 'bite_flower_open', 'bite_animal_hidden', 'bite_animal_open'];
+    const need: (keyof MoneyRules)[] = ['ladder', 'zm_bonus_per_player', 'shoot_total', 'kong_concealed_each', 'kong_exposed_each', 'kong_fed_total', 'bite_flower_hidden', 'bite_flower_open', 'bite_animal_hidden', 'bite_animal_open'];
     const missing = need.filter((k) => m[k] === undefined || m[k] === null);
     if (missing.length) throw new Error(`money config is incomplete: missing ${missing.join(', ')}. A partial money override REPLACES the whole schedule - pass every field, or omit "money" to use chips.`);
     for (const [name, tbl] of [['ladder', m.ladder], ['shoot_total', m.shoot_total]] as const) {

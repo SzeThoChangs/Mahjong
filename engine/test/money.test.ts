@@ -10,7 +10,7 @@ import { KIND, kindOf, isJoker } from '../src/tiles.js';
 const MONEY: MoneyRules = {
   ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm_bonus_per_player: 2,
   shoot_total: { 2: 7, 3: 11, 4: 20, 5: 40 },
-  kong_each: 2, kong_fed_total: 6, bite_flower_hidden: 4, bite_flower_open: 2, bite_animal_hidden: 4, bite_animal_open: 2,
+  kong_concealed_each: 2, kong_exposed_each: 2, kong_fed_total: 6, bite_flower_hidden: 4, bite_flower_open: 2, bite_animal_hidden: 4, bite_animal_open: 2,
 };
 const RL = makeRules({ money: MONEY, jokers: { count: 4 } });
 

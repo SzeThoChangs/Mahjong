@@ -23,8 +23,9 @@ export interface MoneyConfig {
   minTai: number;
   maxTai: number;
   selfDrawMinTai: number;
-  kongEach: number;                 // self-made kong: each opponent pays
-  kongFed: number;                  // fed kong: the feeder alone pays
+  kongConcealed: number;            // 暗槓 concealed kong: each opponent pays
+  kongExposed: number;              // 明槓 exposed kong (4th tile onto your own pong): each opponent pays
+  kongFed: number;                  // fed kong (claimed off a discard): the feeder alone pays
   flowerBiteHidden: number;         // own-number flower pair, from the deal / during play
   flowerBiteOpen: number;
   animalBiteHidden: number;         // cat+mouse or rooster+centipede, from the deal / during play
@@ -34,11 +35,11 @@ export interface MoneyConfig {
 }
 
 export const PRESETS: MoneyConfig[] = [
-  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'shooter', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
-  { name: 'Doubling 2/4/8/16/32', payMode: 'shooter', ladder: { 1: 2, 2: 4, 3: 8, 4: 16, 5: 32 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
-  { name: 'Doubling 1/2/4/8/16', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
-  { name: 'Flat 1/2/3/5/10, max 5', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 10 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
-  { name: 'Doubling to 10 tai (big-hand house)', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32, 7: 64, 8: 128, 9: 256, 10: 512 }, zm: 2, minTai: 1, maxTai: 10, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'shooter', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Doubling 2/4/8/16/32', payMode: 'shooter', ladder: { 1: 2, 2: 4, 3: 8, 4: 16, 5: 32 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Doubling 1/2/4/8/16', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 1, kongExposed: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
+  { name: 'Flat 1/2/3/5/10, max 5', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 10 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 1, kongExposed: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
+  { name: 'Doubling to 10 tai (big-hand house)', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32, 7: 64, 8: 128, 9: 256, 10: 512 }, zm: 2, minTai: 1, maxTai: 10, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
 ];
 
 export const base = (c: MoneyConfig, tai: number): number => {
@@ -98,7 +99,7 @@ export const COMBO_LABEL: Record<string, string> = {
 // Re-pricing measured decisions under any money schedule
 // ---------------------------------------------------------------------------
 /** Outcome mix recorded by the evaluator for one action (see datagen/src/evaluate.ts). */
-export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number] }
+export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number, number] }
 
 /** value to the acting seat of one hand outcome: role letter + tai */
 export function outcomeValue(role: string, tai: number, c: MoneyConfig): number {
@@ -117,7 +118,7 @@ export function outcomeValue(role: string, tai: number, c: MoneyConfig): number 
 export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
   let total = 0;
   for (const [key, count] of Object.entries(mix.w)) total += count * outcomeValue(key[0]!, Number(key.slice(1)), c);
-  const amt = [c.kongEach, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
-  for (let i = 0; i < 6; i++) total += mix.led[i]! * amt[i]!;
+  const amt = [c.kongConcealed, c.kongExposed, c.kongFed, c.flowerBiteHidden, c.flowerBiteOpen, c.animalBiteHidden, c.animalBiteOpen];
+  for (let i = 0; i < amt.length; i++) total += (mix.led[i] ?? 0) * amt[i]!;
   return total / Math.max(1, n);
 }

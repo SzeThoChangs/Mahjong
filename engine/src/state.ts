@@ -370,7 +370,9 @@ export class GameState {
     const m = this.rules.money;
     if (m) {
       if (feeder !== null) { this.pay(feeder, to, m.kong_fed_total); this.note('kongFed', to, feeder); return m.kong_fed_total / 3; }
-      this.payAllOpponents(to, m.kong_each); this.note('kongEach', to, 'all'); return m.kong_each;
+      const concealed = kind === 'kong_4';
+      const each = concealed ? m.kong_concealed_each : m.kong_exposed_each;
+      this.payAllOpponents(to, each); this.note(concealed ? 'kongConcealed' : 'kongExposed', to, 'all'); return each;
     }
     const each = immediatePayout(kind, this.cfg, false, this.rules);
     if (feeder !== null) { this.payAllOpponents(to, each); return each; }

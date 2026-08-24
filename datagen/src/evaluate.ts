@@ -28,7 +28,7 @@ export interface EvalArgs { dir: string; hands: number; perHand: number; rollout
  *  o pays the other share, z pays a self-draw share, l pays everything (pay-all), n pays nothing, d draw.
  *  `led` is the summed ledger units (kongEach, kongFed, biteFH, biteFO, biteAH, biteAO).
  *  Together these let any money schedule be priced later without re-simulating. */
-export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number] }
+export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number, number] }
 export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number; mix?: OutcomeMix }
 // gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
@@ -55,7 +55,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     if (!h) { const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`); h = determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)); hiddenCache.set(i, h); }
     return h;
   };
-  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[], mix: { w: {} as Record<string, number>, led: [0, 0, 0, 0, 0, 0] as [number, number, number, number, number, number] } }));
+  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[], mix: { w: {} as Record<string, number>, led: [0, 0, 0, 0, 0, 0, 0] as [number, number, number, number, number, number, number] } }));
   const roll = (x: typeof acc[number], i: number) => {
     const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
     const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
@@ -65,8 +65,8 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
     // record the outcome in re-priceable form
     const L = res.ledger[seat]!;
-    x.mix.led[0] += L.kongEach; x.mix.led[1] += L.kongFed;
-    x.mix.led[2] += L.biteFlowerHidden; x.mix.led[3] += L.biteFlowerOpen; x.mix.led[4] += L.biteAnimalHidden; x.mix.led[5] += L.biteAnimalOpen;
+    x.mix.led[0] += L.kongConcealed; x.mix.led[1] += L.kongExposed; x.mix.led[2] += L.kongFed;
+    x.mix.led[3] += L.biteFlowerHidden; x.mix.led[4] += L.biteFlowerOpen; x.mix.led[5] += L.biteAnimalHidden; x.mix.led[6] += L.biteAnimalOpen;
     let role: string;
     if (res.winner === null) role = 'd';
     else if (res.winner === seat) role = res.selfDraw || res.score?.combination === 'thirteen_wonders' ? 'W' : 'D';

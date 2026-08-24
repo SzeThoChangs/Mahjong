@@ -79,8 +79,12 @@ export default function TableSetup() {
             <label>Min tai to win <Num v={cfg.minTai} on={(v) => setCfg({ ...cfg, minTai: v })} /></label>
             <label>Max tai (cap) <Num v={cfg.maxTai} on={(v) => setCfg({ ...cfg, maxTai: v })} /></label>
             <label>自摸 min tai <Num v={cfg.selfDrawMinTai} on={(v) => setCfg({ ...cfg, selfDrawMinTai: v })} /></label>
-            <label>Kong each <Num v={cfg.kongEach} on={(v) => setCfg({ ...cfg, kongEach: v })} /></label>
-            <label>Fed kong <Num v={cfg.kongFed} on={(v) => setCfg({ ...cfg, kongFed: v })} /></label>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm items-center">
+            <span className="text-muted-foreground">Kongs — each opponent pays:</span>
+            <label>暗槓 concealed <Num v={cfg.kongConcealed} on={(v) => setCfg({ ...cfg, kongConcealed: v })} /></label>
+            <label>明槓 exposed <Num v={cfg.kongExposed} on={(v) => setCfg({ ...cfg, kongExposed: v })} /></label>
+            <label>Fed kong — feeder alone pays <Num v={cfg.kongFed} on={(v) => setCfg({ ...cfg, kongFed: v })} /></label>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm items-center">
             <span className="text-muted-foreground">Bites (hidden / open):</span>
@@ -170,7 +174,7 @@ function Takeaways({ rows, otherById, otherName, profile, cfg }: { rows: ComboVa
       )}
       <div><b>自摸 vs winning off a discard:</b> at {cfg.maxTai} tai a self-draw collects {money(zmTotal(cfg, cfg.maxTai))} but a discard win collects {money(shootTotal(cfg, cfg.maxTai))} — {zmTotal(cfg, cfg.maxTai) > shootTotal(cfg, cfg.maxTai) * 1.15 ? <>self-draw is worth <b>{(zmTotal(cfg, cfg.maxTai) / shootTotal(cfg, cfg.maxTai)).toFixed(1)}×</b> more, so waits you can draw yourself are worth a lot more than waits you must be fed.</> : shootTotal(cfg, cfg.maxTai) > zmTotal(cfg, cfg.maxTai) * 1.15 ? <>the discard win is worth more here, so a wide wait others may feed is worth more than a self-draw-only shape.</> : <>they are close, so the wait type matters less here than at tables with a big gap.</>}</div>
       <div className="text-muted-foreground text-xs">
-        Also moving on every hand: kongs and bites, about {money(profile.sidePerHand)} per hand at the recorded amounts (kong {money(cfg.kongEach)} each, flower bites {money(cfg.flowerBiteHidden)}/{money(cfg.flowerBiteOpen)}, animal bites {money(cfg.animalBiteHidden)}/{money(cfg.animalBiteOpen)}) — combination-independent, so it does not change which plan to pick, but it does reward declaring kongs.
+        Also moving on every hand: kongs and bites, about {money(profile.sidePerHand)} per hand at the recorded amounts (kongs {money(cfg.kongConcealed)}/{money(cfg.kongExposed)}/{money(cfg.kongFed)}, flower bites {money(cfg.flowerBiteHidden)}/{money(cfg.flowerBiteOpen)}, animal bites {money(cfg.animalBiteHidden)}/{money(cfg.animalBiteOpen)}) — combination-independent, so it does not change which plan to pick, but it does reward declaring kongs.
         <br />Frequencies come from simple bots, so they are a floor: a strong player converts more of the harder hands than these numbers show. The ranking by value is what matters.
       </div>
     </div>

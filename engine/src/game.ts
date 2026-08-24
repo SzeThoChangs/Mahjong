@@ -98,10 +98,10 @@ export interface Recorder { record(d: Decision): void; }
 /** Signed COUNT of each configurable amount a seat received (+) or paid (-).
  *  Lets any money schedule be re-priced later without replaying the hand. */
 export interface Ledger {
-  kongEach: number; kongFed: number;
+  kongConcealed: number; kongExposed: number; kongFed: number;
   biteFlowerHidden: number; biteFlowerOpen: number; biteAnimalHidden: number; biteAnimalOpen: number;
 }
-export const emptyLedger = (): Ledger => ({ kongEach: 0, kongFed: 0, biteFlowerHidden: 0, biteFlowerOpen: 0, biteAnimalHidden: 0, biteAnimalOpen: 0 });
+export const emptyLedger = (): Ledger => ({ kongConcealed: 0, kongExposed: 0, kongFed: 0, biteFlowerHidden: 0, biteFlowerOpen: 0, biteAnimalHidden: 0, biteAnimalOpen: 0 });
 
 export interface GameResult {
   winner: number | null;
