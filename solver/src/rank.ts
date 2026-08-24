@@ -2,13 +2,21 @@
 import {
   fanInHand, isDragon, isHonour, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
-import { handValue, fanRoutes, type Context, type TargetEval } from './targets.js';
+import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
   tile: TileKind; chips: number; delta: number; verdict: Verdict;
   target: TargetEval; acceptance: number; reasons: string[];
+}
+/** The cheap legal win to fall back on, and what in the hand keeps it available. */
+export interface Bailout {
+  target: string;              // usually Chicken
+  enabler: TileKind | null;    // the value pair that makes it legal (e.g. your double wind)
+  enablerFan: number;
+  chips: number;               // what the bailout is worth right now
+  switchBelow: number | null;  // primary evaluator score at which the bailout overtakes it
 }
 export interface Ranking {
   options: DiscardOption[];           // sorted best first
@@ -17,6 +25,8 @@ export interface Ranking {
   best: DiscardOption;
   /** tiles that are equal-best within noise - naming one of them as 'the' answer would be arbitrary */
   tied: TileKind[];
+  /** the fallback plan and its trigger, when the primary is not the cheap one */
+  bailout: Bailout | null;
 }
 
 const WIND_OR_DRAGON: Record<number, string> = { 27: '\u6771', 28: '\u5357', 29: '\u897f', 30: '\u5317', 31: '\u4e2d', 32: '\u767c', 33: '\u767d' };
@@ -97,7 +107,31 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
     }
   }
   const tied = opts.filter((o) => o.delta > -0.05).map((o) => o.tile);
-  return { options: opts, plan, planDetail: detail, best: top, tied };
+
+  // ---- the bailout: the cheap legal win, and the tile that keeps it available ----
+  let bailout: Bailout | null = null;
+  const restAfterBest = (() => { const r = [...concealed]; r.splice(r.indexOf(top.tile), 1); return r; })();
+  const cheap = hvAll.find((x) => x.id === 'chicken');
+  if (cheap && t.id !== 'chicken') {
+    const routes = fanRoutes(restAfterBest, ctx);
+    const r0 = routes[0] ?? null;
+    // at what primary score does the cheap plan overtake the current plan?
+    let switchBelow: number | null = null;
+    if (typeof t.value === 'number') {
+      for (let v = Math.floor(t.value); v >= 0; v--) {
+        const probe = valueOfTargetAt(t.id, v, ctx);
+        if (probe !== null && probe <= cheap.chips) { switchBelow = v; break; }
+      }
+    }
+    bailout = { target: 'Chicken', enabler: r0 ? r0.tile : null, enablerFan: r0?.fan ?? 0, chips: cheap.chips, switchBelow };
+    if (r0) {
+      detail.push(`Bail-out if this stalls: pong ${WIND_OR_DRAGON[r0.tile] ?? ''} (${r0.fan} tai${r0.double ? ', 門風 + 圈風 double' : ''}) and take a quick Chicken — worth about ${fmt(cheap.chips)}. Hold that pair: it is the only thing making the cheap win legal.`);
+    }
+    if (switchBelow !== null && typeof t.value === 'number') {
+      detail.push(`Switch when ${plan} drops below score ${switchBelow} (it is ${t.value} now) — or if it has not improved by 第${Math.max(1, Math.ceil((ctx.playerTurns + 20) / 4))}巡.`);
+    }
+  }
+  return { options: opts, plan, planDetail: detail, best: top, tied, bailout };
 }
 
 /** copies of each kind not visible in your own hand or any meld (a rough "still out there" count) */

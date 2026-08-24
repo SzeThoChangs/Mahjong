@@ -72,10 +72,10 @@ export default function RealQuiz() {
       };
       if (q.k === 'discard' && q.h.length % 3 === 2) {
         const r = rankDiscards(q.h, melds, ctx);
-        return { plan: r.plan, detail: r.planDetail, best: r.best.tile, reasonFor: (k: number) => r.options.find((o) => o.tile === k)?.reasons ?? [] };
+        return { plan: r.plan, detail: r.planDetail, best: r.best.tile, tied: r.tied, reasonFor: (k: number) => r.options.find((o) => o.tile === k)?.reasons ?? [] };
       }
       const hv = handValue({ concealed: q.h, melds }, ctx);
-      return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, reasonFor: () => [] as string[] };
+      return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[] };
     } catch { return null; }
   }, [q]);
 

@@ -97,7 +97,8 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
 
   // Chicken: viable only if the hand can actually reach the table minimum
   const ch = rule4213(h);
-  const chance = byTurn(T.chicken_chance![mf]!, ctx.playerTurns, ch.value);
+  // chicken_chance is a PROBABILITY table: the generic extrapolation can run past 0, so clamp before pricing
+  const chance = Math.max(0.005, Math.min(0.95, byTurn(T.chicken_chance![mf]!, ctx.playerTurns, ch.value)));
   const chickenChips = (chance - 0.31) * 26;    // fit to Table 10:3 (see PLAN.md)
   const routes = fanRoutes(h.concealed, ctx);
   const best = routes[0];
@@ -126,6 +127,16 @@ const tileName = (k: TileKind): string => {
   if (k === 31) return '\u4e2d'; if (k === 32) return '\u767c'; if (k === 33) return '\u767d';
   return String(k);
 };
+
+/** What a target would be worth at evaluator score `v` and the current turn - used to find a switch point. */
+export function valueOfTargetAt(id: TargetId, v: number, ctx: Context): number | null {
+  const mf = ctx.minimumFan === 2 ? 'mf2' : 'mf1';
+  const T = TABLES as unknown as Record<string, Record<string, Record<string, Row>>>;
+  if (id === 'half_color') return byTurn(T.half_color_chips![mf]!, ctx.playerTurns, v);
+  if (id === 'ping_wu') return byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, v);
+  if (id === 'all_chow') { const turn0 = lookup(TABLES.all_chow_table_10_3_turn0_mf1 as unknown as Row, v); return turn0 + byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, v) - byTurn(T.ping_wu_chips![mf]!, 0, v); }
+  return null;
+}
 
 export function handValue(h: HandInput, ctx: Context): { chips: number; best: TargetEval; all: TargetEval[] } {
   const all = evaluateTargets(h, ctx);
