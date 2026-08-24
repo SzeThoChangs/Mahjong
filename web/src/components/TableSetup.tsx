@@ -288,7 +288,7 @@ function Reads() {
               <div key={n} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">threw {n} of a suit by 第10巡</span>{bar(d.suitTell, `${n}|40`)}<span className="text-muted-foreground">actually collecting it (7+ tiles)</span></div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Backwards from what most players watch: a seat that has thrown NOTHING of a suit deep into the hand is the one loading up on it. Feed the suits they discard, not the one they never touch.</p>
+          <p className="text-xs text-muted-foreground mt-1">Backwards from what most players watch. To collect one suit you must throw the other two — so a seat's discards are a list of what they do NOT want. The suit missing from their discards is the one they are hoarding.</p>
         </div>
         <Separator />
         <div>
@@ -301,7 +301,7 @@ function Reads() {
             <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">fresh simple, 第10巡</span>{bar(d.dangerSafe, 'simple|40|fresh')}</div>
             <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">already-seen simple</span>{bar(d.dangerSafe, 'simple|40|seen')}</div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">At this table honours are near-zero risk all game (wildcards make sequence waits dominate), middle tiles are the danger, and a tile someone already threw is roughly a third safer than a fresh one.</p>
+          <p className="text-xs text-muted-foreground mt-1">Honours are near-zero risk all game, middle tiles are the danger. It is just counting: to win on 中 someone needs a pair of it already, but 5筒 can complete 3筒4筒, 4筒6筒, 6筒7筒, a pair, or a lone wait — far more ways to be caught. A tile already thrown once is roughly a third safer than a fresh one.</p>
         </div>
         <p className="text-xs text-muted-foreground">Caveat: measured on the simulator's bots, who never disguise their hands. The meld and suit signals are structural and carry to humans; the exact percentages will drift against players who hide their intent.</p>
       </CardContent>
