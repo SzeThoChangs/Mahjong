@@ -19,7 +19,12 @@ describe("the player's money table", () => {
     expect([1, 2, 3, 4, 5, 7].map((t) => winPaymentsMoney(t, 0, null, MONEY)[1])).toEqual([4, 5, 7, 12, 22, 22]);
     expect(winPaymentsMoney(3, 0, null, MONEY)).toEqual([0, 7, 7, 7]);
   });
-  it('discard win splits as base(tai) from the shooter and base(tai-1) from each other: 5 tai = 20 + 10 + 10', () => {
+  it('SHOOTER PAYS (this table): the discarder alone pays 7 / 11 / 20 / 40', () => {
+    const R = makeRules({ money: MONEY, discard_win_payment: 'discarder_pays_all' });
+    expect(winPaymentsMoney(5, 0, 2, MONEY, null, R)).toEqual([0, 0, 40, 0]);
+    expect([2, 3, 4, 5].map((t) => winPaymentsMoney(t, 0, 2, MONEY, null, R)[2])).toEqual([7, 11, 20, 40]);
+  });
+  it('EVERYONE PAYS: same total, split base(tai) / base(tai-1) / base(tai-1): 5 tai = 20 + 10 + 10', () => {
     const R = makeRules({ money: MONEY, discard_win_payment: 'ladder_split' });
     expect(winPaymentsMoney(5, 0, 2, MONEY, null, R)).toEqual([0, 10, 20, 10]);
     expect(winPaymentsMoney(4, 0, 2, MONEY, null, R)).toEqual([0, 5, 10, 5]);

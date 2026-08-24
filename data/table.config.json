@@ -6,7 +6,7 @@
   "immediate_payouts_multiplier": 2,
   "rules": {
     "_note": "deep-merged over engine/src/rules.ts DEFAULT_RULES; confirmed with the player 2026-08-23",
-    "discard_win_payment": "ladder_split",
+    "discard_win_payment": "discarder_pays_all",
     "self_draw_payment": "all_double",
     "bao": {
       "enabled": true,
@@ -28,7 +28,7 @@
       "usable_in_exposed_melds": false
     },
     "money": {
-      "_note": "the \"3/6, shooter pay, ZM +$2\" table, amounts in SGD; on a discard win the shooter pays base(tai) and each other player pays base(tai-1) - e.g. 5 tai = 20 + 10 + 10 = 40",
+      "_note": "the \"3/6, shooter pay, ZM +$2\" table, SGD. Mode = SHOOTER PAYS: the discarder alone pays the whole shoot_total (5 tai = $40, which is 20+10+10 of shares). The \"everyone pays\" alternative splits it 20/10/10 across the three losers.",
       "ladder": {
         "1": 2,
         "2": 3,

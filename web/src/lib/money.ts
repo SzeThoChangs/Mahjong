@@ -6,11 +6,14 @@
  *   discard win:    the shooter alone pays        ladder(tai) + 2 x ladder(tai-1)
  * Verified exactly against the "3/6, shooter pay, ZM +$2" table.
  */
-/** how a discard win is split between the three losers */
-export type PayMode =
-  | 'ladder'           // the shooter pays base(tai), each other pays base(tai-1)  -- e.g. 5 tai = 20 + 10 + 10
-  | 'shooter_all'      // the shooter alone pays the whole amount (some houses, and always under 包/pay-all)
-  | 'even';            // all three pay the same share
+/**
+ * Who bears a discard win. The TOTAL is the same either way -
+ * base(tai) + 2 x base(tai-1)  (5 tai = 20 + 10 + 10 = $40).
+ *   'shooter'  - 打出者包: the discarder alone pays the whole $40
+ *   'everyone' - the discarder pays $20 and each other loser pays $10
+ *   'even'     - all three pay the same share
+ */
+export type PayMode = 'shooter' | 'everyone' | 'even';
 
 export interface MoneyConfig {
   name: string;
@@ -31,11 +34,11 @@ export interface MoneyConfig {
 }
 
 export const PRESETS: MoneyConfig[] = [
-  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'ladder', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
-  { name: 'Doubling 2/4/8/16/32', payMode: 'ladder', ladder: { 1: 2, 2: 4, 3: 8, 4: 16, 5: 32 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
-  { name: 'Doubling 1/2/4/8/16', payMode: 'ladder', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
-  { name: 'Flat 1/2/3/5/10, max 5', payMode: 'ladder', ladder: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 10 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
-  { name: 'Doubling to 10 tai (big-hand house)', payMode: 'ladder', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32, 7: 64, 8: 128, 9: 256, 10: 512 }, zm: 2, minTai: 1, maxTai: 10, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'shooter', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Doubling 2/4/8/16/32', payMode: 'shooter', ladder: { 1: 2, 2: 4, 3: 8, 4: 16, 5: 32 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  { name: 'Doubling 1/2/4/8/16', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
+  { name: 'Flat 1/2/3/5/10, max 5', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 10 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongEach: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
+  { name: 'Doubling to 10 tai (big-hand house)', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32, 7: 64, 8: 128, 9: 256, 10: 512 }, zm: 2, minTai: 1, maxTai: 10, selfDrawMinTai: 1, kongEach: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
 ];
 
 export const base = (c: MoneyConfig, tai: number): number => {
@@ -50,11 +53,10 @@ export const zmTotal = (c: MoneyConfig, tai: number) => 3 * (base(c, tai) + c.zm
 /** total the WINNER collects on a discard win (how it is split depends on payMode) */
 /** what each seat pays on a discard win */
 export const shootSplit = (c: MoneyConfig, tai: number): { discarder: number; other: number } => {
-  const b = base(c, tai);
+  const b = base(c, tai), lower = base(c, Math.max(1, tai - 1));
   if (c.payMode === 'even') return { discarder: b, other: b };
-  const lower = base(c, Math.max(1, tai - 1));
-  if (c.payMode === 'shooter_all') return { discarder: b + 2 * lower, other: 0 };
-  return { discarder: b, other: lower };                        // ladder split (the usual Singapore rule)
+  if (c.payMode === 'shooter') return { discarder: b + 2 * lower, other: 0 };   // shooter carries the whole bill
+  return { discarder: b, other: lower };                                        // everyone pays their share
 };
 /** total the WINNER collects on a discard win */
 export const shootTotal = (c: MoneyConfig, tai: number): number => {

@@ -50,7 +50,7 @@ export default function TableSetup() {
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">On a discard win, who pays?</span>
-            {([['ladder', 'Shooter pays base(tai), others base(tai−1)'], ['shooter_all', '包 — shooter alone pays everything'], ['even', 'All three pay the same share']] as [PayMode, string][]).map(([m, label]) => (
+            {([['shooter', 'Shooter pays — the discarder alone pays it all'], ['everyone', 'Everyone pays — shooter double, other two one share each'], ['even', 'All three pay the same share']] as [PayMode, string][]).map(([m, label]) => (
               <Button key={m} size="sm" variant={cfg.payMode === m ? 'default' : 'outline'} onClick={() => setCfg({ ...cfg, payMode: m })}>{label}</Button>
             ))}
           </div>
@@ -92,10 +92,10 @@ export default function TableSetup() {
             </label>
             {cfg.jokers > 0 && <label>how many <Num v={cfg.jokers} on={(v) => setCfg({ ...cfg, jokers: v })} /></label>}
           </div>
-          <p className="text-xs text-muted-foreground">{cfg.payMode === 'ladder'
-            ? <>The shooter pays <b>base(tai)</b> and each other player pays <b>base(tai−1)</b> — matches your table exactly (5 tai = $20 + $10 + $10 = $40).</>
-            : cfg.payMode === 'shooter_all' ? <>包 style: the discarder alone covers the whole amount, the other two pay nothing.</>
-            : <>All three pay the same share, so a discard win collects <b>3 × base</b>.</>} Edit the base column and everything re-prices instantly.</p>
+          <p className="text-xs text-muted-foreground">The winner collects the same total either way — <b>base(tai) + 2 × base(tai−1)</b>, i.e. $7 / $11 / $20 / $40. {cfg.payMode === 'shooter'
+            ? <>On <b>shooter pays</b> the discarder carries the whole thing and the other two pay nothing — your table.</>
+            : cfg.payMode === 'everyone' ? <>On <b>everyone pays</b> the discarder pays the big share and the other two losers pay the smaller one (5 tai = $20 + $10 + $10).</>
+            : <>All three pay the same share.</>} Edit the base column and everything re-prices instantly.</p>
           <p className="text-xs text-muted-foreground"><b>Amounts</b> (ladder, 自摸 bonus, kongs, bites) re-price the table below straight away. <b>Min tai and wildcards</b> change how hands actually play out, so the numbers below still reflect the recorded rules until the dataset is regenerated — run <code>pnpm -C datagen gen</code> then <code>tsx src/profile.ts</code>.</p>
         </CardContent>
       </Card>

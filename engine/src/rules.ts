@@ -67,8 +67,8 @@ export interface RulesConfig {
   self_draw_payment: 'all_double' | 'all_single';
   /**
    * How a win on a discard is split.
-   *  'ladder_split'      - discarder pays base(tai), each other pays base(tai-1)   e.g. 5 tai = 20 + 10 + 10
-   *  'discarder_pays_all'- the discarder alone pays the whole amount
+   *  'discarder_pays_all'- SHOOTER PAYS: the discarder alone pays the whole amount (5 tai = $40)
+   *  'ladder_split'      - EVERYONE PAYS: discarder base(tai), each other base(tai-1)  (5 tai = 20 + 10 + 10)
    *  'discarder_double'  - discarder pays 2 x base, the other two pay base each
    *  'all_single'        - all three pay base
    */

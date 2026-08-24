@@ -20,7 +20,7 @@ function priceFromLedger(ledger: Ledger[], win: { winner: number | null; selfDra
   }
   if (win.winner !== null) {
     const pays = winPaymentsMoney(win.fan, win.winner, win.selfDraw || win.thirteen ? null : win.discarder, m, win.liable, r);
-    for (let s = 0; s < 4; s++) { out[s] -= pays[s]!; out[win.winner] += pays[s]!; }
+    for (let s = 0; s < 4; s++) { out[s] = out[s]! - pays[s]!; out[win.winner] = out[win.winner]! + pays[s]!; }
   }
   return out;
 }
