@@ -8,9 +8,10 @@ import {
   kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld,
 } from 'sg-mahjong-engine';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from './features.js';
+import { isHonour, isJoker, rankOf } from 'sg-mahjong-engine';
 
-export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random';
-export const BOT_TYPES: BotType[] = ['efficiency', 'aggressive', 'pong', 'chow', 'random'];
+export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive';
+export const BOT_TYPES: BotType[] = ['efficiency', 'aggressive', 'pong', 'chow', 'random', 'defensive'];
 
 export interface RandomnessConfig { ranked: number[]; random: number }   // e.g. ranked [0.70, 0.15, 0.10], random 0.05
 export const DEFAULT_RANDOMNESS: RandomnessConfig = { ranked: [0.70, 0.15, 0.10], random: 0.05 };
@@ -34,7 +35,7 @@ const unseenOf = (v: PlayerView, extra: TileKind[] = []) => unseenCounts({
 
 /** Personality weights over discard features. Higher = better tile to KEEP... we score the DISCARD, so sign flips below. */
 interface Weights { sh: number; rem: number; eff: number; pairs: number; trip: number; seq: number; pseq: number; isoTile: number; honourIso: number; valueTile: number }
-const W: Record<Exclude<BotType, 'random'>, Weights> = {
+const W: Record<Exclude<BotType, 'random' | 'defensive'>, Weights> = {
   efficiency: { sh: -100, rem: 2.0, eff: 1.0, pairs: 1, trip: 2, seq: 2, pseq: 0.5, isoTile: 6, honourIso: 3, valueTile: -1 },
   aggressive: { sh: -120, rem: 2.5, eff: 1.0, pairs: 0.5, trip: 1, seq: 1, pseq: 0.5, isoTile: 6, honourIso: 4, valueTile: -1 },
   pong:       { sh: -80,  rem: 1.0, eff: 0.5, pairs: 6, trip: 8, seq: -1, pseq: -2, isoTile: 5, honourIso: -2, valueTile: -4 },
@@ -52,7 +53,7 @@ function discardScore(f: DiscardFeatures, w: Weights, ctxValue: (k: TileKind) =>
 }
 
 export class HeuristicBot implements Bot {
-  constructor(readonly type: Exclude<BotType, 'random'>, private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS) {}
+  constructor(readonly type: Exclude<BotType, 'random' | 'defensive'>, private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS) {}
 
   private valueTile(v: PlayerView) {
     const role = (v.seat - v.dealer + 4) % 4;              // the host is East; winds rotate with the deal
@@ -132,6 +133,62 @@ export class RandomBot implements Bot {
   }
 }
 
+/**
+ * The cautious player the other five never model: backs off when someone looks close,
+ * and throws the safest tile it holds rather than the most useful one.
+ * Real opponents do this, so leaving it out makes pushing look better than it is.
+ */
+export class DefensiveBot implements Bot {
+  private inner: HeuristicBot;
+  constructor(private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS, private timid = 0.6) {
+    this.inner = new HeuristicBot('efficiency', rng, randomness);
+  }
+  /** how threatened we are: exposed melds around the table, and how deep the hand is */
+  private threat(v: PlayerView): number {
+    let worst = 0;
+    v.players.forEach((p, s) => { if (s !== v.seat) worst = Math.max(worst, p.melds.length); });
+    const late = v.playerTurns > 40 ? 1 : v.playerTurns > 25 ? 0.5 : 0;
+    return Math.min(1, worst / 3 + late * 0.4);
+  }
+  /** safety: tiles already on the table are safe, honours are safer than middles */
+  private safety(k: TileKind, v: PlayerView): number {
+    const thrown = v.discardLog.filter((d) => kindOf(d.tile) === k).length;
+    let s = thrown * 3;                        // seen before = much safer
+    if (isHonour(k)) s += 2.5;
+    else { const r = rankOf(k); s += r === 1 || r === 9 ? 1.2 : r === 2 || r === 8 ? 0.6 : 0; }
+    return s;
+  }
+  chooseDiscard(v: PlayerView): TileInstance {
+    const hand = v.hand.map(kindOf);
+    const melds = v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
+    const myShanten = shanten(hand, melds.length);
+    const threat = this.threat(v);
+    // fold when the table looks dangerous and our own hand is not close
+    const folding = threat >= this.timid && myShanten >= 2;
+    if (!folding) return this.inner.chooseDiscard(v);
+    let best = v.hand[0]!, bestS = -Infinity;
+    for (const t of v.hand) {
+      const k = kindOf(t);
+      if (isJoker(k)) continue;                 // never throw a wildcard
+      const s = this.safety(k, v) + this.rng() * 0.3;
+      if (s > bestS) { bestS = s; best = t; }
+    }
+    return best;
+  }
+  chooseSelfAction(v: PlayerView, o: SelfAction[]): SelfAction | null { return this.inner.chooseSelfAction(v, o); }
+  chooseClaim(v: PlayerView, o: ClaimOption[]): ClaimOption | null {
+    const win = o.find((x) => x.kind === 'win'); if (win) return win;
+    // a call opens the hand and burns a draw; when threatened, stay quiet unless it really helps
+    if (this.threat(v) >= this.timid) {
+      const hand = v.hand.map(kindOf), melds = v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
+      if (shanten(hand, melds.length) >= 2) return null;
+    }
+    return this.inner.chooseClaim(v, o);
+  }
+}
+
 export function makeBot(type: BotType, rng: () => number, randomness: RandomnessConfig = DEFAULT_RANDOMNESS): Bot {
-  return type === 'random' ? new RandomBot(rng) : new HeuristicBot(type, rng, randomness);
+  if (type === 'random') return new RandomBot(rng);
+  if (type === 'defensive') return new DefensiveBot(rng, randomness);
+  return new HeuristicBot(type, rng, randomness);
 }
