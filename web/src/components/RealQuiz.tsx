@@ -81,15 +81,17 @@ export default function RealQuiz() {
 
   const fmt = (x: number) => `${x < 0 ? '−' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}${unit === '$' ? '' : ''}`;
 
-  if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
-  if (!q) return null;
-
   // If the evaluator recorded an outcome mix, re-price every action under the table config the user set.
+  // Both memos stay above the early returns below: a hook that only runs on some renders breaks the hook order.
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];
     return [...q.actions].map((a) => (a.mix ? { ...a, ev: priceMix(a.mix, a.n ?? 128, money) } : a)).sort((x, y) => y.ev - x.ev);
   }, [q, money]);
+
+  if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
+  if (!q) return null;
+
   const repriced = !!q?.actions?.some((a) => a.mix);
 
   const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
