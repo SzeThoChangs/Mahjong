@@ -114,15 +114,15 @@ Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
 
 ---
 
-# Status — 2026-08-23 (data-generation programme)
+# Status — 2026-08-25 (data-generation programme)
 
 The trainer plan above still stands; the project also now carries the three-layer data programme.
 
 | Layer | Status |
 |---|---|
 | 1 — Data generator (`datagen/`) | **Done, milestone met**: 100,000 hands / 8.22M decisions generated, 0 illegal actions, chips net zero, every hand replays from its seed; 5 bot personalities with 70/15/10/5 controlled randomness; JSONL.gz + Parquet; validation stats + flags. |
-| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Running at scale**: `data/gen/run100k-table` = 100k hands under the confirmed table rules (jokers, shooter-pays, pay-all, 8-flower) with **99,980 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy); 82% of decisions have a clear best action. Resumable, crash-tolerant. |
-| 3 — Model | Not started. |
+| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Run at scale**: `data/gen/run-money2` = 150k hands / 9.03M decisions under the money rules, with **479,912 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy), 0 errors, 0 failed workers, 13h 12m. Resumable, crash-tolerant. The five original bot personalities only — `defensive` landed after this run was generated. **The stored `gapSe` in this run is sqrt(k) too small** (fixed in evaluate.ts after the run); corrected on read, only **28.7% of decisions have a clear best action at 1 SE and 9.2% at 2 SE — 4.5% for discards**, on a mean paired SE of 1.10 chips. |
+| 3 — Model | Not started. Blocked behind the layer-2 noise floor: the median gap between the best discard and the runner-up is 0.41 chips against a 1.10-chip standard error, so the evaluator cannot separate them. More rollouts scale as 1/sqrt(n) and are a bad trade (16x compute -> 47%). The route is variance reduction first (rollout RNG is sequential, so branches decorrelate on the first claim: rho 0.42 discard, 0.11 claim), then a scoring-aware rollout policy — ShantenBot is fan-blind and cannot know a hand is short of the 2-tai minimum. |
 
 Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
 
