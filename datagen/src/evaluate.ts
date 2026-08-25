@@ -16,7 +16,7 @@ import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, ty
 import { positionAt, determinize } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
-import { loadHands, readJsonlGz } from './stats.js';
+import { loadHands, eachJsonlGz } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { rulesForDir } from './tablerules.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
@@ -97,7 +97,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     // paired gap to the best action over the rollout indices both have
     let m = 0, m2 = 0, k = 0;
     for (let i = 0; i < Math.min(x.outcomes.length, bestAcc.outcomes.length); i++) { const a = bestAcc.outcomes[i], b = x.outcomes[i]; if (a === undefined || b === undefined) continue; const d = a - b; m += d; m2 += d * d; k++; }
-    const gap = k ? m / k : 0, gapVar = k > 1 ? Math.max(0, m2 / k - gap * gap) / (k - 1) * k / Math.max(1, k) : 0;
+    const gap = k ? m / k : 0, gapVar = k > 1 ? Math.max(0, m2 / k - gap * gap) * k / (k - 1) : 0;   // Bessel: population -> unbiased sample variance
     return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n, gap, gapSe: Math.sqrt(gapVar / Math.max(1, k)), mix: x.mix };
   });
   actions.sort((x, y) => y.ev - x.ev);
@@ -143,7 +143,7 @@ export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { ev
   const path = join(a.dir, `evals-w${a.workerIndex}.jsonl.gz`);
   // --resume: skip decisions already on disk (selection is deterministic, so the same worker sees the same hands)
   const done = new Set<string>();
-  if (a.resume && existsSync(path)) for (const e of readJsonlGz<EvalRecord>(path)) done.add(`${e.g}:${e.h}:${e.d}`);
+  if (a.resume && existsSync(path)) eachJsonlGz<EvalRecord>(path, (e) => done.add(`${e.g}:${e.h}:${e.d}`));   // stream: a worker's own shard is gigabytes once parsed
   const out = new JsonlGzWriter(path, 1 << 20, a.resume);
   let n = 0, skipped = 0, errors = 0;
   for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {
