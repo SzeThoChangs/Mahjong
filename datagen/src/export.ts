@@ -3,11 +3,14 @@
  *   tsx src/export.ts --dir ../data/gen/run100k-table --out ../web/public/replays/table --hands 150
  * Picks hands (evaluated decisions first, then variety), replays each to collect its decisions,
  * attaches evaluations, and writes compact JSON: index.json + h<g>_<h>.json.
+ * The evals are streamed twice - once to learn which hands were evaluated, once to load the shortlist -
+ * so memory tracks the exported hands, not the size of the run.
  */
 import { mkdirSync, writeFileSync, readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { kindOf } from 'sg-mahjong-engine';
-import { loadHands, readJsonlGz } from './stats.js';
+import { loadHands } from './stats.js';
+import { eachEval } from './evalstats.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
@@ -22,12 +25,12 @@ const maxHands = Number(arg('hands', '150'));
 const rules = rulesForDir(dir);
 const money = rules.money !== null;
 const hands = loadHands(dir);
-const evalsByHand = new Map<string, EvalRecord[]>();
-for (const f of readdirSync(dir).filter((x) => x.startsWith('evals-') && x.endsWith('.jsonl.gz')))
-  for (const e of readJsonlGz<EvalRecord>(join(dir, f))) { const k = `${e.g}:${e.h}`; (evalsByHand.get(k) ?? evalsByHand.set(k, []).get(k)!).push(e); }
+// pass 1: which hands have evaluations at all - a key per hand is all the selection below needs
+const evaluated = new Set<string>();
+eachEval(dir, (e) => evaluated.add(`${e.g}:${e.h}`));
 
 // ---- selection: evaluated hands first; inside that, spread across combinations and outcomes ----
-const withEvals = hands.filter((h) => evalsByHand.has(`${h.g}:${h.h}`));
+const withEvals = hands.filter((h) => evaluated.has(`${h.g}:${h.h}`));
 const pool = (withEvals.length >= maxHands ? withEvals : hands);
 const byCombo = new Map<string, HandRecord[]>();
 for (const h of pool) { const c = h.combo ?? 'draw'; (byCombo.get(c) ?? byCombo.set(c, []).get(c)!).push(h); }
@@ -39,6 +42,11 @@ outer: while (selected.length < Math.min(maxHands, pool.length)) {
   }
   if ([...byCombo.values()].every((l) => l.length === 0)) break;
 }
+
+// pass 2: now that the shortlist is fixed, re-read and keep evaluations for those hands only
+const need = new Set(selected.map((h) => `${h.g}:${h.h}`));
+const evalsByHand = new Map<string, EvalRecord[]>();
+eachEval(dir, (e) => { const k = `${e.g}:${e.h}`; if (need.has(k)) (evalsByHand.get(k) ?? evalsByHand.set(k, []).get(k)!).push(e); });
 
 mkdirSync(out, { recursive: true });
 interface Row { d: number; k: string; t: number; p: number; sel: string; legal: string[]; h: number[]; dr: number | null; b: number[]; m4?: number[][][]; ch?: number[]; f?: unknown; ev?: unknown }
@@ -77,4 +85,4 @@ const runs = readdirSync(runsRoot).filter((d) => existsSync(join(runsRoot, d, 'i
   return { id: d, money: ix.money, unit: ix.unit, hands: ix.hands.length };
 });
 writeFileSync(join(runsRoot, 'index.json'), JSON.stringify({ runs }));
-console.log(`exported ${index.length} hands (${[...evalsByHand.keys()].length} evaluated available, ${drifted} drifted skipped) -> ${out}`);
+console.log(`exported ${index.length} hands (${evaluated.size} evaluated available, ${drifted} drifted skipped) -> ${out}`);

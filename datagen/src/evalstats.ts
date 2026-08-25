@@ -1,58 +1,99 @@
 /** Summaries over evaluator output. tsx src/evalstats.ts <dir> */
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { readJsonlGz } from './stats.js';
+import { eachJsonlGz, readJsonlGz } from './stats.js';
 import type { EvalRecord } from './evaluate.js';
 
+const evalShards = (dir: string) => readdirSync(dir).filter((f) => f.startsWith('evals-') && f.endsWith('.jsonl.gz')).map((f) => join(dir, f));
+/** Stream every evaluated decision in a run. The shards decompress to gigabytes, so never hold them all. */
+export function eachEval(dir: string, fn: (e: EvalRecord) => void): void {
+  for (const p of evalShards(dir)) eachJsonlGz<EvalRecord>(p, fn);
+}
 export function loadEvals(dir: string): EvalRecord[] {
-  return readdirSync(dir).filter((f) => f.startsWith('evals-') && f.endsWith('.jsonl.gz')).flatMap((f) => readJsonlGz<EvalRecord>(join(dir, f)));
+  return evalShards(dir).flatMap((p) => readJsonlGz<EvalRecord>(p));
 }
 const pct = (x: number) => (100 * x).toFixed(0).padStart(3) + '%';
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 const q = (xs: number[], p: number) => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))] ?? NaN; };
+const phaseOf = (e: EvalRecord) => { const t = (e as unknown as { t?: number }).t; return t === undefined ? 'n/a' : t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late'; };
+
+// Only `regret` is retained per decision - median and p90 need the distribution. Everything else is a running total,
+// so the summary costs one number per decision per grouping instead of the whole record.
+interface Group { n: number; regrets: number[]; agree: number; top3: number; spread: number; normSum: number; normN: number }
+const newGroup = (): Group => ({ n: 0, regrets: [], agree: 0, top3: 0, spread: 0, normSum: 0, normN: 0 });
+
+export interface EvalSummary { add(e: EvalRecord): void; format(): string }
+
+/** Accumulate decisions one at a time; call format() when the stream is exhausted. */
+export function evalSummary(): EvalSummary {
+  let total = 0, bad = 0;
+  let gapN = 0, clear1 = 0, clear2 = 0, gapSeSum = 0;   // paired-rollout gap to the runner-up
+  let indepN = 0, indepHits = 0;                        // fallback for runs evaluated before gapSe existed
+  const byBot = new Map<string, Group>(), byKind = new Map<string, Group>(), byPhase = new Map<string, Group>();
+  const at = (m: Map<string, Group>, k: string) => { let g = m.get(k); if (!g) m.set(k, g = newGroup()); return g; };
+
+  const add = (e: EvalRecord) => {
+    total++;
+    const finite = Number.isFinite(e.regret);
+    if (!finite) bad++;
+    const a0 = e.actions[0], a1 = e.actions[1], aN = e.actions[e.actions.length - 1];
+    if (a0 && a1) {
+      if (a1.gapSe !== undefined) { gapN++; gapSeSum += a1.gapSe; if (a1.gap > a1.gapSe) clear1++; if (a1.gap > 2 * a1.gapSe) clear2++; }
+      indepN++;
+      if (a0.ev - a1.ev > Math.sqrt(a0.sd ** 2 / a0.n + a1.sd ** 2 / a1.n)) indepHits++;
+    }
+    if (!finite) return;
+    const spread = a0!.ev - aN!.ev;
+    const agree = e.best === e.sel ? 1 : 0;
+    const top3 = e.actions.slice(0, 3).some((a) => a.a === e.sel) ? 1 : 0;
+    for (const g of [at(byBot, e.bot), at(byKind, e.k), at(byPhase, phaseOf(e))]) {
+      g.n++; g.regrets.push(e.regret); g.agree += agree; g.top3 += top3; g.spread += spread;
+    }
+    if (spread > 0) { const g = at(byBot, e.bot); g.normSum += e.regret / spread; g.normN++; }
+  };
+
+  const format = () => {
+    const L: string[] = [];
+    L.push(`${total} evaluated decisions  (${bad} with unmatched selection)`);
+    const sorted = (m: Map<string, Group>) => [...m.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    const table = (title: string, m: Map<string, Group>) => {
+      L.push(`\n${title}`);
+      L.push(`${'group'.padEnd(12)} ${'n'.padStart(5)}  ${'regret mean'.padStart(11)}  ${'median'.padStart(6)}  ${'p90'.padStart(6)}  ${'EV-best'.padStart(7)}  ${'top3'.padStart(5)}  ${'spread'.padStart(6)}`);
+      for (const [k, g] of sorted(m)) {
+        const d = Math.max(1, g.n);
+        L.push(`${k.padEnd(12)} ${String(g.n).padStart(5)}  ${mean(g.regrets).toFixed(2).padStart(11)}  ${q(g.regrets, 0.5).toFixed(2).padStart(6)}  ${q(g.regrets, 0.9).toFixed(2).padStart(6)}  ${pct(g.agree / d).padStart(7)}  ${pct(g.top3 / d).padStart(5)}  ${(g.spread / d).toFixed(1).padStart(6)}`);
+      }
+    };
+    table('by bot type', byBot);
+    table('by decision kind', byKind);
+    table('by game phase (turn of the hand)', byPhase);
+    // how decisive are decisions? share where best beats 2nd by > 1 SE
+    if (gapN) {
+      L.push(`\nclear best action (paired gap to runner-up > 1 SE): ${pct(clear1 / gapN)}   (> 2 SE): ${pct(clear2 / gapN)}   mean paired SE ${(gapSeSum / gapN).toFixed(2)} chips`);
+    } else {
+      L.push(`\nclear best action (independent-SE gap > 1 SE over runner-up): ${pct(indepHits / Math.max(1, indepN))} of decisions`);
+    }
+    // normalised regret: regret / EV spread of the decision (0 = picked best, 1 = picked worst)
+    L.push(`normalised regret (regret / spread, lower is better): ${sorted(byBot).map(([k, g]) => `${k} ${(g.normSum / Math.max(1, g.normN)).toFixed(2)}`).join('  ')}`);
+    const flags: string[] = [];
+    if (bad / total > 0.01) flags.push(`${bad} evaluations could not match the bot's selected action`);
+    const rb = byBot.get('random'), eb = byBot.get('efficiency');
+    const top3Rate = (g: Group) => g.top3 / Math.max(1, g.n);
+    if (rb && eb && top3Rate(rb) >= top3Rate(eb)) flags.push('random bot agrees with the evaluator at least as often as the efficiency bot - evaluator or bots suspicious');
+    L.push(flags.length ? `FLAGS:\n  - ${flags.join('\n  - ')}` : 'no flags');
+    return L.join('\n');
+  };
+
+  return { add, format };
+}
 
 export function formatEvalStats(evs: EvalRecord[]): string {
-  const L: string[] = [];
-  const bad = evs.filter((e) => !Number.isFinite(e.regret));
-  L.push(`${evs.length} evaluated decisions  (${bad.length} with unmatched selection)`);
-  const byKey = (key: (e: EvalRecord) => string) => {
-    const m = new Map<string, EvalRecord[]>();
-    for (const e of evs) { if (!Number.isFinite(e.regret)) continue; const k = key(e); (m.get(k) ?? m.set(k, []).get(k)!).push(e); }
-    return [...m.entries()].sort();
-  };
-  const table = (title: string, groups: [string, EvalRecord[]][]) => {
-    L.push(`\n${title}`);
-    L.push(`${'group'.padEnd(12)} ${'n'.padStart(5)}  ${'regret mean'.padStart(11)}  ${'median'.padStart(6)}  ${'p90'.padStart(6)}  ${'EV-best'.padStart(7)}  ${'top3'.padStart(5)}  ${'spread'.padStart(6)}`);
-    for (const [k, g] of groups) {
-      const r = g.map((e) => e.regret);
-      const agree = mean(g.map((e) => e.best === e.sel ? 1 : 0)), top3 = mean(g.map((e) => e.actions.slice(0, 3).some((a) => a.a === e.sel) ? 1 : 0));
-      const spread = mean(g.map((e) => e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev));
-      L.push(`${k.padEnd(12)} ${String(g.length).padStart(5)}  ${mean(r).toFixed(2).padStart(11)}  ${q(r, 0.5).toFixed(2).padStart(6)}  ${q(r, 0.9).toFixed(2).padStart(6)}  ${pct(agree).padStart(7)}  ${pct(top3).padStart(5)}  ${spread.toFixed(1).padStart(6)}`);
-    }
-  };
-  table('by bot type', byKey((e) => e.bot));
-  table('by decision kind', byKey((e) => e.k));
-  table('by game phase (turn of the hand)', byKey((e) => { const t = (e as unknown as { t?: number }).t; return t === undefined ? 'n/a' : t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late'; }));
-  // how decisive are decisions? share where best beats 2nd by > 1 SE
-  const withGap = evs.filter((e) => e.actions.length > 1 && e.actions[1]!.gapSe !== undefined);
-  if (withGap.length) {
-    const clear1 = withGap.map((e) => (e.actions[1]!.gap > e.actions[1]!.gapSe ? 1 : 0)), clear2 = withGap.map((e) => (e.actions[1]!.gap > 2 * e.actions[1]!.gapSe ? 1 : 0));
-    L.push(`\nclear best action (paired gap to runner-up > 1 SE): ${pct(mean(clear1))}   (> 2 SE): ${pct(mean(clear2))}   mean paired SE ${mean(withGap.map((e) => e.actions[1]!.gapSe)).toFixed(2)} chips`);
-  } else {
-    const decisive = evs.filter((e) => e.actions.length > 1).map((e) => { const a = e.actions[0]!, b = e.actions[1]!; const se = Math.sqrt(a.sd ** 2 / a.n + b.sd ** 2 / b.n); return (a.ev - b.ev) > se ? 1 : 0; });
-    L.push(`\nclear best action (independent-SE gap > 1 SE over runner-up): ${pct(mean(decisive))} of decisions`);
-  }
-  // normalised regret: regret / EV spread of the decision (0 = picked best, 1 = picked worst)
-  const norm = byKey((e) => e.bot).map(([k, g]) => `${k} ${mean(g.filter((e) => e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev > 0).map((e) => e.regret / (e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev))).toFixed(2)}`);
-  L.push(`normalised regret (regret / spread, lower is better): ${norm.join('  ')}`);
-  const flags: string[] = [];
-  if (bad.length / evs.length > 0.01) flags.push(`${bad.length} evaluations could not match the bot's selected action`);
-  const rb = byKey((e) => e.bot).find(([k]) => k === 'random')?.[1]; const eb = byKey((e) => e.bot).find(([k]) => k === 'efficiency')?.[1];
-  const agree = (g: EvalRecord[]) => mean(g.map((e) => e.actions.slice(0, 3).some((a) => a.a === e.sel) ? 1 : 0));
-  if (rb && eb && agree(rb) >= agree(eb)) flags.push('random bot agrees with the evaluator at least as often as the efficiency bot - evaluator or bots suspicious');
-  L.push(flags.length ? `FLAGS:\n  - ${flags.join('\n  - ')}` : 'no flags');
-  return L.join('\n');
+  const s = evalSummary();
+  for (const e of evs) s.add(e);
+  return s.format();
 }
 if (process.argv[1] && /evalstats\.(ts|js)$/.test(process.argv[1])) {
-  console.log(formatEvalStats(loadEvals(process.argv[2] ?? '../data/gen/dev')));
+  const s = evalSummary();
+  eachEval(process.argv[2] ?? '../data/gen/dev', (e) => s.add(e));
+  console.log(s.format());
 }

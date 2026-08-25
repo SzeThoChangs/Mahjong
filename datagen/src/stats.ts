@@ -4,12 +4,27 @@ import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import type { HandRecord } from './records.js';
 
-export function readJsonlGz<T>(path: string): T[] {
+/**
+ * Stream a .jsonl.gz one record at a time. The decompressed bytes live in a Buffer (outside the V8 heap)
+ * and only one line is ever a string, so a caller that keeps just a summary stays flat in memory
+ * no matter how large the file is. Use this over readJsonlGz for the big evals-*.jsonl.gz shards.
+ */
+export function eachJsonlGz<T>(path: string, fn: (rec: T) => void): void {
   const raw = readFileSync(path);
-  if (raw.length === 0) return [];
-  const txt = gunzipSync(raw).toString('utf8');
+  if (raw.length === 0) return;
+  const buf = gunzipSync(raw);
+  let start = 0;
+  for (let i = 0; i < buf.length; i++) {
+    if (buf[i] !== 0x0a) continue;
+    if (i > start) fn(JSON.parse(buf.toString('utf8', start, i)) as T);
+    start = i + 1;
+  }
+  if (start < buf.length) fn(JSON.parse(buf.toString('utf8', start, buf.length)) as T);
+}
+/** Whole file as an array. Fine for hands/truth; for evals prefer eachJsonlGz. */
+export function readJsonlGz<T>(path: string): T[] {
   const out: T[] = [];
-  for (const line of txt.split('\n')) if (line) out.push(JSON.parse(line) as T);
+  eachJsonlGz<T>(path, (r) => out.push(r));
   return out;
 }
 export function loadHands(dir: string): HandRecord[] {
