@@ -145,7 +145,20 @@ function unseenOf(concealed: TileKind[], melds: Meld[]): number[] {
 // only All-Pong forbids sequences; Half-Color is one suit + honours and may still chow, so neighbours matter there
 const PONG_PLAN = (id: string) => id === 'all_pong';
 
+/**
+ * Why this tile, in words the player can act on.
+ *
+ * Every option must come back with at least one reason. The Train tab used to fall back to printing
+ * the internal plan id ("plan: chicken") when the list was empty, which happened on 12.6% of options
+ * and on the coach's OWN pick in 8.1% of hands - so the "Why 5筒" line became a non-explanation.
+ */
 function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Context, target: TargetEval, unseen: number[]): string[] {
+  const r = reasonsForInner(k, concealed, melds, ctx, target, unseen);
+  if (!r.length) r.push('no strong shape either way');
+  return r;
+}
+
+function reasonsForInner(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Context, target: TargetEval, unseen: number[]): string[] {
   const r: string[] = [];
   const count = concealed.filter((x) => x === k).length;
   const pairs = new Set(concealed.filter((x) => concealed.filter((y) => y === x).length === 2));
@@ -161,13 +174,19 @@ function reasonsFor(k: TileKind, concealed: TileKind[], melds: Meld[], ctx: Cont
     return r;
   }
   if (isHonour(k) && count === 1) r.push('lone honour');
+  if (isHonour(k) && count === 2) r.push('honour pair — one more makes the pong');
   r.push(...valueTileReasons(k, count, ctx));
   if (isSuited(k)) {
     const rk = rankOf(k), su = suitOf(k);
     const near = concealed.filter((x) => x !== k && suitOf(x) === su && Math.abs(rankOf(x) - rk) <= 2).length;
     if (near === 0 && count === 1) r.push('isolated — no neighbours');
+    // 2 and 8 sit in neither the terminal branch nor the 3-7 middle branch, so they used to come
+    // back with nothing at all - 89% of the empty-reason cases. They are genuinely in between: a 2
+    // can only live in 1-2-3 or 2-3-4, where a 5 has three sequences open to it.
     if (isTerminal(k)) r.push('edge tile (1/9): fewest ways to connect');
-    if (rk >= 3 && rk <= 7 && near > 0) r.push('middle tile with neighbours — flexible');
+    else if (rk === 2 || rk === 8) r.push(near > 0 ? 'next to the edge (2/8): only two sequences use it' : 'next to the edge (2/8): few ways to connect');
+    else if (rk >= 3 && rk <= 7 && near > 0) r.push('middle tile with neighbours — flexible');
+    else if (rk >= 3 && rk <= 7) r.push('middle tile, but nothing beside it yet');
     if (target.id === 'half_color' && target.suit && su === target.suit) r.push(`in your ${SUIT_NAME[target.suit as keyof typeof SUIT_NAME]} suit`);
     if (target.id === 'half_color' && target.suit && su !== target.suit) r.push('outside your suit');
   }

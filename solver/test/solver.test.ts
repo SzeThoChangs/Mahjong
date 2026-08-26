@@ -61,3 +61,30 @@ describe('rankDiscards', () => {
     expect(r.options.every((o) => o.reasons !== undefined)).toBe(true);
   });
 });
+
+describe('discard reasons are always explanations', () => {
+  // The Train tab prints o.reasons directly. When the list came back empty it used to fall back to
+  // the internal plan id ("plan: chicken") - 12.6% of options, and the coach's own pick in 8.1% of
+  // hands. Ranks 2 and 8 were 89% of it: they sit in neither the terminal branch nor the 3-7 one.
+  const hands = [
+    '2t 2t 3t 4t 5t 6t 7t 8t 8t 9t 1s 2s 3s 5s',   // ranks 2 and 8 with neighbours, both suits
+    '1w 1w 2w 8w 9w 5t 5t 6t 2s 8s E E S S',        // 2/8 next to nothing, honour pairs
+    '2t 8t 2s 8s 2w 8w 5t 5s 5w E S W N',           // every 2 and 8 isolated
+    '3t 3t 3t 4t 5t 6t 7t 7t 7t 2s 2s 8s 8s 9s',    // completed sets plus 2/8 pairs
+  ];
+  it('never returns an option with no reason', () => {
+    for (const h of hands) {
+      const r = rankDiscards(K(h), [], ctx({ playerTurns: 12 }));
+      for (const o of r.options) {
+        expect(o.reasons.length, `${h} -> tile ${o.tile} had no reason`).toBeGreaterThan(0);
+        for (const reason of o.reasons) expect(reason).not.toMatch(/^plan:/);
+      }
+    }
+  });
+  it('explains 2 and 8 specifically rather than falling through', () => {
+    const r = rankDiscards(K('2t 3t 4t 5t 6t 7t 8t 2s 3s 4s 5s 6s 7s 8s'), [], ctx({ playerTurns: 12 }));
+    for (const rank2or8 of r.options.filter((o) => [1, 7].includes(o.tile % 9))) {
+      expect(rank2or8.reasons.join(' ')).toMatch(/edge/);
+    }
+  });
+});

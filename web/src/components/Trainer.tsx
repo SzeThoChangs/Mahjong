@@ -157,7 +157,8 @@ export default function Trainer() {
                       <Tile kind={o.tile} size="sm" />
                       <Badge className={cn('w-24 justify-center', VERDICT_STYLE[o.verdict])}>{VERDICT_TEXT[o.verdict]}</Badge>
                       <span className="w-14 tabular-nums text-muted-foreground">{o.delta === 0 ? '—' : o.delta.toFixed(1)}</span>
-                      <span className="text-muted-foreground truncate">{o.reasons.join(' · ') || `plan: ${o.target.id.replace('_', ' ')}`}</span>
+                      {/* the solver guarantees at least one reason; never print the internal plan id at a player */}
+                      <span className="text-muted-foreground truncate">{o.reasons.join(' · ')}</span>
                     </div>
                   ))}
                 </div>

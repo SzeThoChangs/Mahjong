@@ -36,6 +36,7 @@ const byPhasePlan = new Map<string, Bucket>();
 const confusion = new Map<string, number>();
 const confusionCost = new Map<string, number>();
 const focus: { fih: number; bonus: number; coachClass: string; bestClass: string; isBest: boolean; cost: number }[] = [];
+const isoRank: { coach: number; measured: number }[] = [];
 
 for (const q of pack.questions) {
   if (q.k !== 'discard' || q.h.length % 3 !== 2) { skipped++; continue; }
@@ -45,9 +46,24 @@ for (const q of pack.questions) {
     prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t,
     minimumFan: cfg.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: cfg.self_draw_minimum_fan,
   };
-  let pick: TileKind, tied: TileKind[], plan: string;
-  try { const r = rankDiscards(q.h as TileKind[], melds, ctx); pick = r.best.tile; tied = r.tied; plan = r.best.target.id; }
+  let pick: TileKind, tied: TileKind[], plan: string, coachOrder: TileKind[];
+  try { const r = rankDiscards(q.h as TileKind[], melds, ctx); pick = r.best.tile; tied = r.tied; plan = r.best.target.id; coachOrder = r.options.map((o) => o.tile); }
   catch { threw++; continue; }
+
+  // rank every isolated candidate two ways: by the coach's ordering and by measured EV
+  {
+    const evOrder = q.actions.filter((a) => a.a.startsWith('d:')).sort((x, y) => y.ev - x.ev).map((a) => Number(a.a.slice(2)) as TileKind);
+    const denom = Math.max(1, evOrder.length - 1);
+    for (const t of new Set(q.h as TileKind[])) {
+      if (isHonour(t)) continue;
+      const same = (q.h as TileKind[]).filter((x) => x !== t && Math.floor(x / 9) === Math.floor(t / 9) && Math.abs(rankOf(x) - rankOf(t)) <= 2).length;
+      const copies = (q.h as TileKind[]).filter((x) => x === t).length;
+      if (same > 0 || copies > 1) continue;                       // only genuinely isolated singles
+      const ci = coachOrder.indexOf(t), mi = evOrder.indexOf(t);
+      if (ci < 0 || mi < 0) continue;
+      isoRank.push({ coach: ci / Math.max(1, coachOrder.length - 1), measured: mi / denom });
+    }
+  }
 
   const discards = q.actions.filter((a) => a.a.startsWith('d:'));
   if (!discards.length) { skipped++; continue; }
@@ -105,6 +121,20 @@ for (const p of ['early', 'mid', 'late']) {
   const g = byPhase.get(p); if (!g) continue;
   console.log(`  ${p.padEnd(6)} n=${String(g.n).padStart(4)}  best ${((100 * g.agree) / g.n).toFixed(1).padStart(5)}%   cost ${(g.lost / g.n).toFixed(2).padStart(6)}`);
 }
+// Does the coach rank ISOLATED tiles the way the play-outs do? Throwing a tile with no neighbours
+// should normally beat breaking up a connected middle shape. If the coach ranks isolated tiles
+// systematically lower than the measurement does, that is a ranking bug, not a taste difference.
+if (isoRank.length) {
+  const mean2 = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
+  console.log(`\nisolated tiles: where each ranks them among the legal discards (0 = best, 1 = worst)`);
+  console.log(`  coach       ${mean2(isoRank.map((x) => x.coach)).toFixed(3)}`);
+  console.log(`  measurement ${mean2(isoRank.map((x) => x.measured)).toFixed(3)}   (n=${isoRank.length} isolated candidates)`);
+  const disagree = isoRank.filter((x) => x.coach - x.measured > 0.25).length;
+  console.log(`  coach ranks it much lower than the play-outs do in ${((100 * disagree) / isoRank.length).toFixed(1)}% of cases`);
+  const bothTop = isoRank.filter((x) => x.measured < 0.15);
+  console.log(`  when the play-outs make the isolated tile the best throw (n=${bothTop.length}), the coach agrees ${((100 * bothTop.filter((x) => x.coach < 0.15).length) / Math.max(1, bothTop.length)).toFixed(1)}%`);
+}
+
 const table = (title: string, m: Map<string, Bucket>, min = 20) => {
   console.log(`\n${title}`);
   for (const [k, g] of [...m.entries()].filter(([, g]) => g.n >= min).sort((a, b) => a[1].agree / a[1].n - b[1].agree / b[1].n))
