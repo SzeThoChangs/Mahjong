@@ -466,6 +466,11 @@ export class GameState {
         if (rob.kong === 'kong1') { m.type = 'pong'; m.tiles.pop(); m.instances = m.instances.filter((t) => t !== rob.tile); }
         else { p.melds.splice(rob.meldIndex, 1); for (const t of m.instances) if (t !== rob.tile) p.hand.push(t); }
         this.counts.kong--;
+        // ...and it goes to the player who robbed it. Without this the tile is removed from the
+        // kong and handed to nobody, so it vanishes: the hand accounts for 147 tiles instead of
+        // 148. Rare (about 1 hand in 1,400) and it never changed a score, because the win is
+        // already resolved by this point - but it left the winner not holding the tile they won on.
+        this.players[taken.seat]!.hand.push(rob.tile);
         // the kong never stood: refund its immediate payment (house-rule assumption, flagged in docs)
         for (let s2 = 0; s2 < 4; s2++) if (s2 !== from) this.pay(from, s2, rob.feeEach);
         this.winTile = kindOf(rob.tile);
