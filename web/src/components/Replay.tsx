@@ -185,13 +185,17 @@ function EvBars({ ev, sel, unit }: { ev: NonNullable<Row['ev']>; sel: string; un
   const min = Math.min(...ev.actions.map((a) => a.ev), 0), max = Math.max(...ev.actions.map((a) => a.ev), 0);
   const span = Math.max(1e-6, max - min);
   const fmt = (x: number) => `${x < 0 ? '−' : '+'}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}`;
+  // ev.n is the budget; successive halving spends far less on moves that fall behind early
+  const counts = ev.actions.map((a) => a.n ?? ev.n);
+  const [lo, hi] = [Math.min(...counts), Math.max(...counts)];
+  const playouts = lo === hi ? `${hi}` : `${lo}–${hi}`;
   return (
     <div className="space-y-1">
       {ev.regret > 0.05 && (() => {
         const se = ev.actions.find((a) => a.a === sel)?.se ?? 0;
         return se > 0 && ev.regret <= se
           ? <div className="text-sm">The bot's pick reads <b>{fmt(-ev.regret).replace('−', '')}</b> behind the best move — inside the ±{fmt(se).replace('+', '')} these {ev.n} play-outs can resolve, so the two are not actually separated. <span className="text-muted-foreground">(bars show ±1 SE)</span></div>
-          : <div className="text-sm">The bot's pick cost <b>{fmt(-ev.regret).replace('−', '')}</b> per hand vs the best move. <span className="text-muted-foreground">({ev.n} paired play-outs per move, bars show ±1 SE)</span></div>;
+          : <div className="text-sm">The bot's pick cost <b>{fmt(-ev.regret).replace('−', '')}</b> per hand vs the best move. <span className="text-muted-foreground">({playouts} paired play-outs per move, bars show ±1 SE)</span></div>;
       })()}
       {ev.regret <= 0.05 && <div className="text-sm text-emerald-700 dark:text-emerald-300">The bot found the best move.</div>}
       {ev.actions.map((a) => {

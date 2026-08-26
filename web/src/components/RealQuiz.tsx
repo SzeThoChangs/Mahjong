@@ -44,6 +44,9 @@ const verdictOf = (regret: number, unit: string, se = 0): Verdict => {
   if (regret <= Math.max(mistake, 3 * se)) return 'mistake';
   return 'blunder';
 };
+/** The recount runs in the dev server's /api/challenge middleware; a static build has no such route. */
+const CAN_CHALLENGE = import.meta.env.DEV;
+
 const kindsOf = (a: string): number[] => a.startsWith('d:') ? [Number(a.slice(2))] : a.startsWith('chow:') ? a.slice(5).split(',').map(Number) : (/^\w+:(\d+)$/.exec(a) ? [Number(/^\w+:(\d+)$/.exec(a)![1])] : []);
 const actionText = (a: string) => a === 'win' ? 'Win' : a === 'pass' ? 'Pass' : a === 'proceed' ? 'No kong' : a.startsWith('d:') ? `Discard ${tileLabel(Number(a.slice(2)))}` : a.startsWith('pong') ? 'Pong' : a.startsWith('chow') ? 'Chow' : 'Kong';
 
@@ -110,6 +113,12 @@ export default function RealQuiz() {
   if (!q) return null;
 
   const repriced = !!q?.actions?.some((a) => a.mix);
+  // q.n is the play-out BUDGET, not what each move got: successive halving stops rolling out an
+  // action once its running mean looks bad, so most moves are estimated on a quarter of it. Show
+  // the range that was actually spent rather than the ceiling.
+  const counts = q.actions.map((a) => a.n ?? q.n);
+  const [lowN, highN] = [Math.min(...counts), Math.max(...counts)];
+  const playoutRange = lowN === highN ? `${highN}` : `${lowN}–${highN}`;
 
   const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
   const bestAction = actions[0]!;
@@ -170,7 +179,7 @@ export default function RealQuiz() {
           )}
           <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b></span>
           <span className="text-muted-foreground">Tai in hand <b className="text-foreground">{q.fih}</b></span>
-          <span className="ml-auto text-xs text-muted-foreground">a real position · {q.n} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
+          <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
         </CardContent>
       </Card>
 
@@ -271,7 +280,9 @@ export default function RealQuiz() {
             })}
             <div className="pt-2 flex items-center gap-2">
               <Button onClick={next}>Next position</Button>
-              <Button variant="outline" disabled={challenging} onClick={runsChallenge}>{challenging ? 'Re-judging — up to a minute…' : 'Challenge the verdict (512 play-outs)'}</Button>
+              {/* /api/challenge is a Vite dev-server middleware (vite.config.ts); the deployed site is
+                  static, so the button would only ever 404 there. Show it where it can actually run. */}
+              {CAN_CHALLENGE && <Button variant="outline" disabled={challenging} onClick={runsChallenge}>{challenging ? 'Re-judging — up to a minute…' : 'Challenge the verdict (512 play-outs)'}</Button>}
             </div>
             {challengeResult && (
               <div className="mt-2 rounded-md border p-3 text-sm space-y-1">
@@ -285,10 +296,11 @@ export default function RealQuiz() {
                   return (
                     <>
                       <div className="font-medium">{overturned ? '🎉 Overturned — the recount says YOUR move is best.' : stillBest ? 'Verdict stands on the recount.' : `The recount prefers ${actionText(nBest.a).toLowerCase()} — a genuinely close position.`}</div>
-                      <div className="text-muted-foreground">512 fresh play-outs per move: your {picked !== null ? actionText(picked).toLowerCase() : ''} {nPick ? fmt(nPick.ev) : '?'} vs best {actionText(nBest.a).toLowerCase()} {fmt(nBest.ev)} (was {fmt(bestAction.ev)} at {q.n}).</div>
+                      <div className="text-muted-foreground">512 fresh play-outs per move: your {picked !== null ? actionText(picked).toLowerCase() : ''} {nPick ? fmt(nPick.ev) : '?'} vs best {actionText(nBest.a).toLowerCase()} {fmt(nBest.ev)} (was {fmt(bestAction.ev)} at {bestAction.n ?? q.n}).</div>
                       {nPick && (() => {
-                        // the recount buys precision as 1/sqrt(n), so its resolution is the pack's scaled by sqrt(q.n / n)
-                        const res = pickedSe > 0 ? pickedSe * Math.sqrt(q.n / Math.max(1, challengeResult.ev!.n)) : 0.3;
+                        // the recount buys precision as 1/sqrt(n), so its resolution is the pack's scaled by
+                        // sqrt(n_pack / n_recount) - using the PICKED move's own count, not the budget
+                        const res = pickedSe > 0 ? pickedSe * Math.sqrt((pickedAction.n ?? q.n) / Math.max(1, challengeResult.ev!.n)) : 0.3;
                         return Math.abs(nBest.ev - nPick.ev) < res
                           ? <div className="text-muted-foreground">Gap under {fmt(res)} — still inside what {challengeResult.ev!.n} play-outs can resolve; call it a coin flip.</div>
                           : null;
