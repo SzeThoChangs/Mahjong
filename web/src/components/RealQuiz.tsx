@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimCandidateOf, policyRank, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -102,6 +102,35 @@ export default function RealQuiz() {
       }
       const hv = handValue({ concealed: q.h, melds }, ctx);
       return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[] };
+    } catch { return null; }
+  }, [q]);
+
+  // What the learned models would do here. Grading stays on the measured EVs - those are the
+  // authority in this tab - but the models are what the Train tab teaches, so showing their answer
+  // beside the measurement is how you find out where they are wrong.
+  const modelPick = useMemo(() => {
+    if (!q) return null;
+    try {
+      const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+      const visible: number[] = [];
+      for (const d of q.disc ?? []) visible.push(d[1]!);
+      (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
+      (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
+      const ctx: Context = {
+        seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
+        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
+      };
+      if (q.k === 'discard' && q.h.length % 3 === 2) return `d:${policyRank(q.h, melds, ctx).best}`;
+      if (q.k === 'claim' && q.ld) {
+        const offered = q.ld[1]!;
+        const acts = q.actions.map((a) => a.a);
+        const cands = acts.map((a) => claimCandidateOf(a, offered));
+        if (cands.some((c) => c === null)) return null;
+        const r = claimRank(cands.map((c) => c!), q.h, melds, offered, ctx);
+        return acts[cands.findIndex((c) => c === r.best)] ?? null;
+      }
+      return null;
     } catch { return null; }
   }, [q]);
 
@@ -283,6 +312,16 @@ export default function RealQuiz() {
           <CardContent className="space-y-1">
             {coach && (
               <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-1">
+                {/* The models are what the Train tab teaches. Measured EVs are the authority here,
+                    so this is the place their disagreements with the measurement show up. */}
+                {modelPick !== null && (
+                  <div className="pb-1 mb-1 border-b">
+                    <span className="text-muted-foreground">The learned model would</span> <b>{actionText(modelPick).toLowerCase()}</b>.
+                    {modelPick === bestAction.a
+                      ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
+                      : <span className="text-amber-700 dark:text-amber-300"> The measurement disagrees — trust the bars here.</span>}
+                  </div>
+                )}
                 <div><span className="text-muted-foreground">Coach reads this as</span> <b>{coach.plan}</b>.
                   {coach.best !== null && bestAction.a.startsWith('d:') && (
                     coach.best === Number(bestAction.a.slice(2))

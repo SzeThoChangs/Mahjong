@@ -150,3 +150,37 @@ describe('the coach reads the table', () => {
     for (const o of r.options) expect(o.risk).toBeLessThan(0.05);
   });
 });
+
+describe('claim model', () => {
+  it('scores the vector it was trained on', async () => {
+    const { CLAIM_FEATURE_NAMES, claimFeatures, claimRank } = await import('../src/claim.js');
+    const { CLAIM_POLICY } = await import('../src/claim.weights.js');
+    expect(CLAIM_POLICY.mu.length).toBe(CLAIM_FEATURE_NAMES.length);
+    expect(CLAIM_POLICY.sd.length).toBe(CLAIM_FEATURE_NAMES.length);
+    if (CLAIM_POLICY.hidden) {
+      expect(CLAIM_POLICY.W1.length).toBe(CLAIM_POLICY.hidden);
+      for (const row of CLAIM_POLICY.W1) expect(row.length).toBe(CLAIM_FEATURE_NAMES.length);
+    }
+    const hand = K('2t 3t 4t 5t 6t 7t 7t 7t 2s 3s 9w 9w 5s');
+    const offered = K('7t')[0]!;
+    const r = claimRank(
+      [{ kind: 'pass', used: [] }, { kind: 'pong', used: [offered, offered] }],
+      hand, [], offered, ctx({ playerTurns: 20 }),
+    );
+    expect(r.options.length).toBe(2);
+    expect(r.options.reduce((a, o) => a + o.p, 0)).toBeCloseTo(1, 6);
+    expect(claimFeatures({ kind: 'pass', used: [] }, hand, [], offered, ctx({ playerTurns: 20 })).length)
+      .toBe(CLAIM_FEATURE_NAMES.length);
+  });
+
+  it('a pong that arms an illegal hand looks different from one that does not', async () => {
+    const { claimFeatures, CLAIM_FEATURE_NAMES } = await import('../src/claim.js');
+    const armedIdx = CLAIM_FEATURE_NAMES.indexOf('armed');
+    // a dragon pair: ponging it is worth a tai and can make the hand legal at the 2-tai minimum
+    const hand = K('2t 3t 4t 5t 6t 7t 2s 3s 4s 5s 6s R R');
+    const dragon = K('R')[0]!;
+    const withDragon = claimFeatures({ kind: 'pong', used: [dragon, dragon] }, hand, [], dragon, ctx({ playerTurns: 20 }));
+    const passing = claimFeatures({ kind: 'pass', used: [] }, hand, [], dragon, ctx({ playerTurns: 20 }));
+    expect(withDragon[armedIdx]).toBeGreaterThanOrEqual(passing[armedIdx]!);
+  });
+});
