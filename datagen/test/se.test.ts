@@ -3,7 +3,7 @@ import { DEFAULT_RULES, makeRng } from 'sg-mahjong-engine';
 import { runSession } from '../src/session.js';
 import { positionAt } from '../src/position.js';
 import { evaluateDecision, type ActionEval } from '../src/evaluate.js';
-import { pairedSe, SE_VERSION } from '../src/se.js';
+import { pairedSe, separationT, SE_VERSION } from '../src/se.js';
 import { DEFAULT_RANDOMNESS } from '../src/bots.js';
 import type { DecisionRecord, HandRecord } from '../src/records.js';
 
@@ -27,6 +27,47 @@ describe('paired standard error', () => {
   it('is NaN when the run predates gapSe entirely', () => {
     const a = { ...action({}), gapSe: undefined as unknown as number };
     expect(Number.isNaN(pairedSe(a, action({}), 1))).toBe(true);
+  });
+});
+
+describe('separation (is this position gradeable at all)', () => {
+  const pair = (bestEv: number, secEv: number, gap: number, gapSe: number, n = 128) =>
+    [action({ ev: bestEv, n }), action({ ev: secEv, gap, gapSe, n })] as const;
+
+  it('is the gap in standard errors', () => {
+    const [b, s] = pair(3, 1, 2, 0.5);
+    expect(separationT(b, s, SE_VERSION)).toBeCloseTo(4, 10);
+  });
+
+  it('takes the WEAKER of the paired gap and the difference of means', () => {
+    // adaptive halving can leave these disagreeing; a question must be decisive read either way
+    const [b, s] = pair(3, 1, 0.5, 0.5);        // paired gap 0.5, difference of means 2.0
+    expect(separationT(b, s, SE_VERSION)).toBeCloseTo(1, 10);
+    const [b2, s2] = pair(1.5, 1, 4, 0.5);      // paired gap 4, difference of means 0.5
+    expect(separationT(b2, s2, SE_VERSION)).toBeCloseTo(1, 10);
+  });
+
+  it('treats two actions with IDENTICAL outcomes as tied, not as infinitely separated', () => {
+    // the bug this pins: gap 0 with se 0 means the branches never diverged, so the moves are
+    // indistinguishable. Reading it as "no error bar, therefore decisive" admitted 778 ungradeable
+    // ties into a 5,000-question pack.
+    const [b, s] = pair(4.31, 4.31, 0, 0);
+    expect(separationT(b, s, SE_VERSION)).toBe(0);
+  });
+
+  it('is infinite only when a real gap came with no disagreement at all', () => {
+    const [b, s] = pair(5, 2, 3, 0);
+    expect(separationT(b, s, SE_VERSION)).toBe(Infinity);
+  });
+
+  it('keeps positions from runs that never recorded gapSe', () => {
+    const b = action({ ev: 3 }), s = { ...action({ ev: 1, gap: 2 }), gapSe: undefined as unknown as number };
+    expect(separationT(b, s, 1)).toBe(Infinity);
+  });
+
+  it('applies the sqrt(k) correction before dividing, on a pre-fix run', () => {
+    const [b, s] = pair(3, 1, 2, 0.1, 64);      // stored se 0.1 -> corrected 0.8
+    expect(separationT(b, s, 1)).toBeCloseTo(2 / (0.1 * 8), 10);
   });
 });
 

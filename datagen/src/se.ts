@@ -31,3 +31,26 @@ export function pairedSe(action: ActionEval, best: ActionEval, version: number):
   if (version >= SE_VERSION) return action.gapSe;
   return action.gapSe * Math.sqrt(Math.max(1, Math.min(action.n, best.n)));
 }
+
+/**
+ * How many standard errors separate the best action from the runner-up - the t statistic that says
+ * whether a position can be graded at all.
+ *
+ * Two statistics are compared and the WEAKER one wins, because they can disagree: `gap` is the mean
+ * paired difference over the rollouts the pair shares, while `best.ev - second.ev` is the difference
+ * of two means that adaptive halving may have computed over different rollout counts. A question is
+ * only worth asking if it is decisive whichever way the number is read.
+ *
+ * The degenerate cases are the ones that bite:
+ *   - se absent (a run predating gapSe): unjudgeable, so let it through rather than empty the pack
+ *   - se == 0 with a real gap: the branches never disagreed, so the separation is perfect
+ *   - se == 0 with gap == 0: the two actions produced IDENTICAL outcomes. They are tied, not
+ *     decisively separated - treating this as infinite separation admits ungradeable ties.
+ */
+export function separationT(best: ActionEval, second: ActionEval, version: number): number {
+  const se = pairedSe(second, best, version);
+  const gap = Math.min(second.gap, best.ev - second.ev);
+  if (!Number.isFinite(se)) return Infinity;
+  if (se > 0) return gap / se;
+  return gap > 0 ? Infinity : 0;
+}

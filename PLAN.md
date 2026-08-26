@@ -159,10 +159,9 @@ shared randomness removes it.
 
 So the remaining routes, in the order they look worth trying:
 
-1. **Lower-variance target.** The 9.8-chip outcome SD is dominated by whether the hand is won and
-   at what tai, not by the discard. Evaluating a shrunk statistic (win probability, or winsorised
-   chips) and pricing afterwards attacks the variance at its source. The recorded `mix` already
-   makes any re-pricing possible without re-simulating.
+1. ~~**Lower-variance target.**~~ **Tried and closed** — see the measurement below. No reweighting
+   of the outcome statistic helps, because the variance lives in which hand wins rather than in the
+   size of the payout.
 2. **Truncated rollouts plus a value estimate.** Shorter play-outs are both cheaper and less
    variable; a shanten/fan-aware terminal value would do. This is the only route that improves
    compute and variance together.
@@ -174,6 +173,63 @@ So the remaining routes, in the order they look worth trying:
    resolvable today. Discards (4%) are not, and no near-term amount of compute makes them so.
 
 Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
+
+**Verdicts respect the error bar.** The quiz used fixed $0.35 / $1.50 bands against a ~$1.10 paired
+SE, so it called moves mistakes that the play-outs cannot separate. Bands are now floored at each
+position's own error bar, with a **Too close to call** verdict inside 1 SE, and both the quiz and
+the film room draw ±1 SE whiskers on the EV bars. Every consumer reads the SE through
+`datagen/src/se.ts`, which corrects pre-`seVersion` runs on read.
+
+**Packs select on decisiveness, not spread.** Selecting on EV spread (best minus worst) gave a pack
+that was 80% discards with a mean best-vs-runner-up gap of $0.60 against a $1.07 error bar — three
+quarters of it ungradeable, which the honest verdicts then made obvious. `quizpack.ts` now keeps
+only positions where the best beats the runner-up by more than `--clear` (default 2) standard
+errors, measured both ways the number can be read (paired gap, and the difference of means the UI
+actually grades on — `separationT` in `se.ts` takes the weaker). Decisive positions on disk: 15.0k
+discards, 21.6k claims, 4.9k self-actions — several times what a pack needs, so the kind mix is held
+at the run's own proportions and the trainer stays discard-heavy. Result: **100% of questions have a
+separable best answer at 1 SE and 99% at 2 SE, against 24% before**, and the share of alternatives
+sitting inside 1 SE of the best fell from 40% to 0.6%.
+
+Two things this costs, both worth knowing:
+
+- **The pack skews late.** Decisive positions are 46% late-hand against 26% in the run, and 16%
+  early against 36%. Hands resolve once they are committed; the early discards a trainer would add
+  most value on are exactly the ones the evaluator cannot separate. `quizpack.ts` prints the phase
+  mix on every build so this stays visible.
+- **The questions are easier.** Mean best-vs-runner-up gap on a discard went from $0.60 to $3.62.
+  The trainer now teaches positions where one tile is clearly right, which is a narrower lesson than
+  intended — but it is a real one, where the previous pack was mostly quizzing on coin flips.
+
+### A lower-variance target does not work either (measured 2026-08-26)
+
+Route 1 below was to attack the 9.8-chip outcome SD by scoring the same play-outs with a
+less volatile statistic. `src/target.ts` runs each action's play-outs once and scores every one of
+them six ways, so all targets see identical games, then asks how confidently each separates the pair
+that matters (the best and runner-up **by chips**). `t` = |paired difference| / SE, unit-free, so
+targets in chips, probabilities and signs compare directly. 400 decisions, 64 play-outs per action:
+
+| target | mean t | t>1 | t>2 | agrees with chips ranking |
+|---|---|---|---|---|
+| chips (incumbent) | 0.74 | 22% | 6% | 100% |
+| win (0/1) | 0.84 | 26% | 8% | 60% |
+| win − dealt-in | 0.82 | 28% | 8% | 62% |
+| chips clamped ±8 | 0.73 | 22% | 6% | 65% |
+| chips clamped ±4 | 0.74 | 25% | 6% | 61% |
+| sign of chips | 0.74 | 25% | 5% | 60% |
+
+Clamping and sign buy **nothing** — identical t to chips. `win` buys 1.14x in t, worth 1.3x the
+play-outs, while ranking a different action best 40% of the time; that is not a precision win, it is
+a different question answered confidently. (A 100-decision pilot showed the clamped targets at
+1.15–1.19x; the larger sample flattened them to 1.00x, so treat small samples here with suspicion.)
+
+The variance is not in the payout scale. It is in *which hand wins*, and every one of these targets
+inherits that. Route 1 is closed.
+
+**That leaves route 2 as the only remaining lever**: truncated rollouts plus a terminal value
+estimate, the one option that cuts variance and compute together. It is also the one that would help
+most where the pack is now weakest — early-hand positions, which is exactly where a full play-out is
+longest and most chaotic.
 
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).

@@ -69,7 +69,7 @@ class CoupledBot implements Bot {
   }
 }
 
-function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig, coupled = true): Bot[] {
+export function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig, coupled = true): Bot[] {
   const build = (rng: () => number): Bot =>
     policy === 'fast' ? new IsolationBot(rng, 0.6, 0.4) : policy === 'shanten' ? new ShantenBot(rng) : makeBot('efficiency', rng, randomness);
   return [0, 1, 2, 3].map((s) => {

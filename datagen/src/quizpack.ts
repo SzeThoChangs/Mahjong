@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { fanInHand, makeRng, type Meld } from 'sg-mahjong-engine';
 import { eachJsonlGz } from './stats.js';
 import { eachEval } from './evalstats.js';
-import { pairedSe, seVersionOf } from './se.js';
+import { pairedSe, separationT, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
@@ -21,24 +21,60 @@ const dir = arg('dir', '../data/gen/run100k-table')!;
 const outDir = arg('out', '../web/public/quiz')!;
 const name = arg('name', 'table')!;
 const maxQ = Number(arg('max', '4000'));
+const clear = Number(arg('clear', '2'));   // keep positions whose best beats the runner-up by > this many SE
 
 const rules = rulesForDir(dir);
 const money = rules.money !== null;
 const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; pairedSe corrects on read
 
-// pass 1: one lightweight reference per decision. prefer decisions where the choice matters:
-// sort into meaty (spread >= 2) and the rest, sample 75/25
-interface Ref { g: number; h: number; d: number; spread: number }
-const meaty: Ref[] = [], rest: Ref[] = [];
+/**
+ * pass 1: one lightweight reference per decision, then keep only the questions that can be GRADED.
+ *
+ * The old rule sampled on EV spread (best minus worst). Spread says the options are far apart
+ * overall; it says nothing about whether the best is separable from the runner-up, which is the
+ * only thing a verdict rests on. Selecting on spread produced a pack that was 80% discards with a
+ * mean best-vs-runner-up gap of $0.60 against a $1.07 error bar - three quarters of it ungradeable.
+ *
+ * Select on `gap > clear * se` instead. Only ~4% of discards clear 2 SE, but 4% of 392k discards is
+ * still ~15,700 positions, far more than a pack needs. Within each decision kind we take decisive
+ * positions only, and hold the kind mix at the run's own proportions so a discard trainer stays a
+ * discard trainer. A kind whose decisive pool is short is topped up from its closest calls, and the
+ * shortfall is reported rather than passed off as full coverage.
+ */
+interface Ref { g: number; h: number; d: number; spread: number; k: string; t: number }
+const decisive = new Map<string, Ref[]>(), close = new Map<string, Ref[]>(), seen = new Map<string, number>();
 eachEval(dir, (e) => {
   if (e.actions.length <= 1) return;
-  const spread = e.actions[0]!.ev - e.actions[e.actions.length - 1]!.ev;
-  (spread >= 2 ? meaty : rest).push({ g: e.g, h: e.h, d: e.d, spread });
+  const best = e.actions[0]!, second = e.actions[1]!;
+  const spread = best.ev - e.actions[e.actions.length - 1]!.ev;
+  const t = separationT(best, second, seVersion);
+  const ref: Ref = { g: e.g, h: e.h, d: e.d, spread, k: e.k, t };
+  seen.set(e.k, (seen.get(e.k) ?? 0) + 1);
+  const bucket = t > clear ? decisive : close;
+  let list = bucket.get(e.k); if (!list) bucket.set(e.k, list = []);
+  list.push(ref);
 });
 const rng = makeRng(99);
 const shuffle = <T,>(a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j]!, a[i]!]; } return a; };
-shuffle(meaty); shuffle(rest);
-const chosen = [...meaty.slice(0, Math.floor(maxQ * 0.75)), ...rest.slice(0, Math.ceil(maxQ * 0.25))].slice(0, maxQ);
+
+const totalSeen = [...seen.values()].reduce((a, b) => a + b, 0);
+const chosen: Ref[] = [];
+const shortfall: string[] = [];
+for (const [kind, n] of [...seen.entries()].sort((a, b) => b[1] - a[1])) {
+  const target = Math.round((n / totalSeen) * maxQ);
+  const pool = shuffle(decisive.get(kind) ?? []);
+  const take = pool.slice(0, target);
+  if (take.length < target) {
+    // not enough decisive positions of this kind: fall back to its closest calls, hardest first
+    const backfill = (close.get(kind) ?? []).sort((a, b) => b.t - a.t).slice(0, target - take.length);
+    take.push(...backfill);
+    shortfall.push(`${kind}: ${target - backfill.length}/${target} decisive, ${backfill.length} backfilled`);
+  }
+  chosen.push(...take);
+}
+shuffle(chosen);
+console.log(`selected ${chosen.length} of ${maxQ} at gap > ${clear} SE  [${[...seen.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${(decisive.get(k) ?? []).length}/${n} decisive`).join(', ')}]`);
+if (shortfall.length) console.log(`  backfilled from close calls - ${shortfall.join('; ')}`);
 
 // group by hand so each hand is replayed once
 const byHand = new Map<string, Ref[]>();
@@ -90,3 +126,15 @@ const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'in
 });
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
 console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
+// Decisive positions are not spread evenly through a hand: late decisions resolve because the hands
+// are committed, early ones rarely do. Selecting on decisiveness therefore skews the pack late, and
+// that skew is a property of the trainer worth stating rather than discovering.
+{
+  const phase = (t: number) => (t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late');
+  const mix = new Map<string, number>(), all = new Map<string, number>();
+  for (const q of questions) mix.set(phase(q.t), (mix.get(phase(q.t)) ?? 0) + 1);
+  for (const list of [...decisive.values(), ...close.values()]) for (const r of list) all.set(phase(r.t), (all.get(phase(r.t)) ?? 0) + 1);
+  const show = (m: Map<string, number>, n: number) => ['early', 'mid', 'late'].map((p) => `${p} ${(100 * (m.get(p) ?? 0) / Math.max(1, n)).toFixed(0)}%`).join('  ');
+  const seenTotal = [...all.values()].reduce((a, b) => a + b, 0);
+  console.log(`  phase mix: pack [${show(mix, questions.length)}] vs run [${show(all, seenTotal)}] - decisive positions cluster late`);
+}
