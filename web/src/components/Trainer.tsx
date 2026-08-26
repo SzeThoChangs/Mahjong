@@ -20,18 +20,27 @@ const VERDICT_TEXT: Record<Verdict, string> = { best: 'Best', fine: 'Also fine',
 const EQUAL_TEXT = 'Equal best';
 
 /**
- * The Train tab grades on the learned model, not the book coach: measured against real play-outs
- * the coach costs $1.86 a decision and the model $1.29, so scoring against the coach was teaching
- * the gap. The coach keeps the job it is better at - saying WHY.
+ * The coach grades this tab. That was briefly changed to the model and then changed back, and the
+ * reason is worth keeping.
  *
- * The model emits a softmax over candidates, not chips, so these bands are calibrated rather than
- * invented (`solver/src/calibrate.ts`): over the quiz pack, where every option has both a measured
- * regret and a model probability, the thresholds are quantile-matched to the measured grader so
- * both hand out the same mix of verdicts. Agreement is 48.9% exact and 86.1% within one band.
+ * Per decision the model looks clearly better: it picks the measured-best tile 70.4% of the time
+ * against the coach's 55.7%, and loses $1.29 a decision against $1.35. But played out - 4,800
+ * paired deals with the tested bot rotated through all four seats, same walls in both arms - the
+ * model LOSES to the coach by 2.66 +/- 0.61 chips a game, negative in all four seats
+ * (`solver/src/headtohead.ts`).
+ *
+ * Per-decision regret against a measured best does not aggregate into winning hands. The likeliest
+ * reason is coherence: the coach commits to a target and plays toward it, while the model scores
+ * every discard independently and can be locally right all the way to an incoherent hand. Until
+ * that is understood, the thing that demonstrably wins money is what the player gets scored on.
+ *
+ * If the model's play-out result ever turns around, grading on it needs probability bands rather
+ * than chips. `solver/src/calibrate.ts` derives them by quantile-matching model probability ratios
+ * to the measured regret bands over the quiz pack; it last produced FINE 0.2668 / MISTAKE 0.0091,
+ * agreeing with the measured grader 48.9% exactly and 86.1% within one band. Re-run it rather than
+ * trusting those numbers - they move with the weights.
  */
-const FINE_RATIO = 0.2668;
-const MISTAKE_RATIO = 0.0091;
-const TIE_RATIO = 0.9;        // within 10% of the top: naming one of them "the" answer is arbitrary
+
 
 type Score = { best: number; fine: number; mistake: number; blunder: number; streak: number };
 
@@ -62,29 +71,22 @@ export default function Trainer() {
 
   const fan = fanInHand({ melds: scenario.melds, bonus: scenario.bonus, seat: (scenario.seat - scenario.dealer + 4) % 4, prevailingWind: scenario.prevailingWind });
 
-  // --- the grader: the learned model ---
-  const model = scenario.policyRanking;
-  const pBest = model.options[0]!.p;
-  const ratioOf = (k: TileKind) => (model.options.find((o) => o.tile === k)?.p ?? 0) / Math.max(1e-9, pBest);
-  /** tiles the model cannot separate from its own pick */
-  const modelTied = model.options.filter((o) => o.p / Math.max(1e-9, pBest) >= TIE_RATIO).map((o) => o.tile);
-  const verdictOf = (k: TileKind): Verdict => {
-    const r = ratioOf(k);
-    if (r >= TIE_RATIO) return 'best';
-    return r >= FINE_RATIO ? 'fine' : r >= MISTAKE_RATIO ? 'mistake' : 'blunder';
-  };
-  const modelPick = model.best;
-  // the coach still explains; its option row carries the plan and the per-tile reasons
-  const picked: DiscardOption | undefined = pick === null ? undefined : scenario.ranking.options.find((o) => o.tile === pick);
-  const pickedVerdict: Verdict | null = pick === null ? null : verdictOf(pick);
+  // --- the grader: the book coach, because it is what wins money in play (see above) ---
   const coachPick = scenario.ranking.best.tile;
-  // the coach's row for the tile the MODEL chose - its reasons are what explain the graded answer
-  const modelAnswerOpt = scenario.ranking.options.find((o) => o.tile === modelPick);
+  const coachTied = scenario.ranking.tied;
+  const picked: DiscardOption | undefined = pick === null ? undefined : scenario.ranking.options.find((o) => o.tile === pick);
+  const pickedVerdict: Verdict | null = picked ? picked.verdict : null;
+  const gradedPick = coachPick;
+  const gradedTied = coachTied;
+  const gradedAnswerOpt = scenario.ranking.best;
+  // the model's opinion, shown alongside: it is right more often per decision, which is exactly the
+  // tension worth showing rather than hiding
+  const modelPick = scenario.policyRanking.best;
 
   const choose = (k: TileKind) => {
     if (pick !== null) return;
     setPick(k);
-    const v = verdictOf(k);
+    const v = scenario.ranking.options.find((o) => o.tile === k)!.verdict;
     setScore((s) => ({ ...s, [v]: s[v] + 1, streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
   };
   const next = () => { setPick(null); setShowAll(false); setSeed((s) => s + 1); };
@@ -173,13 +175,13 @@ export default function Trainer() {
             <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
               {sortedHand.map((k, i) => (
                 <Tile key={i} kind={k} size="md" fluid onClick={pick === null ? () => choose(k) : undefined}
-                  highlight={pick !== null && k === modelPick} dim={pick !== null && k !== pick && k !== modelPick} />
+                  highlight={pick !== null && k === gradedPick} dim={pick !== null && k !== pick && k !== gradedPick} />
               ))}
               {scenario.drawn !== null && (
                 <>
                   <div className="w-2 shrink-0" />
                   <Tile kind={scenario.drawn} size="md" fluid badge="drew" onClick={pick === null ? () => choose(scenario.drawn!) : undefined}
-                    highlight={pick !== null && scenario.drawn === modelPick} dim={pick !== null && scenario.drawn !== pick && scenario.drawn !== modelPick} />
+                    highlight={pick !== null && scenario.drawn === gradedPick} dim={pick !== null && scenario.drawn !== pick && scenario.drawn !== gradedPick} />
                 </>
               )}
             </div>
@@ -191,30 +193,29 @@ export default function Trainer() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center gap-3">
-                <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[pickedVerdict ?? 'fine'])}>{modelTied.length > 1 && modelTied.includes(picked.tile) ? EQUAL_TEXT : VERDICT_TEXT[pickedVerdict ?? 'fine']}</Badge>
+                <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[gradedTied.length > 1 && gradedTied.includes(picked.tile) ? 'best' : (pickedVerdict ?? 'fine')])}>{gradedTied.length > 1 && gradedTied.includes(picked.tile) ? EQUAL_TEXT : VERDICT_TEXT[pickedVerdict ?? 'fine']}</Badge>
                 <div className="text-sm">
                   You discarded <b>{tileLabel(picked.tile)}</b>.{' '}
-                  {modelTied.length > 1 && modelTied.includes(picked.tile)
-                    ? <>Equal best — {modelTied.map(tileLabel).join(', ')} are too close to separate, so pick whichever you like.</>
-                    : pickedVerdict === 'best' ? 'Same as the model.'
-                    : <>The model discards <b>{tileLabel(modelPick)}</b>.</>}
+                  {gradedTied.length > 1 && gradedTied.includes(picked.tile)
+                    ? <>Equal best — {gradedTied.map(tileLabel).join(', ')} are all the same here, so pick whichever you like.</>
+                    : pickedVerdict === 'best' ? 'Same as the coach.'
+                    : <>Coach discards <b>{tileLabel(gradedPick)}</b>{picked.delta < 0 && <span className="text-muted-foreground"> ({picked.delta.toFixed(1)} chips/game)</span>}.</>}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              {/* The model grades; the book coach explains. When they disagree, say so rather than
-                  quietly dropping the coach - its reasoning is still what makes the answer teachable. */}
+              {/* The two disagree often, and which one is "right" depends on how you measure. Say so. */}
               <div className="rounded-md border bg-secondary/40 p-3">
-                {coachPick === modelPick
-                  ? <><span className="text-muted-foreground">The book coach agrees:</span> <b>{tileLabel(coachPick)}</b>.</>
-                  : <><span className="text-muted-foreground">The book coach would throw</span> <b>{tileLabel(coachPick)}</b> <span className="text-muted-foreground">instead. Measured against real play-outs the model is the better picker, so it is what you are scored on — but the coach's reasoning below is worth reading either way.</span></>}
+                {modelPick === gradedPick
+                  ? <><span className="text-muted-foreground">The learned model agrees:</span> <b>{tileLabel(modelPick)}</b>.</>
+                  : <><span className="text-muted-foreground">The learned model would throw</span> <b>{tileLabel(modelPick)}</b> <span className="text-muted-foreground">instead. It picks the measured-best tile more often than the coach does — but played out over thousands of hands the coach still wins more money, so the coach is what you are scored on.</span></>}
               </div>
               <div>
                 <div className="font-medium">Plan: {scenario.ranking.plan}</div>
                 <ul className="mt-1 list-disc pl-5 text-muted-foreground space-y-0.5">{scenario.ranking.planDetail.map((l, i) => <li key={i}>{l}</li>)}</ul>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                {modelAnswerOpt && <ReasonBox title={`Why ${tileLabel(modelPick)}`} opt={modelAnswerOpt} />}
+                <ReasonBox title={`Why ${tileLabel(gradedPick)}`} opt={gradedAnswerOpt} />
                 {pickedVerdict !== 'best' && <ReasonBox title={`About your ${tileLabel(picked.tile)}`} opt={picked} />}
               </div>
               <Separator />

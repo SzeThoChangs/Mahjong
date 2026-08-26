@@ -204,6 +204,39 @@ So the remaining routes, in the order they look worth trying:
 
 Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
 
+### Accuracy against measured EVs does not predict winning (measured 2026-08-27)
+
+The learned discard model beats the book coach on every per-decision measure: it picks the
+measured-best tile 70.4% of the time against 55.7%, and loses $1.29 a decision against $1.35
+across all 49,075 evaluated discards. On that basis the Train tab was switched to grade on it.
+
+Then it was played out. `solver/src/headtohead.ts` rotates the tested bot through all four
+seats and pairs the walls between arms, because a table of four IDENTICAL coaches still
+spreads 4.5 chips a game between seats over 500 games — seat and deal variance swamp the
+effect otherwise. Over 4,800 paired deals:
+
+```
+seat   model chips/game   coach chips/game   difference (paired)
+  0        -1.77             -0.17            -1.60 +/- 1.21
+  1        -2.12             +0.07            -2.19 +/- 1.22
+  2        -2.29             +0.63            -2.91 +/- 1.21
+  3        -4.46             -0.52            -3.94 +/- 1.23
+overall                                       -2.66 +/- 0.61
+```
+
+**The model loses 2.66 chips a game to the coach**, negative in every seat, 4.4 standard
+errors. The Train tab was switched back to grading on the coach.
+
+Per-decision regret against a measured best does not aggregate into winning hands. The
+likeliest reason is coherence: the coach commits to a target and plays toward it, while the
+model scores each discard independently and can be locally right the whole way to an
+incoherent hand. Two other candidates worth ruling out — the measured EVs come from
+ShantenBot rollouts, so "best" means best against ShantenBot rather than against a coach;
+and PolicyBot takes its claims from the coach, so its parts were tuned separately.
+
+The lesson for anything built next: a per-decision metric is a proxy, and this one is a
+proxy that pointed the wrong way. Play it out before believing it.
+
 **Verdicts respect the error bar.** The quiz used fixed $0.35 / $1.50 bands against a ~$1.10 paired
 SE, so it called moves mistakes that the play-outs cannot separate. Bands are now floored at each
 position's own error bar, with a **Too close to call** verdict inside 1 SE, and both the quiz and
