@@ -21,7 +21,9 @@ interface PackIx { id: string; money: boolean; unit: string; questions: number }
 // `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
 // the play-outs can tell them apart. Packs built before 2026-08-26 have no `se` field.
 interface Action { a: string; ev: number; se?: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
-interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
+// `disc` = the discard pool as [seat, kind, claimedBy]; `pm` / `pb` = every seat's exposed melds and
+// bonus tiles. Packs built before 2026-08-26 lack them, so every use is guarded.
+interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
 
 const VERDICT_STYLE: Record<Verdict, string> = {
@@ -81,9 +83,16 @@ export default function RealQuiz() {
     if (!q) return null;
     try {
       const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+      // everything the player can see that is not their own concealed hand or own melds, so the
+      // coach stops counting four copies of a tile that is already dead on the table
+      const visible: number[] = [];
+      for (const d of q.disc ?? []) visible.push(d[1]!);
+      (q.pm ?? []).forEach((seatMelds, s) => { if (s !== q.seat) for (const meld of seatMelds) visible.push(...meld.slice(2)); });
+      (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...bonus); });
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
         minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        visible,
       };
       if (q.k === 'discard' && q.h.length % 3 === 2) {
         const r = rankDiscards(q.h, melds, ctx);
@@ -182,6 +191,40 @@ export default function RealQuiz() {
           <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
         </CardContent>
       </Card>
+
+      {(q.disc?.length || q.pm?.some((m, s) => s !== q.seat && m.length)) && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-base">The table</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {[0, 1, 2, 3].map((s) => {
+              const thrown = (q.disc ?? []).filter((d) => d[0] === s);
+              const melds = (q.pm ?? [])[s] ?? [];
+              const bonus = (q.pb ?? [])[s] ?? [];
+              if (!thrown.length && !melds.length && !bonus.length) return null;
+              return (
+                <div key={s} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span className={cn('w-20 shrink-0', s === q.seat ? 'font-semibold' : 'text-muted-foreground')}>
+                    {WIND[q.dl !== undefined ? (s - q.dl + 4) % 4 : s]}{s === q.seat ? ' (you)' : ''}
+                  </span>
+                  {(melds.length > 0 || bonus.length > 0) && (
+                    <span className="flex items-end gap-1 pr-2 border-r">
+                      {bonus.map((k, i) => <Tile key={`b${i}`} kind={k} size="sm" className="opacity-90" />)}
+                      {melds.map((meld, i) => (
+                        <span key={`m${i}`} className="flex gap-0.5 ml-1">{meld.slice(2).map((k, j) => <Tile key={j} kind={k} size="sm" dim={meld[1] === 1} />)}</span>
+                      ))}
+                    </span>
+                  )}
+                  {/* a claimed discard left the pool - it is sitting in someone's meld above */}
+                  <span className="flex flex-wrap items-end gap-0.5">
+                    {thrown.map((d, i) => <Tile key={i} kind={d[1]!} size="sm" dim={d[2]! >= 0} />)}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="text-xs text-muted-foreground pt-1">Dimmed tiles were claimed off the floor. Everything here is dead — the coach counts it.</div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">

@@ -92,6 +92,40 @@ export default function Trainer() {
           </CardContent>
         </Card>
 
+        {/* the table: what is already face-up, and therefore dead. The coach counts it. */}
+        {(scenario.discards.length > 0 || scenario.publicMelds.some((m) => m.length > 0)) && (
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base">The table</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {[0, 1, 2, 3].map((s) => {
+                const thrown = scenario.discards.filter((d) => d.seat === s);
+                const melds = scenario.publicMelds[s] ?? [];
+                const bonus = scenario.publicBonus[s] ?? [];
+                if (!thrown.length && !melds.length && !bonus.length) return null;
+                return (
+                  <div key={s} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <span className={cn('w-20 shrink-0', s === scenario.seat ? 'font-semibold' : 'text-muted-foreground')}>
+                      {WIND_NAME[(s - scenario.dealer + 4) % 4]}{s === scenario.seat ? ' (you)' : ''}
+                    </span>
+                    {(melds.length > 0 || bonus.length > 0) && (
+                      <span className="flex items-end gap-1 pr-2 border-r">
+                        {bonus.map((k, i) => <Tile key={`b${i}`} kind={k} size="sm" className="opacity-90" />)}
+                        {melds.map((m, i) => (
+                          <span key={`m${i}`} className="flex gap-0.5 ml-1">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="sm" dim={m.concealed} />)}</span>
+                        ))}
+                      </span>
+                    )}
+                    <span className="flex flex-wrap items-end gap-0.5">
+                      {thrown.map((d, i) => <Tile key={i} kind={d.kind} size="sm" dim={d.claimed} />)}
+                    </span>
+                  </div>
+                );
+              })}
+              <div className="text-xs text-muted-foreground pt-1">Dimmed tiles were claimed off the floor. The coach counts everything here as gone.</div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* hand */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>

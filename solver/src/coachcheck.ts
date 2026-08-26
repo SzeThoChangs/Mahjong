@@ -20,7 +20,8 @@ import type { Meld, TileKind } from 'sg-mahjong-engine';
 const classOf = (k: TileKind): string => (isHonour(k) ? 'honour' : rankOf(k) === 1 || rankOf(k) === 9 ? 'terminal' : 'middle');
 
 interface Action { a: string; ev: number; se?: number; n: number }
-interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; h: number[]; b: number[]; m: number[][]; actions: Action[] }
+interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; h: number[]; b: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; actions: Action[] }
+const BLIND = process.argv.includes('--blind');   // ignore the table, to measure what seeing it is worth
 
 const path = process.argv[2] ?? '../web/public/quiz/money.json';
 const pack = JSON.parse(readFileSync(path, 'utf8')) as { unit: string; questions: Q[] };
@@ -41,10 +42,17 @@ const isoRank: { coach: number; measured: number }[] = [];
 for (const q of pack.questions) {
   if (q.k !== 'discard' || q.h.length % 3 !== 2) { skipped++; continue; }
   const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+  const visible: TileKind[] = [];
+  if (!BLIND) {
+    for (const d of q.disc ?? []) visible.push(d[1]! as TileKind);
+    (q.pm ?? []).forEach((seatMelds, s) => { if (s !== q.seat) for (const meld of seatMelds) visible.push(...(meld.slice(2) as TileKind[])); });
+    (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...(bonus as TileKind[])); });
+  }
   const ctx: Context = {
     seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat,
     prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t,
     minimumFan: cfg.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: cfg.self_draw_minimum_fan,
+    visible,
   };
   let pick: TileKind, tied: TileKind[], plan: string, coachOrder: TileKind[];
   try { const r = rankDiscards(q.h as TileKind[], melds, ctx); pick = r.best.tile; tied = r.tied; plan = r.best.target.id; coachOrder = r.options.map((o) => o.tile); }

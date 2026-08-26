@@ -41,16 +41,18 @@ const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; 
  * discard trainer. A kind whose decisive pool is short is topped up from its closest calls, and the
  * shortfall is reported rather than passed off as full coverage.
  */
-interface Ref { g: number; h: number; d: number; spread: number; k: string; t: number }
+// `sep` is the separation in standard errors; `turn` is the player-turn the decision was made on.
+// These were both called `t` and the phase report silently bucketed decisions by their t-statistic.
+interface Ref { g: number; h: number; d: number; spread: number; k: string; sep: number; turn: number }
 const decisive = new Map<string, Ref[]>(), close = new Map<string, Ref[]>(), seen = new Map<string, number>();
 eachEval(dir, (e) => {
   if (e.actions.length <= 1) return;
   const best = e.actions[0]!, second = e.actions[1]!;
   const spread = best.ev - e.actions[e.actions.length - 1]!.ev;
-  const t = separationT(best, second, seVersion);
-  const ref: Ref = { g: e.g, h: e.h, d: e.d, spread, k: e.k, t };
+  const sep = separationT(best, second, seVersion);
+  const ref: Ref = { g: e.g, h: e.h, d: e.d, spread, k: e.k, sep, turn: e.t };
   seen.set(e.k, (seen.get(e.k) ?? 0) + 1);
-  const bucket = t > clear ? decisive : close;
+  const bucket = sep > clear ? decisive : close;
   let list = bucket.get(e.k); if (!list) bucket.set(e.k, list = []);
   list.push(ref);
 });
@@ -66,7 +68,7 @@ for (const [kind, n] of [...seen.entries()].sort((a, b) => b[1] - a[1])) {
   const take = pool.slice(0, target);
   if (take.length < target) {
     // not enough decisive positions of this kind: fall back to its closest calls, hardest first
-    const backfill = (close.get(kind) ?? []).sort((a, b) => b.t - a.t).slice(0, target - take.length);
+    const backfill = (close.get(kind) ?? []).sort((a, b) => b.sep - a.sep).slice(0, target - take.length);
     take.push(...backfill);
     shortfall.push(`${kind}: ${target - backfill.length}/${target} decisive, ${backfill.length} backfilled`);
   }
@@ -90,7 +92,10 @@ for (const f of readdirSync(dir).filter((x) => x.startsWith('hands-') && x.endsW
 
 // `se` is the paired standard error of (best.ev - this.ev): how far apart two actions must sit
 // before the rollouts can tell them apart at all. The quiz must not call anything inside it a mistake.
-interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+// `disc` is the discard pool as [seat, kind, claimedBy] - what the player can actually see on the
+// table, and what tells them which tiles are dead. `pm` / `pb` are every seat's exposed melds and
+// bonus tiles. Together they are the visible information the coach was previously reasoning without.
+interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -108,6 +113,7 @@ for (const [key, list] of byHand) {
     questions.push({
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
+      disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
       bot: e.bot, spread: Number(ref.spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,
       actions: e.actions.map((a) => {
@@ -133,7 +139,7 @@ console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money 
   const phase = (t: number) => (t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late');
   const mix = new Map<string, number>(), all = new Map<string, number>();
   for (const q of questions) mix.set(phase(q.t), (mix.get(phase(q.t)) ?? 0) + 1);
-  for (const list of [...decisive.values(), ...close.values()]) for (const r of list) all.set(phase(r.t), (all.get(phase(r.t)) ?? 0) + 1);
+  for (const list of [...decisive.values(), ...close.values()]) for (const r of list) all.set(phase(r.turn), (all.get(phase(r.turn)) ?? 0) + 1);
   const show = (m: Map<string, number>, n: number) => ['early', 'mid', 'late'].map((p) => `${p} ${(100 * (m.get(p) ?? 0) / Math.max(1, n)).toFixed(0)}%`).join('  ');
   const seenTotal = [...all.values()].reduce((a, b) => a + b, 0);
   console.log(`  phase mix: pack [${show(mix, questions.length)}] vs run [${show(all, seenTotal)}] - decisive positions cluster late`);

@@ -13,6 +13,9 @@ importers:
       sg-mahjong-engine:
         specifier: workspace:*
         version: link:../engine
+      sg-mahjong-solver:
+        specifier: workspace:*
+        version: link:../solver
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

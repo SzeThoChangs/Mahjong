@@ -14,7 +14,8 @@
     "evalstats": "tsx src/evalstats.ts"
   },
   "dependencies": {
-    "sg-mahjong-engine": "workspace:*"
+    "sg-mahjong-engine": "workspace:*",
+    "sg-mahjong-solver": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -27,6 +27,9 @@ export interface Scenario {
   ranking: Ranking;
   interesting: boolean;
   naivePick: TileKind;       // what the baseline bot would discard
+  discards: { seat: number; kind: TileKind; claimed: boolean }[];   // the pool, in order thrown
+  publicMelds: Meld[][];     // per seat, exposed sets (empty for the player's own seat)
+  publicBonus: TileKind[][]; // per seat, flowers and animals
 }
 
 class Stop { view: PlayerView; drawn: TileInstance | null; constructor(view: PlayerView, drawn: TileInstance | null) { this.view = view; this.drawn = drawn; } }
@@ -44,7 +47,12 @@ function capture(seed: number, phase: Exclude<Phase, 'any'>): { view: PlayerView
       onDiscardDecision: (v, drawn) => {
         if (v.seat === targetSeat && v.playerTurns >= targetTurn && v.hand.length % 3 === 2) {
           // snapshot: the view holds live arrays
-          throw new Stop({ ...v, hand: [...v.hand], melds: v.melds.map((m) => ({ ...m, tiles: [...m.tiles], instances: [...m.instances] })), bonus: [...v.bonus] }, drawn);
+          throw new Stop({
+            ...v, hand: [...v.hand], melds: v.melds.map((m) => ({ ...m, tiles: [...m.tiles], instances: [...m.instances] })), bonus: [...v.bonus],
+            // the table is live too, and the coach needs it to know which tiles are already dead
+            discardLog: v.discardLog.map((e) => ({ ...e })),
+            players: v.players.map((p) => ({ ...p, melds: p.melds.map((m) => ({ ...m, tiles: [...m.tiles] })), bonus: [...p.bonus] })),
+          } as PlayerView, drawn);
         }
       },
     });
@@ -62,13 +70,23 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const hand = view.hand.map(kindOf);
     const melds: Meld[] = view.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
     const bonus = view.bonus.map(kindOf);
-    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan };
+    // everything face-up that is not this player's own hand or melds: the discard pool, the other
+    // seats' exposed sets, and every flower/animal on the table
+    const discards = view.discardLog.map((e) => ({ seat: e.seat, kind: kindOf(e.tile), claimed: e.claimedBy !== null && e.claimedBy !== undefined }));
+    const publicMelds: Meld[][] = view.players.map((p, s) => (s === view.seat ? [] : p.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }))));
+    const publicBonus: TileKind[][] = view.players.map((p, s) => (s === view.seat ? [] : p.bonus.map(kindOf)));
+    const visible: TileKind[] = [
+      ...discards.map((d) => d.kind),
+      ...publicMelds.flatMap((ms) => ms.flatMap((m) => m.tiles)),
+      ...publicBonus.flat(),
+    ];
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible };
     const ranking = rankDiscards(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);
     const hasWrongAnswers = ranking.options.some((o) => o.verdict === 'mistake' || o.verdict === 'blunder');
     const interesting = hasWrongAnswers && (naivePick !== ranking.best.tile || ranking.best.target.id !== 'chicken');
-    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, naivePick };
+    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, naivePick, discards, publicMelds, publicBonus };
     if (!wantInteresting) return sc;
     if (interesting) return sc;
     fallback ??= sc;

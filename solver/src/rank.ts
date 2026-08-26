@@ -36,7 +36,7 @@ const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All
 /** How many tile kinds (weighted by copies left) would improve the hand FOR THE PLAN IT IS PLAYING.
  *  Using the wrong evaluator here silently applies chow logic to a pong hand (and vice versa),
  *  which shows up as a phantom preference between tiles the plan values identically. */
-function acceptance(h: HandInput, best: TargetEval): number {
+function acceptance(h: HandInput, best: TargetEval, gone: number[] = []): number {
   const evalFor = (x: HandInput): number => {
     if (best.id === 'half_color') return rule961(x).value;
     if (best.id === 'ping_wu' || best.id === 'all_chow') return rule5313(x).value;
@@ -47,7 +47,8 @@ function acceptance(h: HandInput, best: TargetEval): number {
   let n = 0;
   const held = new Map<TileKind, number>(); for (const k of h.concealed) held.set(k, (held.get(k) ?? 0) + 1);
   for (let k = 0; k < 34; k++) {
-    const left = 4 - (held.get(k) ?? 0) - h.melds.reduce((a, m) => a + m.tiles.filter((t) => t === k).length, 0);
+    // a tile whose copies are all on the table cannot arrive, however much it would help
+    const left = 4 - (held.get(k) ?? 0) - h.melds.reduce((a, m) => a + m.tiles.filter((t) => t === k).length, 0) - (gone[k] ?? 0);
     if (left <= 0) continue;
     if (evalFor({ concealed: [...h.concealed, k], melds: h.melds }) > base) n += left;
   }
@@ -57,6 +58,9 @@ function acceptance(h: HandInput, best: TargetEval): number {
 export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context): Ranking {
   const allJokers = concealed.every(isJoker);
   const kinds = [...new Set(concealed)].filter((k) => allJokers || !isJoker(k));   // never offer a wildcard as a discard
+  // copies of each kind already face-up somewhere other than this player's own hand and melds
+  const gone = new Array<number>(34).fill(0);
+  for (const k of ctx.visible ?? []) if (k < 34) gone[k]!++;
   const opts: DiscardOption[] = [];
   const hands = new Map<TileKind, HandInput>();
   for (const k of kinds) {
@@ -71,7 +75,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   const cutoff = opts[0]!.chips - 1.5;
   for (const o of opts) {
     if (o.chips < cutoff) break;
-    o.acceptance = acceptance(hands.get(o.tile)!, o.target);
+    o.acceptance = acceptance(hands.get(o.tile)!, o.target, gone);
     o.chips += o.acceptance * 0.06;
   }
   opts.sort((a, b) => b.chips - a.chips);
@@ -79,7 +83,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
   for (const o of opts) {
     o.delta = o.chips - top.chips;
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
-    o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds));
+    o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds, gone));
   }
   const t = top.target;
   const where = t.suit ? ` in ${SUIT_NAME[t.suit as keyof typeof SUIT_NAME]}` : '';
@@ -136,10 +140,11 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
 }
 
 /** copies of each kind not visible in your own hand or any meld (a rough "still out there" count) */
-function unseenOf(concealed: TileKind[], melds: Meld[]): number[] {
+function unseenOf(concealed: TileKind[], melds: Meld[], gone: number[] = []): number[] {
   const u = new Array(34).fill(4);
   for (const k of concealed) if (k < 34) u[k]--;
   for (const m of melds) for (const k of m.tiles) if (k < 34) u[k]--;
+  for (let k = 0; k < 34; k++) u[k] = Math.max(0, u[k] - (gone[k] ?? 0));   // discards and everyone's exposed melds
   return u;
 }
 // only All-Pong forbids sequences; Half-Color is one suit + honours and may still chow, so neighbours matter there

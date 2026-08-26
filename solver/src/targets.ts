@@ -27,7 +27,14 @@ export function fanRoutes(concealed: TileKind[], ctx: Context): FanRoute[] {
   return routes.sort((a, b) => b.fan - a.fan);
 }
 export interface TargetEval { id: TargetId; value: number | string; chips: number; armed: boolean; note?: string; suit?: string }
-export interface Context { seat: number; prevailingWind: number; bonus: TileKind[]; playerTurns: number; minimumFan: 1 | 2; selfDrawMinimumFan: number }
+export interface Context {
+  seat: number; prevailingWind: number; bonus: TileKind[]; playerTurns: number; minimumFan: 1 | 2; selfDrawMinimumFan: number;
+  /** Every tile kind the player can SEE that is not in their own concealed hand or own melds:
+   *  the discard pool, all players' exposed melds, all flowers and animals on the table. Without it
+   *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
+   *  still become. Optional so older callers keep working - they just reason blind. */
+  visible?: readonly TileKind[];
+}
 
 type Row = Record<string, number>;
 const lookup = (row: Row | undefined, v: number, floor = -8): number => {

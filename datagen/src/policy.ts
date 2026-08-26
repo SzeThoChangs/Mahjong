@@ -270,4 +270,11 @@ ${H
     : `  w: ${JSON.stringify(round(w))},`}
 } as const;
 `);
-console.log(`\nweights -> ${outPath}  (hidden=${H})`);
+// also as JSON, so tooling can load the weights without importing the browser-facing module
+const jsonPath = outPath.replace(/\.ts$/, '.json');
+writeFileSync(jsonPath, JSON.stringify({
+  features: FEATURES, hidden: H, mu: round(mu), sd: round(sd),
+  ...(H ? { W1: W1.map(round), b1: round(b1), w2: round(w2) } : { w: round(w) }),
+  trainedOn: train.length, heldOut: test.length, heldOutTop1: Number(learned.toFixed(4)), clear,
+}, null, 1));
+console.log(`\nweights -> ${outPath}  and  ${jsonPath}  (hidden=${H})`);
