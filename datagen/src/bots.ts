@@ -7,7 +7,7 @@
 import {
   kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld,
 } from 'sg-mahjong-engine';
-import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from './features.js';
+import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
 import { isHonour, isJoker, rankOf } from 'sg-mahjong-engine';
 
 export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive';

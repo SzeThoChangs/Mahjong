@@ -88,3 +88,39 @@ describe('discard reasons are always explanations', () => {
     }
   });
 });
+
+describe('learned policy', () => {
+  // The shipped weights and the trainer must agree on the feature vector. If they drift, the model
+  // still returns a confident answer - it is just scoring the wrong numbers - so pin the contract.
+  it('scores the vector it was trained on', async () => {
+    const { POLICY_FEATURE_NAMES, policyFeatures, policyRank, policyScore } = await import('../src/policy.js');
+    const { POLICY } = await import('../src/policy.weights.js');
+    expect(POLICY.mu.length).toBe(POLICY_FEATURE_NAMES.length);
+    expect(POLICY.sd.length).toBe(POLICY_FEATURE_NAMES.length);
+    if (POLICY.hidden) {
+      expect(POLICY.W1.length).toBe(POLICY.hidden);
+      for (const row of POLICY.W1) expect(row.length).toBe(POLICY_FEATURE_NAMES.length);
+      expect(POLICY.w2.length).toBe(POLICY.hidden);
+    }
+    const hand = K('2t 3t 4t 5t 6t 7t 8t 2s 3s 4s 5s 6s 7s 9w');
+    const r = policyRank(hand, [], ctx({ playerTurns: 12 }));
+    expect(r.options.length).toBe(new Set(hand).size);
+    expect(r.options[0]!.tile).toBe(r.best);
+    // sorted by score, and the softmax is a distribution
+    for (let i = 1; i < r.options.length; i++) expect(r.options[i - 1]!.score).toBeGreaterThanOrEqual(r.options[i]!.score);
+    expect(r.options.reduce((a, o) => a + o.p, 0)).toBeCloseTo(1, 6);
+    // no feature index is silently dropped: a changed vector changes the score
+    const f = { k: 0, sh: 2, eff: 5, rem: 12, pairs: 1, trip: 0, seq: 2, pseq: 1, iso: 3, isoTile: false, term: false, hon: false, dragon: false, wind: false } as never;
+    expect(policyScore(policyFeatures(f, 0, 0, 10))).not.toBe(policyScore(policyFeatures(f, 0, 0, 40)));
+  });
+
+  it('counts the table: a tile whose copies are all gone is not an improver', async () => {
+    const { policyRank } = await import('../src/policy.js');
+    const hand = K('2t 3t 5t 6t 8t 9t 2s 3s 5s 6s 8s 9s 1w 1w');
+    const blind = policyRank(hand, [], ctx({ playerTurns: 20 }));
+    // bury every tile that would complete the 2t3t shape
+    const dead = [...K('1t 1t 1t 1t 4t 4t 4t 4t')];
+    const seeing = policyRank(hand, [], ctx({ playerTurns: 20, visible: dead }));
+    expect(seeing.options.map((o) => o.score)).not.toEqual(blind.options.map((o) => o.score));
+  });
+});

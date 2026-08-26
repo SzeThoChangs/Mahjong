@@ -1,7 +1,7 @@
 /** Compact, serialisable records. Tiles are numeric kinds (0..45); see engine/src/tiles.ts for the layout. */
 import { kindOf, type Decision, type InstMeld, type LegalAction, type TileKind } from 'sg-mahjong-engine';
 import type { BotType } from './bots.js';
-import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from './features.js';
+import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
 
 /** meld -> [type(0 chow,1 pong,2 kong), concealed(0/1), ...kinds] */
 export const encMeld = (m: InstMeld | { type: string; tiles: TileKind[]; concealed: boolean }): number[] =>

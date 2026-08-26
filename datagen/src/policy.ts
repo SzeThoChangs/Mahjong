@@ -23,7 +23,8 @@ import { loadHands } from './stats.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
-import type { DiscardFeatures } from './features.js';
+import type { DiscardFeatures } from 'sg-mahjong-engine';
+import { policyFeatures, POLICY_FEATURE_NAMES } from 'sg-mahjong-solver';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
@@ -35,25 +36,12 @@ const outPath = arg('out', '../solver/src/policy.weights.ts')!;
 const packPath = arg('pack', '../web/public/quiz/money.json')!;
 
 // ---------------------------------------------------------------- features
-export const FEATURES = [
-  'sh', 'eff', 'rem', 'pairs', 'trip', 'seq', 'pseq', 'iso',
-  'isoTile', 'hon', 'term', 'dragon', 'seatWind', 'prevWind',
-  'honIso', 'sh_x_turn', 'eff_x_turn', 'iso_x_turn',
-] as const;
-
-/** One candidate discard as a vector. Anything constant across candidates cancels in the softmax. */
-function featurise(f: DiscardFeatures, role: number, prevailing: number, turns: number): number[] {
-  const turnNorm = Math.min(1, turns / 40);
-  const seatWind = f.k === 27 + role ? 1 : 0;
-  const prevWind = f.k === 27 + prevailing ? 1 : 0;
-  const isoTile = f.isoTile ? 1 : 0;
-  const hon = f.hon ? 1 : 0;
-  return [
-    f.sh, f.eff, f.rem, f.pairs, f.trip, f.seq, f.pseq, f.iso,
-    isoTile, hon, f.term ? 1 : 0, f.dragon ? 1 : 0, seatWind, prevWind,
-    hon * isoTile, f.sh * turnNorm, f.eff * turnNorm, f.iso * turnNorm,
-  ];
-}
+// Defined in the SOLVER, so the model that ships to the browser scores with exactly the vector it
+// was trained on. Duplicating this was the obvious way to get a model that looks trained and picks
+// at random, with nothing to catch it.
+export const FEATURES = POLICY_FEATURE_NAMES;
+const featurise = (f: DiscardFeatures, role: number, prevailing: number, turns: number): number[] =>
+  policyFeatures(f, role, prevailing, turns);
 
 interface Example { x: number[][]; label: number; heldOut: boolean; sel: number; turns: number }
 

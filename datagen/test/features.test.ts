@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseKinds } from 'sg-mahjong-engine';
-import { shanten, ukeire, structure, unseenCounts } from '../src/features.js';
+import { shanten, ukeire, structure, unseenCounts } from 'sg-mahjong-engine';
 const K = parseKinds;
 describe('shanten', () => {
   it('complete hand = -1, calling = 0', () => {

@@ -6,10 +6,11 @@
  * are reduced to the set of achievable (sets, partials, pairs) outcomes, then
  * suits and honours are combined. Fast enough to run ~500 times per decision.
  */
-import { KIND, countsOf, countsAndJokers, fanInHand, isHonour, isJoker, isSuited, rankOf, suitOf, isTerminal, isWind, isDragon, type TileKind, type Meld, THIRTEEN_WONDER_KINDS } from 'sg-mahjong-engine';
+import { KIND, countsAndJokers, isHonour, isJoker, isSuited, rankOf, suitOf, isTerminal, isWind, isDragon, type TileKind, THIRTEEN_WONDER_KINDS } from './tiles.js';
+import { fanInHand, type Meld } from './score.js';
 
-export { shantenStandard, shantenThirteen, shanten } from 'sg-mahjong-engine';
-import { shantenStandard, shantenThirteen, shanten } from 'sg-mahjong-engine';
+export { shantenStandard, shantenThirteen, shanten } from './shanten.js';
+import { shantenStandard, shantenThirteen, shanten } from './shanten.js';
 
 export interface Structure { pairs: number; triplets: number; sequences: number; partialSeqs: number; isolated: number; honours: number; suitCounts: [number, number, number]; terminals: number }
 export function structure(concealed: TileKind[]): Structure {
