@@ -231,5 +231,52 @@ estimate, the one option that cuts variance and compute together. It is also the
 most where the pack is now weakest — early-hand positions, which is exactly where a full play-out is
 longest and most chaotic.
 
+### How far the book coach is from the measurement (measured 2026-08-26)
+
+The Train tab teaches the coach; the Real quiz teaches the evaluator. `solver/src/coachcheck.ts`
+measures the distance on the 4,086 decisive discard questions — positions where the play-outs
+genuinely separate the best answer, so any disagreement is the coach's and not noise.
+
+| | picks the measured best | cost per hand |
+|---|---|---|
+| book coach | 52.8% (61.6% counting ties it declared) | $2.02 |
+| the recorded bots | 41.0% | $2.90 |
+| random discard | 15.1% | — |
+
+The coach is real signal — clearly ahead of the simulator bots, miles ahead of random — but it
+leaves $2.02 a hand behind, and it is uneven:
+
+```
+by plan     all_chow 79.3% ($0.64)   ping_wu 59.0%   half_color 46.9%   chicken 38.3%   all_pong 33.2% ($2.72)
+by phase    mid 61.8%   late 50.7%   early 36.1% ($2.84)
+worst cell  early + chicken  7.6%  ($3.78)  - worse than guessing at random
+```
+
+**Two obvious fixes were tried and neither works.** Both are recorded so they are not tried again:
+
+- *The missing Section 6.5 (All-Pong at MF2).* The code substitutes the MF1 table plus a flat
+  `+0.5`, where the targets that do have both levels show real MF2 corrections of +1.6 to +3.8
+  chips — so the placeholder looked about 4x too small. Sweeping it 0.0 → 3.0 moves overall
+  agreement by 0.1pp, and *raising* it makes All-Pong worse (33.2% → 27.7%) by committing to the
+  plan more often. The current 0.5 is already near-optimal. Capturing 6.5 is a rigour item, not a
+  quality one.
+- *Chicken committed too early.* In the worst cell, 97% of the hands are legal only because of a
+  flower and 92% hold just 1–2 tai: the coach names Chicken on turn 8 because the hand is already
+  legal, when it should still be building. Discounting Chicken by remaining turns does stop that —
+  the cell shrinks from 92 cases to 42 — but overall agreement moves 52.8% → 53.2% and cost $2.02 →
+  $2.00. It relabels the decision without improving it.
+
+The disagreements are also *within* tile class (the largest bucket is middle → middle, 776 cases at
+$4.43 each), not a coarse "throws honours when it should throw middles" bias. Taken together: the
+coach's gap is not one mis-set constant, and the plan-by-plan spread mostly reflects which positions
+land under each label — All-Chow hands tend to have an obvious throw, All-Pong and Chicken hands do
+not. Tuning book heuristics further looks like a poor use of effort.
+
+**The decisive subset is the training set layer 3 was waiting for.** The noise floor blocks learning
+from all 479,913 decisions, but ~48,000 of them (15.0k discards, 21.6k claims, 4.9k self-actions)
+have a best action separated at 2 SE — labels that are reliable by construction. That is a
+supervised dataset large enough to fit a discard policy against, and it needs no new compute. It
+would also be the honest way to close the coach's $2.02, since no amount of book-table tuning has.
+
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).
