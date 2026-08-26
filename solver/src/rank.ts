@@ -4,7 +4,7 @@ import {
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
-import { READS } from './reads.js';
+import { dealInChance, threatScale } from './reads.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -56,25 +56,9 @@ const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All
 // it is also standing in for the other reasons a already-safe tile tends to be a good throw.
 const DANGER_WEIGHT = 40;
 
-const bucket = (turn: number) => Math.max(0, Math.min(60, Math.round(turn / 10) * 10));
-const tileClass = (k: TileKind) => (isHonour(k) ? 'honour' : isTerminal(k) ? 'terminal' : 'simple');
-
 function dealInChips(k: TileKind, ctx: Context, gone: number[]): number {
   if (isJoker(k)) return 0;
-  const t = bucket(ctx.playerTurns);
-  const fresh = (gone[k] ?? 0) === 0 ? 'fresh' : 'seen';
-  const p = READS.dangerSafe[`${tileClass(k)}|${t}|${fresh}`] ?? READS.danger[`${tileClass(k)}|${t}`];
-  if (p === undefined) return 0;
-  // how ready this table looks, relative to an average one at the same turn
-  const melds = ctx.opponentMelds;
-  let scale = 1;
-  if (melds?.length) {
-    const readyOf = (m: number) => READS.ready[`${Math.max(0, Math.min(3, m))}|${t}`] ?? 0;
-    const here = melds.reduce((a, m) => a + readyOf(m), 0) / melds.length;
-    const typical = readyOf(0) * 0.55 + readyOf(1) * 0.3 + readyOf(2) * 0.12 + readyOf(3) * 0.03;
-    if (typical > 1e-9) scale = Math.max(0.25, Math.min(4, here / typical));
-  }
-  return p * scale * DANGER_WEIGHT;
+  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0) * threatScale(ctx.opponentMelds, ctx.playerTurns) * DANGER_WEIGHT;
 }
 
 /** Say out loud what the discard pool means for this tile, so the advice can be argued with. */

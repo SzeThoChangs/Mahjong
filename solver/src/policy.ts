@@ -10,24 +10,45 @@
  */
 import { discardFeatures, unseenCounts, type DiscardFeatures, type Meld, type TileKind } from 'sg-mahjong-engine';
 import { POLICY } from './policy.weights.js';
+import { dealInChance, threatScale } from './reads.js';
 import type { Context } from './targets.js';
 
 export const POLICY_FEATURE_NAMES = [
   'sh', 'eff', 'rem', 'pairs', 'trip', 'seq', 'pseq', 'iso',
   'isoTile', 'hon', 'term', 'dragon', 'seatWind', 'prevWind',
   'honIso', 'sh_x_turn', 'eff_x_turn', 'iso_x_turn',
+  // What the throw hands the TABLE. Everything above describes only the player's own hand, which
+  // is how the model came to know nothing about danger while the coach was being taught it.
+  'seen', 'dealIn', 'dealIn_x_threat',
 ] as const;
 
+/**
+ * What the player can see, reduced to the two numbers the features need.
+ *
+ * `threat` alone is deliberately NOT a feature: it is identical for every candidate discard, so it
+ * cancels in the softmax and would train to nothing. It only carries signal multiplied by a
+ * per-tile quantity.
+ */
+export interface PolicyTable { gone: readonly number[]; threat: number }
+export function policyTable(ctx: Context): PolicyTable {
+  const gone = new Array<number>(34).fill(0);
+  for (const k of ctx.visible ?? []) if (k < 34) gone[k]!++;
+  return { gone, threat: threatScale(ctx.opponentMelds, ctx.playerTurns) };
+}
+
 /** One candidate discard as a vector. Anything constant across candidates cancels in the softmax. */
-export function policyFeatures(f: DiscardFeatures, role: number, prevailingWind: number, playerTurns: number): number[] {
+export function policyFeatures(f: DiscardFeatures, role: number, prevailingWind: number, playerTurns: number, table?: PolicyTable): number[] {
   const turnNorm = Math.min(1, playerTurns / 40);
   const isoTile = f.isoTile ? 1 : 0;
   const hon = f.hon ? 1 : 0;
+  const seen = table ? (table.gone[f.k] ?? 0) : 0;
+  const dealIn = dealInChance(f.k, playerTurns, seen);
   return [
     f.sh, f.eff, f.rem, f.pairs, f.trip, f.seq, f.pseq, f.iso,
     isoTile, hon, f.term ? 1 : 0, f.dragon ? 1 : 0,
     f.k === 27 + role ? 1 : 0, f.k === 27 + prevailingWind ? 1 : 0,
     hon * isoTile, f.sh * turnNorm, f.eff * turnNorm, f.iso * turnNorm,
+    seen, dealIn, dealIn * (table?.threat ?? 1),
   ];
 }
 
@@ -64,7 +85,8 @@ export function policyRank(concealed: TileKind[], melds: Meld[], ctx: Context): 
     allDiscards: [...(ctx.visible ?? [])],
   });
   const feats = discardFeatures(concealed, melds, unseen);
-  const scores = feats.map((f) => policyScore(policyFeatures(f, ctx.seat, ctx.prevailingWind, ctx.playerTurns)));
+  const table = policyTable(ctx);
+  const scores = feats.map((f) => policyScore(policyFeatures(f, ctx.seat, ctx.prevailingWind, ctx.playerTurns, table)));
   const mx = Math.max(...scores);
   const ex = scores.map((s) => Math.exp(s - mx));
   const sum = ex.reduce((a, b) => a + b, 0);

@@ -81,11 +81,41 @@ Mahjong/                      (git repo, pnpm workspace)
 
 ## Deploy
 
-- GitHub repo for `Mahjong/`. **`.gitignore` the two screenshot folders, the
-  `.acsm`, and `node_modules`** — the book pages are copyrighted and must not be
-  pushed. Everything else (engine, solver, data, knowledge, tile images) is ours.
-- Vercel project → root `web/`, build `pnpm build`, output `dist/`. Preview URL
-  on every push.
+`vercel.json` at the repo root does the configuration, and it deploys **from the repo root,
+not from `web/`**. That matters: `web/src/lib/scenario.ts` imports
+`../../../data/table.config.json`, and the `workspace:*` deps live in `engine/` and `solver/`,
+so a `web/`-rooted deploy would need Vercel's "include files outside the root directory"
+toggle and fail confusingly without it. Rooting at the repo removes the problem.
+
+```json
+{ "framework": "vite", "installCommand": "pnpm install",
+  "buildCommand": "pnpm -C web build", "outputDirectory": "web/dist" }
+```
+
+Verified locally: `rm -rf web/dist && pnpm -C web build` produces a 24 MB `web/dist` with
+`index.html` + hashed `assets/` + the static data directories.
+
+**Steps (the repo has no git remote yet, and the branch is `evaluator-accuracy`):**
+
+1. Create an empty GitHub repo. Do **not** initialise it with any files.
+2. `git remote add origin <url>` and push. `.gitignore` is verified clean — `git ls-files`
+   shows none of the copyrighted book scans, the `.acsm`, or the 10 GB `data/gen/` are
+   tracked, so nothing copyrighted can leave the machine.
+3. Vercel → New Project → import the repo. Leave **Root Directory as the repo root**;
+   `vercel.json` supplies framework, install, build and output. Nothing else to configure —
+   there are no environment variables anywhere in `web/`.
+4. Pick the production branch (currently `evaluator-accuracy`; rename to `main` if you want
+   the usual default).
+
+**What does not survive the move to production, by design:** `/api/challenge` is a Vite
+dev-server middleware and cannot exist on static hosting — it shells out to the evaluator over
+the 10 GB `data/gen/`. `RealQuiz` already gates that button behind `import.meta.env.DEV`, and
+Vite strips both the button and its handler from the production bundle.
+
+**First load is heavy:** `quiz/money.json` is 10.4 MB and the Real quiz fetches the whole pack
+up front. Vercel will compress it in transit and the `Cache-Control` headers in `vercel.json`
+keep it cached afterwards, but the first visit on mobile data will be slow. Splitting the pack
+is the fix if that ever matters.
 
 ## Build order
 

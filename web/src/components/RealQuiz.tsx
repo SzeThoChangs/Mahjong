@@ -62,14 +62,15 @@ export default function RealQuiz() {
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
   const [score, setScore] = useState({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
+  const [runId, setRunId] = useState<string | null>(null);   // from the pack we already have; refetching it costs 10MB
   const [challenging, setChallenging] = useState(false);
   const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
 
   useEffect(() => { fetch('/quiz/index.json').then((r) => r.json()).then((d: { packs: PackIx[] }) => { setPacks(d.packs); if (d.packs[0]) setPack(d.packs[0].id); }).catch(() => setPacks([])); }, []);
   useEffect(() => {
     if (!pack) return;
-    fetch(`/quiz/${pack}.json`).then((r) => r.json()).then((d: { unit: string; questions: Q[] }) => {
-      setUnit(d.unit); setQs(d.questions);
+    fetch(`/quiz/${pack}.json`).then((r) => r.json()).then((d: { unit: string; run?: string; questions: Q[] }) => {
+      setUnit(d.unit); setQs(d.questions); setRunId(d.run ?? null);
       const idx = d.questions.map((_, i) => i);
       for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }
       setOrder(idx); setPos(0); setPicked(null);
@@ -149,8 +150,7 @@ export default function RealQuiz() {
     if (!pack || picked === null) return;
     setChallenging(true); setChallengeResult(null);
     try {
-      const packMeta = await fetch(`/quiz/${pack}.json`).then((r) => r.json()) as { run: string };
-      const res = await fetch(`/api/challenge?run=${packMeta.run}&id=${q.id}&hand=${q.h.join(',')}&rollouts=512`).then((r) => r.json());
+      const res = await fetch(`/api/challenge?run=${runId ?? pack}&id=${q.id}&hand=${q.h.join(',')}&rollouts=512`).then((r) => r.json());
       setChallengeResult(res);
     } catch { setChallengeResult({ error: 'challenge needs the local dev server' }); }
     setChallenging(false);

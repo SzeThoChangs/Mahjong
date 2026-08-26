@@ -5,7 +5,7 @@
 import {
   Wall, makeRng, playGame, IsolationBot, kindOf, type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig,
 } from 'sg-mahjong-engine';
-import { rankDiscards, type Ranking, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, policyRank, type Ranking, type PolicyRanking, type Context } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
 
 export type Phase = 'early' | 'mid' | 'late' | 'any';
@@ -24,7 +24,8 @@ export interface Scenario {
   drawn: TileKind | null;
   melds: Meld[];
   bonus: TileKind[];
-  ranking: Ranking;
+  ranking: Ranking;           // the book coach - now the EXPLAINER, not the grader
+  policyRanking: PolicyRanking; // the learned model - the grader (it is $0.56/decision better)
   interesting: boolean;
   naivePick: TileKind;       // what the baseline bot would discard
   discards: { seat: number; kind: TileKind; claimed: boolean }[];   // the pool, in order thrown
@@ -83,11 +84,15 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
       opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0) };
     const ranking = rankDiscards(hand, melds, ctx);
+    const policyRanking = policyRank(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);
-    const hasWrongAnswers = ranking.options.some((o) => o.verdict === 'mistake' || o.verdict === 'blunder');
-    const interesting = hasWrongAnswers && (naivePick !== ranking.best.tile || ranking.best.target.id !== 'chicken');
-    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, naivePick, discards, publicMelds, publicBonus };
+    // "Interesting" now keys off the GRADER, so hand selection and scoring agree: a hand is worth
+    // asking when the model separates the options and the naive throw is not already the answer.
+    const spread = (policyRanking.options[policyRanking.options.length - 1]?.p ?? 0) / Math.max(1e-9, policyRanking.options[0]!.p);
+    const hasWrongAnswers = spread < 0.25;
+    const interesting = hasWrongAnswers && naivePick !== policyRanking.best;
+    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, policyRanking, interesting, naivePick, discards, publicMelds, publicBonus };
     if (!wantInteresting) return sc;
     if (interesting) return sc;
     fallback ??= sc;

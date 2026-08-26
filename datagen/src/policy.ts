@@ -24,7 +24,7 @@ import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DiscardFeatures } from 'sg-mahjong-engine';
-import { policyFeatures, POLICY_FEATURE_NAMES } from 'sg-mahjong-solver';
+import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, type PolicyTable } from 'sg-mahjong-solver';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
@@ -40,8 +40,22 @@ const packPath = arg('pack', '../web/public/quiz/money.json')!;
 // was trained on. Duplicating this was the obvious way to get a model that looks trained and picks
 // at random, with nothing to catch it.
 export const FEATURES = POLICY_FEATURE_NAMES;
-const featurise = (f: DiscardFeatures, role: number, prevailing: number, turns: number): number[] =>
-  policyFeatures(f, role, prevailing, turns);
+const featurise = (f: DiscardFeatures, role: number, prevailing: number, turns: number, table: PolicyTable): number[] =>
+  policyFeatures(f, role, prevailing, turns, table);
+
+/** The same view of the table the browser will have: pool, other seats' melds, their bonus tiles. */
+function tableOf(d: DecisionRecord): PolicyTable {
+  const visible: number[] = [];
+  for (const e of d.pub.dl) visible.push(e[1]!);
+  d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...m.slice(2)); });
+  d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...bs); });
+  return policyTable({
+    seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: [], playerTurns: d.t,
+    minimumFan: 2, selfDrawMinimumFan: 1,
+    visible,
+    opponentMelds: d.pub.m.map((ms, s) => (s === d.p ? -1 : ms.length)).filter((n) => n >= 0),
+  });
+}
 
 interface Example { x: number[][]; label: number; heldOut: boolean; sel: number; turns: number }
 
@@ -84,8 +98,9 @@ for (const hand of hands) {
     const bestKind = Number(best.slice(2));
     const li = feats.findIndex((f) => f.k === bestKind);
     if (li < 0) { unmatched++; continue; }
+    const table = tableOf(d);        // one view per decision, not per candidate tile
     examples.push({
-      x: feats.map((f) => featurise(f, role(d), d.w, d.t)),
+      x: feats.map((f) => featurise(f, role(d), d.w, d.t, table)),
       label: li,
       heldOut: heldOutIds.has(`${d.g}:${d.h}:${d.d}`),
       sel: feats.findIndex((f) => `d:${f.k}` === d.sel),
