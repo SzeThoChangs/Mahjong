@@ -18,19 +18,31 @@ import type { Meld } from 'sg-mahjong-engine';
 const WIND = ['東', '南', '西', '北'];
 
 interface PackIx { id: string; money: boolean; unit: string; questions: number }
-interface Action { a: string; ev: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
+// `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
+// the play-outs can tell them apart. Packs built before 2026-08-26 have no `se` field.
+interface Action { a: string; ev: number; se?: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
 interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
-type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
+type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
 
 const VERDICT_STYLE: Record<Verdict, string> = {
-  best: 'bg-emerald-600 text-white', fine: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
+  best: 'bg-emerald-600 text-white', unclear: 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-50',
+  fine: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
   mistake: 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50', blunder: 'bg-red-600 text-white',
 };
-const VERDICT_TEXT: Record<Verdict, string> = { best: 'Best move', fine: 'Close enough', mistake: 'Mistake', blunder: 'Big mistake' };
+const VERDICT_TEXT: Record<Verdict, string> = { best: 'Best move', unclear: 'Too close to call', fine: 'Close enough', mistake: 'Mistake', blunder: 'Big mistake' };
 
-const verdictOf = (regret: number, unit: string): Verdict => {
+/**
+ * Nothing inside the measurement error may be called a mistake. At 128 play-outs the paired error
+ * on this dataset averages about a chip, which is larger than the old fixed 0.35 / 1.5 bands - so
+ * the bands are floored at the position's own error bar and only widen when it is the binding one.
+ */
+const verdictOf = (regret: number, unit: string, se = 0): Verdict => {
   const [fine, mistake] = unit === '$' ? [0.35, 1.5] : [0.8, 3.5];
-  return regret <= 0.01 ? 'best' : regret <= fine ? 'fine' : regret <= mistake ? 'mistake' : 'blunder';
+  if (regret <= 0.01) return 'best';
+  if (regret <= se) return 'unclear';
+  if (regret <= Math.max(fine, 2 * se)) return 'fine';
+  if (regret <= Math.max(mistake, 3 * se)) return 'mistake';
+  return 'blunder';
 };
 const kindsOf = (a: string): number[] => a.startsWith('d:') ? [Number(a.slice(2))] : a.startsWith('chow:') ? a.slice(5).split(',').map(Number) : (/^\w+:(\d+)$/.exec(a) ? [Number(/^\w+:(\d+)$/.exec(a)![1])] : []);
 const actionText = (a: string) => a === 'win' ? 'Win' : a === 'pass' ? 'Pass' : a === 'proceed' ? 'No kong' : a.startsWith('d:') ? `Discard ${tileLabel(Number(a.slice(2)))}` : a.startsWith('pong') ? 'Pong' : a.startsWith('chow') ? 'Chow' : 'Kong';
@@ -44,7 +56,7 @@ export default function RealQuiz() {
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
-  const [score, setScore] = useState({ best: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
+  const [score, setScore] = useState({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
   const [challenging, setChallenging] = useState(false);
   const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
 
@@ -86,7 +98,12 @@ export default function RealQuiz() {
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];
-    return [...q.actions].map((a) => (a.mix ? { ...a, ev: priceMix(a.mix, a.n ?? 128, money) } : a)).sort((x, y) => y.ev - x.ev);
+    const out = q.actions.map((a) => (a.mix ? { ...a, ev: priceMix(a.mix, a.n ?? 128, money) } : a)).sort((x, y) => y.ev - x.ev);
+    // Re-pricing re-weights the same play-out outcomes, so the error bar moves with the spread it was
+    // measured against. Scale it by how much the spread moved rather than keep the recorded number.
+    const ev = (xs: Action[]) => Math.max(1e-6, (xs[0]?.ev ?? 0) - (xs[xs.length - 1]?.ev ?? 0));
+    const k = Math.min(10, Math.max(0.1, ev(out) / ev(q.actions)));
+    return out.map((a) => (a.se === undefined ? a : { ...a, se: a.se * k }));
   }, [q, money]);
 
   if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
@@ -97,14 +114,16 @@ export default function RealQuiz() {
   const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
   const bestAction = actions[0]!;
   const regret = pickedAction ? bestAction.ev - pickedAction.ev : 0;
-  const verdict = pickedAction ? verdictOf(regret, unit) : null;
+  const pickedSe = pickedAction?.se ?? 0;
+  const verdict = pickedAction ? verdictOf(regret, unit, pickedSe) : null;
 
   const choose = (a: string) => {
     if (picked !== null) return;
     setPicked(a);
     const act = actions.find((x) => x.a === a)!;
-    const v = verdictOf(bestAction.ev - act.ev, unit);
-    setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
+    const v = verdictOf(bestAction.ev - act.ev, unit, act.se ?? 0);
+    const kept = v === 'best' || v === 'fine' || v === 'unclear';
+    setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: kept ? s.streak + 1 : 0 }));
   };
   const next = () => { setPicked(null); setChallengeResult(null); setPos((p) => p + 1); };
   const runsChallenge = async () => {
@@ -203,6 +222,7 @@ export default function RealQuiz() {
               <span className="text-sm">
                 {verdict === 'best' ? <>Measured best: worth <b>{fmt(pickedAction.ev)}</b> per hand.</>
                   : <>Your {actionText(pickedAction.a).toLowerCase()} is worth <b>{fmt(pickedAction.ev)}</b>; best was {actionText(bestAction.a).toLowerCase()} at <b>{fmt(bestAction.ev)}</b> — you gave up <b>{fmt(regret)}</b>.</>}
+                {verdict === 'unclear' && pickedSe > 0 && <> These {q.n} play-outs resolve a gap of about <b>{fmt(pickedSe)}</b>, so this one is inside the noise — not a worse move, just an unmeasurable one.</>}
               </span>
               <span className="ml-auto text-xs text-muted-foreground">the {q.bot} bot chose {actionText(q.sel).toLowerCase()}</span>
             </div>
@@ -237,6 +257,10 @@ export default function RealQuiz() {
                   <div className="flex-1 h-4 rounded bg-secondary relative overflow-hidden">
                     <div className={cn('absolute inset-y-0 rounded', isBest ? 'bg-emerald-500' : isPick ? 'bg-sky-500' : 'bg-muted-foreground/40')}
                       style={{ left: `${((Math.min(0, a.ev) - min) / span) * 100}%`, width: `${(Math.abs(a.ev) / span) * 100}%` }} />
+                    {a.se ? (   // ±1 SE: how far this bar could slide on a re-run. Overlapping whiskers = not separated.
+                      <div className="absolute inset-y-1 border-x-2 border-foreground/35"
+                        style={{ left: `${(Math.max(min, a.ev - a.se) - min) / span * 100}%`, width: `${(Math.min(max, a.ev + a.se) - Math.max(min, a.ev - a.se)) / span * 100}%` }} />
+                    ) : null}
                   </div>
                   <span className="w-16 tabular-nums text-right">{fmt(a.ev)}</span>
                   <span className="w-20 text-muted-foreground">win {(a.win * 100).toFixed(0)}%</span>
@@ -262,7 +286,13 @@ export default function RealQuiz() {
                     <>
                       <div className="font-medium">{overturned ? '🎉 Overturned — the recount says YOUR move is best.' : stillBest ? 'Verdict stands on the recount.' : `The recount prefers ${actionText(nBest.a).toLowerCase()} — a genuinely close position.`}</div>
                       <div className="text-muted-foreground">512 fresh play-outs per move: your {picked !== null ? actionText(picked).toLowerCase() : ''} {nPick ? fmt(nPick.ev) : '?'} vs best {actionText(nBest.a).toLowerCase()} {fmt(nBest.ev)} (was {fmt(bestAction.ev)} at {q.n}).</div>
-                      {nPick && Math.abs(nBest.ev - nPick.ev) < 0.3 && <div className="text-muted-foreground">Gap under 0.3 — call it a coin flip; either move is fine at the table.</div>}
+                      {nPick && (() => {
+                        // the recount buys precision as 1/sqrt(n), so its resolution is the pack's scaled by sqrt(q.n / n)
+                        const res = pickedSe > 0 ? pickedSe * Math.sqrt(q.n / Math.max(1, challengeResult.ev!.n)) : 0.3;
+                        return Math.abs(nBest.ev - nPick.ev) < res
+                          ? <div className="text-muted-foreground">Gap under {fmt(res)} — still inside what {challengeResult.ev!.n} play-outs can resolve; call it a coin flip.</div>
+                          : null;
+                      })()}
                     </>
                   );
                 })()}
@@ -276,10 +306,11 @@ export default function RealQuiz() {
         <span>Session:</span>
         <Badge variant="outline" className="border-emerald-600 text-emerald-700 dark:text-emerald-300">best {score.best}</Badge>
         <Badge variant="outline">close {score.fine}</Badge>
+        <Badge variant="outline" className="border-slate-400 text-slate-600 dark:text-slate-300">too close to call {score.unclear}</Badge>
         <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-300">mistake {score.mistake}</Badge>
         <Badge variant="outline" className="border-red-600 text-red-700 dark:text-red-300">blunder {score.blunder}</Badge>
         <span>· given up {fmt(score.lost)} · streak {score.streak}</span>
-        <button className="underline ml-auto" onClick={() => setScore({ best: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 })}>reset</button>
+        <button className="underline ml-auto" onClick={() => setScore({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 })}>reset</button>
       </div>
     </div>
   );

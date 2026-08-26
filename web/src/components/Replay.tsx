@@ -15,7 +15,8 @@ const WIND = ['東', '南', '西', '北'];
 
 interface RunIx { id: string; money: boolean; unit: string; hands: number }
 interface HandIx { file: string; g: number; h: number; winner: number | null; sd: boolean; fan: number | null; combo: string; turns: number; delta: number[]; bots: string[]; evals: number }
-interface ActionEv { a: string; ev: number; win: number; dealin: number; draw: number; n: number }
+// `se` = paired standard error of (best.ev - this.ev). Exports written before 2026-08-26 lack it.
+interface ActionEv { a: string; ev: number; se?: number; win: number; dealin: number; draw: number; n: number }
 interface Row { d: number; k: string; t: number; p: number; sel: string; legal: string[]; h: number[]; dr: number | null; b: number[]; m4?: number[][][]; ch?: number[]; ev?: { best: string; regret: number; n: number; actions: ActionEv[] } }
 interface HandData { g: number; h: number; dealer: number; wind: number; bots: string[]; money: boolean; winner: number | null; selfDraw: boolean; discarder: number | null; fan: number | null; combo: string | null; turns: number; delta: number[]; decisions: Row[]; evalCount: number }
 
@@ -186,7 +187,12 @@ function EvBars({ ev, sel, unit }: { ev: NonNullable<Row['ev']>; sel: string; un
   const fmt = (x: number) => `${x < 0 ? '−' : '+'}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}`;
   return (
     <div className="space-y-1">
-      {ev.regret > 0.05 && <div className="text-sm">The bot's pick cost <b>{fmt(-ev.regret).replace('−', '')}</b> per hand vs the best move. <span className="text-muted-foreground">({ev.n} paired play-outs per move)</span></div>}
+      {ev.regret > 0.05 && (() => {
+        const se = ev.actions.find((a) => a.a === sel)?.se ?? 0;
+        return se > 0 && ev.regret <= se
+          ? <div className="text-sm">The bot's pick reads <b>{fmt(-ev.regret).replace('−', '')}</b> behind the best move — inside the ±{fmt(se).replace('+', '')} these {ev.n} play-outs can resolve, so the two are not actually separated. <span className="text-muted-foreground">(bars show ±1 SE)</span></div>
+          : <div className="text-sm">The bot's pick cost <b>{fmt(-ev.regret).replace('−', '')}</b> per hand vs the best move. <span className="text-muted-foreground">({ev.n} paired play-outs per move, bars show ±1 SE)</span></div>;
+      })()}
       {ev.regret <= 0.05 && <div className="text-sm text-emerald-700 dark:text-emerald-300">The bot found the best move.</div>}
       {ev.actions.map((a) => {
         const kinds = kindOfAction(a.a);
@@ -200,6 +206,10 @@ function EvBars({ ev, sel, unit }: { ev: NonNullable<Row['ev']>; sel: string; un
             <div className="flex-1 h-4 rounded bg-secondary relative overflow-hidden">
               <div className={cn('absolute inset-y-0 rounded', isBest ? 'bg-emerald-500' : isSel ? 'bg-sky-500' : 'bg-muted-foreground/40')}
                 style={{ left: `${((Math.min(0, a.ev) - min) / span) * 100}%`, width: `${(Math.abs(a.ev) / span) * 100}%` }} />
+              {a.se ? (   // ±1 SE: how far this bar could slide if the play-outs were run again
+                <div className="absolute inset-y-1 border-x-2 border-foreground/35"
+                  style={{ left: `${(Math.max(min, a.ev - a.se) - min) / span * 100}%`, width: `${(Math.min(max, a.ev + a.se) - Math.max(min, a.ev - a.se)) / span * 100}%` }} />
+              ) : null}
             </div>
             <span className="w-16 tabular-nums text-right">{fmt(a.ev)}</span>
             <span className="w-24 text-muted-foreground">win {(a.win * 100).toFixed(0)}% · in {(a.dealin * 100).toFixed(0)}%</span>

@@ -121,8 +121,57 @@ The trainer plan above still stands; the project also now carries the three-laye
 | Layer | Status |
 |---|---|
 | 1 — Data generator (`datagen/`) | **Done, milestone met**: 100,000 hands / 8.22M decisions generated, 0 illegal actions, chips net zero, every hand replays from its seed; 5 bot personalities with 70/15/10/5 controlled randomness; JSONL.gz + Parquet; validation stats + flags. |
-| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Run at scale**: `data/gen/run-money2` = 150k hands / 9.03M decisions under the money rules, with **479,912 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy), 0 errors, 0 failed workers, 13h 12m. Resumable, crash-tolerant. The five original bot personalities only — `defensive` landed after this run was generated. **The stored `gapSe` in this run is sqrt(k) too small** (fixed in evaluate.ts after the run); corrected on read, only **28.7% of decisions have a clear best action at 1 SE and 9.2% at 2 SE — 4.5% for discards**, on a mean paired SE of 1.10 chips. |
-| 3 — Model | Not started. Blocked behind the layer-2 noise floor: the median gap between the best discard and the runner-up is 0.41 chips against a 1.10-chip standard error, so the evaluator cannot separate them. More rollouts scale as 1/sqrt(n) and are a bad trade (16x compute -> 47%). The route is variance reduction first (rollout RNG is sequential, so branches decorrelate on the first claim: rho 0.42 discard, 0.11 claim), then a scoring-aware rollout policy — ShantenBot is fan-blind and cannot know a hand is short of the 2-tai minimum. |
+| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Run at scale**: `data/gen/run-money2` = 150k hands / 9.03M decisions under the money rules, with **479,912 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy), 0 errors, 0 failed workers, 13h 12m. Resumable, crash-tolerant. The five original bot personalities only — `defensive` landed after this run was generated. **The stored `gapSe` in this run is sqrt(k) too small** (fixed in evaluate.ts after the run). Runs now carry `seVersion` in `evals-manifest.json` and `src/se.ts` corrects old ones on read, so every consumer sees the same honest number: **29% of decisions have a clear best action at 1 SE, 9% at 2 SE — 4% for discards, 27% for claims, 72% for self-actions** — on a mean paired SE of 1.10 chips. |
+| 3 — Model | Not started. Blocked behind the layer-2 noise floor: the median gap between the best discard and the runner-up is 0.41 chips against a 1.10-chip standard error. More rollouts scale as 1/sqrt(n) and are a bad trade (16x compute -> 47%). |
+
+### The noise floor is structural, not a coupling artifact (measured 2026-08-26)
+
+The previous status blamed the sequential rollout RNG: branches were said to decorrelate on the
+first claim, so sharing randomness better would tighten the estimate for free. **That diagnosis was
+wrong, and it is worth recording why so nobody spends a week on it.**
+
+`ShantenBot` — the rollout policy this run used — overrides all three decision methods and never
+touches its RNG. It is completely deterministic. There was no RNG desynchronisation to fix, because
+there was no RNG in the loop at all.
+
+`src/evaluate.ts` now supports position-keyed rollout randomness anyway (`CoupledBot`: each decision
+is re-keyed from a fingerprint of the position rather than from how many draws preceded it, so two
+branches that reach the same position draw alike however they got there). `src/coupling.ts` measures
+it, A/B, on the same decisions at the same seed:
+
+| policy | mean paired SE, sequential | position-keyed | change |
+|---|---|---|---|
+| shanten (this run) | 2.227 | 2.227 | none — the policy is deterministic |
+| efficiency | 2.323 | 2.209 | 4.9% lower (~1.1x the play-outs) |
+
+What the pairing is really doing, over all 479,913 evaluated decisions:
+
+```
+outcome SD 9.8 chips, paired-difference SD 10.7, correlation 0.37
+sharing the deal cuts the difference SD from 13.9 (independent) to 10.7 — 22% of the way to zero
+```
+
+The paired difference is *more* volatile than the outcome it is built from. Sharing the deal is
+already being done and buys the 22%; the rest is the hand itself diverging. A different discard
+draws a different claim, which shifts who draws what for the rest of the hand. That divergence is
+not noise layered on the signal — it substantially *is* the effect being measured, and no amount of
+shared randomness removes it.
+
+So the remaining routes, in the order they look worth trying:
+
+1. **Lower-variance target.** The 9.8-chip outcome SD is dominated by whether the hand is won and
+   at what tai, not by the discard. Evaluating a shrunk statistic (win probability, or winsorised
+   chips) and pricing afterwards attacks the variance at its source. The recorded `mix` already
+   makes any re-pricing possible without re-simulating.
+2. **Truncated rollouts plus a value estimate.** Shorter play-outs are both cheaper and less
+   variable; a shanten/fan-aware terminal value would do. This is the only route that improves
+   compute and variance together.
+3. **Scoring-aware rollout policy.** ShantenBot is fan-blind and cannot know a hand is short of the
+   2-tai minimum, so it misprices exactly the positions this table's minimum makes decisive. This
+   changes what the rollouts measure rather than how precisely — worth doing, but it is a
+   correctness fix, not a variance fix.
+4. **Aim the product at what is measurable.** Claims (27% clear at 2 SE) and self-actions (72%) are
+   resolvable today. Discards (4%) are not, and no near-term amount of compute makes them so.
 
 Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
 

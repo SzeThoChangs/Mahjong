@@ -2,6 +2,7 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { eachJsonlGz, readJsonlGz } from './stats.js';
+import { pairedSe, seVersionOf, SE_VERSION } from './se.js';
 import type { EvalRecord } from './evaluate.js';
 
 const evalShards = (dir: string) => readdirSync(dir).filter((f) => f.startsWith('evals-') && f.endsWith('.jsonl.gz')).map((f) => join(dir, f));
@@ -24,11 +25,18 @@ const newGroup = (): Group => ({ n: 0, regrets: [], agree: 0, top3: 0, spread: 0
 
 export interface EvalSummary { add(e: EvalRecord): void; format(): string }
 
-/** Accumulate decisions one at a time; call format() when the stream is exhausted. */
-export function evalSummary(): EvalSummary {
+/** Accumulate decisions one at a time; call format() when the stream is exhausted.
+ *  `seVersion` says which gapSe formula wrote the run - pass seVersionOf(dir), never assume the current one. */
+export function evalSummary(seVersion: number = SE_VERSION): EvalSummary {
   let total = 0, bad = 0;
   let gapN = 0, clear1 = 0, clear2 = 0, gapSeSum = 0;   // paired-rollout gap to the runner-up
   let indepN = 0, indepHits = 0;                        // fallback for runs evaluated before gapSe existed
+  const decisive = new Map<string, { n: number; c: number }>();   // share clear at 2 SE, by decision kind
+  // How much the paired rollouts actually cancel. rho = 1 means the two branches follow each other
+  // exactly and only the action's own effect survives; rho = 0 means the pairing bought nothing and
+  // the branches are independent play-outs. This is the number that says whether the noise floor is
+  // a coupling problem (fixable by sharing randomness) or a structural one (not).
+  let rhoN = 0, rhoSum = 0, sdSum = 0, diffSdSum = 0;
   const byBot = new Map<string, Group>(), byKind = new Map<string, Group>(), byPhase = new Map<string, Group>();
   const at = (m: Map<string, Group>, k: string) => { let g = m.get(k); if (!g) m.set(k, g = newGroup()); return g; };
 
@@ -38,7 +46,19 @@ export function evalSummary(): EvalSummary {
     if (!finite) bad++;
     const a0 = e.actions[0], a1 = e.actions[1], aN = e.actions[e.actions.length - 1];
     if (a0 && a1) {
-      if (a1.gapSe !== undefined) { gapN++; gapSeSum += a1.gapSe; if (a1.gap > a1.gapSe) clear1++; if (a1.gap > 2 * a1.gapSe) clear2++; }
+      const se = pairedSe(a1, a0, seVersion);
+      if (Number.isFinite(se)) {
+        gapN++; gapSeSum += se; if (a1.gap > se) clear1++; if (a1.gap > 2 * se) clear2++;
+        let d = decisive.get(e.k); if (!d) decisive.set(e.k, d = { n: 0, c: 0 });
+        d.n++; if (a1.gap > 2 * se) d.c++;
+        // Var(A-B) = se^2 * k over the k paired rollouts; rho from Var(A-B) = varA + varB - 2*rho*sdA*sdB
+        const k = Math.max(1, Math.min(a0.n, a1.n));
+        const diffVar = se * se * k;
+        if (a0.sd > 1e-9 && a1.sd > 1e-9) {
+          rhoN++; rhoSum += (a0.sd ** 2 + a1.sd ** 2 - diffVar) / (2 * a0.sd * a1.sd);
+          sdSum += (a0.sd + a1.sd) / 2; diffSdSum += Math.sqrt(diffVar);
+        }
+      }
       indepN++;
       if (a0.ev - a1.ev > Math.sqrt(a0.sd ** 2 / a0.n + a1.sd ** 2 / a1.n)) indepHits++;
     }
@@ -70,6 +90,15 @@ export function evalSummary(): EvalSummary {
     // how decisive are decisions? share where best beats 2nd by > 1 SE
     if (gapN) {
       L.push(`\nclear best action (paired gap to runner-up > 1 SE): ${pct(clear1 / gapN)}   (> 2 SE): ${pct(clear2 / gapN)}   mean paired SE ${(gapSeSum / gapN).toFixed(2)} chips`);
+      L.push(`  clear at 2 SE by kind: ${[...decisive.entries()].sort().map(([k, d]) => `${k} ${pct(d.c / Math.max(1, d.n)).trim()}`).join('  ')}`);
+      if (seVersion < SE_VERSION) L.push(`  (run stored gapSe with the sqrt(k)-short formula; corrected on read)`);
+      if (rhoN) {
+        const rho = rhoSum / rhoN, sd = sdSum / rhoN, diffSd = diffSdSum / rhoN;
+        const independent = sd * Math.SQRT2;                       // difference SD if the branches shared nothing
+        L.push(`pairing: outcome SD ${sd.toFixed(1)} chips, paired-difference SD ${diffSd.toFixed(1)}, correlation ${rho.toFixed(2)}`);
+        L.push(`  sharing the deal already cuts the difference SD from ${independent.toFixed(1)} (independent) to ${diffSd.toFixed(1)} - ${(100 * (1 - diffSd / independent)).toFixed(0)}% of the way to zero`);
+        L.push(`  remaining headroom is what better coupling could win; halving the SE by rollouts alone costs 4x the compute`);
+      }
     } else {
       L.push(`\nclear best action (independent-SE gap > 1 SE over runner-up): ${pct(indepHits / Math.max(1, indepN))} of decisions`);
     }
@@ -87,13 +116,14 @@ export function evalSummary(): EvalSummary {
   return { add, format };
 }
 
-export function formatEvalStats(evs: EvalRecord[]): string {
-  const s = evalSummary();
+export function formatEvalStats(evs: EvalRecord[], seVersion: number = SE_VERSION): string {
+  const s = evalSummary(seVersion);
   for (const e of evs) s.add(e);
   return s.format();
 }
 if (process.argv[1] && /evalstats\.(ts|js)$/.test(process.argv[1])) {
-  const s = evalSummary();
-  eachEval(process.argv[2] ?? '../data/gen/dev', (e) => s.add(e));
+  const dir = process.argv[2] ?? '../data/gen/dev';
+  const s = evalSummary(seVersionOf(dir));
+  eachEval(dir, (e) => s.add(e));
   console.log(s.format());
 }

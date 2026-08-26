@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { kindOf } from 'sg-mahjong-engine';
 import { loadHands } from './stats.js';
 import { eachEval } from './evalstats.js';
+import { pairedSe, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
@@ -24,6 +25,7 @@ const maxHands = Number(arg('hands', '150'));
 
 const rules = rulesForDir(dir);
 const money = rules.money !== null;
+const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; pairedSe corrects on read
 const hands = loadHands(dir);
 // pass 1: which hands have evaluations at all - a key per hand is all the selection below needs
 const evaluated = new Set<string>();
@@ -63,7 +65,12 @@ for (const hr of selected) {
     const chStr = JSON.stringify(r.ch); if (chStr !== lastCh) { row.ch = r.ch; lastCh = chStr; }
     if (r.k === 'discard') row.f = (r.f as { k: number; sh: number; eff: number; rem: number }[]).map(({ k, sh, eff, rem }) => ({ k, sh, eff, rem }));
     const e = evs.get(r.d);
-    if (e) row.ev = { best: e.best, regret: e.regret, n: e.n, actions: e.actions.map((a) => ({ a: a.a, ev: a.ev, win: a.win, dealin: a.dealin, draw: a.draw, n: a.n })) };
+    // `se` = paired standard error of (best.ev - this.ev), so the film room can draw the bars with
+    // the precision they actually have instead of implying the ranking is exact.
+    if (e) row.ev = { best: e.best, regret: e.regret, n: e.n, actions: e.actions.map((a) => {
+      const se = pairedSe(a, e.actions[0]!, seVersion);
+      return { a: a.a, ev: a.ev, se: Number((Number.isFinite(se) ? se : 0).toFixed(2)), win: a.win, dealin: a.dealin, draw: a.draw, n: a.n };
+    }) };
     return row;
   });
   // final board state via one more replay

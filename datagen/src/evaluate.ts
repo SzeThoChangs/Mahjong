@@ -12,7 +12,7 @@ import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
-import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type LegalAction, type RulesConfig, type Snapshot } from 'sg-mahjong-engine';
+import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type ClaimOption, type LegalAction, type PlayerView, type RulesConfig, type SelfAction, type Snapshot, type TileInstance } from 'sg-mahjong-engine';
 import { positionAt, determinize } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
@@ -20,9 +20,10 @@ import { loadHands, eachJsonlGz } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { rulesForDir } from './tablerules.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
+import { SE_VERSION } from './se.js';
 
 export type Policy = 'fast' | 'shanten' | 'efficiency';
-export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean }
+export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean }
 /** Outcome mix for one action, from the acting seat's point of view.
  *  `w` keys are `<role><fan>` where role is: W self-draw win, D discard win, s pays the shooter share,
  *  o pays the other share, z pays a self-draw share, l pays everything (pay-all), n pays nothing, d draw.
@@ -33,8 +34,49 @@ export interface ActionEval { a: string; ev: number; sd: number; win: number; de
 // gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
 
-function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig): Bot[] {
-  return [0, 1, 2, 3].map((s) => policy === 'fast' ? new IsolationBot(makeRng(seed * 4 + s), 0.6, 0.4) : policy === 'shanten' ? new ShantenBot(makeRng(seed * 4 + s)) : makeBot('efficiency', makeRng(seed * 4 + s), randomness));
+/**
+ * Common random numbers that survive a claim.
+ *
+ * Rollout i already deals every action the same hidden state, but the rollout bots draw from one
+ * sequential stream per seat. As soon as two branches diverge - a claim consumes a different number
+ * of draws than a pass - the streams slide out of step, and everything after that point is
+ * effectively independent. That is why the pairing decays to a correlation of 0.42 on discards and
+ * 0.11 on claims, and why the paired error bar is a full chip at 128 rollouts.
+ *
+ * The fix costs nothing: key each decision's randomness to the POSITION the bot faces rather than
+ * to how many draws preceded it. Two branches that reach the same position then draw the same
+ * numbers however differently they got there, and the pairing holds to the end of the hand. The
+ * value is still a hash-derived uniform and still independent of the action under evaluation, so
+ * the estimator stays unbiased - only its variance drops.
+ */
+const positionKey = (v: PlayerView, kind: string, extra = ''): string =>
+  `${kind}:${v.playerTurns}:${v.discardLog.length}:${v.melds.length}:${v.hand.map(kindOf).sort((x, y) => x - y).join('.')}${extra}`;
+
+/** A bot whose randomness is re-keyed from the position in front of it before every decision. */
+class CoupledBot implements Bot {
+  constructor(private inner: Bot, private reseed: (key: string) => void) {}
+  chooseDiscard(v: PlayerView): TileInstance {
+    this.reseed(positionKey(v, 'd'));
+    return this.inner.chooseDiscard(v);
+  }
+  chooseSelfAction(v: PlayerView, o: SelfAction[]): SelfAction | null {
+    this.reseed(positionKey(v, 's', `:${o.map((x) => x.kind).join('|')}`));
+    return this.inner.chooseSelfAction(v, o);
+  }
+  chooseClaim(v: PlayerView, o: ClaimOption[]): ClaimOption | null {
+    this.reseed(positionKey(v, 'c', `:${v.lastDiscard ? kindOf(v.lastDiscard.tile) : -1}:${o.map((x) => x.kind).join('|')}`));
+    return this.inner.chooseClaim(v, o);
+  }
+}
+
+function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig, coupled = true): Bot[] {
+  const build = (rng: () => number): Bot =>
+    policy === 'fast' ? new IsolationBot(rng, 0.6, 0.4) : policy === 'shanten' ? new ShantenBot(rng) : makeBot('efficiency', rng, randomness);
+  return [0, 1, 2, 3].map((s) => {
+    if (!coupled) return build(makeRng(seed * 4 + s));
+    let stream = makeRng(seed * 4 + s);                                    // until the first decision re-keys it
+    return new CoupledBot(build(() => stream()), (key) => { stream = makeRng(fnv1a(`${seed}:${s}:${key}`)); });
+  });
 }
 
 /** Evaluate one decision at the given live position. */
@@ -60,7 +102,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
     const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
     const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
     h.apply(x.act);
-    const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness));
+    const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness, a.coupled !== false));
     const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++; x.outcomes[i] = v;
     if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
     // record the outcome in re-priceable form
@@ -177,6 +219,7 @@ if (parentPort) {
   const base: Omit<EvalArgs, 'workerIndex'> = {
     dir, hands: Number(arg('hands', '50')), perHand: Number(arg('per-hand', '4')), rollouts: Number(arg('rollouts', '32')),
     mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'shanten') as Policy), seed: Number(arg('seed', '1')), workers, adaptive: process.argv.includes('--adaptive'), resume: process.argv.includes('--resume'),
+    coupled: !process.argv.includes('--no-coupled'),   // position-keyed rollout randomness; --no-coupled reproduces pre-2026-08-26 runs
     rulesOverride: arg('rules') ? JSON.parse(arg('rules')!) : {}, randomness: arg('randomness') ? JSON.parse(arg('randomness')!) : { ranked: [0.7, 0.15, 0.1], random: 0.05 },
   };
   mkdirSync(dir, { recursive: true });
@@ -187,7 +230,7 @@ if (parentPort) {
     const finishIfDone = () => {
       if (--remaining !== 0) return;
       const s = (Date.now() - t0) / 1000;
-      writeFileSync(join(dir, 'evals-manifest.json'), JSON.stringify({ ...base, total, skipped: totalSkipped, errors: totalErrors, failedWorkers, seconds: s }, null, 2));
+      writeFileSync(join(dir, 'evals-manifest.json'), JSON.stringify({ ...base, seVersion: SE_VERSION, total, skipped: totalSkipped, errors: totalErrors, failedWorkers, seconds: s }, null, 2));
       console.log(`\n${total} decisions evaluated in ${s.toFixed(0)}s (${(total / s).toFixed(2)}/s), ${totalSkipped} skipped (resume), ${totalErrors} errors, ${failedWorkers} failed workers -> ${dir}/evals-w*.jsonl.gz`);
     };
     w.on('message', (m: { type: string; n?: number; evaluated?: number; skipped?: number; errors?: number }) => {

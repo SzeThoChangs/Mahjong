@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { fanInHand, makeRng, type Meld } from 'sg-mahjong-engine';
 import { eachJsonlGz } from './stats.js';
 import { eachEval } from './evalstats.js';
+import { pairedSe, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
@@ -23,6 +24,7 @@ const maxQ = Number(arg('max', '4000'));
 
 const rules = rulesForDir(dir);
 const money = rules.money !== null;
+const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; pairedSe corrects on read
 
 // pass 1: one lightweight reference per decision. prefer decisions where the choice matters:
 // sort into meaty (spread >= 2) and the rest, sample 75/25
@@ -50,7 +52,9 @@ const hands = new Map<string, HandRecord>();
 for (const f of readdirSync(dir).filter((x) => x.startsWith('hands-') && x.endsWith('.jsonl.gz')))
   eachJsonlGz<HandRecord>(join(dir, f), (h) => { const k = `${h.g}:${h.h}`; if (byHand.has(k)) hands.set(k, h); });
 
-interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+// `se` is the paired standard error of (best.ev - this.ev): how far apart two actions must sit
+// before the rollouts can tell them apart at all. The quiz must not call anything inside it a mistake.
+interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -70,7 +74,10 @@ for (const [key, list] of byHand) {
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
       bot: e.bot, spread: Number(ref.spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,
-      actions: e.actions.map((a) => ({ a: a.a, ev: Number(a.ev.toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix })),
+      actions: e.actions.map((a) => {
+        const se = pairedSe(a, e.actions[0]!, seVersion);
+        return { a: a.a, ev: Number(a.ev.toFixed(2)), se: Number((Number.isFinite(se) ? se : 0).toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix };
+      }),
     });
   }
   if (++handsDone % 500 === 0) process.stdout.write(`\r${handsDone}/${byHand.size} hands replayed`);
