@@ -118,6 +118,7 @@ for (const hand of sample) {
     const ctx: Context = {
       seat: role, prevailingWind: d.w, bonus: d.me.b as TileKind[], playerTurns: d.t,
       minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, visible,
+      opponentMelds: d.pub.m.map((ms, s2) => (s2 === d.p ? -1 : ms.length)).filter((n) => n >= 0),
     };
     let coachPick: number | null = null;
     try { coachPick = rankDiscards(d.me.h as TileKind[], melds, ctx).best.tile; } catch { coachPick = null; }

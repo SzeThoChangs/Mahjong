@@ -93,6 +93,7 @@ export default function RealQuiz() {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
         minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
         visible,
+        opponentMelds: (q.pm ?? []).map((ms, s2) => (s2 === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
       if (q.k === 'discard' && q.h.length % 3 === 2) {
         const r = rankDiscards(q.h, melds, ctx);

@@ -4,11 +4,14 @@ import {
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
+import { READS } from './reads.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
   tile: TileKind; chips: number; delta: number; verdict: Verdict;
   target: TargetEval; acceptance: number; reasons: string[];
+  /** chips this throw concedes on average, from the measured deal-in reads */
+  risk: number;
 }
 /** The cheap legal win to fall back on, and what in the hand keeps it available. */
 export interface Bailout {
@@ -32,6 +35,57 @@ export interface Ranking {
 const WIND_OR_DRAGON: Record<number, string> = { 27: '\u6771', 28: '\u5357', 29: '\u897f', 30: '\u5317', 31: '\u4e2d', 32: '\u767c', 33: '\u767d' };
 const SUIT_NAME = { wan: '萬', tong: '筒', sok: '條' } as const;
 const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All-Chow', half_color: 'Half-Color', all_pong: 'All-Pong', chicken: 'Chicken', thirteen: '13 Wonders' };
+
+/**
+ * What throwing this tile risks, in chips.
+ *
+ * The coach used to advise as if it were playing solitaire: it valued what a discard did to its own
+ * hand and never asked what it hands the table. `READS` are measured on 574,775 real decisions and
+ * say two things the discard pool alone can answer:
+ *   - a tile already on the floor is 2-5x safer than a fresh one (simple at turn 40: 3.07% -> 1.75%,
+ *     honours 0.76% -> 0.16%), because the players who could use it have passed on it
+ *   - a player with three exposed sets is ready 39.5% of the time against 4.9% with none
+ *
+ * The two combine: base deal-in chance for the tile's class, freshness and turn, scaled by how
+ * ready this particular table looks against an average one. DEAL_IN_COST turns that probability
+ * into chips; it is swept against measured play-outs rather than guessed.
+ */
+// Fitted against measured play-outs, not derived: sweeping it moves the coach's agreement 54.5% ->
+// 55.7% with a clear peak near 40 and a decline past 70, so it is a real optimum rather than "more
+// caution is always better". It is larger than an actual deal-in costs at this table, which means
+// it is also standing in for the other reasons a already-safe tile tends to be a good throw.
+const DANGER_WEIGHT = 40;
+
+const bucket = (turn: number) => Math.max(0, Math.min(60, Math.round(turn / 10) * 10));
+const tileClass = (k: TileKind) => (isHonour(k) ? 'honour' : isTerminal(k) ? 'terminal' : 'simple');
+
+function dealInChips(k: TileKind, ctx: Context, gone: number[]): number {
+  if (isJoker(k)) return 0;
+  const t = bucket(ctx.playerTurns);
+  const fresh = (gone[k] ?? 0) === 0 ? 'fresh' : 'seen';
+  const p = READS.dangerSafe[`${tileClass(k)}|${t}|${fresh}`] ?? READS.danger[`${tileClass(k)}|${t}`];
+  if (p === undefined) return 0;
+  // how ready this table looks, relative to an average one at the same turn
+  const melds = ctx.opponentMelds;
+  let scale = 1;
+  if (melds?.length) {
+    const readyOf = (m: number) => READS.ready[`${Math.max(0, Math.min(3, m))}|${t}`] ?? 0;
+    const here = melds.reduce((a, m) => a + readyOf(m), 0) / melds.length;
+    const typical = readyOf(0) * 0.55 + readyOf(1) * 0.3 + readyOf(2) * 0.12 + readyOf(3) * 0.03;
+    if (typical > 1e-9) scale = Math.max(0.25, Math.min(4, here / typical));
+  }
+  return p * scale * DANGER_WEIGHT;
+}
+
+/** Say out loud what the discard pool means for this tile, so the advice can be argued with. */
+function safetyReason(k: TileKind, ctx: Context, gone: number[]): string | null {
+  if (isJoker(k)) return null;
+  const seen = gone[k] ?? 0;
+  const risk = dealInChips(k, ctx, gone);
+  if (seen > 0) return `${seen === 1 ? 'one is' : `${seen} are`} already on the floor — safer to follow`;
+  if (risk >= 0.6) return 'nobody has thrown one yet — the risky kind to break with';
+  return null;
+}
 
 /** How many tile kinds (weighted by copies left) would improve the hand FOR THE PLAN IT IS PLAYING.
  *  Using the wrong evaluator here silently applies chow logic to a pong hand (and vice versa),
@@ -68,7 +122,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
     const h = { concealed: rest, melds };
     hands.set(k, h);
     const hv = handValue(h, ctx);
-    opts.push({ tile: k, chips: hv.chips, delta: 0, verdict: 'fine', target: hv.best, acceptance: 0, reasons: [] });
+    opts.push({ tile: k, chips: hv.chips, delta: 0, verdict: 'fine', target: hv.best, acceptance: 0, reasons: [], risk: 0 });
   }
   opts.sort((a, b) => b.chips - a.chips);
   // acceptance (what improves next draw) is the expensive part: only compute it where it can change the order
@@ -78,12 +132,16 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
     o.acceptance = acceptance(hands.get(o.tile)!, o.target, gone);
     o.chips += o.acceptance * 0.06;
   }
+  // what the throw hands the table, priced in the same chips as what it does for the hand
+  for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone); o.chips -= o.risk; }
   opts.sort((a, b) => b.chips - a.chips);
   const top = opts[0]!;
   for (const o of opts) {
     o.delta = o.chips - top.chips;
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
     o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds, gone));
+    const safety = safetyReason(o.tile, ctx, gone);
+    if (safety) o.reasons.push(safety);
   }
   const t = top.target;
   const where = t.suit ? ` in ${SUIT_NAME[t.suit as keyof typeof SUIT_NAME]}` : '';

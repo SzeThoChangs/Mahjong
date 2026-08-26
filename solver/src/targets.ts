@@ -34,6 +34,10 @@ export interface Context {
    *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
    *  still become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
+  /** Exposed meld count for each OTHER seat. Three exposed sets at turn 40 means that player is
+   *  ready 39.5% of the time; none means 4.9%. Without it the coach cannot tell a dangerous table
+   *  from a quiet one, so it prices every discard as if nobody were close. */
+  opponentMelds?: readonly number[];
 }
 
 type Row = Record<string, number>;

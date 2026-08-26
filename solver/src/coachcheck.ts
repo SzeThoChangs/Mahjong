@@ -53,6 +53,7 @@ for (const q of pack.questions) {
     prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t,
     minimumFan: cfg.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: cfg.self_draw_minimum_fan,
     visible,
+    opponentMelds: BLIND ? undefined : (q.pm ?? []).map((ms, s2) => (s2 === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
   };
   let pick: TileKind, tied: TileKind[], plan: string, coachOrder: TileKind[];
   try { const r = rankDiscards(q.h as TileKind[], melds, ctx); pick = r.best.tile; tied = r.tied; plan = r.best.target.id; coachOrder = r.options.map((o) => o.tile); }

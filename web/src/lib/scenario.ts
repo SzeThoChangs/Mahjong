@@ -80,7 +80,8 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
       ...publicMelds.flatMap((ms) => ms.flatMap((m) => m.tiles)),
       ...publicBonus.flat(),
     ];
-    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible };
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
+      opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0) };
     const ranking = rankDiscards(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);

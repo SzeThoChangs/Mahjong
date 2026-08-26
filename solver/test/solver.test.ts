@@ -124,3 +124,29 @@ describe('learned policy', () => {
     expect(seeing.options.map((o) => o.score)).not.toEqual(blind.options.map((o) => o.score));
   });
 });
+
+describe('the coach reads the table', () => {
+  const hand = '1t 2t 3t 4s 5s 6s 7w 8w 9w E E 2s 8s 5w';
+  it('prefers a tile already on the floor over an identical fresh one', () => {
+    const late = { playerTurns: 40 };
+    const blind = rankDiscards(K(hand), [], ctx(late));
+    // bury three copies of 5w: it is now the safe throw, and the coach should notice
+    const seeing = rankDiscards(K(hand), [], ctx({ ...late, visible: K('5w 5w 5w') }));
+    const riskOf = (r: typeof blind, tile: number) => r.options.find((o) => o.tile === tile)!.risk;
+    const fiveWan = K('5w')[0]!;
+    expect(riskOf(seeing, fiveWan)).toBeLessThan(riskOf(blind, fiveWan));
+    expect(seeing.options.find((o) => o.tile === fiveWan)!.reasons.join(' ')).toMatch(/on the floor/);
+  });
+
+  it('fears a table with three exposed sets more than a quiet one', () => {
+    const quiet = rankDiscards(K(hand), [], ctx({ playerTurns: 40, opponentMelds: [0, 0, 0] }));
+    const scary = rankDiscards(K(hand), [], ctx({ playerTurns: 40, opponentMelds: [3, 3, 3] }));
+    const total = (r: typeof quiet) => r.options.reduce((a, o) => a + o.risk, 0);
+    expect(total(scary)).toBeGreaterThan(total(quiet));
+  });
+
+  it('charges nothing on turn zero, when nobody can be ready', () => {
+    const r = rankDiscards(K(hand), [], ctx({ playerTurns: 0 }));
+    for (const o of r.options) expect(o.risk).toBeLessThan(0.05);
+  });
+});
