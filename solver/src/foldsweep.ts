@@ -19,6 +19,8 @@ import { maxReadyChance } from './reads.js';
 import type { Context } from './targets.js';
 
 const n = Number(process.argv[2] ?? 1000);
+/** wall seed base - see headtohead.ts: a single hardcoded shuffle hid a false per-seat pattern */
+const seedBase = Number(process.argv[3] ?? 11);
 const cfg = loadTableConfig(), rules = loadTableRules();
 
 const ctxOf = (v: PlayerView): Context => ({
@@ -52,7 +54,7 @@ const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a
 function armChips(seat: number, make: () => Bot): number[] {
   const out: number[] = [];
   for (let g = 0; g < n; g++) {
-    const wall = new Wall(makeRng(11 * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
+    const wall = new Wall(makeRng(seedBase * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
     const bots: Bot[] = [0, 1, 2, 3].map((s) => (s === seat ? make() : new CoachBot()));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
@@ -62,7 +64,7 @@ function armChips(seat: number, make: () => Bot): number[] {
 
 const READY = [0.10, 0.16, 0.25, 0.35];
 const SH = [2, 3, 4];
-console.log(`${n} paired deals per seat (${n * 4} per setting), threat-fold vs the plain coach\n`);
+console.log(`${n} paired deals per seat (${n * 4} per setting), threat-fold vs the plain coach (wall seed base ${seedBase})\n`);
 console.log(`ready>=  shanten>=   fires    chips/game vs coach`);
 for (const ready of READY) {
   for (const sh of SH) {
