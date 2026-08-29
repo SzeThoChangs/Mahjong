@@ -151,7 +151,7 @@ The trainer plan above still stands; the project also now carries the three-laye
 | Layer | Status |
 |---|---|
 | 1 — Data generator (`datagen/`) | **Done, milestone met**: 100,000 hands / 8.22M decisions generated, 0 illegal actions, chips net zero, every hand replays from its seed; 5 bot personalities with 70/15/10/5 controlled randomness; JSONL.gz + Parquet; validation stats + flags. |
-| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Run at scale**: `data/gen/run-money2` = 150k hands / 9.03M decisions under the money rules, with **479,912 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy), 0 errors, 0 failed workers, 13h 12m. Resumable, crash-tolerant. The five original bot personalities only — `defensive` landed after this run was generated. **The stored `gapSe` in this run is sqrt(k) too small** (fixed in evaluate.ts after the run). Runs now carry `seVersion` in `evals-manifest.json` and `src/se.ts` corrects old ones on read, so every consumer sees the same honest number: **29% of decisions have a clear best action at 1 SE, 9% at 2 SE — 4% for discards, 27% for claims, 72% for self-actions** — on a mean paired SE of 1.10 chips. |
+| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Run at scale**: `data/gen/run-money2` = 150k hands / 9.03M decisions under the money rules, with **479,912 evaluated decisions** (adaptive 128 paired rollouts, ShantenBot policy), 0 errors, 0 failed workers, 13h 12m. Resumable, crash-tolerant. The five original bot personalities only — `defensive` landed after this run was generated. **The stored `gapSe` in this run is sqrt(k) too small** (fixed in evaluate.ts after the run). Runs now carry `seVersion` in `evals-manifest.json` and `src/se.ts` corrects old ones on read, so every consumer sees the same honest number: **29% of decisions have a clear best action at 1 SE, 9% at 2 SE — 4% for discards, 27% for claims, 72% for self-actions** — on a mean paired SE of 1.10 chips. | **Superseded 2026-08-29 by `data/gen/run-money3`** — same shape (150k hands / 8.84M decisions / 479,923 evaluated, 0 errors, 6h 59m) but generated after the wildcard fixes below, so it is the first run where the recorded game is the game the table actually plays. Its noise floor is identical (29% / 9%, 4% discards), which is the useful negative result: wildcards were never what made discards unmeasurable. Everything the app serves is now built from it.
 | 3 — Model | Not started. Blocked behind the layer-2 noise floor: the median gap between the best discard and the runner-up is 0.41 chips against a 1.10-chip standard error. More rollouts scale as 1/sqrt(n) and are a bad trade (16x compute -> 47%). |
 
 ### The noise floor is structural, not a coupling artifact (measured 2026-08-26)
@@ -236,6 +236,36 @@ and PolicyBot takes its claims from the coach, so its parts were tuned separatel
 
 The lesson for anything built next: a per-decision metric is a proxy, and this one is a
 proxy that pointed the wrong way. Play it out before believing it.
+
+#### That margin was measured on the wrong wall — it is 0.54, not 2.66 (re-measured 2026-08-29)
+
+**The table plays four wildcards and `headtohead.ts` was dealing none.** Both bots it compares
+were tuned on data generated WITH them, so the verdict above was measured on a game neither one
+was built for. The harness now loads the table's rules and deals its wall. Re-run against the
+model refitted on run-money3, 16,000 paired deals:
+
+```
+seat   model chips/game   coach chips/game   difference (paired)
+  0        -0.38             -0.45            +0.07 +/- 0.29
+  1        -0.16             +0.01            -0.18 +/- 0.28
+  2        -0.94             +0.10            -1.04 +/- 0.29
+  3        -0.69             +0.34            -1.02 +/- 0.29
+overall                                       -0.544 +/- 0.144
+```
+
+**The direction holds and the magnitude does not.** The coach is still ahead, at 3.8 standard
+errors, so the Train tab stays on the coach and the lesson above stands: 69.8% top-1 against the
+coach's 52.8% still does not buy a win. But the gap is a fifth of what was recorded, and the
+coherence diagnosis was reasoning about a 2.66-chip hole that was mostly an artefact. Whatever
+explains 0.54 chips a game need not be as large a defect as incoherence.
+
+Two things changed between the runs — the wall, and the model being refitted on run-money3 — so
+the shift cannot be attributed wholly to the wall.
+
+**New and unexplained: the loss is not spread across the table.** Seats 0 and 1 are at parity;
+seats 2 and 3 each lose about a chip a game, ~3.5 SE apiece. The dealer rotates uniformly over
+4,000 deals per seat, so seat effects should cancel and this asymmetry should not exist. It is
+the most concrete lead on where the remaining 0.54 actually comes from.
 
 **Verdicts respect the error bar.** The quiz used fixed $0.35 / $1.50 bands against a ~$1.10 paired
 SE, so it called moves mistakes that the play-outs cannot separate. Bands are now floored at each
@@ -340,6 +370,41 @@ from all 479,913 decisions, but ~48,000 of them (15.0k discards, 21.6k claims, 4
 have a best action separated at 2 SE — labels that are reliable by construction. That is a
 supervised dataset large enough to fit a discard policy against, and it needs no new compute. It
 would also be the honest way to close the coach's $2.02, since no amount of book-table tuning has.
+
+### The table plays with wildcards and the code was not dealing them (fixed 2026-08-29)
+
+The table config has said `jokers.count 4` since the money rules went in. Several places never
+read it and the ones that did read it wrong, so "the game" meant different things in different
+files. Three separate defects, all now fixed and covered by `engine/test/jokers.test.ts`:
+
+- **A wildcard was a legal throw.** It is not — confirmed for this table, it is too valuable to
+  give up, so it is not a discard at all (`rules.jokers.discardable`, default false). Enforcing
+  it in `legalActions()` alone was not enough: the bots pick a tile straight out of the hand, not
+  off the legal list, so it is enforced in `applyDiscard` too and `PlayerView.legalDiscards` gives
+  a freely-picking bot somewhere correct to pick from. In run-money2 a wildcard was offered as a
+  legal discard in **41.1%** of discard positions and thrown in **0.72%**.
+- **`Wall` read a count as a flag.** `jokers > 0 ? TOTAL_TILES_WITH_JOKERS : TOTAL_TILES`, so a
+  table asking for 12 wildcards silently got 4.
+- **The harnesses measured a different game.** `headtohead.ts` and `leakhunt.ts` dealt walls with
+  no wildcards while the bots they compare were tuned on data generated with them. This is what
+  put the 2.66-chip verdict above 5x out.
+
+**The one case left, and what it really is.** run-money3 still contains 195 wildcard discards in
+150,000 hands (0.13%), every one the same position: four melds exposed and a concealed part that
+is nothing but wildcards, where `throwable()` falls back to the full hand so the game can move.
+
+That fallback is the wrong answer, and the state should be unreachable. The win detection is not
+at fault — it accepts a wildcard pair as the eye, `valid=true`, a complete hand. The player cannot
+declare it because the locked melds score 0–1 tai against the 2-tai minimum, and no wildcard
+assignment can raise that. So the hand is **complete and uncashable**, and since a wildcard pairs
+with anything the seat sits in permanent ready-to-win it can never legally take. Those hands run
+83–88 turns against a 49-turn average and mostly end in a draw.
+
+The wildcard is only thrown on the turn every tile held is a wildcard: four melds plus one
+wildcard, draw a second, something must go. **The fix belongs in the claim policy — refusing the
+claim that locks a hand below the minimum — not in a discard rule for the corner it creates.**
+That is route 3 (a scoring-aware policy) showing up in its most visible form. The run as a whole
+is not distorted by it: 15.9% draws and 49.0 mean turns against the book's 14% and 48.
 
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).
