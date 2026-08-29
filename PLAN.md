@@ -455,5 +455,39 @@ behaviour it had before any of this. The harness is better - four arms and a sel
 `solver/src/foldrate.ts` reports how often a rule actually fires, which is the check that would
 have caught the trap above immediately.
 
+### How much to defend, finally measured in money (2026-08-30)
+
+Folding failed twice - once keyed on the hand being unable to reach the minimum (-0.039), once on
+the real trigger, somebody looking ready AND this hand being far (`foldsweep.ts`, 12 threshold
+combinations, none ahead; the more a setting fired the more it lost). The explanation is that the
+coach ALREADY does this continuously: every discard is priced `dealInChance * threatScale *
+DANGER_WEIGHT` and that is subtracted from what the tile does for the hand. A fold replaces a
+graded trade-off with a switch and throws the value half away.
+
+Which moved the question to the constant. `DANGER_WEIGHT = 40` was fitted by sweeping the coach's
+per-decision AGREEMENT with the play-outs (54.5% -> 55.7%, peak near 40) - the same proxy that has
+now failed to predict chips three times. So the number governing how defensively the coach plays
+had never been checked against money. `dangersweep.ts`, 6,000 paired deals per setting:
+
+```
+weight    chips/game vs the shipped 40
+   10     -0.113 +/- 0.100
+   20     +0.006 +/- 0.083
+   40      0.000  (baseline, and a harness self-check: identical bots must return exactly 0)
+   70     -0.052 +/- 0.079
+  110     -0.185 +/- 0.109
+  160     -0.401 +/- 0.131
+  240     -0.683 +/- 0.153
+```
+
+**More defence is monotonically worse, out to 4.5 SE.** The optimum is a plateau over roughly
+20-40 and 40 stays; being bolder than 20 is also worse. Two things worth taking from this:
+
+- **The fold question is now answered from two directions.** A fold is "defend more" in switch
+  form, and defending more loses across the entire range. It was never a threshold problem.
+- **The agreement-fitted 40 was right anyway.** Agreement has been a bad guide to money three times
+  and a good one here, which is the useful nuance: a proxy is not always wrong, it is unreliable.
+  The only way to know which is to play it out, and that now costs 20 minutes.
+
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).
