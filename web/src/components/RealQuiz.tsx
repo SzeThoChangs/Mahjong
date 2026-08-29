@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimCandidateOf, policyRank, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, policyRank, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -101,10 +101,19 @@ export default function RealQuiz() {
       };
       if (q.k === 'discard' && q.h.length % 3 === 2) {
         const r = rankDiscards(q.h, melds, ctx);
-        return { plan: r.plan, detail: r.planDetail, best: r.best.tile, tied: r.tied, reasonFor: (k: number) => r.options.find((o) => o.tile === k)?.reasons ?? [] };
+        return { plan: r.plan, detail: r.planDetail, best: r.best.tile, tied: r.tied, reasonFor: (k: number) => r.options.find((o) => o.tile === k)?.reasons ?? [], reasonForAction: () => [] as string[] };
       }
       const hv = handValue({ concealed: q.h, melds }, ctx);
-      return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[] };
+      // A claim question used to come back with no reasons at all, so the memo could say what the
+      // money was and never why. `claimReasons` reads out the same quantities the claim model
+      // scores - what the call buys in distance, what it buys in tai, and what it costs in cover.
+      const reasonForAction = (a: string): string[] => {
+        if (q.k !== 'claim' || !q.ld) return [];
+        const c = claimCandidateOf(a, q.ld[1]!);
+        if (!c) return [];
+        try { return claimReasons(c, q.h, melds, q.ld[1]!, ctx); } catch { return []; }
+      };
+      return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[], reasonForAction };
     } catch { return null; }
   }, [q]);
 
@@ -338,6 +347,13 @@ export default function RealQuiz() {
                 )}
                 {picked !== null && picked !== bestAction.a && picked.startsWith('d:') && coach.reasonFor(Number(picked.slice(2))).length > 0 && (
                   <div><span className="text-muted-foreground">Your {tileLabel(Number(picked.slice(2)))}:</span> {coach.reasonFor(Number(picked.slice(2))).join(' · ')}</div>
+                )}
+                {/* the same for claims: what the best call buys, and what yours did instead */}
+                {q.k === 'claim' && coach.reasonForAction(bestAction.a).length > 0 && (
+                  <div><span className="text-muted-foreground">Why {actionText(bestAction.a).toLowerCase()}:</span> {coach.reasonForAction(bestAction.a).join(' · ')}</div>
+                )}
+                {q.k === 'claim' && picked !== null && picked !== bestAction.a && coach.reasonForAction(picked).length > 0 && (
+                  <div><span className="text-muted-foreground">Your {actionText(picked).toLowerCase()}:</span> {coach.reasonForAction(picked).join(' · ')}</div>
                 )}
               </div>
             )}

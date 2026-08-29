@@ -1,10 +1,10 @@
 /** Rank the 14 possible discards and explain the choice in plain language. */
 import {
-  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, suitOf, windKind, type Meld, type TileKind,
+  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, shanten, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
-import { dealInChance, threatScale } from './reads.js';
+import { dealInChance, threatScale, maxReadyChance } from './reads.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -60,7 +60,7 @@ const DANGER_WEIGHT = 40;
 
 function dealInChips(k: TileKind, ctx: Context, gone: number[]): number {
   if (isJoker(k)) return 0;
-  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0) * threatScale(ctx.opponentMelds, ctx.playerTurns) * DANGER_WEIGHT;
+  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0) * threatScale(ctx.opponentMelds, ctx.playerTurns) * (ctx.dangerWeight ?? DANGER_WEIGHT);
 }
 
 /** Say out loud what the discard pool means for this tile, so the advice can be argued with. */
@@ -96,12 +96,19 @@ function acceptance(h: HandInput, best: TargetEval, gone: number[] = []): number
 }
 
 /**
- * `fold: true` enables giving up on a hand with no route to the table minimum. It is OFF by
- * default because it was measured and it LOSES: 0.039 +/- 0.018 chips a game against the same
- * coach without it, over 16,000 paired deals. Kept, opt-in, so the experiment can be re-run - see
- * `FoldCoachBot` and PLAN.md.
+ * FOLDING. Two triggers, both off by default and both measured.
+ *
+ * `fold: true` gives up when the hand has no route to the table minimum. It LOSES 0.039 +/- 0.018
+ * chips a game - the wrong question, because a hand that is unarmed now can still draw the flower
+ * that arms it.
+ *
+ * `fold: { ready, shanten }` is the real rule as it is played: give up when somebody is probably
+ * about to win AND this hand is still a long way off. Both halves are required - a dangerous table
+ * is no reason to stop building a hand that is nearly there, and a hopeless hand costs nothing to
+ * keep building while nobody is close.
  */
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean } = {}): Ranking {
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number } } = {}): Ranking {
+  const threatFold = typeof cfg.fold === 'object' ? cfg.fold : null;
   const foldEnabled = cfg.fold === true;
   const allJokers = concealed.every(isJoker);
   const kinds = [...new Set(concealed)].filter((k) => allJokers || !isJoker(k));   // never offer a wildcard as a discard
@@ -122,7 +129,9 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   // risk with no return. At that point the only question left is which throw is safest. This is
   // the fold: it is decided on whether winning is still POSSIBLE, not on how dangerous the table
   // looks, which is what `DefensiveBot` keys on and why nothing in the run ever folded.
-  const folding = foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
+  const folding = threatFold
+    ? maxReadyChance(ctx.opponentMelds, ctx.playerTurns) >= threatFold.ready && shanten(concealed, melds.length) >= threatFold.shanten
+    : foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
   if (folding) {
     for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone);
     opts.sort((a, b) => a.risk - b.risk);
@@ -131,14 +140,18 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
       o.chips = -o.risk;
       o.delta = -(o.risk - safest.risk);
       o.verdict = o === safest ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
-      o.reasons = [`the hand cannot reach ${ctx.minimumFan} tai by any route - playing for safety`];
+      o.reasons = [threatFold
+        ? `someone is probably ready and this hand is ${shanten(concealed, melds.length)} away - playing for safety`
+        : `the hand cannot reach ${ctx.minimumFan} tai by any route - playing for safety`];
       const sr = safetyReason(o.tile, ctx, gone); if (sr) o.reasons.push(sr);
     }
     return {
       options: opts, best: safest, tied: opts.filter((o) => o.risk <= safest.risk + 0.05).map((o) => o.tile),
       plan: 'Fold', bailout: null, folding: true,
       planDetail: [
-        `No route to ${ctx.minimumFan} tai: nothing to pong for Fan, and no flower or animal left to draw in time.`,
+        threatFold
+          ? `An opponent is about ${Math.round(100 * maxReadyChance(ctx.opponentMelds, ctx.playerTurns))}% likely to be ready and this hand is still ${shanten(concealed, melds.length)} tiles away.`
+          : `No route to ${ctx.minimumFan} tai: nothing to pong for Fan, and no flower or animal left to draw in time.`,
         'The hand cannot be won, so it is played for damage: throw what is least likely to pay someone else.',
         `Safest here is ${kindName(safest.tile)} at about ${fmt(safest.risk)} chips of risk.`,
       ],

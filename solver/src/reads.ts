@@ -43,3 +43,18 @@ export function threatScale(opponentMelds: readonly number[] | undefined, player
   const typical = readyOf(0) * 0.55 + readyOf(1) * 0.3 + readyOf(2) * 0.12 + readyOf(3) * 0.03;
   return typical > 1e-9 ? Math.max(0.25, Math.min(4, here / typical)) : 1;
 }
+
+/**
+ * The chance the MOST advanced opponent is ready, straight off the measured table.
+ *
+ * `threatScale` answers "is this table busier than usual", which prices a discard. Folding needs a
+ * different question - "is somebody actually about to win" - and that is an absolute probability,
+ * not a ratio. Three exposed sets at turn 40 is 39.5%; nothing exposed at turn 20 is 2.0%.
+ */
+export function maxReadyChance(opponentMelds: readonly number[] | undefined, playerTurns: number): number {
+  if (!opponentMelds?.length) return 0;
+  const t = bucket(playerTurns);
+  let mx = 0;
+  for (const m of opponentMelds) mx = Math.max(mx, READS.ready[`${Math.max(0, Math.min(3, m))}|${t}`] ?? 0);
+  return mx;
+}

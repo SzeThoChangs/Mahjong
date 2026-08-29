@@ -15,7 +15,7 @@ import {
 } from 'sg-mahjong-engine';
 import { threatScale } from './reads.js';
 import { CLAIM_POLICY } from './claim.weights.js';
-import type { Context } from './targets.js';
+import { handValue, type Context } from './targets.js';
 
 export type ClaimKindName = 'pass' | 'chow' | 'pong' | 'kong3' | 'win';
 
@@ -43,7 +43,24 @@ const FALLBACK_SH = 9;
  * the floor. Everything is measured after the forced follow-up discard, because a call you cannot
  * discard sensibly out of is not the bargain it looks like.
  */
-export function claimFeatures(c: ClaimCandidate, concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): number[] {
+/**
+ * Everything both the model and the explanation need about one option, computed once.
+ *
+ * `claimFeatures` turns this into the vector the model scores; `claimReasons` turns the same
+ * numbers into sentences. They must not drift apart - a reason that disagrees with the feature it
+ * came from would teach the opposite of what the model learned.
+ */
+export interface ClaimAnalysis {
+  shBefore: number; shAfter: number; shGain: number;
+  fanBefore: number; fanAfter: number; fanGain: number; armed: boolean;
+  opens: boolean; threat: number; meldsAfter: number; turnNorm: number;
+  /** tile kinds that improve the resulting hand, and how many copies of them are still live */
+  eff: number; rem: number;
+  /** the plan the hand would be playing before and after the call */
+  planBefore: string; planAfter: string; chipsBefore: number; chipsAfter: number;
+}
+
+export function analyseClaim(c: ClaimCandidate, concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): ClaimAnalysis {
   const turnNorm = Math.min(1, ctx.playerTurns / 40);
   const threat = threatScale(ctx.opponentMelds, ctx.playerTurns);
   const fanBefore = fanInHand({ melds, bonus: [...ctx.bonus], seat: ctx.seat, prevailingWind: ctx.prevailingWind });
@@ -76,10 +93,7 @@ export function claimFeatures(c: ClaimCandidate, concealed: TileKind[], melds: M
   }
 
   const fanAfter = fanInHand({ melds: newMelds, bonus: [...ctx.bonus], seat: ctx.seat, prevailingWind: ctx.prevailingWind });
-  const armed = fanAfter >= ctx.minimumFan ? 1 : 0;
-  const opens = c.kind === 'pass' || c.kind === 'win' ? 0 : 1;
 
-  // ukeire on the resulting hand, counting the table as gone
   let eff = 0, rem = 0;
   if (best && best.length % 3 === 1) {
     const unseen = unseenCounts({
@@ -91,16 +105,80 @@ export function claimFeatures(c: ClaimCandidate, concealed: TileKind[], melds: M
     eff = hf.eff; rem = hf.rem;
   }
 
-  const shGain = shBefore - shAfter;
+  const hvBefore = handValue({ concealed, melds }, ctx);
+  const hvAfter = best && best.length ? handValue({ concealed: best, melds: newMelds }, ctx) : hvBefore;
+
+  return {
+    shBefore, shAfter, shGain: shBefore - shAfter,
+    fanBefore, fanAfter, fanGain: fanAfter - fanBefore, armed: fanAfter >= ctx.minimumFan,
+    opens: c.kind !== 'pass' && c.kind !== 'win', threat, meldsAfter: newMelds.length, turnNorm,
+    eff, rem,
+    planBefore: hvBefore.best.id, planAfter: hvAfter.best.id, chipsBefore: hvBefore.chips, chipsAfter: hvAfter.chips,
+  };
+}
+
+/**
+ * Score one option. `concealed` and `melds` are the hand BEFORE the call; `offered` is the tile on
+ * the floor. Everything is measured after the forced follow-up discard, because a call you cannot
+ * discard sensibly out of is not the bargain it looks like.
+ */
+export function claimFeatures(c: ClaimCandidate, concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): number[] {
+  const a = analyseClaim(c, concealed, melds, offered, ctx);
   return [
     c.kind === 'pass' ? 1 : 0, c.kind === 'chow' ? 1 : 0, c.kind === 'pong' ? 1 : 0,
     c.kind === 'kong3' ? 1 : 0, c.kind === 'win' ? 1 : 0,
-    shAfter, shGain, eff, rem,
-    fanAfter, fanAfter - fanBefore, armed,
-    newMelds.length, opens,
-    opens * threat,
-    shGain * turnNorm, armed * turnNorm, opens * turnNorm,
+    a.shAfter, a.shGain, a.eff, a.rem,
+    a.fanAfter, a.fanGain, a.armed ? 1 : 0,
+    a.meldsAfter, a.opens ? 1 : 0,
+    (a.opens ? 1 : 0) * a.threat,
+    a.shGain * a.turnNorm, (a.armed ? 1 : 0) * a.turnNorm, (a.opens ? 1 : 0) * a.turnNorm,
   ];
+}
+
+const PLAN_NAME: Record<string, string> = {
+  ping_wu: 'Ping Wu', all_chow: 'All-Chow', half_color: 'Half-Color', all_pong: 'All-Pong', chicken: 'Chicken', thirteen: '13 Wonders',
+};
+
+/**
+ * Why this call, in words a player can argue with.
+ *
+ * The quiz has always explained discards and never explained claims - a claim question said only
+ * what the money was, which tells you the answer and teaches nothing. These are the same
+ * quantities the model scores, read out loud.
+ */
+export function claimReasons(c: ClaimCandidate, concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): string[] {
+  const a = analyseClaim(c, concealed, melds, offered, ctx);
+  const r: string[] = [];
+
+  if (c.kind === 'win') return ['it wins the hand'];
+
+  if (c.kind === 'pass') {
+    r.push(a.shBefore <= 0 ? 'you are already waiting — nothing to gain by opening up' : `keeps your hand closed and ${a.shBefore} away`);
+    if (melds.length === 0) r.push('a closed hand keeps every option, and nobody can read what you are collecting');
+    if (a.threat > 1.3) r.push('the table looks dangerous — staying quiet is worth more than a small gain');
+    return r;
+  }
+
+  // what the call buys
+  if (a.shGain > 0) r.push(`brings you ${a.shGain} step${a.shGain === 1 ? '' : 's'} closer — ${a.shAfter === 0 ? 'you would be waiting to win' : `${a.shAfter} away after`}`);
+  else if (a.shGain === 0) r.push(`does not bring you closer — still ${a.shAfter} away after the call`);
+  else r.push(`sets you BACK ${-a.shGain} — ${a.shAfter} away after the call`);
+
+  // the tai question, which at a 2-tai table is usually the whole decision
+  if (a.fanGain > 0) r.push(`worth ${a.fanGain} more tai${a.armed ? ` — that makes the hand legal at ${ctx.minimumFan}` : ''}`);
+  if (!a.armed) r.push(`your hand still cannot win — ${ctx.minimumFan - a.fanAfter} more tai needed`);
+
+  // what it costs
+  if (a.opens) {
+    r.push(melds.length === 0 ? 'opens your hand for the first time — everyone can see the plan from here' : 'shows another set');
+    if (a.threat > 1.3) r.push('and the table already looks close to ready');
+  }
+  if (a.planBefore !== a.planAfter) {
+    r.push(`changes the plan from ${PLAN_NAME[a.planBefore] ?? a.planBefore} to ${PLAN_NAME[a.planAfter] ?? a.planAfter} (${a.chipsAfter >= a.chipsBefore ? '+' : ''}${(a.chipsAfter - a.chipsBefore).toFixed(1)} chips)`);
+  }
+  if (a.eff > 0) r.push(`${a.eff} tile kind${a.eff === 1 ? '' : 's'} would still improve you, ${a.rem} of them live`);
+  if (!r.length) r.push('no strong argument either way');
+  return r;
 }
 
 type Weights = {

@@ -59,6 +59,11 @@ export interface Context {
    *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
    *  still become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
+  /** How heavily to price deal-in risk against hand value. Defaults to the fitted 40. It exists as
+   *  a knob because the 40 was fitted against per-decision AGREEMENT with the play-outs, and
+   *  agreement has repeatedly failed to predict chips - see PLAN.md. Sweeping it against money is
+   *  a different question from the one that produced it. */
+  dangerWeight?: number;
   /** Drawable tiles left in the wall. Needed to price the flower/animal route: a hand that is one
    *  Fan short at turn 12 has a real chance of drawing it and at turn 44 has almost none. Optional
    *  so older callers keep working - without it the bonus route is priced as unavailable. */
