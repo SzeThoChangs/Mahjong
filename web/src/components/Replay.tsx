@@ -11,6 +11,9 @@ import { Tile } from '@/components/Tile';
 import { PublicTable } from '@/components/PublicTable';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
+import { rankDiscards, claimReasons, claimCandidateOf, type Context } from 'sg-mahjong-solver';
+import { CONFIG } from '@/lib/scenario';
+import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
 
@@ -110,6 +113,66 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
     return out;
   }, [hand, i]);
   const evalIdxs = useMemo(() => hand.decisions.map((r, j) => (r.ev ? j : -1)).filter((x) => x >= 0), [hand]);
+
+  /**
+   * What the coach would say about this decision, in words.
+   *
+   * The film room could show what every move was WORTH and never why any of it was so - which
+   * makes the EV bars a scoreboard rather than a lesson. The Real quiz explains itself and this
+   * did not, for either kind of decision.
+   *
+   * A claim needs the tile on the floor, which is not on the row: it is the `sel` of the nearest
+   * preceding discard.
+   */
+  const why = useMemo((): { head: string; lines: string[] } | null => {
+    if (!hand) return null;
+    try {
+      const seatMelds: Meld[] = melds[cur.p]!.map((m) => ({
+        type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', concealed: m[1] === 1, tiles: m.slice(2),
+      }));
+      const visible: number[] = [];
+      for (let s = 0; s < 4; s++) {
+        for (const t of rivers[s]!) visible.push(t.k);
+        if (s !== cur.p) for (const m of melds[s]!) visible.push(...m.slice(2));
+      }
+      const ctx: Context = {
+        seat: (cur.p - hand.dealer + 4) % 4, prevailingWind: hand.wind, bonus: cur.b, playerTurns: cur.t,
+        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        visible, opponentMelds: [0, 1, 2, 3].filter((s) => s !== cur.p).map((s) => melds[s]!.length),
+      };
+      if (cur.k === 'discard' && cur.h.length % 3 === 2) {
+        const r = rankDiscards(cur.h, seatMelds, ctx);
+        const chosen = cur.sel.startsWith('d:') ? Number(cur.sel.slice(2)) : null;
+        const lines = [`Plan: ${r.plan}.`];
+        const bestWhy = r.options.find((o) => o.tile === r.best.tile)?.reasons ?? [];
+        if (bestWhy.length) lines.push(`Coach would throw ${tileLabel(r.best.tile)} — ${bestWhy.join(' · ')}`);
+        if (chosen !== null && chosen !== r.best.tile) {
+          const mine = r.options.find((o) => o.tile === chosen)?.reasons ?? [];
+          if (mine.length) lines.push(`It threw ${tileLabel(chosen)} — ${mine.join(' · ')}`);
+        }
+        return { head: 'Why', lines };
+      }
+      if (cur.k === 'claim') {
+        let offered: number | null = null;
+        for (let j = i - 1; j >= 0; j--) {
+          const r = hand.decisions[j]!;
+          if (r.k === 'discard' && r.sel.startsWith('d:')) { offered = Number(r.sel.slice(2)); break; }
+        }
+        if (offered === null) return null;
+        const lines: string[] = [];
+        const say = (a: string, label: string) => {
+          const c = claimCandidateOf(a, offered!);
+          if (!c) return;
+          const rs = claimReasons(c, cur.h, seatMelds, offered!, ctx);
+          if (rs.length) lines.push(`${label} — ${rs.join(' · ')}`);
+        };
+        if (cur.ev?.best && cur.ev.best !== cur.sel) say(cur.ev.best, `Best was ${actionText(cur.ev.best).toLowerCase()}`);
+        say(cur.sel, `It chose ${actionText(cur.sel).toLowerCase()}`);
+        return lines.length ? { head: 'Why', lines } : null;
+      }
+      return null;
+    } catch { return null; }
+  }, [hand, cur, melds, rivers, i]);
   const fmt = (x: number) => `${x < 0 ? '-' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(1)}`;
 
   return (
@@ -167,6 +230,11 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
         <CardContent className="space-y-2">
           {!cur.ev && <div className="text-sm text-muted-foreground">Not evaluated. Legal: {cur.legal.map(actionText).join(' · ')}</div>}
           {cur.ev && <EvBars ev={cur.ev} sel={cur.sel} unit={unit} />}
+          {why && why.lines.length > 0 && (
+            <div className="space-y-1 border-t pt-2 text-xs">
+              {why.lines.map((l, x) => <div key={x} className={x === 0 ? 'font-medium' : 'text-muted-foreground'}>{l}</div>)}
+            </div>
+          )}
         </CardContent>
       </Card>
       <Separator />

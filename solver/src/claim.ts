@@ -160,13 +160,18 @@ export function claimReasons(c: ClaimCandidate, concealed: TileKind[], melds: Me
   }
 
   // what the call buys
-  if (a.shGain > 0) r.push(`brings you ${a.shGain} step${a.shGain === 1 ? '' : 's'} closer — ${a.shAfter === 0 ? 'you would be waiting to win' : `${a.shAfter} away after`}`);
-  else if (a.shGain === 0) r.push(`does not bring you closer — still ${a.shAfter} away after the call`);
-  else r.push(`sets you BACK ${-a.shGain} — ${a.shAfter} away after the call`);
+  // shanten -1 is a COMPLETE hand and 0 is waiting on a tile; printing either as "-1 away" is
+  // nonsense, and the complete-but-cannot-declare case is exactly the one worth naming clearly.
+  const distance = a.shAfter < 0 ? 'that completes the hand' : a.shAfter === 0 ? 'you would be waiting to win' : `${a.shAfter} away after`;
+  if (a.shGain > 0) r.push(`brings you ${a.shGain} step${a.shGain === 1 ? '' : 's'} closer — ${distance}`);
+  else if (a.shGain === 0) r.push(`does not bring you closer — ${distance}`);
+  else r.push(`sets you BACK ${-a.shGain} — ${distance}`);
 
   // the tai question, which at a 2-tai table is usually the whole decision
   if (a.fanGain > 0) r.push(`worth ${a.fanGain} more tai${a.armed ? ` — that makes the hand legal at ${ctx.minimumFan}` : ''}`);
-  if (!a.armed) r.push(`your hand still cannot win — ${ctx.minimumFan - a.fanAfter} more tai needed`);
+  if (!a.armed) r.push(a.shAfter < 0
+    ? `but the hand STILL cannot be declared — ${ctx.minimumFan - a.fanAfter} more tai needed`
+    : `your hand still cannot win — ${ctx.minimumFan - a.fanAfter} more tai needed`);
 
   // what it costs
   if (a.opens) {
