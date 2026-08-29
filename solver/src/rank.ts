@@ -60,7 +60,7 @@ const DANGER_WEIGHT = 40;
 
 function dealInChips(k: TileKind, ctx: Context, gone: number[]): number {
   if (isJoker(k)) return 0;
-  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0) * threatScale(ctx.opponentMelds, ctx.playerTurns) * (ctx.dangerWeight ?? DANGER_WEIGHT);
+  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0, ctx.reads) * threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads) * (ctx.dangerWeight ?? DANGER_WEIGHT);
 }
 
 /** Say out loud what the discard pool means for this tile, so the advice can be argued with. */
@@ -130,7 +130,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   // the fold: it is decided on whether winning is still POSSIBLE, not on how dangerous the table
   // looks, which is what `DefensiveBot` keys on and why nothing in the run ever folded.
   const folding = threatFold
-    ? maxReadyChance(ctx.opponentMelds, ctx.playerTurns) >= threatFold.ready && shanten(concealed, melds.length) >= threatFold.shanten
+    ? maxReadyChance(ctx.opponentMelds, ctx.playerTurns, ctx.reads) >= threatFold.ready && shanten(concealed, melds.length) >= threatFold.shanten
     : foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
   if (folding) {
     for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone);
@@ -150,7 +150,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
       plan: 'Fold', bailout: null, folding: true,
       planDetail: [
         threatFold
-          ? `An opponent is about ${Math.round(100 * maxReadyChance(ctx.opponentMelds, ctx.playerTurns))}% likely to be ready and this hand is still ${shanten(concealed, melds.length)} tiles away.`
+          ? `An opponent is about ${Math.round(100 * maxReadyChance(ctx.opponentMelds, ctx.playerTurns, ctx.reads))}% likely to be ready and this hand is still ${shanten(concealed, melds.length)} tiles away.`
           : `No route to ${ctx.minimumFan} tai: nothing to pong for Fan, and no flower or animal left to draw in time.`,
         'The hand cannot be won, so it is played for damage: throw what is least likely to pay someone else.',
         `Safest here is ${kindName(safest.tile)} at about ${fmt(safest.risk)} chips of risk.`,

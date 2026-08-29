@@ -63,7 +63,7 @@ export interface ClaimAnalysis {
 
 export function analyseClaim(c: ClaimCandidate, concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): ClaimAnalysis {
   const turnNorm = Math.min(1, ctx.playerTurns / 40);
-  const threat = threatScale(ctx.opponentMelds, ctx.playerTurns);
+  const threat = threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads);
   const fanBefore = fanInHand({ melds, bonus: [...ctx.bonus], seat: ctx.seat, prevailingWind: ctx.prevailingWind });
   const shBefore = shanten(concealed, melds.length);
 

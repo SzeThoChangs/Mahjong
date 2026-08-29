@@ -4,6 +4,7 @@
  */
 import { fanInHand, isAnimal, isDragon, isFlower, isSeason, windKind, type TileKind } from 'sg-mahjong-engine';
 import { TABLES } from './tables.js';
+import type { ReadsTables } from './reads.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, thirteenBreakdown, type HandInput } from './evaluators.js';
 
 export type TargetId = 'ping_wu' | 'all_chow' | 'half_color' | 'all_pong' | 'chicken' | 'thirteen';
@@ -59,6 +60,9 @@ export interface Context {
    *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
    *  still become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
+  /** An alternative reads table to price danger with. Defaults to the shipped one; exists so a
+   *  regenerated table can be PLAYED against the current one before it replaces it. */
+  reads?: ReadsTables;
   /** How heavily to price deal-in risk against hand value. Defaults to the fitted 40. It exists as
    *  a knob because the 40 was fitted against per-decision AGREEMENT with the play-outs, and
    *  agreement has repeatedly failed to predict chips - see PLAN.md. Sweeping it against money is
