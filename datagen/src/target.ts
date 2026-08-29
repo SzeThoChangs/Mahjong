@@ -1,7 +1,7 @@
 /**
  * Which outcome statistic can the rollouts actually resolve?
  *
- *   tsx src/target.ts --dir ../data/gen/run-money2 --decisions 120 --rollouts 64
+ *   tsx src/target.ts --dir ../data/gen/run-money3 --decisions 120 --rollouts 64
  *
  * The noise floor is set by the variance of what we measure, not only by how many play-outs we buy.
  * Chips per hand has an outcome SD of 9.8 - dominated by whether the hand is won and at what tai,
@@ -30,7 +30,7 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const want = Number(arg('decisions', '120'));
 const rollouts = Number(arg('rollouts', '64'));
 const seed = Number(arg('seed', '31'));

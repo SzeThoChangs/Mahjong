@@ -1,6 +1,6 @@
 /**
  * Build a quiz pack: real evaluated decisions, compact, for the web Real Quiz.
- *   tsx src/quizpack.ts --dir ../data/gen/run100k-table --out ../web/public/quiz --name table --max 4000
+ *   tsx src/quizpack.ts --dir ../data/gen/run-money3 --out ../web/public/quiz --name table --max 4000
  * Every question carries the acting player's visible context and the measured EV of every legal action.
  * Two streaming passes over the evals: the first keeps only a key and a spread per decision so the sample
  * can be drawn, the second re-reads and materialises just the few thousand records that were picked.
@@ -17,7 +17,7 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run100k-table')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const outDir = arg('out', '../web/public/quiz')!;
 const name = arg('name', 'table')!;
 const maxQ = Number(arg('max', '4000'));

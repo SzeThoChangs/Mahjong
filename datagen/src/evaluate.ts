@@ -1,7 +1,7 @@
 /**
  * Layer 2 evaluator: for a recorded decision, estimate the value of EVERY legal action by rollouts.
  *
- *   tsx src/evaluate.ts --dir ../data/gen/run100k --hands 200 --per-hand 4 --rollouts 32 --mode sampled --policy fast --workers 8 --seed 1
+ *   tsx src/evaluate.ts --dir ../data/gen/run-money3 --hands 200 --per-hand 4 --rollouts 32 --mode sampled --policy fast --workers 8 --seed 1
  *
  * Output: <dir>/evals-wN.jsonl.gz, one line per evaluated decision:
  *   { g,h,d,k,seat,bot,sel, mode, policy, n, actions:[{a, ev, sd, win, dealin, draw}], best, regret }

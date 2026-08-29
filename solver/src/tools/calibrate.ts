@@ -17,7 +17,7 @@
  * Prints the constants to paste into Trainer.tsx.
  */
 import { readFileSync } from 'node:fs';
-import { policyRank, type Context } from './index.js';
+import { policyRank, type Context } from '../index.js';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 
 interface Action { a: string; ev: number; se?: number }

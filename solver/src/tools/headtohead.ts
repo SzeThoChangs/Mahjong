@@ -14,7 +14,7 @@
  */
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot } from './bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot } from '../bot.js';
 
 const n = Number(process.argv[2] ?? 1000);
 /** which learned half to put in the seat: the discard model, the claim model, or both. */

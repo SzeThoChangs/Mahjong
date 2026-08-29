@@ -1,7 +1,7 @@
 /**
  * Does successive halving inflate the gap it reports?
  *
- *   tsx src/halving.ts --dir ../data/gen/run-money2 --decisions 80 --rollouts 128
+ *   tsx src/halving.ts --dir ../data/gen/run-money3 --decisions 80 --rollouts 128
  *
  * `--adaptive` stops rolling out an action once its running mean looks bad: everyone gets n/4, the
  * top half gets n/2, the top quarter gets n. That saves most of the compute, but an action pruned
@@ -22,7 +22,7 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const want = Number(arg('decisions', '80'));
 const rollouts = Number(arg('rollouts', '128'));
 const seed = Number(arg('seed', '17'));

@@ -8,7 +8,7 @@
  * player. This counts the gaps over real hands and shows which tiles fall through.
  */
 import { readFileSync } from 'node:fs';
-import { rankDiscards, type Context } from './index.js';
+import { rankDiscards, type Context } from '../index.js';
 import { isHonour, isSuited, rankOf, suitOf } from 'sg-mahjong-engine';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 

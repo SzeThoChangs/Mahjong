@@ -1,7 +1,7 @@
 /**
  * Opponent reading tables: what public signals actually tell you about a hidden hand.
  *
- *   tsx src/reads.ts --dir ../data/gen/run-money --hands 20000 --out ../web/public/reads --name money
+ *   tsx src/reads.ts --dir ../data/gen/run-money3 --hands 20000 --out ../web/public/reads --name money
  *
  * Replays recorded hands and, at sampled moments, compares what is PUBLIC about each seat
  * (exposed melds, their discard pattern, the turn) with what they are TRULY holding
@@ -19,7 +19,7 @@ import { botsFor } from './position.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
-const dir = arg('dir', '../data/gen/run-money')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const outDir = arg('out', '../web/public/reads')!;
 const name = arg('name', 'money')!;
 const maxHands = Number(arg('hands', '20000'));

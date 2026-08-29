@@ -1,7 +1,7 @@
 /**
  * Layer 3, first cut: learn the discard policy from the decisions the evaluator can actually label.
  *
- *   tsx src/policy.ts --dir ../data/gen/run-money2 --epochs 60 --out ../solver/src/policy.weights.ts
+ *   tsx src/policy.ts --dir ../data/gen/run-money3 --epochs 60 --out ../solver/src/policy.weights.ts
  *
  * The noise floor blocks learning from all 480k evaluated decisions, but the ones whose best action
  * clears 2 SE have labels that are right by construction. That subset is the training set.
@@ -13,7 +13,7 @@
  * the book tables already do, and it is directly comparable to both the bots and the book coach.
  *
  * Held out: the exact decisions in the quiz pack, so the reported accuracy is on the same 4,086
- * questions `solver/src/coachcheck.ts` scored the book coach on (52.8%). Nothing else is comparable.
+ * questions `solver/src/tools/coachcheck.ts` scored the book coach on (52.8%). Nothing else is comparable.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { makeRng } from 'sg-mahjong-engine';
@@ -28,7 +28,7 @@ import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, type PolicyTable } f
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const clear = Number(arg('clear', '2'));
 const epochs = Number(arg('epochs', '60'));
 const l2 = Number(arg('l2', '1e-4'));

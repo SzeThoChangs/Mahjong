@@ -2,7 +2,7 @@
  * Strategy profile: how often each hand type is actually won, and at what tai.
  * Lets the app re-price every combination under ANY money ladder instantly,
  * without re-simulating.
- *   tsx src/profile.ts --dir ../data/gen/run-money --out ../web/public/profile --name money
+ *   tsx src/profile.ts --dir ../data/gen/run-money3 --out ../web/public/profile --name money
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,7 +11,7 @@ import { rulesForDir } from './tablerules.js';
 import { moneyAt } from 'sg-mahjong-engine';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
-const dir = arg('dir', '../data/gen/run-money')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const outDir = arg('out', '../web/public/profile')!;
 const name = arg('name', 'money')!;
 

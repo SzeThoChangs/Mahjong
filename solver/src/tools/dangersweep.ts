@@ -14,9 +14,9 @@
  */
 import { Wall, playGame, makeRng, kindOf, type Bot, type PlayerView, type TileInstance, type Meld } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot } from './bot.js';
-import { rankDiscards } from './rank.js';
-import type { Context } from './targets.js';
+import { CoachBot } from '../bot.js';
+import { rankDiscards } from '../rank.js';
+import type { Context } from '../targets.js';
 
 const n = Number(process.argv[2] ?? 1000);
 /** wall seed base - see headtohead.ts: a single hardcoded shuffle hid a false per-seat pattern */

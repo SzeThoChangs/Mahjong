@@ -8,7 +8,7 @@
  */
 import { Wall, playGame, kindOf, makeRng, IsolationBot, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot } from './bot.js';
+import { CoachBot, PolicyBot } from '../bot.js';
 
 const n = Number(process.argv[2] ?? 300);
 const cfg = loadTableConfig();

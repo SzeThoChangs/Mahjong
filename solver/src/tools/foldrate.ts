@@ -1,9 +1,9 @@
 /** How often the fold rule fires, and how often the bonus route keeps a hand alive. */
 import { Wall, playGame, makeRng, kindOf, type Bot, type PlayerView, type TileInstance, type Meld } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { rankDiscards } from './rank.js';
-import { bonusFanChance, handValue, type Context } from './targets.js';
-import { CoachBot } from './bot.js';
+import { rankDiscards } from '../rank.js';
+import { bonusFanChance, handValue, type Context } from '../targets.js';
+import { CoachBot } from '../bot.js';
 
 const cfg = loadTableConfig(), rules = loadTableRules();
 const n = Number(process.argv[2] ?? 300);

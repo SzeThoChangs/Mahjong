@@ -1,6 +1,6 @@
 /**
  * Re-judge one recorded decision with more play-outs (the quiz's Challenge button).
- *   tsx src/challenge.ts --dir ../data/gen/run100k-table --id 976:13:4 --hand 17,9,... --rollouts 512
+ *   tsx src/challenge.ts --dir ../data/gen/run-money3 --id 976:13:4 --hand 17,9,... --rollouts 512
  * Prints a JSON result to stdout.
  */
 import { kindOf } from 'sg-mahjong-engine';

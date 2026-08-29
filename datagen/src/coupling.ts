@@ -1,7 +1,7 @@
 /**
  * Does position-keyed rollout randomness actually shrink the error bar?
  *
- *   tsx src/coupling.ts --dir ../data/gen/run-money2 --decisions 200 --rollouts 128
+ *   tsx src/coupling.ts --dir ../data/gen/run-money3 --decisions 200 --rollouts 128
  *
  * Evaluates the SAME decisions twice at the same seed and rollout count, once with the sequential
  * per-seat stream (--no-coupled behaviour) and once with the position-keyed one, and reports what
@@ -19,7 +19,7 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const want = Number(arg('decisions', '200'));
 const rollouts = Number(arg('rollouts', '128'));
 const seed = Number(arg('seed', '77'));

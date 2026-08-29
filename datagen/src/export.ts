@@ -1,6 +1,6 @@
 /**
  * Export replay bundles for the web film room.
- *   tsx src/export.ts --dir ../data/gen/run100k-table --out ../web/public/replays/table --hands 150
+ *   tsx src/export.ts --dir ../data/gen/run-money3 --out ../web/public/replays/table --hands 150
  * Picks hands (evaluated decisions first, then variety), replays each to collect its decisions,
  * attaches evaluations, and writes compact JSON: index.json + h<g>_<h>.json.
  * The evals are streamed twice - once to learn which hands were evaluated, once to load the shortlist -
@@ -19,7 +19,7 @@ import { playHand } from './session.js';
 import type { HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run100k-table')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const out = arg('out', '../web/public/replays/table')!;
 const maxHands = Number(arg('hands', '150'));
 

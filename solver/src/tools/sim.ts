@@ -7,7 +7,7 @@
  */
 import { runSim, formatStats, IsolationBot, makeRng } from 'sg-mahjong-engine';
 import { loadTableConfig } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot } from './bot.js';
+import { CoachBot, PolicyBot } from '../bot.js';
 
 const n = Number(process.argv[2] ?? 1000);
 const cfg = loadTableConfig();

@@ -1,7 +1,7 @@
 /**
  * Train the call-or-pass model on the claim decisions the evaluator can label.
  *
- *   tsx src/claimpolicy.ts --dir ../data/gen/run-money2 --epochs 60 --hidden 16
+ *   tsx src/claimpolicy.ts --dir ../data/gen/run-money3 --epochs 60 --hidden 16
  *
  * These labels were already on disk and being thrown away: claims ARE evaluated (selectDecisions
  * only filters `legal.length > 1`), but the discard trainer drops everything that is not a discard.
@@ -30,7 +30,7 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const clear = Number(arg('clear', '2'));
 const epochs = Number(arg('epochs', '60'));
 const l2 = Number(arg('l2', '1e-4'));

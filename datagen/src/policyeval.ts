@@ -1,7 +1,7 @@
 /**
  * Does the learned policy hold up OFF its training distribution?
  *
- *   tsx src/policyeval.ts --dir ../data/gen/run-money2 --hands 20000
+ *   tsx src/policyeval.ts --dir ../data/gen/run-money3 --hands 20000
  *
  * policy.ts trains and reports on decisive decisions only - the 3.8% of discards whose best action
  * clears 2 SE. In the app the policy is asked about every position, including the 96% it has never
@@ -25,7 +25,7 @@ import { discardFeatures, unseenCounts, type DiscardFeatures } from 'sg-mahjong-
 import type { DecisionRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money2')!;
+const dir = arg('dir', '../data/gen/run-money3')!;
 const maxHands = Number(arg('hands', '20000'));
 const weightsPath = arg('weights', '../solver/src/policy.weights.json')!;
 

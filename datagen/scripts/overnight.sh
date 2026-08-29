@@ -3,7 +3,7 @@
 # Every step is checked: the run stops at the first failure instead of printing COMPLETE over broken outputs.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-OUT=${OUT:-../data/gen/run-money2}
+OUT=${OUT:-../data/gen/run-money3}
 HANDS=${HANDS:-150000}
 DECISIONS=${DECISIONS:-120000}
 VENV=${VENV:-/private/tmp/claude-502/-Users-changshengszetho-Desktop-01-All-Projects-My-Games-Mahjong/12a7a5b9-734f-47e0-a966-762b0e9ab487/scratchpad/venv}

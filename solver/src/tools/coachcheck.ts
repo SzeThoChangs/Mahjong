@@ -12,7 +12,7 @@
  * and what its choices cost in dollars per hand.
  */
 import { readFileSync } from 'node:fs';
-import { rankDiscards, type Context } from './index.js';
+import { rankDiscards, type Context } from '../index.js';
 import { isHonour, rankOf } from 'sg-mahjong-engine';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 
