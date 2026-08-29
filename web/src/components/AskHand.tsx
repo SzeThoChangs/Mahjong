@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
-import { rankDiscards, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, claimAdvice, type ClaimCandidate, type Context } from 'sg-mahjong-solver';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 import { CONFIG } from '@/lib/scenario';
 
@@ -39,7 +39,11 @@ export default function AskHand() {
   const [seat, setSeat] = useState(0);
   const [round, setRound] = useState(0);
   const [turn, setTurn] = useState(16);
-  const [pending, setPending] = useState<'hand' | 'pong' | 'chow' | 'seen'>('hand');
+  const [pending, setPending] = useState<'hand' | 'pong' | 'chow' | 'seen' | 'thrown'>('hand');
+  /** the tile someone just discarded, when the question is call-or-pass rather than what-to-throw */
+  const [offered, setOffered] = useState<TileKind | null>(null);
+  /** you may only chow from the player who plays immediately before you - everyone can pong */
+  const [fromLeft, setFromLeft] = useState(true);
   /** tiles already face-up anywhere on the table: the discard pool and everyone else's sets.
    *  Without these the coach counts four copies of a dead tile as live and reads the table as
    *  quieter than it is - it is the single biggest thing separating real advice from a guess. */
@@ -61,6 +65,7 @@ export default function AskHand() {
   const add = (k: TileKind) => {
     if ((used.get(k) ?? 0) >= copiesAllowed(k)) return;
     if (pending === 'seen') { setSeen((v) => [...v, k].sort((a, b) => a - b)); return; }
+    if (pending === 'thrown') { if (k < 34) { setOffered(k); setPending('hand'); } return; }
     if (k >= 34) { setBonus((b) => [...b, k].sort((a, b2) => a - b2)); return; }
     if (pending === 'hand') {
       if (total >= HAND_TILES) return;
@@ -81,22 +86,48 @@ export default function AskHand() {
     setPending('hand');
   };
   const removeAt = (i: number) => setHand((h) => h.filter((_, x) => x !== i));
-  const clear = () => { setHand([]); setMelds([]); setBonus([]); setSeen([]); setPending('hand'); };
+  const clear = () => { setHand([]); setMelds([]); setBonus([]); setSeen([]); setOffered(null); setPending('hand'); };
+
+  const ctx = useMemo((): Context => ({
+    // `seat` here is already a WIND - the player picks 東/南/西/北 directly - which is what
+    // Context wants. Elsewhere it is derived as (seat - dealer + 4) % 4 from an absolute seat.
+    seat, prevailingWind: round, bonus, playerTurns: turn,
+    minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+    visible: seen, opponentMelds: oppMelds,
+  }), [seat, round, bonus, turn, seen, oppMelds]);
 
   // The coach only has an answer when the hand is a legal 14 and it is your turn to throw.
   const answer = useMemo(() => {
     if (total !== HAND_TILES || hand.length % 3 !== 2) return null;
     try {
-      const ctx: Context = {
-        // `seat` here is already a WIND - the player picks 東/南/西/北 directly - which is what
-        // Context wants. Elsewhere it is derived as (seat - dealer + 4) % 4 from an absolute seat.
-        seat, prevailingWind: round, bonus, playerTurns: turn,
-        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
-        visible: seen, opponentMelds: oppMelds,
-      };
       return rankDiscards(hand, melds, ctx);
     } catch { return null; }
-  }, [hand, melds, bonus, seat, round, turn, total, seen, oppMelds]);
+  }, [hand, melds, total, ctx]);
+
+  /**
+   * Call or pass. This needs THIRTEEN tiles plus the one on the floor - a 14-tile hand is one you
+   * are about to throw from, which is the other question entirely.
+   *
+   * Chow is offered only when the tile came from the player immediately before you; a pong or kong
+   * can be taken from anyone. The advice comes from `claimAdvice`, which is literally the rule
+   * CoachBot plays, so this tab cannot quietly disagree with the bot that was measured.
+   */
+  const claim = useMemo(() => {
+    if (offered === null || total !== HAND_TILES - 1 || hand.length % 3 !== 1) return null;
+    const copies = hand.filter((k) => k === offered).length;
+    const cands: ClaimCandidate[] = [{ kind: 'pass', used: [] }];
+    if (copies >= 2) cands.push({ kind: 'pong', used: [offered, offered] });
+    if (copies >= 3) cands.push({ kind: 'kong3', used: [offered, offered, offered] });
+    if (fromLeft && offered < 27) {
+      const suit = Math.floor(offered / 9);
+      const has = (k: number) => Math.floor(k / 9) === suit && k >= 0 && k < 27 && hand.includes(k);
+      for (const [a, b] of [[offered - 2, offered - 1], [offered - 1, offered + 1], [offered + 1, offered + 2]]) {
+        if (has(a!) && has(b!)) cands.push({ kind: 'chow', used: [a!, b!] });
+      }
+    }
+    if (cands.length === 1) return { none: true as const };
+    try { return { none: false as const, ...claimAdvice(cands, hand, melds, offered, ctx) }; } catch { return null; }
+  }, [offered, hand, melds, total, ctx, fromLeft]);
 
   const Picker = ({ kinds, cols }: { kinds: TileKind[]; cols?: string }) => (
     <div className={cn('flex flex-wrap gap-1', cols)}>
@@ -150,6 +181,7 @@ export default function AskHand() {
           <CardTitle className="text-base">
             {total}/{HAND_TILES} tiles
             {short > 0 && <span className="ml-2 font-normal text-muted-foreground">— {short} more to go</span>}
+            {short === 1 && <span className="ml-2 font-normal text-muted-foreground">— one more to ask what to throw, or set a thrown tile to ask whether to take it</span>}
             {short === 0 && hand.length % 3 !== 2 && <span className="ml-2 font-normal text-amber-600">— that is a full hand, not one waiting to throw</span>}
           </CardTitle>
           <Button size="sm" variant="ghost" onClick={clear} disabled={!total && !bonus.length && !seen.length}>clear</Button>
@@ -196,6 +228,62 @@ export default function AskHand() {
         </CardContent>
       </Card>
 
+      {/* call or pass: only meaningful with 13 tiles and something on the floor */}
+      {(offered !== null || total === HAND_TILES - 1) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-base">Someone threw a tile</CardTitle>
+              <div className="flex items-center gap-2 text-sm">
+                <Button size="sm" variant={fromLeft ? 'secondary' : 'ghost'} onClick={() => setFromLeft(true)}>from 上家 (before you)</Button>
+                <Button size="sm" variant={!fromLeft ? 'secondary' : 'ghost'} onClick={() => setFromLeft(false)}>from anyone else</Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center gap-3">
+              {offered === null
+                ? <span className="text-muted-foreground">Tap <b>thrown tile</b> below, then the tile.</span>
+                : <>
+                    <Tile kind={offered} size="lg" />
+                    <Button size="sm" variant="ghost" onClick={() => setOffered(null)}>remove</Button>
+                    {total !== HAND_TILES - 1 && <span className="text-amber-600">You need {HAND_TILES - 1} tiles to answer this — you have {total}.</span>}
+                  </>}
+            </div>
+            {!fromLeft && <div className="text-xs text-muted-foreground">Only the player immediately before you may chow; pong and kong are open to everyone.</div>}
+            {claim && claim.none && <div className="text-muted-foreground">You cannot claim it — nothing in your hand matches.</div>}
+            {claim && !claim.none && (
+              <>
+                <div className="text-base font-medium">
+                  {claim.best.kind === 'pass' ? 'Pass.' : `Take it — ${claim.best.kind === 'chow' ? 'chow' : claim.best.kind === 'pong' ? 'pong' : 'kong'}.`}
+                </div>
+                <div className="space-y-2">
+                  {claim.options.map((o, i) => {
+                    const isBest = o.candidate.kind === claim.best.kind && o.candidate.used.join() === claim.best.used.join();
+                    return (
+                      <div key={i} className={cn('rounded border p-2', isBest && 'border-primary bg-primary/5')}>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium w-14">{o.candidate.kind === 'kong3' ? 'Kong' : o.candidate.kind[0]!.toUpperCase() + o.candidate.kind.slice(1)}</span>
+                          {o.candidate.used.map((k, j) => <Tile key={j} kind={k} size="xs" />)}
+                          {o.candidate.kind !== 'pass' && <Tile kind={offered!} size="xs" highlight />}
+                          {isBest && <Badge className="ml-auto">best</Badge>}
+                          {Number.isFinite(o.gain) && o.candidate.kind !== 'pass' && (
+                            <span className={cn('ml-auto tabular-nums text-xs', o.gain > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground')}>
+                              {o.gain >= 0 ? '+' : ''}{o.gain.toFixed(1)} chips
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">{o.reasons.join(' · ')}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* the answer, as soon as there is one */}
       {answer && (
         <Card className="border-primary">
@@ -237,10 +325,10 @@ export default function AskHand() {
           <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">Add tiles</CardTitle>
           <div className="flex flex-wrap gap-1">
-            {(['hand', 'pong', 'chow', 'seen'] as const).map((m) => (
+            {(['hand', 'pong', 'chow', 'seen', 'thrown'] as const).map((m) => (
               <Button key={m} size="sm" variant={pending === m ? 'secondary' : 'ghost'} onClick={() => setPending(m)}
                 disabled={(m === 'pong' || m === 'chow') && total + 3 > HAND_TILES}>
-                {m === 'hand' ? 'to hand' : m === 'pong' ? '+ pong' : m === 'chow' ? '+ chow' : 'seen on table'}
+                {m === 'hand' ? 'to hand' : m === 'pong' ? '+ pong' : m === 'chow' ? '+ chow' : m === 'seen' ? 'seen on table' : 'thrown tile'}
               </Button>
             ))}
           </div>
@@ -251,7 +339,8 @@ export default function AskHand() {
             <div className="text-xs text-amber-700 dark:text-amber-300">
               {pending === 'pong' ? 'Tap the tile you ponged — it takes three copies.'
                 : pending === 'chow' ? 'Tap the LOWEST tile of the run you chowed — 3條 for 3-4-5條.'
-                : 'Tap everything already face-up: the discard pool and the sets in front of the other players. The more of it you enter, the better the danger read.'}
+                : pending === 'seen' ? 'Tap everything already face-up: the discard pool and the sets in front of the other players. The more of it you enter, the better the danger read.'
+                : 'Tap the tile somebody just threw, and it will tell you whether to take it.'}
             </div>
           )}
           {SUITS.map((s) => (

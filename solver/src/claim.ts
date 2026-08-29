@@ -16,6 +16,7 @@ import {
 import { threatScale } from './reads.js';
 import { CLAIM_POLICY } from './claim.weights.js';
 import { handValue, type Context } from './targets.js';
+import { rankDiscards } from './rank.js';
 
 export type ClaimKindName = 'pass' | 'chow' | 'pong' | 'kong3' | 'win';
 
@@ -240,4 +241,44 @@ export function claimRank(candidates: ClaimCandidate[], concealed: TileKind[], m
     .map((c, i) => ({ candidate: c, score: scores[i]!, p: ex[i]! / sum }))
     .sort((a, b) => b.score - a.score);
   return { best: options[0]!.candidate, options };
+}
+
+export interface ClaimAdviceOption { candidate: ClaimCandidate; gain: number; reasons: string[] }
+export interface ClaimAdvice { best: ClaimCandidate; options: ClaimAdviceOption[] }
+
+/**
+ * The coach's own call-or-pass rule, as a pure function.
+ *
+ * This IS what `CoachBot.chooseClaim` plays - the bot calls straight into it - so the advice the
+ * app gives and the advice the measured player follows cannot drift apart. A second copy of this
+ * arithmetic living in the web tab is exactly the bug that would never be noticed.
+ *
+ * `gain` is what the call does to the hand: the value of the best hand you could be left with
+ * AFTER the forced follow-up discard, minus what the hand is worth if you pass. Opening a
+ * concealed hand costs something real that the chips do not capture, so a call has to beat passing
+ * by `OPEN_COST` before it is worth taking.
+ */
+export const OPEN_COST = 0.4;
+export function claimAdvice(candidates: ClaimCandidate[], concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): ClaimAdvice {
+  const win = candidates.find((c) => c.kind === 'win');
+  if (win) return { best: win, options: [{ candidate: win, gain: Infinity, reasons: ['it wins the hand'] }] };
+  const kong = candidates.find((c) => c.kind === 'kong3');
+  const before = handValue({ concealed, melds }, ctx).chips;
+  const out: ClaimAdviceOption[] = [];
+  for (const c of candidates) {
+    const reasons = claimReasons(c, concealed, melds, offered, ctx);
+    if (c.kind === 'pass') { out.push({ candidate: c, gain: 0, reasons }); continue; }
+    if (c.kind === 'kong3') { out.push({ candidate: c, gain: Infinity, reasons }); continue; }
+    const rest = [...concealed];
+    for (const k of c.used) { const i = rest.indexOf(k); if (i >= 0) rest.splice(i, 1); }
+    const meld: Meld = { type: c.kind === 'chow' ? 'chow' : 'pong', tiles: [...c.used, offered].sort((a, b) => a - b), concealed: false };
+    let gain = -Infinity;
+    try { gain = rankDiscards(rest, [...melds, meld], ctx).best.chips - before; } catch { /* an illegal shape scores nothing */ }
+    out.push({ candidate: c, gain, reasons });
+  }
+  out.sort((a, b) => b.gain - a.gain);
+  // the coach takes a kong whenever it is offered, and otherwise only calls if it clears OPEN_COST
+  const top = out[0];
+  const best = kong ?? (top && top.candidate.kind !== 'pass' && top.gain > OPEN_COST ? top.candidate : { kind: 'pass' as const, used: [] });
+  return { best, options: out };
 }

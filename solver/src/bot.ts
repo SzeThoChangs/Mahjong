@@ -1,9 +1,9 @@
 /** A bot that plays by the solver's advice. Exists to verify the advice in the simulator. */
 import { kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type Meld } from 'sg-mahjong-engine';
 import { rankDiscards } from './rank.js';
-import { handValue, type Context } from './targets.js';
+import { type Context } from './targets.js';
 import { policyRank } from './policy.js';
-import { claimRank, type ClaimCandidate } from './claim.js';
+import { claimRank, claimAdvice, type ClaimCandidate } from './claim.js';
 
 /**
  * The bot's view of the table, including what everyone can see.
@@ -33,24 +33,17 @@ export class CoachBot implements Bot {
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
     return options.find((o) => o.kind === 'win') ?? options.find((o) => o.kind === 'kong4') ?? options.find((o) => o.kind === 'kong1') ?? null;
   }
+  /** The rule itself lives in `claimAdvice` so the app can show exactly what the bot plays. */
   chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
     const win = options.find((o) => o.kind === 'win'); if (win) return win;
     const kong = options.find((o) => o.kind === 'kong3'); if (kong) return kong;
-    const ctx = ctxOf(v), melds = meldsOf(v), hand = v.hand.map(kindOf);
-    const before = handValue({ concealed: hand, melds }, ctx).chips;
-    let best: ClaimOption | null = null, bestGain = 0.4;      // require a real gain to open the hand
-    for (const o of options) {
-      if (o.kind !== 'pong' && o.kind !== 'chow') continue;
-      const used = o.tiles!.map(kindOf);
-      const rest = [...hand]; for (const k of used) rest.splice(rest.indexOf(k), 1);
-      const dk = kindOf(v.lastDiscard!.tile);
-      const meld: Meld = { type: o.kind, tiles: [...used, dk].sort((a, b) => a - b), concealed: false };
-      // after claiming we must discard one: take the best resulting 13
-      const r = rankDiscards(rest, [...melds, meld], ctx);
-      const after = r.best.chips;
-      if (after - before > bestGain) { bestGain = after - before; best = o; }
-    }
-    return best;
+    const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow');
+    if (!usable.length) return null;
+    const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow', used: (o.tiles ?? []).map(kindOf) }));
+    const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), ctxOf(v));
+    if (adv.best.kind === 'pass') return null;
+    const i = cands.findIndex((c) => c.kind === adv.best.kind && c.used.join() === adv.best.used.join());
+    return usable[i] ?? null;
   }
 }
 
