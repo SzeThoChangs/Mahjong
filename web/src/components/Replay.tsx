@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
+import { PublicTable } from '@/components/PublicTable';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 
@@ -135,35 +136,27 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
         )}
       </CardContent></Card>
 
-      {/* seats */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {[0, 1, 2, 3].map((s) => (
-          <Card key={s} className={cn(s === cur.p && 'ring-2 ring-primary')}>
-            <CardHeader className="py-2"><CardTitle className="text-sm flex items-center gap-2">
-              {WIND[s]} <span className="text-muted-foreground font-normal">{hand.bots[s]}</span>
-              {s === hand.dealer && <Badge variant="outline">dealer</Badge>}
-              {s === cur.p && <Badge>acting</Badge>}
-            </CardTitle></CardHeader>
-            <CardContent className="space-y-1.5 pb-3">
-              {s === cur.p && (
-                <div className="flex flex-wrap gap-0.5 items-end">
-                  {[...cur.h].sort((a, b) => a - b).filter((k) => k !== cur.dr).map((k, x) => <Tile key={x} kind={k} size="sm" />)}
-                  {cur.dr !== null && <span className="ml-2"><Tile kind={cur.dr} size="sm" badge="drew" /></span>}
-                </div>
-              )}
-              {melds[s]!.length > 0 && (
-                <div className="flex flex-wrap gap-2">{melds[s]!.map((m, x) => (
-                  <span key={x} className={cn('flex gap-0.5 rounded p-0.5', m[1] === 1 && 'bg-secondary')}>{m.slice(2).map((k, y) => <Tile key={y} kind={k} size="sm" dim={m[1] === 1} />)}</span>
-                ))}</div>
-              )}
-              {s === cur.p && cur.b.length > 0 && <div className="flex gap-0.5">{cur.b.map((k, x) => <Tile key={x} kind={k} size="sm" className="opacity-80" />)}</div>}
-              <div className="flex flex-wrap gap-0.5 min-h-6 pt-1 border-t">
-                {rivers[s]!.map((t, x) => <Tile key={x} kind={t.k} size="sm" dim={!t.claimed} highlight={t.claimed} />)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* the table, seen from behind whoever is deciding */}
+      <PublicTable
+        you={cur.p}
+        centre={<div className="text-center leading-tight">
+          <div className="text-lg font-semibold">{WIND[hand.wind]}圈</div>
+          <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(cur.t / 4))}巡</div>
+        </div>}
+        seats={[0, 1, 2, 3].map((s) => ({
+          wind: WIND[s]!,
+          you: false,
+          name: hand.bots[s],
+          dealer: s === hand.dealer,
+          acting: s === cur.p,
+          // the generator only carries the acting seat's flowers and concealed hand
+          bonus: s === cur.p ? cur.b : [],
+          hand: s === cur.p ? cur.h : undefined,
+          drawn: s === cur.p ? cur.dr : undefined,
+          // a meld row is [type, concealed, ...tiles]
+          melds: melds[s]!.map((m) => ({ tiles: m.slice(2), concealed: m[1] === 1 })),
+          discards: rivers[s]!.map((t) => ({ kind: t.k, claimed: t.claimed })),
+        }))} />
 
       {/* decision detail */}
       <Card>

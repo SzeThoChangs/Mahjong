@@ -3,7 +3,8 @@
  * and stopping at a genuine discard decision in the requested phase.
  */
 import {
-  Wall, makeRng, playGame, IsolationBot, kindOf, type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig,
+  Wall, makeRng, playGame, IsolationBot, kindOf, makeRules,
+  type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig, type RulesConfig,
 } from 'sg-mahjong-engine';
 import { rankDiscards, policyRank, type Ranking, type PolicyRanking, type Context } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
@@ -15,6 +16,25 @@ export const CONFIG: TableConfig = {
   minimum_fan: tableConfig.minimum_fan, fan_limit: tableConfig.fan_limit, self_draw_minimum_fan: tableConfig.self_draw_minimum_fan,
   immediate_payouts_multiplier: tableConfig.immediate_payouts_multiplier, unplayable_tiles: 15,
 };
+
+/**
+ * The table's FULL house rules, not just its fan limits - bao, special hands, and above all
+ * `jokers.count`. This tab used to deal with the engine defaults and no wildcards at all, so the
+ * hands it asked about were a different game from the one the Real quiz and Film room record.
+ *
+ * The node loader (`sg-mahjong-engine/node`) cannot be used here: it reads the file with node:fs
+ * and this bundle must stay browser-only. Vite inlines the JSON instead and `makeRules` - which is
+ * pure - does the same deep merge over the defaults.
+ */
+const { _note: _drop, ...RULES_OVERRIDE } = tableConfig.rules as Record<string, unknown>;
+export const RULES: RulesConfig = makeRules({
+  ...RULES_OVERRIDE,
+  minimum_tai: tableConfig.minimum_fan,
+  maximum_tai: tableConfig.fan_limit,
+  self_draw_minimum_tai: tableConfig.self_draw_minimum_fan,
+});
+/** wildcards in the wall, from the table config (4 at this table) */
+export const JOKERS = RULES.jokers.count;
 
 export interface Scenario {
   id: number;
@@ -40,11 +60,11 @@ function capture(seed: number, phase: Exclude<Phase, 'any'>): { view: PlayerView
   const [lo, hi] = PHASE_TURNS[phase];
   const targetTurn = lo + Math.floor(rng() * (hi - lo + 1));
   const targetSeat = Math.floor(rng() * 4);
-  const wall = new Wall(makeRng(seed * 7919 + 1), CONFIG.unplayable_tiles);
+  const wall = new Wall(makeRng(seed * 7919 + 1), CONFIG.unplayable_tiles, JOKERS);
   const bots = [0, 1, 2, 3].map(() => new IsolationBot(makeRng(seed * 31 + 7)));
   try {
     playGame(bots, CONFIG, wall, {
-      dealer: seed % 4, prevailingWind: Math.floor(seed / 4) % 4,
+      dealer: seed % 4, prevailingWind: Math.floor(seed / 4) % 4, rules: RULES,
       onDiscardDecision: (v, drawn) => {
         if (v.seat === targetSeat && v.playerTurns >= targetTurn && v.hand.length % 3 === 2) {
           // snapshot: the view holds live arrays

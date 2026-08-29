@@ -8,10 +8,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
+import { PublicTable } from '@/components/PublicTable';
 import { makeScenario, CONFIG, type Phase, type Scenario } from '@/lib/scenario';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['東', '南', '西', '北'];
+/** the small caption that says what a run of tiles actually IS */
+const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground';
 const VERDICT_STYLE: Record<Verdict, string> = {
   best: 'bg-emerald-600 text-white', fine: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
   mistake: 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50', blunder: 'bg-red-600 text-white',
@@ -127,51 +130,46 @@ export default function Trainer() {
         </Card>
 
         {/* the table: what is already face-up, and therefore dead. The coach counts it. */}
-        {(scenario.discards.length > 0 || scenario.publicMelds.some((m) => m.length > 0)) && (
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-base">The table</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {[0, 1, 2, 3].map((s) => {
-                const thrown = scenario.discards.filter((d) => d.seat === s);
-                const melds = scenario.publicMelds[s] ?? [];
-                const bonus = scenario.publicBonus[s] ?? [];
-                if (!thrown.length && !melds.length && !bonus.length) return null;
-                return (
-                  <div key={s} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                    <span className={cn('w-20 shrink-0', s === scenario.seat ? 'font-semibold' : 'text-muted-foreground')}>
-                      {WIND_NAME[(s - scenario.dealer + 4) % 4]}{s === scenario.seat ? ' (you)' : ''}
-                    </span>
-                    {(melds.length > 0 || bonus.length > 0) && (
-                      <span className="flex items-end gap-1 pr-2 border-r">
-                        {bonus.map((k, i) => <Tile key={`b${i}`} kind={k} size="sm" className="opacity-90" />)}
-                        {melds.map((m, i) => (
-                          <span key={`m${i}`} className="flex gap-0.5 ml-1">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="sm" dim={m.concealed} />)}</span>
-                        ))}
-                      </span>
-                    )}
-                    <span className="flex flex-wrap items-end gap-0.5">
-                      {thrown.map((d, i) => <Tile key={i} kind={d.kind} size="sm" dim={d.claimed} />)}
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="text-xs text-muted-foreground pt-1">Dimmed tiles were claimed off the floor. The coach counts everything here as gone.</div>
-            </CardContent>
-          </Card>
-        )}
+        <PublicTable
+          you={scenario.seat}
+          centre={<div className="text-center leading-tight">
+            <div className="text-lg font-semibold">{WIND_NAME[scenario.prevailingWind]}圈</div>
+            <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡 · {scenario.phase} game</div>
+          </div>}
+          seats={[0, 1, 2, 3].map((s) => ({
+            wind: WIND_NAME[(s - scenario.dealer + 4) % 4]!,
+            you: s === scenario.seat,
+            dealer: s === scenario.dealer,
+            bonus: scenario.publicBonus[s] ?? [],
+            melds: (scenario.publicMelds[s] ?? []).map((m) => ({ tiles: m.tiles, concealed: m.concealed })),
+            discards: scenario.discards.filter((d) => d.seat === s).map((d) => ({ kind: d.kind, claimed: d.claimed })),
+          }))} />
 
         {/* hand */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>
           <CardContent className="@container">
             {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
-              <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pb-2 mb-2 border-b">
-                {scenario.bonus.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
-                {scenario.melds.map((m, i) => (
-                  <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m.concealed} />)}</span>
-                ))}
+              <div className="flex flex-nowrap items-end gap-x-4 pb-2 mb-2 border-b">
+                {scenario.bonus.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className={LABEL}>Your flowers</span>
+                    <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
+                  </div>
+                )}
+                {scenario.melds.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className={LABEL}>Your open sets</span>
+                    <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
+                      {scenario.melds.map((m, i) => (
+                        <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m.concealed} />)}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+            {(scenario.melds.length > 0 || scenario.bonus.length > 0) && <span className={cn(LABEL, 'block pb-1')}>In your hand — concealed</span>}
             <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
               {sortedHand.map((k, i) => (
                 <Tile key={i} kind={k} size="md" fluid onClick={pick === null ? () => choose(k) : undefined}

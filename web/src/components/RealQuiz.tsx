@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tile } from '@/components/Tile';
+import { PublicTable } from '@/components/PublicTable';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
@@ -16,6 +17,8 @@ import { rankDiscards, handValue, claimRank, claimCandidateOf, policyRank, type 
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
+/** the small caption that says what a run of tiles actually IS */
+const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground';
 
 interface PackIx { id: string; money: boolean; unit: string; questions: number }
 // `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
@@ -222,39 +225,24 @@ export default function RealQuiz() {
         </CardContent>
       </Card>
 
-      {(q.disc?.length || q.pm?.some((m, s) => s !== q.seat && m.length)) && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">The table</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {[0, 1, 2, 3].map((s) => {
-              const thrown = (q.disc ?? []).filter((d) => d[0] === s);
-              const melds = (q.pm ?? [])[s] ?? [];
-              const bonus = (q.pb ?? [])[s] ?? [];
-              if (!thrown.length && !melds.length && !bonus.length) return null;
-              return (
-                <div key={s} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                  <span className={cn('w-20 shrink-0', s === q.seat ? 'font-semibold' : 'text-muted-foreground')}>
-                    {WIND[q.dl !== undefined ? (s - q.dl + 4) % 4 : s]}{s === q.seat ? ' (you)' : ''}
-                  </span>
-                  {(melds.length > 0 || bonus.length > 0) && (
-                    <span className="flex items-end gap-1 pr-2 border-r">
-                      {bonus.map((k, i) => <Tile key={`b${i}`} kind={k} size="sm" className="opacity-90" />)}
-                      {melds.map((meld, i) => (
-                        <span key={`m${i}`} className="flex gap-0.5 ml-1">{meld.slice(2).map((k, j) => <Tile key={j} kind={k} size="sm" dim={meld[1] === 1} />)}</span>
-                      ))}
-                    </span>
-                  )}
-                  {/* a claimed discard left the pool - it is sitting in someone's meld above */}
-                  <span className="flex flex-wrap items-end gap-0.5">
-                    {thrown.map((d, i) => <Tile key={i} kind={d[1]!} size="sm" dim={d[2]! >= 0} />)}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="text-xs text-muted-foreground pt-1">Dimmed tiles were claimed off the floor. Everything here is dead — the coach counts it.</div>
-          </CardContent>
-        </Card>
-      )}
+      <PublicTable
+        you={q.seat}
+        centre={<div className="text-center leading-tight">
+          <div className="text-lg font-semibold">{WIND[q.w]}圈</div>
+          <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</div>
+        </div>}
+        seats={[0, 1, 2, 3].map((s) => ({
+        wind: WIND[q.dl !== undefined ? (s - q.dl + 4) % 4 : s]!,
+        you: s === q.seat,
+        dealer: s === q.dl,
+        // your own flowers and sets belong to the hand card below, where they are labelled "Your ...".
+        // Showing them here too printed them twice, from two sources that could disagree.
+        bonus: s === q.seat ? [] : (q.pb ?? [])[s] ?? [],
+        // a meld row is [type, concealed, ...tiles]
+        melds: s === q.seat ? [] : ((q.pm ?? [])[s] ?? []).map((m) => ({ tiles: m.slice(2), concealed: m[1] === 1 })),
+        // [seat, kind, claimedBy] - claimedBy >= 0 means it left the floor into someone's set
+        discards: (q.disc ?? []).filter((d) => d[0] === s).map((d) => ({ kind: d[1]!, claimed: d[2]! >= 0 })),
+        }))} />
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">
@@ -262,13 +250,26 @@ export default function RealQuiz() {
         </CardTitle></CardHeader>
         <CardContent className="space-y-3 @container">
           {(q.m.length > 0 || q.b.length > 0) && (
-            <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5 pb-1 border-b">
-              {q.b.length > 0 && <span className="flex gap-0.5 sm:gap-1 mr-3">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid className="opacity-90" />)}</span>}
-              {q.m.map((m, i) => (
-                <span key={i} className="flex gap-0.5 sm:gap-1 mr-2">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid dim={m[1] === 1} />)}</span>
-              ))}
+            <div className="flex flex-nowrap items-end gap-x-4 pb-1 border-b">
+              {q.b.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className={LABEL}>Your flowers</span>
+                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
+                </div>
+              )}
+              {q.m.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className={LABEL}>Your open sets</span>
+                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
+                    {q.m.map((m, i) => (
+                      <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m[1] === 1} />)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
+          {(q.m.length > 0 || q.b.length > 0) && <span className={cn(LABEL, 'block')}>In your hand — concealed</span>}
           <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
             {handTiles.map((k, i) => (
               <Tile key={i} kind={k} size="md" fluid
