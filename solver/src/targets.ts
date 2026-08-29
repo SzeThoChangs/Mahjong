@@ -26,6 +26,31 @@ export function fanRoutes(concealed: TileKind[], ctx: Context): FanRoute[] {
   }
   return routes.sort((a, b) => b.fan - a.fan);
 }
+/**
+ * The other way a hand reaches the table minimum: draw a flower or an animal.
+ *
+ * A value pair (see `fanRoutes`) needs a pong and a live tile. A bonus tile needs nothing but a
+ * draw - which is why a weak hand with no pairs still plays on rather than folding. Of the twelve
+ * bonus tiles, an animal is always worth 1 Fan and a flower or season only when it is this seat's
+ * own, so six of the twelve carry Fan for any given player.
+ *
+ * Returns the chance of drawing at least one of the Fan-carrying ones in the draws this player has
+ * left, which is `wallRemaining / 4` - the other three seats take the rest.
+ */
+export function bonusFanChance(ctx: Context): number {
+  if (!ctx.wallRemaining || ctx.wallRemaining <= 0) return 0;
+  const seen = new Set<TileKind>([...ctx.bonus, ...(ctx.visible ?? []).filter((k) => k >= 34)]);
+  let live = 0;
+  for (let k = 42; k < 46; k++) if (!seen.has(k)) live++;              // animals: 1 Fan each, always
+  for (const k of [34 + ctx.seat, 38 + ctx.seat]) if (!seen.has(k)) live++;   // this seat's own flower and season
+  if (!live) return 0;
+  const myDraws = Math.max(0, Math.floor(ctx.wallRemaining / 4));
+  if (!myDraws) return 0;
+  // chance at least one of `live` specific tiles lands in `myDraws` draws from `wallRemaining`
+  const miss = Math.pow(1 - live / ctx.wallRemaining, myDraws);
+  return Math.max(0, Math.min(0.95, 1 - miss));
+}
+
 export interface TargetEval { id: TargetId; value: number | string; chips: number; armed: boolean; note?: string; suit?: string }
 export interface Context {
   seat: number; prevailingWind: number; bonus: TileKind[]; playerTurns: number; minimumFan: 1 | 2; selfDrawMinimumFan: number;
@@ -34,6 +59,10 @@ export interface Context {
    *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
    *  still become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
+  /** Drawable tiles left in the wall. Needed to price the flower/animal route: a hand that is one
+   *  Fan short at turn 12 has a real chance of drawing it and at turn 44 has almost none. Optional
+   *  so older callers keep working - without it the bonus route is priced as unavailable. */
+  wallRemaining?: number;
   /** Exposed meld count for each OTHER seat. Three exposed sets at turn 40 means that player is
    *  ready 39.5% of the time; none means 4.9%. Without it the coach cannot tell a dangerous table
    *  from a quiet one, so it prices every discard as if nobody were close. */
@@ -121,7 +150,18 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
       note: `needs the ${tileName(best.tile)} pong first${best.double ? ' (double wind: 2 fan in one call)' : ''}` });
   }
   else if (fan >= ctx.selfDrawMinimumFan) out.push({ id: 'chicken', value: ch.value, armed: true, chips: chickenChips * 0.45 - 0.5, note: 'self-draw only' });
-  else out.push({ id: 'chicken', value: ch.value, armed: false, chips: -9, note: `needs ${ctx.minimumFan - fan} more Fan` });
+  else {
+    // No pair to pong into Fan - but a flower or an animal arms the hand just as well, and needs
+    // only a draw. Priced by the chance of getting one in the draws this seat has left, so the plan
+    // decays as the wall empties and is worth nothing once it is gone.
+    // The route is REPORTED but not PRICED. Pricing it - arming Chicken in proportion to the
+    // chance of drawing a bonus tile - was measured over 16,000 paired deals and cost 0.18 +/- 0.06
+    // chips a game against the coach that simply wrote the hand off. Knowing a flower could still
+    // arm the hand is worth saying to a player; it is not worth playing on for.
+    const pb = bonusFanChance(ctx);
+    const how = pb > 0.05 ? `a flower or animal would arm it (about ${Math.round(pb * 100)}% of the draws left)` : 'no route to it';
+    out.push({ id: 'chicken', value: ch.value, armed: false, chips: -9, note: `needs ${ctx.minimumFan - fan} more Fan - ${how}` });
+  }
   // All-Pong gets the same credit: a value pair is both a set and the tai the hand needs
   if (best) { const ap = out.find((x) => x.id === 'all_pong'); if (ap) ap.chips += best.fan * 1.2; }
 

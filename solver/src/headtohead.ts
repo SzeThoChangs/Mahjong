@@ -14,9 +14,21 @@
  */
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot } from './bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot } from './bot.js';
 
 const n = Number(process.argv[2] ?? 1000);
+/** which learned half to put in the seat: the discard model, the claim model, or both. */
+const ARMS: Record<string, { label: string; make: () => Bot }> = {
+  policy: { label: 'discard model', make: () => new PolicyBot() },
+  claim: { label: 'claim model', make: () => new ClaimBot() },
+  full: { label: 'both models', make: () => new FullPolicyBot() },
+  fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
+  // identical bots on both sides: the difference must be exactly zero, which checks the harness
+  self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
+};
+const armName = process.argv[3] ?? 'policy';
+const ARM = ARMS[armName];
+if (!ARM) { console.error(`unknown arm ${armName}; expected one of ${Object.keys(ARMS).join(', ')}`); process.exit(1); }
 const cfg: TableConfig = loadTableConfig();
 // The wall must be the table's wall. This harness used to deal WITHOUT wildcards while the bots it
 // compares were tuned on data generated WITH them, so the verdict was measured on a different game.
@@ -38,10 +50,10 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.le
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
 const diffs: number[] = [];
-console.log(`${n} paired deals per seat, tested bot rotated through all four seats\n`);
+console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats\n`);
 console.log(`seat   model chips/game   coach chips/game   difference (paired)`);
 for (let seat = 0; seat < 4; seat++) {
-  const model = arm(seat, () => new PolicyBot());
+  const model = arm(seat, ARM.make);
   const coach = arm(seat, () => new CoachBot());
   const d = model.map((x, i) => x - coach[i]!);
   diffs.push(...d);

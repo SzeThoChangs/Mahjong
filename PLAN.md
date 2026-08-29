@@ -406,5 +406,54 @@ claim that locks a hand below the minimum — not in a discard rule for the corn
 That is route 3 (a scoring-aware policy) showing up in its most visible form. The run as a whole
 is not distorted by it: 15.9% draws and 49.0 mean turns against the book's 14% and 48.
 
+### Four things played for money, and none of them won (measured 2026-08-29)
+
+With `headtohead.ts` finally dealing the table's own wall, every outstanding "this should be
+better" claim was played out. It is parameterised by arm now (`policy` / `claim` / `full` / `fold`
+/ `self`), 4,000 paired deals per seat, tested bot rotated through all four seats. `self` puts the
+coach against itself and must return exactly 0.000 +/- 0.000 - a harness check, since a pairing bug
+would show up as a spurious difference between identical bots.
+
+| arm | vs the book coach | read |
+|---|---|---|
+| discard model | -0.544 +/- 0.144 | loses, 3.8 SE |
+| claim model | **+0.001 +/- 0.092** | dead level |
+| both models | -0.180 +/- 0.145 | inside noise, not ahead |
+| coach + flower/animal route priced | -0.180 +/- 0.061 | loses, 3 SE |
+| coach + give-up rule | -0.039 +/- 0.018 | loses, 2.2 SE |
+
+**The machine-learning programme is closed by the claim model.** Discards were always the weak
+case - only 4% of them have a best action the play-outs separate at 2 SE, so the labels are mostly
+noise. Claims were the strong case: 27% separate, 22,107 decisive examples, and the model reaches
+86.1% held-out top-1 against 32.2% for always-pass and 59.6% for the recorded bots. It converts to
+**+0.001 chips a game**. That is not a near miss, it is nothing. Three models have now been played
+for money and none is ahead of a hand-written book heuristic. Per-decision accuracy has failed to
+predict winning three times in a row; it should not be believed a fourth.
+
+**Two hand-written strategy rules also lost, in opposite directions.** Both came from a description
+of how the table is actually played: all-chow is the default plan, a hand that cannot carry tai in
+its shape plays for flowers, animals or self-draw, and late on you decide whether to give up and
+defend.
+
+- *Pricing the flower/animal route* - arming a Chicken hand in proportion to the chance of drawing
+  a Fan-carrying bonus tile in the draws left - cost 0.18 chips a game. The advice was sound and
+  the encoding was not: knowing a flower could still arm the hand is a reason not to despair of it,
+  not a reason to invest in it. `bonusFanChance` survives and is REPORTED in the plan note, so a
+  player is told the route exists; nothing prices it.
+- *Giving up* - on a hand with no route to the minimum, rank by safety alone - cost 0.039. The
+  likely fault is the trigger: it asks whether the hand is armed NOW, which writes off exactly the
+  hands that could still draw the flower that arms them. Premature surrender. Kept opt-in behind
+  `rankDiscards(..., { fold: true })` and `FoldCoachBot`, off by default.
+
+A measurement trap worth recording: while the flower route was priced, the fold rule fired 0 times
+in 15,909 decisions and looked inert. It was not inert - the route was arming the hands the fold
+would have caught. With the pricing removed it fires on 2.24%. **A rule measured underneath another
+untested change measures nothing.**
+
+What survives: the coach is unchanged and remains the best player available, at exactly the
+behaviour it had before any of this. The harness is better - four arms and a self-check - and
+`solver/src/foldrate.ts` reports how often a rule actually fires, which is the check that would
+have caught the trap above immediately.
+
 Engine: rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot / resume), `Wall.fromSnapshot`.
 Engine rules now include robbing the kong, Seven/Eight-Flower and all-animals specials, and Pay-All liability (config-gated, off by default pending house-rule confirmation).

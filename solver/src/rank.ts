@@ -30,6 +30,8 @@ export interface Ranking {
   tied: TileKind[];
   /** the fallback plan and its trigger, when the primary is not the cheap one */
   bailout: Bailout | null;
+  /** the hand cannot reach the table minimum by any route, so the ranking is by safety alone */
+  folding: boolean;
 }
 
 const WIND_OR_DRAGON: Record<number, string> = { 27: '\u6771', 28: '\u5357', 29: '\u897f', 30: '\u5317', 31: '\u4e2d', 32: '\u767c', 33: '\u767d' };
@@ -93,7 +95,14 @@ function acceptance(h: HandInput, best: TargetEval, gone: number[] = []): number
   return n;
 }
 
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context): Ranking {
+/**
+ * `fold: true` enables giving up on a hand with no route to the table minimum. It is OFF by
+ * default because it was measured and it LOSES: 0.039 +/- 0.018 chips a game against the same
+ * coach without it, over 16,000 paired deals. Kept, opt-in, so the experiment can be re-run - see
+ * `FoldCoachBot` and PLAN.md.
+ */
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean } = {}): Ranking {
+  const foldEnabled = cfg.fold === true;
   const allJokers = concealed.every(isJoker);
   const kinds = [...new Set(concealed)].filter((k) => allJokers || !isJoker(k));   // never offer a wildcard as a discard
   // copies of each kind already face-up somewhere other than this player's own hand and melds
@@ -107,6 +116,33 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
     hands.set(k, h);
     const hv = handValue(h, ctx);
     opts.push({ tile: k, chips: hv.chips, delta: 0, verdict: 'fine', target: hv.best, acceptance: 0, reasons: [], risk: 0 });
+  }
+  // GIVING UP. A hand with no route to the table minimum - no value pair to pong, no flower or
+  // animal left to draw - wins nothing however well it is played, so every tile it throws is pure
+  // risk with no return. At that point the only question left is which throw is safest. This is
+  // the fold: it is decided on whether winning is still POSSIBLE, not on how dangerous the table
+  // looks, which is what `DefensiveBot` keys on and why nothing in the run ever folded.
+  const folding = foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
+  if (folding) {
+    for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone);
+    opts.sort((a, b) => a.risk - b.risk);
+    const safest = opts[0]!;
+    for (const o of opts) {
+      o.chips = -o.risk;
+      o.delta = -(o.risk - safest.risk);
+      o.verdict = o === safest ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
+      o.reasons = [`the hand cannot reach ${ctx.minimumFan} tai by any route - playing for safety`];
+      const sr = safetyReason(o.tile, ctx, gone); if (sr) o.reasons.push(sr);
+    }
+    return {
+      options: opts, best: safest, tied: opts.filter((o) => o.risk <= safest.risk + 0.05).map((o) => o.tile),
+      plan: 'Fold', bailout: null, folding: true,
+      planDetail: [
+        `No route to ${ctx.minimumFan} tai: nothing to pong for Fan, and no flower or animal left to draw in time.`,
+        'The hand cannot be won, so it is played for damage: throw what is least likely to pay someone else.',
+        `Safest here is ${kindName(safest.tile)} at about ${fmt(safest.risk)} chips of risk.`,
+      ],
+    };
   }
   opts.sort((a, b) => b.chips - a.chips);
   // acceptance (what improves next draw) is the expensive part: only compute it where it can change the order
@@ -178,7 +214,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context)
       detail.push(`Switch when ${plan} drops below score ${switchBelow} (it is ${t.value} now) — or if it has not improved by 第${Math.max(1, Math.ceil((ctx.playerTurns + 20) / 4))}巡.`);
     }
   }
-  return { options: opts, plan, planDetail: detail, best: top, tied, bailout };
+  return { options: opts, plan, planDetail: detail, best: top, tied, bailout, folding: false };
 }
 
 /** copies of each kind not visible in your own hand or any meld (a rough "still out there" count) */

@@ -3,6 +3,7 @@ import { kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, t
 import { rankDiscards } from './rank.js';
 import { handValue, type Context } from './targets.js';
 import { policyRank } from './policy.js';
+import { claimRank, type ClaimCandidate } from './claim.js';
 
 /**
  * The bot's view of the table, including what everyone can see.
@@ -13,7 +14,7 @@ import { policyRank } from './policy.js';
  * measuring a handicapped coach.
  */
 const ctxOf = (v: PlayerView): Context => ({
-  seat: (v.seat - v.dealer + 4) % 4, prevailingWind: v.prevailingWind, bonus: v.bonus.map(kindOf), playerTurns: v.playerTurns,
+  seat: (v.seat - v.dealer + 4) % 4, prevailingWind: v.prevailingWind, bonus: v.bonus.map(kindOf), playerTurns: v.playerTurns, wallRemaining: v.wallRemaining,
   minimumFan: v.config.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: v.config.self_draw_minimum_fan,
   visible: [
     ...v.discardLog.map((d) => kindOf(d.tile)),
@@ -64,5 +65,55 @@ export class PolicyBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = policyRank(v.hand.map(kindOf), meldsOf(v), ctxOf(v));
     return v.hand.find((t) => kindOf(t) === r.best) ?? super.chooseDiscard(v);
+  }
+}
+
+/**
+ * The same bot, but call-or-pass comes from the learned claim model instead of the coach's
+ * hand-value comparison. Discards still go through the coach, so a head-to-head against CoachBot
+ * isolates the claim decision the way PolicyBot isolates the discard.
+ *
+ * This is the arm the claim model had never been played in: PolicyBot extends CoachBot and only
+ * overrides the discard, so 86.1% held-out accuracy had never been converted into chips.
+ */
+export class ClaimBot extends CoachBot {
+  override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
+    const win = options.find((o) => o.kind === 'win'); if (win) return win;
+    const offered = kindOf(v.lastDiscard!.tile);
+    const ctx = ctxOf(v), melds = meldsOf(v), hand = v.hand.map(kindOf);
+    // `pass` is always on the table and is not in `options`; the model ranks it alongside the rest.
+    const cands: (ClaimCandidate & { opt: ClaimOption | null })[] = [{ kind: 'pass', used: [], opt: null }];
+    for (const o of options) {
+      if (o.kind !== 'pong' && o.kind !== 'chow' && o.kind !== 'kong3') continue;
+      cands.push({ kind: o.kind, used: (o.tiles ?? []).map(kindOf), opt: o });
+    }
+    if (cands.length === 1) return null;
+    const r = claimRank(cands.map((c) => ({ kind: c.kind, used: c.used })), hand, melds, offered, ctx);
+    const picked = cands.find((c) => c.kind === r.best.kind && c.used.join() === r.best.used.join());
+    return picked?.opt ?? null;
+  }
+}
+
+/** Both learned halves at once: model discards AND model claims. */
+export class FullPolicyBot extends ClaimBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = policyRank(v.hand.map(kindOf), meldsOf(v), ctxOf(v));
+    return v.hand.find((t) => kindOf(t) === r.best) ?? super.chooseDiscard(v);
+  }
+}
+
+/**
+ * The coach WITH the fold rule: on a hand that cannot reach the table minimum by any route it
+ * stops playing for value and throws the safest tile.
+ *
+ * Measured against plain CoachBot over 16,000 paired deals and it loses 0.039 +/- 0.018 chips a
+ * game, so the coach does not use it. Kept as an arm so the result can be reproduced, and because
+ * the rule is probably right in spirit and wrong in its trigger: it asks whether the hand is armed
+ * NOW, which writes off hands that could still draw the flower or animal that arms them.
+ */
+export class FoldCoachBot extends CoachBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { fold: true });
+    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
