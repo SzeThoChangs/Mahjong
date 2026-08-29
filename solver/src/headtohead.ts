@@ -27,6 +27,12 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
 };
 const armName = process.argv[3] ?? 'policy';
+/**
+ * Wall seed base. Fixed at 11 for every run so far, which means every comparison ever made here
+ * has been on ONE set of 4,000 deals. Changing it is how you tell a structural effect from an
+ * artefact of that particular shuffle - see the seat asymmetry in PLAN.md.
+ */
+const seedBase = Number(process.argv[4] ?? 11);
 const ARM = ARMS[armName];
 if (!ARM) { console.error(`unknown arm ${armName}; expected one of ${Object.keys(ARMS).join(', ')}`); process.exit(1); }
 const cfg: TableConfig = loadTableConfig();
@@ -38,7 +44,7 @@ const rules = loadTableRules();
 function arm(seat: number, makeSeatBot: () => Bot): number[] {
   const out: number[] = [];
   for (let g = 0; g < n; g++) {
-    const wall = new Wall(makeRng(11 * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
+    const wall = new Wall(makeRng(seedBase * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
     const bots: Bot[] = [0, 1, 2, 3].map((s) => (s === seat ? makeSeatBot() : new CoachBot()));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
@@ -50,7 +56,7 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.le
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
 const diffs: number[] = [];
-console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats\n`);
+console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats (wall seed base ${seedBase})\n`);
 console.log(`seat   model chips/game   coach chips/game   difference (paired)`);
 for (let seat = 0; seat < 4; seat++) {
   const model = arm(seat, ARM.make);
