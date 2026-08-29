@@ -4,6 +4,7 @@ import Trainer from '@/components/Trainer';
 import Replay from '@/components/Replay';
 import RealQuiz from '@/components/RealQuiz';
 import TableSetup from '@/components/TableSetup';
+import AskHand from '@/components/AskHand';
 
 export default function App() {
   const [tab, setTab] = useState('train');
@@ -14,12 +15,13 @@ export default function App() {
           <TabsList>
             <TabsTrigger value="train">Train</TabsTrigger>
             <TabsTrigger value="real">Real quiz</TabsTrigger>
+            <TabsTrigger value="ask">Your hand</TabsTrigger>
             <TabsTrigger value="film">Film room</TabsTrigger>
             <TabsTrigger value="table">Table setup</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
-      {tab === 'train' ? <Trainer /> : tab === 'real' ? <RealQuiz /> : tab === 'table' ? <TableSetup /> : <Replay />}
+      {tab === 'train' ? <Trainer /> : tab === 'real' ? <RealQuiz /> : tab === 'ask' ? <AskHand /> : tab === 'table' ? <TableSetup /> : <Replay />}
     </div>
   );
 }
