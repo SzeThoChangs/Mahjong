@@ -16,3 +16,6 @@ dist/
 
 # --- generated datasets (large) ---
 data/gen/
+
+# python bytecode from the parquet script
+__pycache__/

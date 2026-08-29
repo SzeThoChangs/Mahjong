@@ -26,6 +26,13 @@ DEC_SCHEMA = pa.schema([
     ('pub_discards', pa.list_(pa.list_(pa.int16()))), ('pub_melds', pa.list_(pa.list_(pa.list_(pa.int8())))), ('pub_bonus', pa.list_(pa.list_(pa.int8()))),
     ('legal', pa.list_(pa.string())), ('sel', pa.string()), ('bot', pa.string()), ('features_json', pa.string()),
 ])
+EVAL_SCHEMA = pa.schema([
+    ('g', pa.int32()), ('h', pa.int16()), ('d', pa.int16()), ('k', pa.string()), ('t', pa.int16()),
+    ('seat', pa.int8()), ('bot', pa.string()), ('sel', pa.string()), ('mode', pa.string()), ('policy', pa.string()),
+    ('action', pa.string()), ('ev', pa.float64()), ('sd', pa.float64()), ('win', pa.float64()),
+    ('dealin', pa.float64()), ('draw', pa.float64()), ('n', pa.int32()),
+    ('is_best', pa.bool_()), ('is_selected', pa.bool_()), ('regret_of_selected', pa.float64()),
+])
 def dec_row(r):
     return {
         'g': r['g'], 'h': r['h'], 'd': r['d'], 'seed': r['seed'], 'k': r['k'], 't': r['t'], 'p': r['p'], 'dl': r['dl'], 'w': r['w'],
@@ -67,14 +74,28 @@ def main():
     if truth:
         pq.write_table(pa.Table.from_pylist(truth), os.path.join(d, 'parquet', 'truth.parquet'), compression='zstd'); print(f'truth: {len(truth)} rows')
 
-    evals = [r for f in sorted(glob.glob(os.path.join(d, 'evals-*.jsonl.gz'))) for r in read_jsonl_gz(f)]
-    if evals:
-        rows = []
-        for e in evals:
-            for a in e['actions']:
-                rows.append({'g': e['g'], 'h': e['h'], 'd': e['d'], 'k': e['k'], 't': e.get('t', -1), 'seat': e['seat'], 'bot': e['bot'], 'sel': e['sel'], 'mode': e['mode'], 'policy': e['policy'],
-                             'action': a['a'], 'ev': a['ev'], 'sd': a['sd'], 'win': a['win'], 'dealin': a['dealin'], 'draw': a['draw'], 'n': a['n'], 'is_best': a['a'] == e['best'], 'is_selected': a['a'] == e['sel'], 'regret_of_selected': e['regret']})
-        pq.write_table(pa.Table.from_pylist(rows), os.path.join(d, 'parquet', 'evals.parquet'), compression='zstd'); print(f'evals: {len(rows)} action rows from {len(evals)} decisions')
+    # Streamed: a run's eval shards decompress to many gigabytes, so never hold them all.
+    eval_files = sorted(glob.glob(os.path.join(d, 'evals-*.jsonl.gz')))
+    if eval_files:
+        writer, nrows, ndec, buf = None, 0, 0, []
+        def flush():
+            nonlocal writer, buf
+            if not buf: return
+            tbl = pa.Table.from_pylist(buf, schema=EVAL_SCHEMA)
+            if writer is None:
+                writer = pq.ParquetWriter(os.path.join(d, 'parquet', 'evals.parquet'), EVAL_SCHEMA, compression='zstd')
+            writer.write_table(tbl); buf = []
+        for f in eval_files:
+            for e in read_jsonl_gz(f):
+                ndec += 1
+                for a in e['actions']:
+                    buf.append({'g': e['g'], 'h': e['h'], 'd': e['d'], 'k': e['k'], 't': e.get('t', -1), 'seat': e['seat'], 'bot': e['bot'], 'sel': e['sel'], 'mode': e['mode'], 'policy': e['policy'],
+                                'action': a['a'], 'ev': a['ev'], 'sd': a['sd'], 'win': a['win'], 'dealin': a['dealin'], 'draw': a['draw'], 'n': a['n'], 'is_best': a['a'] == e['best'], 'is_selected': a['a'] == e['sel'], 'regret_of_selected': e['regret']})
+                    nrows += 1
+                if len(buf) >= rpf: flush()
+        flush()
+        if writer is not None: writer.close()
+        print(f'evals: {nrows} action rows from {ndec} decisions')
 
 if __name__ == '__main__':
     main()
