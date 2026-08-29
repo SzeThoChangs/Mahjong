@@ -27,6 +27,7 @@
       "count": 4,
       "dealer_all_four_instant_win": true,
       "all_four_tai": 5,
+      "discardable": false,
       "claimable_when_discarded": false,
       "usable_in_exposed_melds": false
     },
@@ -58,7 +59,7 @@
   "unconfirmed": {
     "unplayable_tiles": "15 is the 67% default - confirm",
     "self_draw_bonus_fan": "some tables add +1 Fan for a self-draw - confirm whether yours does on top of the 1-Fan exemption",
-    "joker_assumptions": "a discarded joker is dead (not claimable); jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
+    "joker_assumptions": "CONFIRMED 2026-08-29: a wildcard cannot be thrown at all (discardable false), so claimable_when_discarded never arises; jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
     "peng_peng_hu": "\u78b0\u78b0\u80e1 (all pongs) set to 2 fan - inferred from your \u56db\u6697\u523b answer; confirm"
   }
 }

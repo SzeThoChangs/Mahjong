@@ -35,7 +35,11 @@ export const KIND = {
 
 /** the standard Singapore set; jokers (instances 148..151) are added on top when the table uses them */
 export const TOTAL_TILES = 148;
+/** the usual number of wildcards; tables that play more pass their own count to `Wall` */
 export const JOKER_COUNT = 4;
+/** the most wildcards any table may play. INSTANCE_KIND is built to this, so instances
+ *  148..(148+JOKER_MAX-1) are all jokers and a wall simply takes the first `count` of them. */
+export const JOKER_MAX = 16;
 export const TOTAL_TILES_WITH_JOKERS = TOTAL_TILES + JOKER_COUNT;
 
 export function suitOf(k: TileKind): Suit | null {
@@ -86,13 +90,15 @@ export const THIRTEEN_WONDER_KINDS: readonly TileKind[] = [
   0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33,
 ];
 
-/** Map each instance id to its kind. Standard tiles: 4 each; bonus: 1 each; then 4 jokers. */
+/** Map each instance id to its kind. Standard tiles: 4 each; bonus: 1 each; then JOKER_MAX jokers.
+ *  Jokers sit LAST and all share one kind, so a wall that wants fewer just stops earlier - instances
+ *  0..147 keep their meaning whatever the table's wildcard count. */
 export const INSTANCE_KIND: readonly TileKind[] = (() => {
   const out: TileKind[] = [];
   for (let k = 0; k < KIND.STANDARD_COUNT; k++) for (let c = 0; c < 4; c++) out.push(k);
   for (let k = KIND.FLOWER; k < KIND.JOKER; k++) out.push(k);
   if (out.length !== TOTAL_TILES) throw new Error(`expected ${TOTAL_TILES} tiles, got ${out.length}`);
-  for (let c = 0; c < JOKER_COUNT; c++) out.push(KIND.JOKER);
+  for (let c = 0; c < JOKER_MAX; c++) out.push(KIND.JOKER);
   return out;
 })();
 export const kindOf = (t: TileInstance): TileKind => INSTANCE_KIND[t]!;

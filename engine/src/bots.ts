@@ -7,7 +7,7 @@ import { shanten } from './shanten.js';
 export class RandomBot implements Bot {
   protected rng: () => number; private pongP: number; private chowP: number;
   constructor(rng: () => number, pongP = 0.6, chowP = 0.4) { this.rng = rng; this.pongP = pongP; this.chowP = chowP; }
-  chooseDiscard(v: PlayerView): TileInstance { return v.hand[Math.floor(this.rng() * v.hand.length)]!; }
+  chooseDiscard(v: PlayerView): TileInstance { return v.legalDiscards[Math.floor(this.rng() * v.legalDiscards.length)]!; }
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
     return options.find((o) => o.kind === 'win') ?? options[0] ?? null;
   }
@@ -26,9 +26,9 @@ export class RandomBot implements Bot {
  */
 export class IsolationBot extends RandomBot {
   override chooseDiscard(v: PlayerView): TileInstance {
-    let best: TileInstance = v.hand[0]!, bestScore = Infinity;
+    let best: TileInstance = v.legalDiscards[0]!, bestScore = Infinity;
     const kinds = v.hand.map(kindOf);
-    for (const t of v.hand) {
+    for (const t of v.legalDiscards) {
       const k = kindOf(t);
       let s = 0;
       if (isJoker(k)) s = 1000;                  // never throw a wild tile
@@ -54,9 +54,9 @@ export class IsolationBot extends RandomBot {
 export class ShantenBot extends IsolationBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const kinds = v.hand.map(kindOf); const m = v.melds.length;
-    let best: TileInstance = v.hand[0]!, bestSh = 99, bestIso = -Infinity;
+    let best: TileInstance = v.legalDiscards[0]!, bestSh = 99, bestIso = -Infinity;
     const seen = new Set<TileKind>();
-    for (const t of v.hand) {
+    for (const t of v.legalDiscards) {
       const k = kindOf(t); if (seen.has(k)) continue; seen.add(k);
       const rest = [...kinds]; rest.splice(rest.indexOf(k), 1);
       const sh = shanten(rest, m);

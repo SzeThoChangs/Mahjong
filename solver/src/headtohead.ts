@@ -13,19 +13,22 @@
  * error, because a difference smaller than its error bar is not a difference.
  */
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
-import { loadTableConfig } from 'sg-mahjong-engine/node';
+import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
 import { CoachBot, PolicyBot } from './bot.js';
 
 const n = Number(process.argv[2] ?? 1000);
 const cfg: TableConfig = loadTableConfig();
+// The wall must be the table's wall. This harness used to deal WITHOUT wildcards while the bots it
+// compares were tuned on data generated WITH them, so the verdict was measured on a different game.
+const rules = loadTableRules();
 
 /** Play the same n deals with `seatBot` in `seat` and coaches elsewhere; return that seat's chips. */
 function arm(seat: number, makeSeatBot: () => Bot): number[] {
   const out: number[] = [];
   for (let g = 0; g < n; g++) {
-    const wall = new Wall(makeRng(11 * 1000003 + g), cfg.unplayable_tiles);
+    const wall = new Wall(makeRng(11 * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
     const bots: Bot[] = [0, 1, 2, 3].map((s) => (s === seat ? makeSeatBot() : new CoachBot()));
-    const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4 });
+    const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
   }
   return out;

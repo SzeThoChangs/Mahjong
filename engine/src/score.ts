@@ -97,7 +97,8 @@ export function scoreHand(ctx: WinContext, rules: RulesConfig = DEFAULT_RULES): 
     if (!best || r.fan > best.fan) best = r;
   }
   if (!best) return { fan: 0, items: [], combination: 'none', valid: false, reason: 'no joker assignment completes the hand' };
-  if (jokers >= 4 && best.fan < rules.jokers.all_four_tai) { best.items.push({ id: 'tian_hu', fan: rules.jokers.all_four_tai - best.fan }); best.fan = rules.jokers.all_four_tai; best.combination = 'tian_hu'; }
+  // same rule as the limit-hand check: no wildcard 天和 on a table playing more than four
+  if (rules.jokers.count <= 4 && jokers >= 4 && best.fan < rules.jokers.all_four_tai) { best.items.push({ id: 'tian_hu', fan: rules.jokers.all_four_tai - best.fan }); best.fan = rules.jokers.all_four_tai; best.combination = 'tian_hu'; }
   best.items.push({ id: 'jokers_used', fan: 0 });
   return best;
 }
@@ -169,7 +170,10 @@ function scoreDecomposition(ctx: WinContext, concealedSets: ConcealedSet[], eye:
   if (ctx.firstDiscard && !ctx.isDealer) return limit('di_hu');
   if (ctx.robbedFlower) return limit('qi_qiang_yi');
   if (ctx.kongOnKong) return limit('gang_shang_gang');
-  if ((ctx.jokersUsed ?? 0) >= 4) return limit('tian_hu');          // four wildcards in a completed hand
+  // Four wildcards is 天和 only on a table that plays FOUR - there, holding four means holding
+  // every one in the game. Past four it is an ordinary occurrence (10.7% of games at 12 wildcards),
+  // so the limit hand is withdrawn rather than paying max on nearly one win in five.
+  if (rules.jokers.count <= 4 && (ctx.jokersUsed ?? 0) >= 4) return limit('tian_hu');
   if (windPongs.length === 4) return limit('da_si_xi');
   if (dragonPongs.length === 3) return limit('da_san_yuan');
   if (allHonours) return limit('zi_yi_se');

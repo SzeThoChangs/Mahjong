@@ -1,4 +1,4 @@
-import { TOTAL_TILES, TOTAL_TILES_WITH_JOKERS, type TileInstance } from './tiles.js';
+import { TOTAL_TILES, JOKER_MAX, type TileInstance } from './tiles.js';
 
 /** Deterministic PRNG (mulberry32) so simulations are reproducible. */
 export function makeRng(seed: number): () => number {
@@ -26,8 +26,11 @@ export class Wall {
   readonly unplayable: number;
 
   constructor(rng: () => number, unplayable = 15, jokers = 0) {
+    // `jokers` is a COUNT, not a flag. It used to be read as "any non-zero means the standard four",
+    // so a table asking for 12 silently got 4.
+    const n = TOTAL_TILES + Math.max(0, Math.min(JOKER_MAX, Math.floor(jokers)));
     const t: TileInstance[] = [];
-    for (let i = 0; i < (jokers > 0 ? TOTAL_TILES_WITH_JOKERS : TOTAL_TILES); i++) t.push(i);
+    for (let i = 0; i < n; i++) t.push(i);
     for (let i = t.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [t[i], t[j]] = [t[j]!, t[i]!];

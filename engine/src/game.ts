@@ -62,6 +62,9 @@ export interface PlayerView {
   /** every discard this hand, in order, with who claimed it (public) */
   discardLog: DiscardEvent[];
   config: TableConfig;
+  /** The tiles this seat may actually THROW - `hand` minus anything the table forbids discarding
+   *  (a wildcard, at most tables). A bot that picks freely must pick from here, not from `hand`. */
+  legalDiscards: TileInstance[];
 }
 
 /** Simulator ground truth. For replay/debugging/evaluation only. */

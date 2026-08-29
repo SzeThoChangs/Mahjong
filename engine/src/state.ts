@@ -157,7 +157,9 @@ export class GameState {
   /** the dealer holding all four jokers wins on the spot (config-gated) */
   private fourJokerWin(p: PlayerState): ScoreResult | null {
     const jr = this.rules.jokers;
-    if (jr.count < 4 || !jr.dealer_all_four_instant_win || p.seat !== this.dealer) return null;
+    // exactly four: holding four is only "all of them" on a four-wildcard table. Past four this
+    // instant win would fire constantly, so it is off.
+    if (jr.count !== 4 || !jr.dealer_all_four_instant_win || p.seat !== this.dealer) return null;
     if (p.hand.filter((t) => isJoker(kindOf(t))).length < 4) return null;
     return { fan: jr.all_four_tai, items: [{ id: 'tian_hu', fan: jr.all_four_tai }], combination: 'tian_hu', valid: true };   // 天和: four wildcards for the host
   }
@@ -188,6 +190,7 @@ export class GameState {
       seat, hand: this.players[seat]!.hand, melds: this.players[seat]!.melds, bonus: this.players[seat]!.bonus,
       players: this.players.map((q) => ({ melds: q.melds, bonus: q.bonus, discards: q.discards, chips: q.chips })),
       prevailingWind: this.prevailingWind, dealer: this.dealer, wallRemaining: this.wall.remaining, playerTurns: this.playerTurns, lastDiscard, discardLog: this.discardLog, config: this.cfg,
+      legalDiscards: this.throwable(this.players[seat]!),
     };
   }
   truth = (): GroundTruth => ({ hands: this.players.map((p) => [...p.hand]), wall: this.wall.snapshot(), dealer: this.dealer, prevailingWind: this.prevailingWind });
@@ -313,7 +316,13 @@ export class GameState {
       const legal: LegalAction[] = [...this.selfOptions.map((o): LegalAction => o.kind === 'win' ? { a: 'win' } : o.kind === 'kong4' ? { a: 'kong4', kind: kindOf(o.tiles[0]!) } : { a: 'kong1', kind: kindOf(o.tile) }), { a: 'proceed' }];
       return { kind: 'self', seat: this.turn, legal };
     }
-    if (this.phase === 'discard') return { kind: 'discard', seat: this.turn, legal: this.players[this.turn]!.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })) };
+    if (this.phase === 'discard') {
+      // A wildcard is not a legal throw unless the table says so. Enforced HERE, in the legal list,
+      // rather than left to the bots: a bot that picks at random would otherwise throw one, and
+      // 0.76% of the recorded dataset is exactly that.
+      const src = this.throwable(this.players[this.turn]!);
+      return { kind: 'discard', seat: this.turn, legal: src.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })) };
+    }
     if (this.phase === 'claim' && this.claimQueue.length) {
       const q = this.claimQueue[0]!; const dk = kindOf(this.claimTile());
       return { kind: 'claim', seat: q.seat, legal: [...q.options.map((o) => this.encClaim(o, dk)), { a: 'pass' }] };
@@ -424,12 +433,24 @@ export class GameState {
     if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex, feeEach }; this.phase = 'claim'; }
     else this.phase = 'replacement';
   }
+  /** The tiles this seat may legally throw. A wildcard is not one of them unless the table says so;
+   *  a hand of nothing but wildcards still has to be able to move. */
+  private throwable(p: PlayerState): TileInstance[] {
+    if (this.rules.jokers.discardable) return p.hand;
+    const std = p.hand.filter((t) => !isJoker(kindOf(t)));
+    return std.length ? std : p.hand;
+  }
   private applyDiscard(action: LegalAction) {
     if (action.a !== 'discard') throw new Error('discard expected');
     const p = this.players[this.turn]!, v = this.view(this.turn, null);
     const idx = p.hand.indexOf(action.tile);
     if (idx < 0) { this.counts.illegal++; throw new Error(`seat ${this.turn} discarded a tile it does not hold`); }
-    this.record('discard', this.turn, v, p.hand.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
+    // Bots pick a tile straight out of the hand rather than off a legal list, so the no-throw rule
+    // has to be enforced HERE too - filtering `legalActions()` alone left every bot free to throw a
+    // wildcard, which is how 0.76% of the old dataset came to contain moves the table forbids.
+    const ok = this.throwable(p);
+    if (!ok.includes(action.tile)) { this.counts.illegal++; throw new Error(`seat ${this.turn} may not discard a wildcard at this table`); }
+    this.record('discard', this.turn, v, ok.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
     this.consecutiveKongs = 0;                     // a discard breaks the kong chain
     p.hand.splice(idx, 1); p.discards.push(action.tile);
     if (this.readyTurn[this.turn] === -1 && shanten(p.hand.map(kindOf), p.melds.length) <= 0) this.readyTurn[this.turn] = this.playerTurns;

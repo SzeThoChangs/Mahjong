@@ -120,7 +120,7 @@ export class HeuristicBot implements Bot {
 /** Uniform over legal actions, except it always takes a win (configurable). Exists to create unusual states. */
 export class RandomBot implements Bot {
   constructor(private rng: () => number, private alwaysWin = true) {}
-  chooseDiscard(v: PlayerView): TileInstance { return v.hand[Math.floor(this.rng() * v.hand.length)]!; }
+  chooseDiscard(v: PlayerView): TileInstance { return v.legalDiscards[Math.floor(this.rng() * v.legalDiscards.length)]!; }
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
     if (this.alwaysWin) { const w = options.find((o) => o.kind === 'win'); if (w) return w; }
     const all: (SelfAction | null)[] = [...options, null];
@@ -166,10 +166,9 @@ export class DefensiveBot implements Bot {
     // fold when the table looks dangerous and our own hand is not close
     const folding = threat >= this.timid && myShanten >= 2;
     if (!folding) return this.inner.chooseDiscard(v);
-    let best = v.hand[0]!, bestS = -Infinity;
-    for (const t of v.hand) {
+    let best = v.legalDiscards[0]!, bestS = -Infinity;
+    for (const t of v.legalDiscards) {          // the view already excludes anything unthrowable
       const k = kindOf(t);
-      if (isJoker(k)) continue;                 // never throw a wildcard
       const s = this.safety(k, v) + this.rng() * 0.3;
       if (s > bestS) { bestS = s; best = t; }
     }

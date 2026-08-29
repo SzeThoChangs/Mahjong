@@ -2,6 +2,7 @@
 import { Wall, makeRng } from './wall.js';
 import { playGame, type Bot } from './game.js';
 import type { TableConfig } from './payout.js';
+import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 
 export interface SimStats {
   games: number; draws: number;
@@ -11,16 +12,17 @@ export interface SimStats {
   playerTurnsHist: Record<string, number>;
 }
 
-export function runSim(n: number, makeBots: (rng: () => number) => Bot[], cfg: TableConfig, seed = 1): SimStats {
+export function runSim(n: number, makeBots: (rng: () => number) => Bot[], cfg: TableConfig, seed = 1, rules: RulesConfig = DEFAULT_RULES): SimStats {
   const rng = makeRng(seed);
   const st: SimStats = { games: 0, draws: 0, winsBySeat: [0, 0, 0, 0], chipsBySeat: [0, 0, 0, 0], selfDraws: 0, avgPlayerTurns: 0, avgFan: 0, combos: {}, playerTurnsHist: {} };
   let turnsSum = 0, fanSum = 0, wins = 0;
   for (let g = 0; g < n; g++) {
-    const wall = new Wall(makeRng(seed * 1000003 + g), cfg.unplayable_tiles);
+    const wall = new Wall(makeRng(seed * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
     const bots = makeBots(rng);
-    const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4 });
+    const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     st.games++;
-    if (r.tilesAccounted + wall.totalLeft !== 148) throw new Error(`tile leak: ${r.tilesAccounted} + ${wall.totalLeft}`);
+    // `wall.size` not a literal 148: the set is 152 when the table plays with wildcards
+    if (r.tilesAccounted + wall.totalLeft !== wall.size) throw new Error(`tile leak: ${r.tilesAccounted} + ${wall.totalLeft} != ${wall.size}`);
     const sum = r.chipsDelta.reduce((a, b) => a + b, 0);
     if (sum !== 0) throw new Error(`chips do not sum to zero: ${r.chipsDelta}`);
     for (let s = 0; s < 4; s++) st.chipsBySeat[s]! += r.chipsDelta[s]!;

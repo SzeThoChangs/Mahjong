@@ -93,3 +93,33 @@ describe('jokers: play', () => {
     expect(g1.result?.score?.combination).not.toBe('tian_hu');
   });
 });
+
+describe('wildcard 天和 only on a four-wildcard table', () => {
+  /** the same completed hand holding all four wildcards, scored at different table counts */
+  const fourJokerWin = (count: number) =>
+    scoreHand({ ...base, concealed: K('1w 2w 3w 4t 5t 6t 7s 8s 9s 5w J J J J'), winningTile: 46 },
+      makeRules({ jokers: { count } }));
+
+  it('awards it at four - there, holding four IS holding every one in the game', () => {
+    const r = fourJokerWin(4);
+    expect(r.valid).toBe(true);
+    expect(r.fan).toBe(5);
+    expect(r.combination).toBe('tian_hu');
+  });
+
+  it('withdraws it past four, where holding four is ordinary', () => {
+    for (const n of [8, 12, 16]) {
+      const r = fourJokerWin(n);
+      expect(r.valid).toBe(true);
+      expect(r.combination).not.toBe('tian_hu');
+      expect(r.fan).toBeLessThan(5);
+    }
+  });
+
+  it('leaves the REAL 天和 alone - dealer winning on the opening hand is still a limit hand', () => {
+    const r = scoreHand({ ...base, concealed: K('1w 2w 3w 4t 5t 6t 7s 8s 9s 2s 3s 4s 5w 5w'), winningTile: 4,
+      isDealer: true, firstDraw: true }, makeRules({ jokers: { count: 12 } }));
+    expect(r.combination).toBe('tian_hu');
+    expect(r.fan).toBe(5);
+  });
+});

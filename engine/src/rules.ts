@@ -1,3 +1,4 @@
+import { JOKER_MAX } from './tiles.js';
 /**
  * Configurable rules layer. Legality (decompose.ts / game.ts) and scoring
  * (score.ts / payout.ts) read from this; nothing is hardcoded in the modules.
@@ -85,7 +86,11 @@ export interface JokerRules {
   dealer_all_four_instant_win: boolean;
   /** a completed hand holding all four jokers is worth at least this many tai */
   all_four_tai: number;
-  /** may a discarded joker be claimed (pong/chow/win)? */
+  /** may a joker be THROWN at all? Most Singapore tables say no - it is too valuable to give up,
+   *  so it simply is not a legal discard. When false the engine removes jokers from the legal
+   *  discard list rather than trusting a bot not to pick one. */
+  discardable: boolean;
+  /** may a discarded joker be claimed (pong/chow/win)? Moot when `discardable` is false. */
   claimable_when_discarded: boolean;
   /** may jokers be used inside exposed pongs / chows / kongs? */
   usable_in_exposed_melds: boolean;
@@ -140,7 +145,7 @@ export const DEFAULT_RULES: RulesConfig = {
   bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, fresh_tile_threshold: 4 },
   dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
   special_hands: { seven_pairs: false, all_green: false, men_qing: false, men_qing_tai: 1, eight_flower_instant_win: false, all_animals_instant_win: false },
-  jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, claimable_when_discarded: false, usable_in_exposed_melds: false },
+  jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, discardable: false, claimable_when_discarded: false, usable_in_exposed_melds: false },
   money: null,
 };
 
@@ -172,7 +177,7 @@ export function validateRules(r: RulesConfig): void {
   }
   if (r.minimum_tai < 0 || r.maximum_tai < r.minimum_tai) throw new Error(`minimum_tai ${r.minimum_tai} / maximum_tai ${r.maximum_tai} are inconsistent`);
   if (r.self_draw_minimum_tai > r.minimum_tai) throw new Error(`self_draw_minimum_tai ${r.self_draw_minimum_tai} cannot exceed minimum_tai ${r.minimum_tai}`);
-  if (r.jokers.count < 0 || r.jokers.count > 8) throw new Error(`jokers.count ${r.jokers.count} out of range`);
+  if (r.jokers.count < 0 || r.jokers.count > JOKER_MAX) throw new Error(`jokers.count ${r.jokers.count} out of range (0..${JOKER_MAX})`);
 }
 
 /** Back-compat view used by payout/game/web: the handful of knobs they needed before the full rules layer. */
