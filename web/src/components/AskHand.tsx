@@ -10,7 +10,7 @@
  * anything to ask, and the header says how far off you are rather than leaving you guessing why
  * nothing has happened.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,30 @@ const SUITS: { label: string; base: number }[] = [
 const HONOURS = [27, 28, 29, 30, 31, 32, 33];
 const BONUS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
 const HAND_TILES = 14;
+
+/**
+ * Your seat, the round and how busy the table looks stay the same all evening, so re-picking them
+ * every time the tab opens is pure friction. The TILES are not saved: they change every turn, and
+ * a stale hand from yesterday sitting there would be worse than an empty one.
+ */
+const KEY = 'mahjong.ask.table';
+interface Saved { seat: number; round: number; turn: number; oppMelds: [number, number, number] }
+function loadSaved(): Saved {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const v = JSON.parse(raw) as Partial<Saved>;
+      return {
+        seat: Number(v.seat) || 0, round: Number(v.round) || 0,
+        turn: Math.max(1, Math.min(70, Number(v.turn) || 16)),
+        oppMelds: Array.isArray(v.oppMelds) && v.oppMelds.length === 3
+          ? v.oppMelds.map((n) => Math.max(0, Math.min(4, Number(n) || 0))) as [number, number, number]
+          : [0, 0, 0],
+      };
+    }
+  } catch { /* a broken or blocked store just means defaults */ }
+  return { seat: 0, round: 0, turn: 16, oppMelds: [0, 0, 0] };
+}
 /** four copies of every playing tile; one of each flower, season and animal */
 const copiesAllowed = (k: TileKind) => (k >= 34 ? 1 : 4);
 
@@ -36,9 +60,10 @@ export default function AskHand() {
   const [hand, setHand] = useState<TileKind[]>([]);
   const [melds, setMelds] = useState<Meld[]>([]);
   const [bonus, setBonus] = useState<TileKind[]>([]);
-  const [seat, setSeat] = useState(0);
-  const [round, setRound] = useState(0);
-  const [turn, setTurn] = useState(16);
+  const saved = useMemo(loadSaved, []);
+  const [seat, setSeat] = useState(saved.seat);
+  const [round, setRound] = useState(saved.round);
+  const [turn, setTurn] = useState(saved.turn);
   const [pending, setPending] = useState<'hand' | 'pong' | 'chow' | 'seen' | 'thrown'>('hand');
   /** the tile someone just discarded, when the question is call-or-pass rather than what-to-throw */
   const [offered, setOffered] = useState<TileKind | null>(null);
@@ -49,7 +74,11 @@ export default function AskHand() {
    *  quieter than it is - it is the single biggest thing separating real advice from a guess. */
   const [seen, setSeen] = useState<TileKind[]>([]);
   /** exposed sets in front of each of the other three players - what "the table looks dangerous" is made of */
-  const [oppMelds, setOppMelds] = useState<[number, number, number]>([0, 0, 0]);
+  const [oppMelds, setOppMelds] = useState<[number, number, number]>(saved.oppMelds);
+
+  useEffect(() => {
+    try { localStorage.setItem(KEY, JSON.stringify({ seat, round, turn, oppMelds })); } catch { /* private mode, blocked storage - not worth telling anyone about */ }
+  }, [seat, round, turn, oppMelds]);
 
   const used = useMemo(() => {
     const c = new Map<TileKind, number>();
@@ -170,6 +199,7 @@ export default function AskHand() {
         <span className="flex items-center gap-1">Turn
           <input type="number" min={1} max={70} value={turn} onChange={(e) => setTurn(Math.max(1, Math.min(70, Number(e.target.value))))}
             className="w-16 rounded border bg-background px-2 py-0.5" />
+          <Button size="sm" variant="ghost" onClick={() => setTurn((t) => Math.min(70, t + 4))}>+1 巡</Button>
           <span className="text-muted-foreground">(第{Math.max(1, Math.ceil(turn / 4))}巡 — early is under 16, late is over 36)</span>
         </span>
       </div></CardContent></Card>
