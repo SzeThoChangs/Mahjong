@@ -47,7 +47,9 @@ const PER_ROW = 6;
 const TILE = 36;
 
 type Side = 'bottom' | 'right' | 'top' | 'left';
-const ROT: Record<Side, 0 | 90 | 180 | 270> = { bottom: 0, right: 270, top: 0, left: 90 };
+/** Every seat's tiles face THAT seat, as they would on a real table: the player opposite reads
+ *  theirs upside down from where you sit, not the right way up. */
+const ROT: Record<Side, 0 | 90 | 180 | 270> = { bottom: 0, right: 270, top: 180, left: 90 };
 
 function Caption({ label, count }: { label: string; count: number }) {
   return <span className={LABEL}>{label} <span className="tabular-nums opacity-60">{count}</span></span>;
