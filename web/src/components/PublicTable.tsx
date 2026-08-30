@@ -167,8 +167,11 @@ export function PublicTable({ seats, you, centre }: {
             <SeatName seat={left} className="[writing-mode:vertical-rl] rotate-180" /><Shown seat={left} side="left" />
           </div>
 
-          {/* the middle: the discard pile, each seat's throws in front of that seat */}
-          <div className="col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border border-dashed bg-background/60 px-2 py-2"
+          {/* The middle: the discard pile, each seat's throws in front of that seat.
+              The dashed box is the one line that separates thrown tiles from shown ones - two
+              different kinds of information sitting a few millimetres apart - so it is drawn to be
+              seen rather than hinted at. */}
+          <div className="col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/45 bg-background/70 px-2 py-2"
             style={{ gridTemplateColumns: 'auto minmax(6rem,auto) auto' }}>
             <div className="col-start-2 row-start-1"><Pool seat={top} side="top" /></div>
             <div className="col-start-1 row-start-2"><Pool seat={left} side="left" /></div>
