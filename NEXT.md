@@ -2,23 +2,11 @@
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
-## The one thing still running
+## Nothing is running
 
-A sweep testing how cautious the bot should be. It has one setting, `DANGER_WEIGHT`, currently 40.
-
-We changed the danger data underneath it today, which halved the numbers that setting multiplies.
-So 40 may no longer be the right value. The sweep tries 10 / 20 / 40 / 70 / 110 / 160 / 240 and
-reports which wins money.
-
-Re-run it with:
-
-```
-npx --prefix solver tsx solver/src/tools/dangersweep.ts 1500 23
-```
-
-If a weight above 40 wins by more than twice its error bar, change `DANGER_WEIGHT` in
-`solver/src/rank.ts` and re-run the sweep once more to confirm. If nothing beats 40, leave it and
-delete `solver/src/tools/reads.legacy.ts` — it only exists for a comparison that is now finished.
+The last job finished. `DANGER_WEIGHT` stays at 40 — the sweep tried 10 through 240 and nothing
+beat it. The safe range around it got wider after the danger data was corrected, but the answer
+did not move.
 
 ## What we decided today
 

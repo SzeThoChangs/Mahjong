@@ -14,22 +14,8 @@
  */
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, ctxOf, meldsOf } from '../bot.js';
-import { rankDiscards } from '../rank.js';
-import { LEGACY_READS } from './reads.legacy.js';
-import { kindOf, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot } from '../bot.js';
 
-/**
- * The coach reading danger off the OLD table - the one generated before the engine dealt
- * wildcards, which understated how ready opponents are by 2-4x in the common cases.
- * A NEGATIVE result means the regenerated table is the better one.
- */
-class LegacyReadsCoachBot extends CoachBot {
-  override chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), { ...ctxOf(v), reads: LEGACY_READS as never });
-    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
-  }
-}
 
 const n = Number(process.argv[2] ?? 1000);
 /** which learned half to put in the seat: the discard model, the claim model, or both. */
@@ -38,7 +24,6 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   claim: { label: 'claim model', make: () => new ClaimBot() },
   full: { label: 'both models', make: () => new FullPolicyBot() },
   fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
-  oldreads: { label: 'coach on the OLD (pre-wildcard) danger table', make: () => new LegacyReadsCoachBot() },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness
   self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
 };
