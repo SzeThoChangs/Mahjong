@@ -1,0 +1,46 @@
+# Every check we would otherwise have to remember to run by hand.
+# Mirrors the root package.json scripts, so `pnpm typecheck && pnpm test && pnpm build`
+# locally is the same thing CI runs.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # a new push to the same branch cancels the run still in flight
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # version comes from the root package.json "packageManager" field
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # fails if pnpm-lock.yaml disagrees with any package.json, rather than
+      # quietly resolving something different from what we ran locally
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
