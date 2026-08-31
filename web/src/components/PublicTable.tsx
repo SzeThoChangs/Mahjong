@@ -113,7 +113,6 @@ function SeatName({ seat, className }: { seat: SeatPublic; className?: string })
       {seat.name && <span className="text-muted-foreground">{seat.name}</span>}
       {seat.dealer && <span className="rounded border px-1 text-[10px] text-muted-foreground">dealer</span>}
       {seat.acting && <span className="rounded bg-primary px-1.5 text-[10px] text-primary-foreground">acting</span>}
-      {seat.discards.length > 0 && <span className="text-[10px] tabular-nums text-muted-foreground">{seat.discards.length} out</span>}
     </div>
   );
 }
