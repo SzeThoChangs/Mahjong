@@ -153,20 +153,36 @@ quarters of it ungradeable, which the honest verdicts then made obvious. `quizpa
 only positions where the best beats the runner-up by more than `--clear` (default 2) standard
 errors, measured both ways the number can be read (paired gap, and the difference of means the UI
 actually grades on — `separationT` in `se.ts` takes the weaker). Decisive positions on disk: 15.0k
-discards, 21.6k claims, 4.9k self-actions — several times what a pack needs, so the kind mix is held
-at the run's own proportions and the trainer stays discard-heavy. Result: **100% of questions have a
-separable best answer at 1 SE and 99% at 2 SE, against 24% before**, and the share of alternatives
-sitting inside 1 SE of the best fell from 40% to 0.6%.
+discards, 21.6k claims, 4.9k self-actions — several times what a pack needs, so the mix is held at
+the run's own proportions. Result: **100% of questions have a separable best answer at 1 SE and 99%
+at 2 SE, against 24% before**, and the share of alternatives sitting inside 1 SE of the best fell
+from 40% to 0.6%.
 
-Two things this costs, both worth knowing:
+What this costs: **the questions are easier.** Mean best-vs-runner-up gap on a discard went from
+$0.60 to $3.62. The trainer teaches positions where one tile is clearly right, which is a narrower
+lesson than intended — but it is a real one, where the previous pack was mostly quizzing on coin
+flips.
 
-- **The pack skews late.** Decisive positions are 46% late-hand against 26% in the run, and 16%
-  early against 36%. Hands resolve once they are committed; the early discards a trainer would add
-  most value on are exactly the ones the evaluator cannot separate. `quizpack.ts` prints the phase
-  mix on every build so this stays visible.
-- **The questions are easier.** Mean best-vs-runner-up gap on a discard went from $0.60 to $3.62.
-  The trainer now teaches positions where one tile is clearly right, which is a narrower lesson than
-  intended — but it is a real one, where the previous pack was mostly quizzing on coin flips.
+### The pack no longer skews late (fixed 2026-08-31)
+
+Holding the mix by decision KIND alone left a second skew unheld. Decisiveness is very unevenly
+spread through a hand — 7.0% of late discards clear 2 SE against 1.4% of early ones, because a late
+hand is committed and an early one is still every hand at once — so selecting on decisiveness within
+kind delivered a pack that was **43% late and 17% early against a run that is 25% late and 37%
+early**. The trainer was quietly declining to ask the opening questions, which are the ones a player
+has the most turns to get wrong.
+
+The fix was to make a stratum kind × phase rather than kind, which the existing proportional
+allocation then holds for free. It cost nothing in gradeability: at 5,000 questions every one of the
+nine strata still fills from decisive positions alone, no backfill from close calls. The rebuilt
+pack reports `pack [early 37% mid 38% late 25%] vs run [early 37% mid 38% late 25%]`, and the median
+question moved from turn 32 to turn 23. The kind mix is unchanged (4,077 discards of 4,999).
+
+One thing to watch, which `quizpack.ts` now prints as `drawn thin`: early discards are the binding
+stratum — 1,554 wanted out of 2,066 decisive, 75% of the pool. That slice is no longer a sample of
+early discards so much as most of the separable early discards there are, and a larger pack, or a
+second pack off the same run, will repeat it before it repeats the others. More early questions need
+more hands or deeper play-outs, not a different selection rule.
 
 ### A lower-variance target does not work either (measured 2026-08-26)
 

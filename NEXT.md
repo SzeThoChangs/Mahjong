@@ -1,4 +1,4 @@
-# Where we left off — 2026-08-30
+# Where we left off — 2026-08-31
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
@@ -8,7 +8,7 @@ The last job finished. `DANGER_WEIGHT` stays at 40 — the sweep tried 10 throug
 beat it. The safe range around it got wider after the danger data was corrected, but the answer
 did not move.
 
-## What we decided today
+## What we decided on 2026-08-30
 
 **The bot is the hand-written coach, and it stays that way.** We tried six ways to improve it and
 all six lost or drew:
@@ -41,16 +41,32 @@ the repo depends on them any more.
   just threw and ask whether to take it.
 - Claim questions in the quiz and the film room now explain *why*, not just what the money was.
 
+## Done since (2026-08-31)
+
+The list from yesterday is finished. The sweep landed on 40. **Your hand** remembers your seat and
+round. The table view now shows the discard pile, turns the far seat's tiles the right way up for
+that player, and puts seat/round/how-deep-you-are next to the tiles instead of in a card you scroll
+away from. CI runs the checks on every push.
+
+**The quiz no longer skews late.** It was 43% late-hand and 17% early against a run that is 25% and
+37%. The cause was that the pack held its mix by decision *kind* only, and a late hand is far easier
+for the simulator to grade than an early one (7.0% of late discards separate cleanly, against 1.4%
+of early ones) — so decisiveness quietly did the choosing. Holding the mix by kind *and* phase fixes
+it with no loss of gradeability: every slice still fills from cleanly-separated positions, and the
+median question moved from turn 32 to turn 23. Pack rebuilt.
+
 ## What to do next
 
-1. **Finish the sweep above.** Ten minutes of attention.
-2. **Then stop working on the bot.** Six measured losses say it's as good as this approach gets.
-3. **Build the app instead.** Two obvious gaps: **Your hand** forgets your seat and round every
-   time you open it, and the quiz questions skew late in the hand because those are the only ones
-   the simulator can grade confidently.
+**Build the app.** No open bugs from the list above. Candidates, in no particular order:
 
-If the bot is ever revisited: shorter play-outs with an estimated ending is the only idea left that
-saves time *and* noise together. It was never urgent once the 2.66 turned out to be 0.54.
+- Early discards are the one thin slice — the pack uses 75% of all the separable early positions the
+  run contains. More of them needs more hands or deeper play-outs, not a smarter picker. Worth a
+  night of compute if the early questions start feeling repetitive.
+- The open question below still has no answer, and the engine still does the nonsense thing.
+
+**Don't work on the bot.** Six measured losses say it's as good as this approach gets. If it is ever
+revisited: shorter play-outs with an estimated ending is the only idea left that saves time *and*
+noise together. It was never urgent once the 2.66 turned out to be 0.54.
 
 ## Two habits worth keeping
 
