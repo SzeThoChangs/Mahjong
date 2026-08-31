@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { PublicTable } from '@/components/PublicTable';
+import { HandContext } from '@/components/HandContext';
 import { makeScenario, CONFIG, type Phase, type Scenario } from '@/lib/scenario';
 import { cn } from '@/lib/utils';
 
@@ -112,23 +113,6 @@ export default function Trainer() {
           </Tabs>
         </header>
 
-        {/* context */}
-        <Card>
-          <CardContent className="pt-5 !flex !flex-row flex-wrap items-center justify-start gap-x-6 gap-y-3 text-sm">
-            {(() => { const role = (scenario.seat - scenario.dealer + 4) % 4; const dbl = role === scenario.prevailingWind; return (<>
-            <div>Seat <b>{scenario.seat + 1}</b> · you are <b>{WIND_NAME[role]}</b></div>
-            <div><span className="text-muted-foreground">Host: seat</span> <b>{scenario.dealer + 1}</b>{scenario.dealer === scenario.seat ? ' (you)' : ''}</div>
-            <div><span className="text-muted-foreground">Round</span> <b>{WIND_NAME[scenario.prevailingWind]}</b></div>
-            <div className="flex items-center gap-1"><span className="text-muted-foreground">tai winds</span>
-              <Tile kind={27 + scenario.prevailingWind} size="sm" /><Tile kind={27 + role} size="sm" className={dbl ? '-ml-4' : ''} />
-              {dbl && <span className="text-xs text-muted-foreground">double!</span>}
-            </div>
-            </>); })()}
-            <div><b>第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡</b> <span className="text-muted-foreground">({scenario.phase} game)</span></div>
-            <div><span className="text-muted-foreground">Fan in hand</span> <b>{fan}</b>{fan < CONFIG.minimum_fan && <span className="text-muted-foreground"> — need {CONFIG.minimum_fan} to win on a discard</span>}</div>
-          </CardContent>
-        </Card>
-
         {/* the table: what is already face-up, and therefore dead. The coach counts it. */}
         <PublicTable
           you={scenario.seat}
@@ -148,6 +132,11 @@ export default function Trainer() {
         {/* hand */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{pick === null ? 'Which tile do you discard? Tap one.' : 'Your hand'}</CardTitle></CardHeader>
+          {/* context: the facts that decide this discard, right above the tiles */}
+          <CardContent className="border-b pb-(--card-spacing)">
+            <HandContext seat={scenario.seat} dealer={scenario.dealer} prevailingWind={scenario.prevailingWind}
+              playerTurns={scenario.playerTurns} phase={scenario.phase} fan={fan} minimumFan={CONFIG.minimum_fan} />
+          </CardContent>
           <CardContent className="@container">
             {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
               <div className="flex flex-nowrap items-end gap-x-4 pb-2 mb-2 border-b">

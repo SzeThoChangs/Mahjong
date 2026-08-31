@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tile } from '@/components/Tile';
 import { PublicTable } from '@/components/PublicTable';
+import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
@@ -211,26 +212,11 @@ export default function RealQuiz() {
       </div>
 
       <Card>
-        <CardContent className="pt-4 !flex !flex-row flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          {q.dl !== undefined ? (() => { const role = (q.seat - q.dl! + 4) % 4; const doubleWind = role === q.w; return (
-            <>
-              <span>Seat <b>{q.seat + 1}</b> · you are <b>{WIND[role]}</b></span>
-              <span className="text-muted-foreground">Host: seat <b className="text-foreground">{q.dl! + 1}</b>{q.dl === q.seat ? ' (you)' : ''}</span>
-              <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}</b></span>
-              <span className="flex items-center gap-1 text-muted-foreground">tai winds:
-                <Tile kind={27 + q.w} size="sm" /><Tile kind={27 + role} size="sm" className={cn(doubleWind && '-ml-4')} />
-                {doubleWind && <Badge variant="outline">double!</Badge>}
-              </span>
-            </>
-          ); })() : (
-            <>
-              <span>You are <b>{WIND[q.seat]}</b></span>
-              <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[q.w]}</b></span>
-            </>
-          )}
-          <span className="text-muted-foreground"><b className="text-foreground">第{Math.max(1, Math.ceil(q.t / 4))}巡</b></span>
-          <span className="text-muted-foreground">Tai in hand <b className="text-foreground">{q.fih}</b></span>
-          <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
+        <CardContent className="pt-4">
+          <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
+            fan={q.fih} fanLabel="Tai in hand" className="gap-x-5 gap-y-2">
+            <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
+          </HandContext>
         </CardContent>
       </Card>
 
