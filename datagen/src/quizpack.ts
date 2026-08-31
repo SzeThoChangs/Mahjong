@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fanInHand, makeRng, type Meld } from 'sg-mahjong-engine';
 import { eachJsonlGz } from './stats.js';
-import { eachEval } from './evalstats.js';
+import { eachEval, phaseOfTurn, PHASES } from './evalstats.js';
 import { pairedSe, separationT, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
@@ -36,14 +36,25 @@ const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; 
  * mean best-vs-runner-up gap of $0.60 against a $1.07 error bar - three quarters of it ungradeable.
  *
  * Select on `gap > clear * se` instead. Only ~4% of discards clear 2 SE, but 4% of 392k discards is
- * still ~15,700 positions, far more than a pack needs. Within each decision kind we take decisive
- * positions only, and hold the kind mix at the run's own proportions so a discard trainer stays a
- * discard trainer. A kind whose decisive pool is short is topped up from its closest calls, and the
- * shortfall is reported rather than passed off as full coverage.
+ * still ~15,700 positions, far more than a pack needs. Within each stratum we take decisive
+ * positions only, and hold the stratum mix at the run's own proportions. A stratum whose decisive
+ * pool is short is topped up from its closest calls, and the shortfall is reported rather than
+ * passed off as full coverage.
+ *
+ * A stratum is decision KIND x PHASE, not kind alone. Kind alone holds a discard trainer to being a
+ * discard trainer and nothing else, and decisiveness is very unevenly spread through a hand: 7.0% of
+ * late discards clear 2 SE against 1.4% of early ones, because a late hand is committed and an early
+ * one is still every hand at once. Selecting on decisiveness within kind therefore delivered a pack
+ * that was 43% late and 17% early against a run that is 25% late and 37% early - a trainer that
+ * quietly declined to ask the opening questions, which are the ones a player has the most turns to
+ * get wrong. Adding phase to the key costs nothing: every stratum still fills from decisive
+ * positions alone at 5,000 questions. Early discards are the binding one (2,066 decisive for ~1,550
+ * wanted), so that slice is drawn thin and repeats across large packs sooner than the others.
  */
 // `sep` is the separation in standard errors; `turn` is the player-turn the decision was made on.
 // These were both called `t` and the phase report silently bucketed decisions by their t-statistic.
 interface Ref { g: number; h: number; d: number; spread: number; k: string; sep: number; turn: number }
+const stratumOf = (kind: string, turn: number) => `${kind}/${phaseOfTurn(turn)}`;
 const decisive = new Map<string, Ref[]>(), close = new Map<string, Ref[]>(), seen = new Map<string, number>();
 eachEval(dir, (e) => {
   if (e.actions.length <= 1) return;
@@ -51,9 +62,10 @@ eachEval(dir, (e) => {
   const spread = best.ev - e.actions[e.actions.length - 1]!.ev;
   const sep = separationT(best, second, seVersion);
   const ref: Ref = { g: e.g, h: e.h, d: e.d, spread, k: e.k, sep, turn: e.t };
-  seen.set(e.k, (seen.get(e.k) ?? 0) + 1);
+  const stratum = stratumOf(e.k, e.t);
+  seen.set(stratum, (seen.get(stratum) ?? 0) + 1);
   const bucket = sep > clear ? decisive : close;
-  let list = bucket.get(e.k); if (!list) bucket.set(e.k, list = []);
+  let list = bucket.get(stratum); if (!list) bucket.set(stratum, list = []);
   list.push(ref);
 });
 const rng = makeRng(99);
@@ -61,22 +73,27 @@ const shuffle = <T,>(a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const
 
 const totalSeen = [...seen.values()].reduce((a, b) => a + b, 0);
 const chosen: Ref[] = [];
-const shortfall: string[] = [];
-for (const [kind, n] of [...seen.entries()].sort((a, b) => b[1] - a[1])) {
+const shortfall: string[] = [], drawnThin: string[] = [];
+const strata = [...seen.entries()].sort((a, b) => b[1] - a[1]);
+for (const [stratum, n] of strata) {
   const target = Math.round((n / totalSeen) * maxQ);
-  const pool = shuffle(decisive.get(kind) ?? []);
+  const pool = shuffle(decisive.get(stratum) ?? []);
   const take = pool.slice(0, target);
   if (take.length < target) {
-    // not enough decisive positions of this kind: fall back to its closest calls, hardest first
-    const backfill = (close.get(kind) ?? []).sort((a, b) => b.sep - a.sep).slice(0, target - take.length);
+    // not enough decisive positions in this stratum: fall back to its closest calls, hardest first
+    const backfill = (close.get(stratum) ?? []).sort((a, b) => b.sep - a.sep).slice(0, target - take.length);
     take.push(...backfill);
-    shortfall.push(`${kind}: ${target - backfill.length}/${target} decisive, ${backfill.length} backfilled`);
+    shortfall.push(`${stratum}: ${target - backfill.length}/${target} decisive, ${backfill.length} backfilled`);
   }
+  // How much of the stratum's decisive pool a pack this size consumes. Above ~50% the questions stop
+  // being a sample of the position type and start being most of the positions of that type there are.
+  if (pool.length && take.length / pool.length > 0.5) drawnThin.push(`${stratum} ${Math.round(100 * take.length / pool.length)}% of ${pool.length}`);
   chosen.push(...take);
 }
 shuffle(chosen);
-console.log(`selected ${chosen.length} of ${maxQ} at gap > ${clear} SE  [${[...seen.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${(decisive.get(k) ?? []).length}/${n} decisive`).join(', ')}]`);
+console.log(`selected ${chosen.length} of ${maxQ} at gap > ${clear} SE  [${strata.map(([k, n]) => `${k} ${(decisive.get(k) ?? []).length}/${n} decisive`).join(', ')}]`);
 if (shortfall.length) console.log(`  backfilled from close calls - ${shortfall.join('; ')}`);
+if (drawnThin.length) console.log(`  drawn thin - ${drawnThin.join(', ')}`);
 
 // group by hand so each hand is replayed once
 const byHand = new Map<string, Ref[]>();
@@ -132,15 +149,14 @@ const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'in
 });
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
 console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
-// Decisive positions are not spread evenly through a hand: late decisions resolve because the hands
-// are committed, early ones rarely do. Selecting on decisiveness therefore skews the pack late, and
-// that skew is a property of the trainer worth stating rather than discovering.
+// Phase is a selection key now, so this is the check that it worked rather than a warning that it
+// did not. The two rows should agree to within rounding; a gap means a stratum was backfilled or
+// ran dry, and the lines above say which.
 {
-  const phase = (t: number) => (t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late');
   const mix = new Map<string, number>(), all = new Map<string, number>();
-  for (const q of questions) mix.set(phase(q.t), (mix.get(phase(q.t)) ?? 0) + 1);
-  for (const list of [...decisive.values(), ...close.values()]) for (const r of list) all.set(phase(r.turn), (all.get(phase(r.turn)) ?? 0) + 1);
-  const show = (m: Map<string, number>, n: number) => ['early', 'mid', 'late'].map((p) => `${p} ${(100 * (m.get(p) ?? 0) / Math.max(1, n)).toFixed(0)}%`).join('  ');
+  for (const q of questions) { const p = phaseOfTurn(q.t); mix.set(p, (mix.get(p) ?? 0) + 1); }
+  for (const list of [...decisive.values(), ...close.values()]) for (const r of list) { const p = phaseOfTurn(r.turn); all.set(p, (all.get(p) ?? 0) + 1); }
+  const show = (m: Map<string, number>, n: number) => PHASES.map((p) => `${p} ${(100 * (m.get(p) ?? 0) / Math.max(1, n)).toFixed(0)}%`).join('  ');
   const seenTotal = [...all.values()].reduce((a, b) => a + b, 0);
-  console.log(`  phase mix: pack [${show(mix, questions.length)}] vs run [${show(all, seenTotal)}] - decisive positions cluster late`);
+  console.log(`  phase mix: pack [${show(mix, questions.length)}] vs run [${show(all, seenTotal)}]`);
 }

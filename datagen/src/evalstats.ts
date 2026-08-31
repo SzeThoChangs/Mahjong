@@ -16,7 +16,12 @@ export function loadEvals(dir: string): EvalRecord[] {
 const pct = (x: number) => (100 * x).toFixed(0).padStart(3) + '%';
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 const q = (xs: number[], p: number) => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))] ?? NaN; };
-const phaseOf = (e: EvalRecord) => { const t = (e as unknown as { t?: number }).t; return t === undefined ? 'n/a' : t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late'; };
+/** How deep into the hand a decision was made. One definition, because the quiz pack stratifies on
+ *  the same boundaries this summary reports against and the two must not drift apart. */
+export const PHASES = ['early', 'mid', 'late'] as const;
+export type Phase = (typeof PHASES)[number];
+export const phaseOfTurn = (t: number): Phase => (t <= 15 ? 'early' : t <= 35 ? 'mid' : 'late');
+const phaseOf = (e: EvalRecord) => { const t = (e as unknown as { t?: number }).t; return t === undefined ? 'n/a' : phaseOfTurn(t); };
 
 // Only `regret` is retained per decision - median and p90 need the distribution. Everything else is a running total,
 // so the summary costs one number per decision per grouping instead of the whole record.
