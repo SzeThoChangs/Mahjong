@@ -70,14 +70,17 @@
     "robbing_kong": "+1 tai. engine event_scoring.robbing_kong = 1 already matches.",
     "wind_bao": "the FOURTH wind pong, not the third. Everything else (dragons, colour, terminals) is the third.",
     "kong_feed_bao": "feeding a kong that wins on its replacement makes you bao, and the hand scores +1 tai for the replacement win (event_scoring.replacement_win = 1, already matches).",
-    "three_wildcards": "worth nothing. Only all four score, at 5 tai. Two and three add no tai. Engine already matches - score.ts only lifts the hand at jokers >= 4."
+    "three_wildcards": "worth nothing. Only all four score, at 5 tai. Two and three add no tai. Engine already matches - score.ts only lifts the hand at jokers >= 4.",
+    "flower_animal_honour_scoring": "ALL CONFIRMED as the engine already had them. Own flower 1 and own season 1 (hold both and that is 2 tai); all four flowers +1, all four seasons +1; each animal 1, all four animals +1; dragon pong 1, seat wind 1, round wind 1 (a pong of the wind that is both scores both, so 2). Seven bonus tiles is 10 tai flat and replaces the individual flower tai; eight is an instant win.",
+    "combination_tai_top5": "The five hand types that decide 99.5% of wins, all CONFIRMED as the engine already had them: ping_hu 4, chou_ping_hu 1, peng_peng_hu 2, ban_se 2, and chicken scoring nothing from its pattern. peng_peng_hu is no longer an inference. The engine separates ping_hu from chou_ping_hu by FLOWERS - an all-chow hand holding no flower or animal is ping_hu at 4, and any bonus tile drops it to chou_ping_hu at 1."
   },
   "unconfirmed": {
     "unplayable_tiles": "15 is the 67% default - confirm",
-    "combination_tai": "THE WHOLE TAI TABLE is engine defaults and has never been confirmed - 25 values in rules.ts DEFAULT_RULES.combination_tai. It prices every payout in the dataset. Ask before trusting any money figure.",
-    "dealer_rules": "never asked: dealer keeps the deal on a win (true), keeps it on a draw (true), 4 hands per wind.",
-    "flower_animal_honour_scoring": "never asked: own flower 1, flower set 1, season set 1, seven flowers 10, eight 12; each animal 1, set 1; dragon pong 1, round wind 1, seat wind 1, two dragons as eye 1, three winds as eye 4.",
-    "joker_assumptions": "CONFIRMED 2026-08-29: a wildcard cannot be thrown at all (discardable false), so claimable_when_discarded never arises; jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
-    "peng_peng_hu": "\u78b0\u78b0\u80e1 (all pongs) set to 2 fan - inferred from your \u56db\u6697\u523b answer; confirm"
+    "combination_tai_rest": "The top 5 are confirmed above and cover 99.5% of wins. The remaining ~20 values are still engine defaults, but every one of them occurs in under 0.3% of hands: qing_yi_se 4, xiao_san_yuan 3, and a long list of 5-tai limit hands. Low priority.",
+    "dead_config_two_dragons_eye_three_winds_eye": "honour_scoring.two_dragons_eye (1) and three_winds_eye (4) are declared in rules.ts and NEVER READ by the scorer. Setting them does nothing. xiao_san_yuan and xiao_si_xi appear to cover the same hands. Delete them or wire them - do not leave them looking live.",
+    "dealer_rules": "never asked: dealer keeps the deal on a win (true), keeps it on a draw (true), 4 hands per wind."
+  },
+  "confirmed_2026_08_29": {
+    "joker_assumptions": "a wildcard cannot be thrown at all (discardable false), so claimable_when_discarded never arises; jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value"
   }
 }
