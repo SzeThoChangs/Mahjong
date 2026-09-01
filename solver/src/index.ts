@@ -5,3 +5,4 @@ export * from './bot.js';
 export { TABLES } from './tables.js';
 export * from './policy.js';
 export * from './claim.js';
+export * from './shapes.js';
