@@ -119,6 +119,19 @@ export class PlainWaitCoachBot extends CoachBot {
   }
 }
 
+/**
+ * The coach, plus the measured discount for a tile no run can still be waiting on.
+ *
+ * Second idea from the tactics book (`no_chance_tiles`). Measured at three to five times safer in
+ * every cell of `dangerWall`; whether that is worth chips is what the `wall` arm answers.
+ */
+export class WallCoachBot extends CoachBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { wall: true });
+    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
+  }
+}
+
 export class FoldCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { fold: true });

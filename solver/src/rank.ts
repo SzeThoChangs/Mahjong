@@ -4,7 +4,7 @@ import {
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
-import { dealInChance, threatScale, maxReadyChance } from './reads.js';
+import { dealInChance, threatScale, maxReadyChance, walled } from './reads.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -58,16 +58,18 @@ const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All
 // it is also standing in for the other reasons a already-safe tile tends to be a good throw.
 const DANGER_WEIGHT = 40;
 
-function dealInChips(k: TileKind, ctx: Context, gone: number[]): number {
+function dealInChips(k: TileKind, ctx: Context, gone: number[], accounted?: number[]): number {
   if (isJoker(k)) return 0;
-  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0, ctx.reads) * threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads) * (ctx.dangerWeight ?? DANGER_WEIGHT);
+  const isWalled = accounted ? walled(k, accounted) : false;
+  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0, ctx.reads, isWalled) * threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads) * (ctx.dangerWeight ?? DANGER_WEIGHT);
 }
 
 /** Say out loud what the discard pool means for this tile, so the advice can be argued with. */
-function safetyReason(k: TileKind, ctx: Context, gone: number[]): string | null {
+function safetyReason(k: TileKind, ctx: Context, gone: number[], accounted?: number[]): string | null {
   if (isJoker(k)) return null;
   const seen = gone[k] ?? 0;
-  const risk = dealInChips(k, ctx, gone);
+  if (accounted && walled(k, accounted)) return 'no run can still be waiting on it — every sequence it could finish is already dead';
+  const risk = dealInChips(k, ctx, gone, accounted);
   if (seen > 0) return `${seen === 1 ? 'one is' : `${seen} are`} already on the floor — safer to follow`;
   if (risk >= 0.6) return 'nobody has thrown one yet — the risky kind to break with';
   return null;
@@ -145,7 +147,7 @@ function legalWait(h: HandInput, ctx: Context, gone: number[]): number | null {
  * is no reason to stop building a hand that is nearly there, and a hopeless hand costs nothing to
  * keep building while nobody is close.
  */
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean } = {}): Ranking {
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean; wall?: boolean } = {}): Ranking {
   const threatFold = typeof cfg.fold === 'object' ? cfg.fold : null;
   const foldEnabled = cfg.fold === true;
   const allJokers = concealed.every(isJoker);
@@ -153,6 +155,16 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   // copies of each kind already face-up somewhere other than this player's own hand and melds
   const gone = new Array<number>(34).fill(0);
   for (const k of ctx.visible ?? []) if (k < 34) gone[k]!++;
+  // Copies of each kind this player can account for: everything visible plus their own hand and
+  // melds. `gone` is what the discard POOL says about a tile; `accounted` is what is left in the
+  // world, which is what decides whether a run can still be waiting on it. Only built when the
+  // rule is on, so the comparison is of one change.
+  const accounted = cfg.wall ? (() => {
+    const a = [...gone];
+    for (const k of concealed) if (k < 34) a[k]!++;
+    for (const m of melds) for (const k of m.tiles) if (k < 34) a[k]!++;
+    return a;
+  })() : undefined;
   const opts: DiscardOption[] = [];
   const hands = new Map<TileKind, HandInput>();
   for (const k of kinds) {
@@ -171,7 +183,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     ? maxReadyChance(ctx.opponentMelds, ctx.playerTurns, ctx.reads) >= threatFold.ready && shanten(concealed, melds.length) >= threatFold.shanten
     : foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
   if (folding) {
-    for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone);
+    for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone, accounted);
     opts.sort((a, b) => a.risk - b.risk);
     const safest = opts[0]!;
     for (const o of opts) {
@@ -181,7 +193,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
       o.reasons = [threatFold
         ? `someone is probably ready and this hand is ${shanten(concealed, melds.length)} away - playing for safety`
         : `the hand cannot reach ${ctx.minimumFan} tai by any route - playing for safety`];
-      const sr = safetyReason(o.tile, ctx, gone); if (sr) o.reasons.push(sr);
+      const sr = safetyReason(o.tile, ctx, gone, accounted); if (sr) o.reasons.push(sr);
     }
     return {
       options: opts, best: safest, tied: opts.filter((o) => o.risk <= safest.risk + 0.05).map((o) => o.tile),
@@ -209,14 +221,14 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     o.chips += o.acceptance * 0.06;
   }
   // what the throw hands the table, priced in the same chips as what it does for the hand
-  for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone); o.chips -= o.risk; }
+  for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone, accounted); o.chips -= o.risk; }
   opts.sort((a, b) => b.chips - a.chips);
   const top = opts[0]!;
   for (const o of opts) {
     o.delta = o.chips - top.chips;
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
     o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds, gone));
-    const safety = safetyReason(o.tile, ctx, gone);
+    const safety = safetyReason(o.tile, ctx, gone, accounted);
     if (safety) o.reasons.push(safety);
   }
   const t = top.target;
