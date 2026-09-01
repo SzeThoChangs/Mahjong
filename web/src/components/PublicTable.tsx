@@ -56,6 +56,32 @@ function Caption({ label, count }: { label: string; count: number }) {
 }
 
 /**
+ * Where the i-th tile of a pile goes, in the grid's own row and column.
+ *
+ * Every seat throws the same way: the first six go on the line NEAREST that player, left to right
+ * as THEY see it, and the pile then grows towards the middle of the table. Saying that in screen
+ * terms means something different for each of the four seats, because the grid always puts row 1
+ * above row 2 and column 1 left of column 2 while "towards the player" points four different ways.
+ * Left to auto-placement, opposite seats fill in opposite directions - the bottom seat's pile grew
+ * away from them while the top seat's grew towards them, and neither matched a real table.
+ *
+ * `line` counts lines out from the player, `at` is the position along one. The seats along the
+ * sides read their lines as columns, and their own left-to-right runs down the screen for the seat
+ * on the left and up it for the seat on the right, which is what facing each other means.
+ */
+function place(i: number, total: number, side: Side): { gridRow: number; gridColumn: number } {
+  const line = Math.floor(i / PER_ROW), at = i % PER_ROW;
+  const lines = Math.max(1, Math.ceil(total / PER_ROW));      // how deep the pile has grown
+  const wide = Math.max(1, Math.min(PER_ROW, total));         // how long a full line is
+  switch (side) {
+    case 'bottom': return { gridRow: lines - line, gridColumn: at + 1 };
+    case 'top': return { gridRow: line + 1, gridColumn: wide - at };
+    case 'left': return { gridRow: at + 1, gridColumn: line + 1 };
+    case 'right': return { gridRow: wide - at, gridColumn: lines - line };
+  }
+}
+
+/**
  * The pool in front of one seat: six to a line, oldest first.
  *
  * The line runs PARALLEL TO THAT SEAT'S EDGE of the table - across for the seats top and bottom,
@@ -65,18 +91,22 @@ function Caption({ label, count }: { label: string; count: number }) {
  *
  * An explicit grid rather than a wrapping flex: `flex-wrap` under a `max-width` takes its break
  * point from the container's intrinsic width, which the surrounding grid track had already
- * squeezed, so the upright seats broke at five per row while the turned seats got six.
+ * squeezed, so the upright seats broke at five per row while the turned seats got six. Each tile is
+ * then placed by hand, because auto-placement cannot fill in four different directions.
  */
 function Pool({ seat, side }: { seat: SeatPublic; side: Side }) {
   const rot = ROT[side];
   const down = side === 'left' || side === 'right';
-  const n = Math.max(1, Math.min(PER_ROW, seat.discards.length));
+  const total = seat.discards.length;
+  const n = Math.max(1, Math.min(PER_ROW, total));
   return (
     <div className="grid gap-0.5"
       style={down
-        ? { gridTemplateRows: `repeat(${n}, ${TILE}px)`, gridAutoFlow: 'column', gridAutoColumns: 'max-content' }
+        ? { gridTemplateRows: `repeat(${n}, ${TILE}px)`, gridAutoColumns: 'max-content' }
         : { gridTemplateColumns: `repeat(${n}, ${TILE}px)`, gridAutoRows: 'max-content' }}>
-      {seat.discards.map((d, i) => <Tile key={i} kind={d.kind} size="sm" rot={rot} />)}
+      {seat.discards.map((d, i) => (
+        <div key={i} style={place(i, total, side)}><Tile kind={d.kind} size="sm" rot={rot} /></div>
+      ))}
     </div>
   );
 }

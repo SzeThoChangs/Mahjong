@@ -26,5 +26,8 @@ export default defineConfig({
     },
   }],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
-  server: { fs: { allow: ['..'] } },
+  // The repo path contains a ':' ("My Games:Learn"), which Vite's file-serving allow list cannot
+  // match - it resolves the allow root to the repo correctly and then still refuses a file inside
+  // it with a 403. `strict: false` turns the check off for the dev server, which is local-only.
+  server: { fs: { allow: ['..'], strict: false } },
 })

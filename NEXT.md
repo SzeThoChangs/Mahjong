@@ -1,72 +1,50 @@
-# Where we left off — 2026-08-31
+# Where we left off — 2026-09-02
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
 ## Nothing is running
 
-The last job finished. `DANGER_WEIGHT` stays at 40 — the sweep tried 10 through 240 and nothing
-beat it. The safe range around it got wider after the danger data was corrected, but the answer
-did not move.
+All three ideas found in the tactics book have now been played for money. Counting the wait in tiles
+that can legally win WON (+0.048) and is shipped. Reading the wall did not. Reading what an opponent
+MELDED, rather than how many times, is the third, and it is the interesting one.
 
-## What we decided on 2026-08-30
+## The third read, and what it turned up (2026-09-02)
 
-**The bot is the hand-written coach, and it stays that way.** We tried six ways to improve it and
-all six lost or drew:
+The read is `half_color_tell`: a player collecting a suit does not throw that suit, so the suit
+missing from their discards is their hand. Measured on run-money4 it came out BACKWARDS - their suit
+looked safer. The reason is that the recorded run has almost no colour hands in it. Its bots have no
+colour target, so 1.29% of their wins are Half or Full Colour against 31.7% at a table of coaches.
+The read was being looked for in players who do not make the play.
 
-- teach a model to pick discards — lost
-- teach a model to decide pong/chow — dead level
-- both models together — lost
-- play on for flowers when the hand is weak — lost
-- give up when the hand can't reach 2 tai — lost
-- give up when someone looks ready and you're far — lost
+Measured again on 25,000 hands the coach played against itself (`reads.ts --coach`), the read is
+right and large: a tile in their suit deals in to them at x2.03, rising to x5.52 late. Then played
+for money over 16,000 paired deals on two seeds it returns -0.034 +/- 0.057. Nothing.
 
-Machine learning is closed. It picks the "right" tile more often than the coach and still loses
-money. We checked that three separate times.
+**That is four true reads in a row that pay nothing** (the wall, and now this). The coach's danger
+term is not where the money is; it already prices every discard continuously and a better price does
+not move it.
 
-**We fixed a real bug.** The table plays with 4 wildcards and most of the code wasn't dealing them.
-Worse, the tool that compares bots was dealing no wildcards at all — so an old result saying the
-model loses 2.66 chips a game was measured on the wrong game. The real number is 0.54.
+## What this leaves worth doing
 
-**We rebuilt everything the app serves** on the current data (`run-money3`). The old quiz was
-offering wildcards as tiles you could throw, which the table forbids, and in 14 questions it taught
-throwing one as the correct answer.
+**The training material, not the coach.** The quiz pack and the film room are drawn from the recorded
+run, so a player practises positions from a game with 1.3% colour hands and 15.9% draws while being
+taught by a coach that plays one with 31.7% and 0.9%. Regenerating from coach-played hands is the
+job with real value in it, and it is the expensive one - it needs the evaluator run again, which was
+seven hours on the weak bots and will be longer on coach play-outs.
 
-**We deleted 10 GB of old game data.** Five runs, all generated before the wildcard fix, so they
-describe a game your table doesn't play. Gone for good — not in git, not recoverable. Nothing in
-the repo depends on them any more.
+**Teach the suit read to the player.** It is true, mechanical and measured at x2.03. It is worth
+nothing to score with and worth a lot to know, because a person does not weigh danger continuously
+the way the coach does. It belongs in the app's explanations, not in `rankDiscards`.
 
-**We added two things to the app**, which is where the only real wins came from:
+**Do not tune the danger model again.** Four measured failures.
 
-- **Your hand** — type in the hand you're holding and ask what to throw, or tap the tile someone
-  just threw and ask whether to take it.
-- Claim questions in the quiz and the film room now explain *why*, not just what the money was.
+## Fixed on the way past
 
-## Done since (2026-08-31)
-
-The list from yesterday is finished. The sweep landed on 40. **Your hand** remembers your seat and
-round. The table view now shows the discard pile, turns the far seat's tiles the right way up for
-that player, and puts seat/round/how-deep-you-are next to the tiles instead of in a card you scroll
-away from. CI runs the checks on every push.
-
-**The quiz no longer skews late.** It was 43% late-hand and 17% early against a run that is 25% and
-37%. The cause was that the pack held its mix by decision *kind* only, and a late hand is far easier
-for the simulator to grade than an early one (7.0% of late discards separate cleanly, against 1.4%
-of early ones) — so decisiveness quietly did the choosing. Holding the mix by kind *and* phase fixes
-it with no loss of gradeability: every slice still fills from cleanly-separated positions, and the
-median question moved from turn 32 to turn 23. Pack rebuilt.
-
-## What to do next
-
-**Build the app.** No open bugs from the list above. Candidates, in no particular order:
-
-- Early discards are the one thin slice — the pack uses 75% of all the separable early positions the
-  run contains. More of them needs more hands or deeper play-outs, not a smarter picker. Worth a
-  night of compute if the early questions start feeling repetitive.
-- The open question below still has no answer, and the engine still does the nonsense thing.
-
-**Don't work on the bot.** Six measured losses say it's as good as this approach gets. If it is ever
-revisited: shorter play-outs with an estimated ending is the only idea left that saves time *and*
-noise together. It was never urgent once the 2.66 turned out to be 0.54.
+Seats are numbered 1-4 everywhere a person reads one, matching the app; the tools used to print 0-3.
+`sim.ts` and `stats.ts` labelled their four chairs E/S/W/N, which is wrong - the dealer rotates, so
+chair 1 is East a quarter of the time - and that output reads as a seat-wind edge it never counted.
+`.claude/launch.json` and `web/vite.config.ts` needed changes to run the dev server at all, because
+the repo path contains a ':'.
 
 ## Two habits worth keeping
 

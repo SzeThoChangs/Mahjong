@@ -2,6 +2,7 @@
 import { kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type Meld } from 'sg-mahjong-engine';
 import { rankDiscards } from './rank.js';
 import { type Context } from './targets.js';
+import { type ReadsTables } from './reads.js';
 import { policyRank } from './policy.js';
 import { claimRank, claimAdvice, type ClaimCandidate } from './claim.js';
 
@@ -26,8 +27,11 @@ export const ctxOf = (v: PlayerView): Context => ({
 export const meldsOf = (v: PlayerView): Meld[] => v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
 
 export class CoachBot implements Bot {
+  /** Every decision reads the table through here, so a subclass can change what the coach is told
+   *  about it - an alternative reads table, say - without reimplementing the decisions. */
+  protected ctx(v: PlayerView): Context { return ctxOf(v); }
   chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v));
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v));
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
@@ -40,7 +44,7 @@ export class CoachBot implements Bot {
     const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow');
     if (!usable.length) return null;
     const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow', used: (o.tiles ?? []).map(kindOf) }));
-    const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), ctxOf(v));
+    const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), this.ctx(v));
     if (adv.best.kind === 'pass') return null;
     const i = cands.findIndex((c) => c.kind === adv.best.kind && c.used.join() === adv.best.used.join());
     return usable[i] ?? null;
@@ -73,7 +77,7 @@ export class ClaimBot extends CoachBot {
   override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
     const win = options.find((o) => o.kind === 'win'); if (win) return win;
     const offered = kindOf(v.lastDiscard!.tile);
-    const ctx = ctxOf(v), melds = meldsOf(v), hand = v.hand.map(kindOf);
+    const ctx = this.ctx(v), melds = meldsOf(v), hand = v.hand.map(kindOf);
     // `pass` is always on the table and is not in `options`; the model ranks it alongside the rest.
     const cands: (ClaimCandidate & { opt: ClaimOption | null })[] = [{ kind: 'pass', used: [], opt: null }];
     for (const o of options) {
@@ -114,7 +118,7 @@ export class FullPolicyBot extends ClaimBot {
  */
 export class PlainWaitCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { legalWait: false });
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { legalWait: false });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
@@ -127,14 +131,33 @@ export class PlainWaitCoachBot extends CoachBot {
  */
 export class WallCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { wall: true });
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { wall: true });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
 
 export class FoldCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { fold: true });
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { fold: true });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
+}
+
+/**
+ * The coach pricing danger off a DIFFERENT measured table.
+ *
+ * `Context.reads` has existed since the reads went in, for exactly this - so a regenerated table can
+ * be PLAYED against the shipped one before it replaces it - and nothing had ever used it. The table
+ * that ships was measured by replaying a recorded run, and those runs were played by the datagen
+ * personalities: they win a colour hand 1.3% of the time against the coach's 32%, so every read
+ * about suits in it was measured on a game nobody at this table plays.
+ *
+ * The alternative table is passed in rather than read from disk, because this file is also part of
+ * the browser build.
+ */
+export class AltReadsCoachBot extends CoachBot {
+  // a plain field, not a constructor parameter property: the web build runs `erasableSyntaxOnly`
+  private readonly tables: ReadsTables;
+  constructor(tables: ReadsTables) { super(); this.tables = tables; }
+  protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), reads: this.tables }; }
 }

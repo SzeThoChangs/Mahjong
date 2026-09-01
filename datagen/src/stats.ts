@@ -84,7 +84,9 @@ export function formatStats(st: Stats): string {
     `hands ${st.hands}  sessions ${st.sessions}  avg turns ${st.avgTurns.toFixed(1)}  actions/hand ${st.actionsPerHand.toFixed(1)}`,
     `win ${pct(st.winRate)}  draw ${pct(st.drawRate)}  | of wins: self-draw ${pct(st.selfDrawRate)}  discard ${pct(st.discardWinRate)}  avg tai ${st.avgTai.toFixed(2)}`,
     `per hand: chow ${st.chowPerHand.toFixed(2)}  pong ${st.pongPerHand.toFixed(2)}  kong ${st.kongPerHand.toFixed(2)}  flowers ${st.flowersPerHand.toFixed(2)}  animals ${st.animalsPerHand.toFixed(2)}`,
-    `win by seat  E ${pct(st.winRateBySeat[0]!)}  S ${pct(st.winRateBySeat[1]!)}  W ${pct(st.winRateBySeat[2]!)}  N ${pct(st.winRateBySeat[3]!)}   chips/hand by seat ${st.chipsPerHandBySeat.map((x) => x.toFixed(2)).join(' / ')}`,
+    // chairs 1-4, not winds: the dealer rotates, so a chair's wind changes from hand to hand
+    `win by seat  ` + st.winRateBySeat.map((r, i) => `${i + 1} ${pct(r)}`).join('  ')
+      + `   chips/hand by seat ` + st.chipsPerHandBySeat.map((x, i) => `${i + 1} ${x.toFixed(2)}`).join('  '),
     `win by bot   ` + Object.entries(st.winRateByBot).map(([b, r]) => `${b} ${pct(r)}`).join('  '),
     `combinations ` + Object.entries(st.combos).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', '),
     `illegal actions ${st.illegal}   chips net ${st.chipsSum}`,

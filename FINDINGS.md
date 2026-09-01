@@ -370,6 +370,139 @@ opponent has but never what they are, so a dragon pong and a chow are the same i
 and is the one the book spends eleven tips on.
 
 
+### The third gap from the tactics book is real, was invisible in our data, and pays nothing (2026-09-02)
+
+The gap: the coach sees how MANY melds an opponent has and never what they are, so a dragon pong and
+a chow of 3-4-5 are the same input to it. Eleven of the book's tips turn on the difference, and the
+one it calls the strongest single read available is `half_color_tell` - a player collecting a suit
+does not throw that suit, so the suit missing from their discards is their hand.
+
+Mechanised as something a player can work out from the table alone: a seat is concentrating in suit
+S when every suited set they have exposed is in S and they have thrown at most one S themselves.
+Honour melds do not break the pattern, because Half-Color is one suit plus honours. Measured as new
+dimensions on the existing reads pipeline - same method, same 25,000 hands of run-money4 - at two
+strictnesses, one exposed set in the suit and two.
+
+**The tell fires, and it is false.** Two exposed sets in one suit with the suit undiscarded flags a
+seat 3.7% of the time, and when it does, that seat's CONCEALED part is in the suit almost never:
+
+```
+                          5+ concealed of it    80%+ of their concealed suited tiles
+  one exposed set               10.2%                        1.0%       (n=211,160)
+  two exposed sets               2.1%                        2.6%       (n= 16,979)
+```
+
+An earlier version of this check said 78.6% and was measuring nothing: it counted melds towards the
+holding, and two exposed sets already supply six tiles of the suit, so it was true by construction.
+The melds are not evidence about the part you cannot see. The question is only ever what is
+concealed.
+
+**Per opponent, the danger runs the other way.** Asked as "does this tile deal in to THAT seat",
+which is the only honest form - pooling three seats lets two players who have nothing to do with the
+read dilute it - a tile in the suit they are concentrating in is SAFER than one outside it:
+
+```
+  fresh turn 20   in 0.65%  off 0.76%   x0.85        seen turn 20   in 0.24%  off 0.35%   x0.70
+  fresh turn 30   in 0.48%  off 0.80%   x0.60        seen turn 30   in 0.43%  off 0.45%   x0.94
+  fresh turn 40   in 0.69%  off 0.92%   x0.75        seen turn 40   in 0.47%  off 0.49%   x0.94
+  fresh turn 50   in 0.63%  off 0.86%   x0.72        seen turn 50   in 0.24%  off 0.32%   x0.77
+  pooled: in 0.495%  off 0.649%  no concentration 0.286%    in/off x0.76   z = -3.33
+```
+
+That is not the book's read with the sign flipped, it is a different mechanism wearing its clothes.
+Two exposed sets in a suit are six of that suit's tiles taken off the table, so what that seat still
+needs is disproportionately outside it. Scarcity, not intention. The `off` column is also the reason
+to distrust the aggregate version: a seat with two melds is a developed seat, so `off` beats `no
+concentration` (0.649% against 0.286%) purely on tempo, and any comparison against the unflagged
+cell measures development rather than content.
+
+**The reason it finds nothing is that the players in the data do not play the hand.** What a
+recorded run wins with, against what a table of coaches wins with (`solver/src/tools/_combos.ts`,
+2,000 games; the recorded side is `datagen/src/stats.ts` over run-money4's 126,273 wins):
+
+```
+                       run-money4      four coaches
+  chicken                 63.6%            22.7%
+  chou_ping_hu            26.5%            33.2%
+  ping_hu                  6.0%             9.4%
+  peng_peng_hu             2.1%             2.6%
+  ban_se   (Half-Color)    1.17%           28.9%
+  qing_yi_se (Full)        0.12%            2.8%
+  ---------------------------------------------------
+  colour hands             1.29%           31.7%
+```
+
+**A read about suits cannot be measured on players who never collect one.** The datagen
+personalities score discards on shanten, pairs, triplets and sequences; not one of them has a colour
+target, so a suit concentration in their melds is a coincidence rather than a plan - which is
+exactly what the 2.1% precision says. The book's tip is not refuted here. It was never tested.
+
+**One defect looked for and not found.** The danger table splits fresh from seen on the discard pool
+alone, and `rank.ts` looks the answer up with `ctx.visible`, which is the pool PLUS every exposed
+meld - so a tile whose only copies sit in somebody's chow is `fresh` to the table and `seen` to the
+coach. Melded copies are two thirds invisible to the pool: a chow claimed on 4筒 shows the 4 in the
+discard log and hides the 3 and the 5. Measured both ways on the same sample, the discount is the
+same either way, so the coach has not been reading a cell that was never measured for it:
+
+```
+  simple|20   pool  fresh 0.65%  seen 0.38%  x0.58     visible  fresh 0.65%  seen 0.44%  x0.68
+  simple|30   pool  fresh 1.23%  seen 0.72%  x0.59     visible  fresh 1.23%  seen 0.80%  x0.65
+  simple|40   pool  fresh 1.64%  seen 0.99%  x0.60     visible  fresh 1.70%  seen 1.04%  x0.61
+  terminal|40 pool  fresh 1.05%  seen 0.57%  x0.54     visible  fresh 1.04%  seen 0.59%  x0.56
+  honour|40   pool  fresh 0.37%  seen 0.06%  x0.17     visible  fresh 0.37%  seen 0.06%  x0.17
+```
+
+**Measured again on 25,000 hands the coach played against itself**, through a new `--coach` source in
+`datagen/src/reads.ts`, every number turns over:
+
+```
+                                              run-money4      four coaches
+  the tell is true (80%+ of concealed)             2.6%           49.6%
+  deals in to that seat, in-suit vs off            x0.76           x2.03   (z = 14.1)
+    ...at turn 40, tile already thrown             x0.94           x5.52
+  a tile is IN somebody's suit (one set)          13.1%           20.9%
+  they have thrown none of a suit by turn 40 ->
+    they are really collecting it                   18%             54%
+```
+
+So the book is right and the coach is blind to it. The earlier reading was not an inversion of the
+tip, it was its absence: with no colour hands in the population, the only thing left in the signal
+was the scarcity artefact, and that is what got measured.
+
+**A second thing falls out, larger than the read.** The whole danger table is soft for the game the
+coach plays. A fresh simple tile at turn 30 deals in 1.23% of the time in run-money4 and 2.38% at a
+table of coaches - about double, all the way along - and the fresh/seen discount is sharper too
+(x0.44 against x0.59). `DANGER_WEIGHT = 40` was swept on coach games, but the probabilities it
+multiplies were measured on the other one.
+
+**And none of it is worth anything.** `AltReadsCoachBot` and the `altreads` arm exist so a table can
+be PLAYED rather than admired - `Context.reads` had been declared for this since the reads went in
+and had never had a user. The coach-measured table against the shipped one:
+
+```
+  seed 11    8,000 paired deals    -0.054 +/- 0.078
+  seed 23    8,000 paired deals    -0.013 +/- 0.083
+  pooled    16,000 paired deals    -0.034 +/- 0.057    t = -0.59
+```
+
+Dead level, and if anything the wrong side of zero. That is the fourth read that is measurably true
+and pays nothing, after the wall, and it is the same shape: the coach was already close to the best
+throw, so a better price on danger moves it somewhere it was nearly going anyway.
+
+**What to take from four of these in a row.** The coach's danger term is not where the money is. It
+already prices every discard continuously, and sharpening the price does not move the result. The
+place these reads are worth something is the app, where the reader is a person who does NOT weigh
+danger continuously and can be taught a true, mechanical rule. "Two sets in one suit and they are
+not throwing it - stop feeding that suit" is worth teaching even though it is worth nothing to
+score with.
+
+**The real cost of the population gap is the training material, not the coach.** Everything the app
+serves - the quiz pack, the film room - is drawn from the recorded run, so the positions a player
+practises come from a game with 1.3% colour hands and 15.9% draws, taught by a coach that plays one
+with 31.7% and 0.9%. The EVs on each position are still measured correctly; it is the mix that is
+wrong, and this is the second time that has been said here about the same run.
+
+
 ### A lower-variance target does not work either (measured 2026-08-26)
 
 Route 1 below was to attack the 9.8-chip outcome SD by scoring the same play-outs with a

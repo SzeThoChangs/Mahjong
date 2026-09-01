@@ -46,8 +46,12 @@ export function formatStats(st: SimStats, label: string): string {
   const lines = [
     `== ${label}: ${st.games} games ==`,
     `draws ${pct(st.draws)} | self-draw share of wins ${st.games - st.draws ? (100 * st.selfDraws / (st.games - st.draws)).toFixed(0) : 0}% | avg Player Turns ${st.avgPlayerTurns.toFixed(1)} | avg Fan ${st.avgFan.toFixed(2)}`,
-    `win rate by seat  E ${pct(st.winsBySeat[0]!)}  S ${pct(st.winsBySeat[1]!)}  W ${pct(st.winsBySeat[2]!)}  N ${pct(st.winsBySeat[3]!)}`,
-    `chips/game by seat E ${(st.chipsBySeat[0]! / st.games).toFixed(2)}  S ${(st.chipsBySeat[1]! / st.games).toFixed(2)}  W ${(st.chipsBySeat[2]! / st.games).toFixed(2)}  N ${(st.chipsBySeat[3]! / st.games).toFixed(2)}`,
+    // Chairs, numbered 1-4 the way the app numbers them - NOT winds. The dealer moves round the
+    // table every game, and a seat's wind is its distance from the dealer, so chair 1 is East in
+    // only a quarter of these games. Labelling these columns E/S/W/N named a wind the chair does
+    // not keep, and read as a seat-wind edge that is not what is being counted.
+    `win rate by seat  ` + st.winsBySeat.map((w, i) => `${i + 1} ${pct(w)}`).join('  '),
+    `chips/game by seat ` + st.chipsBySeat.map((c, i) => `${i + 1} ${(c / st.games).toFixed(2)}`).join('  '),
     `combinations: ` + Object.entries(st.combos).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', '),
   ];
   return lines.join('\n');

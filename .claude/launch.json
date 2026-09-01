@@ -1,6 +1,17 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["-C", "web", "dev", "--port", "5174", "--strictPort"], "port": 5174 }
+    {
+      "name": "web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "/Users/changshengszetho/Desktop/01/All Projects/My Games:Learn/Mahjong/web/node_modules/vite/bin/vite.js",
+        "/Users/changshengszetho/Desktop/01/All Projects/My Games:Learn/Mahjong/web",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
+      "port": 5174
+    }
   ]
 }

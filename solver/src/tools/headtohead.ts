@@ -12,9 +12,24 @@
  * Reports the tested seat's chips per game against the same seat playing coach, with a standard
  * error, because a difference smaller than its error bar is not a difference.
  */
+import { readFileSync } from 'node:fs';
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot } from '../bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, AltReadsCoachBot } from '../bot.js';
+import type { ReadsTables } from '../reads.js';
+
+/**
+ * Load a reads table written by `datagen/src/reads.ts`, which stores each cell as `{p, n}`.
+ * `--reads <file>` selects the file the `altreads` arm plays with.
+ */
+function loadReads(path: string): ReadsTables {
+  const j = JSON.parse(readFileSync(path, 'utf8')) as Record<string, Record<string, { p: number; n: number }>>;
+  const flat = (t?: Record<string, { p: number; n: number }>) =>
+    Object.fromEntries(Object.entries(t ?? {}).map(([k, c]) => [k, c.p]));
+  return { dangerSafe: flat(j.dangerSafe), danger: flat(j.danger), ready: flat(j.ready), dangerWall: flat(j.dangerWall) };
+}
+const readsArg = process.argv.indexOf('--reads');
+const readsPath = readsArg >= 0 ? process.argv[readsArg + 1]! : '../data/gen/reads-coach.json';
 
 
 const n = Number(process.argv[2] ?? 1000);
@@ -26,6 +41,8 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
   plainwait: { label: 'coach WITHOUT the legal-wait rule (expect roughly -0.048)', make: () => new PlainWaitCoachBot() },
   wall: { label: 'coach discounting tiles no run can be waiting on', make: () => new WallCoachBot() },
+  // the same coach, pricing danger off a table measured on a different population of players
+  altreads: { label: `coach reading danger off ${readsPath}`, make: () => new AltReadsCoachBot(loadReads(readsPath)) },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness
   self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
 };
@@ -66,7 +83,7 @@ for (let seat = 0; seat < 4; seat++) {
   const coach = arm(seat, () => new CoachBot());
   const d = model.map((x, i) => x - coach[i]!);
   diffs.push(...d);
-  console.log(`  ${seat}    ${mean(model).toFixed(2).padStart(14)}   ${mean(coach).toFixed(2).padStart(16)}   ${mean(d).toFixed(2).padStart(8)} ± ${(sd(d) / Math.sqrt(d.length)).toFixed(2)}`);
+  console.log(`  ${seat + 1}    ${mean(model).toFixed(2).padStart(14)}   ${mean(coach).toFixed(2).padStart(16)}   ${mean(d).toFixed(2).padStart(8)} ± ${(sd(d) / Math.sqrt(d.length)).toFixed(2)}`);
 }
 const m = mean(diffs), se = sd(diffs) / Math.sqrt(diffs.length);
 console.log(`\nover all ${diffs.length} paired deals: ${m >= 0 ? '+' : ''}${m.toFixed(3)} ± ${se.toFixed(3)} chips/game for the model`);
