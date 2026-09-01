@@ -286,7 +286,33 @@ model, both together, the flower route, and two fold rules - re-weighted informa
 already had. This one hands it a fact it could not see. That is the distinction to test next, not
 "another weighting".
 
-It stays OFF behind `{ legalWait: true }` and `LegalWaitCoachBot` until the number stops moving.
+**It stopped moving, so it is ON.** A third batch of five further seeds returned +0.049 +/- 0.019
+against a pooled +0.048 - the estimate reproduced itself rather than shrinking again:
+
+```
+  batch 1   3 seeds, 18,000 deals   +0.072 +/- 0.030
+  batch 2   4 seeds, 32,000 deals   +0.035 +/- 0.022
+  batch 3   5 seeds, 40,000 deals   +0.049 +/- 0.019
+  ALL TWELVE        90,000 deals    +0.048 +/- 0.013   t = 3.72   95%: +0.023 .. +0.074
+```
+
+Shipped on by default. `PlainWaitCoachBot` and the `plainwait` arm play the old way so the rule can
+still be measured by REMOVING it: that returns -0.045 +/- 0.030 over 18,000 deals, the mirror of what
+adding it won, which is the check that the flag still drives the shipped coach rather than dangling.
+A result near zero there would mean the wiring had rotted.
+
+What it actually changes, from `tools/_why.ts`:
+
+```
+hand:  2萬 2萬 2萬 3萬 3萬 5萬 6萬  .  4筒 7筒 7筒 8筒 8筒 9筒 9筒
+OLD coach throws 4筒  -> ready, waiting on 4萬 or 7萬 - both dead
+NEW coach throws 3萬  -> not ready, still building
+```
+
+Throwing 4筒 completes the hand two ways and both are 222萬 + 345萬 + 33萬 + 789筒 + 789筒: a chicken
+hand at 0 tai that cannot be declared at this table. The old coach preferred it because it scored
+readiness and wait width and never asked whether winning would be LEGAL. That is the whole of the
++0.048.
 
 
 ### A lower-variance target does not work either (measured 2026-08-26)

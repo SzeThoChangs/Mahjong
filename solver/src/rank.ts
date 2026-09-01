@@ -202,8 +202,10 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     if (o.chips < cutoff) break;
     const h = hands.get(o.tile)!;
     // once ready, count what can legally win instead of what merely improves - same scale, so no
-    // new constant to tune and the comparison is of one idea, not of an idea plus a weight
-    o.acceptance = (cfg.legalWait ? legalWait(h, ctx, gone) : null) ?? acceptance(h, o.target, gone);
+    // new constant to tune and the comparison is of one idea, not of an idea plus a weight.
+    // ON by default since 2026-09-01: +0.048 +/- 0.013 chips/game over 90,000 paired deals on
+    // twelve wall seeds. Pass `legalWait: false` to play the old way, which is how it is measured.
+    o.acceptance = (cfg.legalWait === false ? null : legalWait(h, ctx, gone)) ?? acceptance(h, o.target, gone);
     o.chips += o.acceptance * 0.06;
   }
   // what the throw hands the table, priced in the same chips as what it does for the hand

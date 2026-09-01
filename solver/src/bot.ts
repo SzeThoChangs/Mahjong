@@ -105,12 +105,16 @@ export class FullPolicyBot extends ClaimBot {
  * NOW, which writes off hands that could still draw the flower or animal that arms them.
  */
 /**
- * The coach, with the wait counted in tiles that can legally win rather than tiles that merely
- * complete the hand. The first idea tried from the tactics book, which the coach has never used.
+ * The coach as it was BEFORE the legal-wait rule: counting every tile that completes the hand,
+ * including the ones that complete it below the table minimum and therefore cannot be declared.
+ *
+ * Kept so the rule that is now shipped can still be measured. Running this arm should return
+ * roughly the mirror of the +0.048 the rule won, and a result near zero would mean the flag stopped
+ * being wired to anything.
  */
-export class LegalWaitCoachBot extends CoachBot {
+export class PlainWaitCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
-    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { legalWait: true });
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { legalWait: false });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
