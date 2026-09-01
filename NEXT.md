@@ -46,6 +46,37 @@ chair 1 is East a quarter of the time - and that output reads as a seat-wind edg
 `.claude/launch.json` and `web/vite.config.ts` needed changes to run the dev server at all, because
 the repo path contains a ':'.
 
+## Running overnight (started 2026-09-02, ~07:10)
+
+`headtohead.ts 30000 plainwait --from 200001` -> `data/gen/h2h-plainwait-fresh.log`.
+
+The only change this project has ever shipped is `legalWait`, at +0.048 +/- 0.013. It was fitted and
+confirmed on twelve wall seeds, and its effect already halved once when tested harder (0.072 in the
+first batch, 0.035 in the second). It has never been tried on deals nothing was fitted on. Now that
+deals have names, shuffle-200001 onwards is a range nothing here has ever touched.
+
+The arm REMOVES the rule, so a real effect reads about **-0.048**. Near zero means the rule is worth
+nothing on fresh deals and should come off by default. A large positive would mean the flag has come
+unwired, not that the rule is bad. Harness self-check on the same range returned exactly
++0.000 +/- 0.000 before it started.
+
+## Next, asked for on 2026-09-02: hand shapes in the quiz
+
+Changs asked that the book's hand-shape tips be measured and taught, not just the reading tips.
+So far three of the book's 102 rules have been touched, all from `phase: read`. The untouched bulk
+is shape work - 28 rules in `phase: build` and 16 in `phase: discard` - things like `five_blocks`,
+`sandwich`, `stepping_stones`, `threes_and_sevens`, `edge_waits_stronger`, `pair_rule`,
+`perfect_one_away` and `bad_wait_ranking`.
+
+Two jobs, and they are separate. MEASURE each tip the way the three reads were measured, to find
+which are true at this table. TEACH them in the quiz, which means the questions have to be picked
+so a named shape is actually the point of the question - the pack currently selects on how cleanly
+the play-outs separate an answer and nothing else, so no tip is guaranteed to appear at all.
+
+Do the measuring first. The suit read is the warning: it is true, it is teachable, and pricing it
+was worth nothing, so "measured true" and "worth scoring with" are different findings and the quiz
+should only teach the first.
+
 ## Two habits worth keeping
 
 **Play it out before believing it.** Being right per-decision has now failed to predict winning
