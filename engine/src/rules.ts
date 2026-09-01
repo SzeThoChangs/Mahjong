@@ -37,7 +37,9 @@ export interface CombinationTai {
 
 export interface FlowerScoring { own_flower: number; flower_set: number; season_set: number; seven_flower: number; eight_flower: number; }
 export interface AnimalScoring { each: number; set: number; }
-export interface HonourScoring { dragon_pong: number; prevailing_wind: number; seat_wind: number; two_dragons_eye: number; three_winds_eye: number; }
+/** Eyes do not pay at this table, so there is nothing here for a dragon or wind PAIR. There were
+ *  two such fields, `two_dragons_eye` and `three_winds_eye`; the scorer never read either. */
+export interface HonourScoring { dragon_pong: number; prevailing_wind: number; seat_wind: number; }
 export interface EventScoring { replacement_win: number; last_tile: number; robbing_kong: number; }
 export interface KongScoring {
   /** immediate payouts, per opponent, at the reference minimum tai (1) */
@@ -65,7 +67,14 @@ export interface BaoRules {
   kong_feed: boolean;
   fresh_tile_threshold: number | null;
 }
-export interface DealerRules { retain_on_win: boolean; retain_on_draw: boolean; hands_per_wind: number; }
+export interface DealerRules {
+  retain_on_win: boolean;
+  retain_on_draw: boolean;
+  /** On a DRAWN hand the dealer normally keeps the deal - but a kong anywhere in that hand passes it
+   *  on anyway. Any seat's kong counts, not just the dealer's. */
+  kong_passes_draw: boolean;
+  hands_per_wind: number;
+}
 export interface SpecialHands {
   /** 对对胡 seven pairs - most houses do NOT allow it */
   seven_pairs: boolean;
@@ -166,13 +175,13 @@ export const DEFAULT_RULES: RulesConfig = {
   },
   flower_scoring: { own_flower: 1, flower_set: 1, season_set: 1, seven_flower: 10, eight_flower: 12 },
   animal_scoring: { each: 1, set: 1 },
-  honour_scoring: { dragon_pong: 1, prevailing_wind: 1, seat_wind: 1, two_dragons_eye: 1, three_winds_eye: 4 },
+  honour_scoring: { dragon_pong: 1, prevailing_wind: 1, seat_wind: 1 },
   event_scoring: { replacement_win: 1, last_tile: 1, robbing_kong: 1 },
   kong_scoring: { kong_1: 2, kong_3: 2, kong_4: 4, animal_set: 4, flower_set: 4, animal_pair: 2, flower_pair: 2, multiplier_by_minimum_tai: { 0: 0.5, 1: 1, 2: 2 }, initial_hand_double: true },
   self_draw_payment: 'all_double',
   discard_win_payment: 'discarder_double',
   bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, colour_set_feed: true, terminal_set_feed: true, kong_feed: true, fresh_tile_threshold: 4 },
-  dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
+  dealer_rules: { retain_on_win: true, retain_on_draw: true, kong_passes_draw: false, hands_per_wind: 4 },
   special_hands: { seven_pairs: false, all_green: false, men_qing: false, men_qing_tai: 1, eight_flower_instant_win: false, all_animals_instant_win: false },
   jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, discardable: false, claimable_when_discarded: false, usable_in_exposed_melds: false, stranded_bao_each: null },
   money: null,

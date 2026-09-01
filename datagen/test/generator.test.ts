@@ -40,6 +40,21 @@ describe('generator', () => {
       expect(cur.dl).toBe(retained ? prev.dl : (prev.dl + 1) % 4);
     }
   });
+  it('a kong in a drawn hand passes the deal on; a kongless draw leaves it', () => {
+    const rules = { ...DEFAULT_RULES, dealer_rules: { ...DEFAULT_RULES.dealer_rules, kong_passes_draw: true } };
+    let passed = 0, kept = 0;
+    for (let seed = 1; seed <= 12; seed++) {
+      const s = runSession({ sessionId: seed, seed, rules, botTypes: ['efficiency', 'pong', 'chow', 'random'], maxHands: 40 });
+      for (let i = 1; i < s.hands.length; i++) {
+        const prev = s.hands[i - 1]!, cur = s.hands[i]!;
+        if (prev.winner !== null) continue;                       // only drawn hands say anything here
+        if (prev.cnt.kong > 0) { passed++; expect(cur.dl).toBe((prev.dl + 1) % 4); }
+        else { kept++; expect(cur.dl).toBe(prev.dl); }
+      }
+    }
+    expect(passed).toBeGreaterThan(0);                            // the rule actually fired
+    expect(kept).toBeGreaterThan(0);                              // ...and did not fire on every draw
+  });
   it('controlled randomness picks the top choice ~70% of the time', () => {
     const rng = makeRng(1); let top = 0, N = 20000;
     for (let i = 0; i < N; i++) if (pickRanked(['a', 'b', 'c', 'd', 'e'], rng, DEFAULT_RANDOMNESS) === 'a') top++;

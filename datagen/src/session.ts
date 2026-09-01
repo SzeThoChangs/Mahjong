@@ -62,7 +62,11 @@ export function runSession(o: SessionOptions): { hands: HandRecord[]; scores: nu
     const seed = handSeed(o.seed, h);
     const { result, record } = playHand({ sessionId: o.sessionId, handIdx: h, seed, dealer, prevailingWind, botTypes: o.botTypes, scores }, o.rules, randomness, o.sink, o.recordDecisions ?? true);
     hands.push(record); scores = record.scores;
-    const retain = (result.winner === dealer && dr.retain_on_win) || (result.winner === null && dr.retain_on_draw);
+    // A drawn hand normally leaves the deal where it is, but a kong in it passes the deal on
+    // anyway - any seat's kong, not just the dealer's.
+    const konged = result.counts.kong > 0;
+    const retain = (result.winner === dealer && dr.retain_on_win)
+      || (result.winner === null && dr.retain_on_draw && !(dr.kong_passes_draw && konged));
     if (!retain) {
       dealer = (dealer + 1) % 4; dealerSeatsThisWind++;
       if (dealerSeatsThisWind > dr.hands_per_wind) { prevailingWind++; dealerSeatsThisWind = 1; }

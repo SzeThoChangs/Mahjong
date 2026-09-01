@@ -63,6 +63,13 @@
       "bite_animal_open": 2,
       "kong_concealed_each": 2,
       "kong_exposed_each": 2
+    },
+    "dealer_rules": {
+      "_note": "CONFIRMED 2026-09-01: dealer keeps the deal on a win and on a draw, four hands per wind - EXCEPT that a kong anywhere in a drawn hand passes the deal on anyway ('the wind moves down').",
+      "retain_on_win": true,
+      "retain_on_draw": true,
+      "kong_passes_draw": true,
+      "hands_per_wind": 4
     }
   },
   "confirmed_2026_09_01": {
@@ -72,13 +79,12 @@
     "kong_feed_bao": "feeding a kong that wins on its replacement makes you bao, and the hand scores +1 tai for the replacement win (event_scoring.replacement_win = 1, already matches).",
     "three_wildcards": "worth nothing. Only all four score, at 5 tai. Two and three add no tai. Engine already matches - score.ts only lifts the hand at jokers >= 4.",
     "flower_animal_honour_scoring": "ALL CONFIRMED as the engine already had them. Own flower 1 and own season 1 (hold both and that is 2 tai); all four flowers +1, all four seasons +1; each animal 1, all four animals +1; dragon pong 1, seat wind 1, round wind 1 (a pong of the wind that is both scores both, so 2). Seven bonus tiles is 10 tai flat and replaces the individual flower tai; eight is an instant win.",
-    "combination_tai_top5": "The five hand types that decide 99.5% of wins, all CONFIRMED as the engine already had them: ping_hu 4, chou_ping_hu 1, peng_peng_hu 2, ban_se 2, and chicken scoring nothing from its pattern. peng_peng_hu is no longer an inference. The engine separates ping_hu from chou_ping_hu by FLOWERS - an all-chow hand holding no flower or animal is ping_hu at 4, and any bonus tile drops it to chou_ping_hu at 1."
+    "combination_tai_top5": "The five hand types that decide 99.5% of wins, all CONFIRMED as the engine already had them: ping_hu 4, chou_ping_hu 1, peng_peng_hu 2, ban_se 2, and chicken scoring nothing from its pattern. peng_peng_hu is no longer an inference. The engine separates ping_hu from chou_ping_hu by FLOWERS - an all-chow hand holding no flower or animal is ping_hu at 4, and any bonus tile drops it to chou_ping_hu at 1.",
+    "unplayable_tiles": "15 dead tiles at the back of the wall. Confirmed as the engine had it.",
+    "eyes_do_not_pay": "A pair scores nothing, ever - so honour_scoring.two_dragons_eye and three_winds_eye are DELETED rather than wired. Related rule, already implemented in score.ts: a wind that would score tai for you (your seat wind or the round wind), or any dragon, may not be used as the eye of a chow hand."
   },
   "unconfirmed": {
-    "unplayable_tiles": "15 is the 67% default - confirm",
-    "combination_tai_rest": "The top 5 are confirmed above and cover 99.5% of wins. The remaining ~20 values are still engine defaults, but every one of them occurs in under 0.3% of hands: qing_yi_se 4, xiao_san_yuan 3, and a long list of 5-tai limit hands. Low priority.",
-    "dead_config_two_dragons_eye_three_winds_eye": "honour_scoring.two_dragons_eye (1) and three_winds_eye (4) are declared in rules.ts and NEVER READ by the scorer. Setting them does nothing. xiao_san_yuan and xiao_si_xi appear to cover the same hands. Delete them or wire them - do not leave them looking live.",
-    "dealer_rules": "never asked: dealer keeps the deal on a win (true), keeps it on a draw (true), 4 hands per wind."
+    "combination_tai_rest": "The top 5 are confirmed above and cover 99.5% of wins. The remaining ~20 values are still engine defaults, but every one of them occurs in under 0.3% of hands: qing_yi_se 4, xiao_san_yuan 3, and a long list of 5-tai limit hands. Low priority."
   },
   "confirmed_2026_08_29": {
     "joker_assumptions": "a wildcard cannot be thrown at all (discardable false), so claimable_when_discarded never arises; jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value"
