@@ -13,6 +13,13 @@
       "fan_limit_feed": true,
       "dragon_set_feed": true,
       "wind_set_feed": true,
+      "_colour_note": "CONFIRMED 2026-09-01: it is the THIRD meld that is bao - two melds of one suit down, you throw that suit and they claim it, you kena bao. Attaches at the feed, so it holds even if they then self-draw. If somebody else later feeds a bao tile, the bao transfers to them.",
+      "colour_set_feed": true,
+      "_terminal_note": "CONFIRMED 2026-09-01: all-pong counts only when the pongs are honours, dragons and 1s/9s - a plain all-pong of middle numbers is not bao. Third such meld is the bao, same as colour.",
+      "terminal_set_feed": true,
+      "_wind_note": "CONFIRMED 2026-09-01: winds stay at the FOURTH pong, unlike dragons/colour/terminals which are the third.",
+      "_kong_note": "CONFIRMED 2026-09-01: they kong your discard, draw the replacement and win on it - you are bao. Does not persist: once they discard, the replacement is spent and the liability with it.",
+      "kong_feed": true,
       "fresh_tile_threshold": 8
     },
     "special_hands": {
@@ -29,7 +36,9 @@
       "all_four_tai": 5,
       "discardable": false,
       "claimable_when_discarded": false,
-      "usable_in_exposed_melds": false
+      "usable_in_exposed_melds": false,
+      "_stranded_note": "CONFIRMED 2026-09-01: four melds down and nothing but wildcards in hand - cannot win (0 tai, under the minimum) and cannot throw. The player kena bao and pays every other player the maximum, $42 each.",
+      "stranded_bao_each": 42
     },
     "money": {
       "_note": "the \"3/6, shooter pay, ZM +$2\" table, SGD. Mode = SHOOTER PAYS: the discarder alone pays the whole shoot_total (5 tai = $40, which is 20+10+10 of shares). The \"everyone pays\" alternative splits it 20/10/10 across the three losers.",
@@ -56,9 +65,18 @@
       "kong_exposed_each": 2
     }
   },
+  "confirmed_2026_09_01": {
+    "self_draw_bonus_fan": "NO. There is no +1 tai for a self-draw. The 1-tai minimum exemption is the whole of it, and event_scoring has no self-draw entry, so the engine already matches.",
+    "robbing_kong": "+1 tai. engine event_scoring.robbing_kong = 1 already matches.",
+    "wind_bao": "the FOURTH wind pong, not the third. Everything else (dragons, colour, terminals) is the third.",
+    "kong_feed_bao": "feeding a kong that wins on its replacement makes you bao, and the hand scores +1 tai for the replacement win (event_scoring.replacement_win = 1, already matches).",
+    "three_wildcards": "worth nothing. Only all four score, at 5 tai. Two and three add no tai. Engine already matches - score.ts only lifts the hand at jokers >= 4."
+  },
   "unconfirmed": {
     "unplayable_tiles": "15 is the 67% default - confirm",
-    "self_draw_bonus_fan": "some tables add +1 Fan for a self-draw - confirm whether yours does on top of the 1-Fan exemption",
+    "combination_tai": "THE WHOLE TAI TABLE is engine defaults and has never been confirmed - 25 values in rules.ts DEFAULT_RULES.combination_tai. It prices every payout in the dataset. Ask before trusting any money figure.",
+    "dealer_rules": "never asked: dealer keeps the deal on a win (true), keeps it on a draw (true), 4 hands per wind.",
+    "flower_animal_honour_scoring": "never asked: own flower 1, flower set 1, season set 1, seven flowers 10, eight 12; each animal 1, set 1; dragon pong 1, round wind 1, seat wind 1, two dragons as eye 1, three winds as eye 4.",
     "joker_assumptions": "CONFIRMED 2026-08-29: a wildcard cannot be thrown at all (discardable false), so claimable_when_discarded never arises; jokers cannot be used in exposed pongs/chows/kongs; jokers score as the tiles they stand for; all-joker groups take no honour value",
     "peng_peng_hu": "\u78b0\u78b0\u80e1 (all pongs) set to 2 fan - inferred from your \u56db\u6697\u523b answer; confirm"
   }

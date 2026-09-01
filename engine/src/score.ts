@@ -251,6 +251,43 @@ function finish(items: FanItem[], combination: string): ScoreResult {
 function invalid(reason: string): ScoreResult { return { fan: 0, items: [], combination: 'none', valid: false, reason }; }
 
 /** Fan currently held from bonus tiles + exposed melds (no win needed). Used for "is the fallback armed". */
+/**
+ * What the TABLE can see this hand is worth - the tai already locked in by the exposed melds,
+ * as a player sitting opposite would count it. Different from `fanInHand`, which counts only
+ * dragon and wind pongs and is blind to shape: four terminal pongs read as 0 there, though
+ * everyone at the table can see what is coming.
+ *
+ * Used for the fed-the-limit bao, which asks whether your tile took their VISIBLE hand to the
+ * limit. Only shapes the exposed melds already settle are counted, and only from three melds on,
+ * because with two down the hand can still become anything:
+ *
+ *   - all pongs of honours and terminals (混老頭) - counted per the house rule that a plain
+ *     all-pong of middle numbers does NOT make a feeder liable, only this one
+ *   - every meld in one suit (清一色), or one suit plus honours (半色)
+ *
+ * Deliberately CONSERVATIVE, in two ways, because this number decides whether somebody owes the
+ * whole bill and a rule that fires too readily is worse than one that fires too late:
+ *
+ *   - the shape bonuses do not stack. A 混老頭 of one suit's terminals plus dragons is also,
+ *     technically, half-colour, and adding both reads 8 against a finished hand worth 6. The
+ *     larger of the two is taken and the other dropped.
+ *   - a plain all-pong scores nothing here. Three pongs down can still take a chow for the
+ *     fourth set, so 碰碰胡 is not settled, and the house rule says a plain all-pong of middle
+ *     numbers carries no liability anyway.
+ *
+ * It prices what is on the table, never a hand's potential.
+ */
+export function visibleTai(ctx: Pick<WinContext, 'melds' | 'bonus' | 'seat' | 'prevailingWind'>, rules: RulesConfig = DEFAULT_RULES): number {
+  const t = fanTable(rules), F = (k: string) => t[k] ?? 0;
+  let fan = fanInHand(ctx);
+  if (ctx.melds.length < 3) return fan;
+  const heads = ctx.melds.map((m) => m.tiles[0]!);
+  const suits = new Set(heads.filter(isSuited).map(suitOf));
+  const terminals = ctx.melds.every((m) => m.type !== 'chow') && heads.every(isTerminalOrHonour) ? F('hun_lao_tou') : 0;
+  const colour = suits.size === 1 ? (heads.every(isSuited) ? F('qing_yi_se') : F('ban_se')) : 0;
+  return fan + Math.max(terminals, colour);
+}
+
 export function fanInHand(ctx: Pick<WinContext, 'melds' | 'bonus' | 'seat' | 'prevailingWind'>): number {
   let fan = 0;
   for (const i of bonusItems({ ...ctx, concealed: [], winningTile: 0, selfDraw: false })) fan += i.fan;

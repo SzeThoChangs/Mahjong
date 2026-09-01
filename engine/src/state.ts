@@ -11,7 +11,7 @@
  */
 import { Wall } from './wall.js';
 import {
-  animalPartner, bonusSeat, isAnimal, isBonus, isFlower, isSeason, isSuited, kindOf, rankOf, suitOf,
+  animalPartner, bonusSeat, isAnimal, isBonus, isFlower, isSeason, isSuited, isTerminalOrHonour, kindOf, rankOf, suitOf,
   type TileInstance, type TileKind,
 } from './tiles.js';
 import { scoreHand, type ScoreResult } from './score.js';
@@ -19,7 +19,7 @@ import { immediatePayout, meetsMinimum, winPayments, winPaymentsMoney, type Tabl
 import { DEFAULT_RULES, type RulesConfig } from './rules.js';
 import { couldBeComplete, shanten } from './shanten.js';
 import { countsAndJokers, isHonour, isDragon, isWind, isJoker } from './tiles.js';
-import { fanInHand } from './score.js';
+import { visibleTai } from './score.js';
 import { emptyLedger, type Ledger } from './game.js';
 import type {
   Bot, ClaimKind, ClaimOption, DecisionKind, DiscardEvent, GameOptions, GameResult, GroundTruth, InstMeld, LegalAction, PlayerState, PlayerView, SelfAction,
@@ -39,6 +39,8 @@ export interface Snapshot {
   pendingRob: { tile: TileInstance; from: number; kong: 'kong1' | 'kong4'; meldIndex: number; feeEach: number } | null;
   /** Pay-All liability: seat -> the seat that must pay for everyone if this seat wins (null = none) */
   liable: (number | null)[];
+  /** seat -> who fed the kong this seat is drawing a replacement for, while that draw is still live */
+  kongFedBy: (number | null)[];
   paidEvents: string[][];
   counts: GameResult['counts'];
   claimQueue: { seat: number; options: ClaimOption[] }[];
@@ -51,6 +53,7 @@ export class GameState {
   dealer: number; prevailingWind: number; turn: number; phase: Phase = 'draw'; playerTurns = 0;
   drawnInfo: Snapshot['drawnInfo'] = null; pendingDiscard: Snapshot['pendingDiscard'] = null;
   pendingRob: Snapshot['pendingRob'] = null; liable: (number | null)[] = [null, null, null, null];
+  kongFedBy: (number | null)[] = [null, null, null, null];
   paidEvents: Set<string>[]; counts: GameResult['counts'] = { chow: 0, pong: 0, kong: 0, flowers: 0, animals: 0, decisions: 0, illegal: 0 };
   log: string[] = []; result: GameResult | null = null;
   ledger: Ledger[] = [0, 1, 2, 3].map(emptyLedger);
@@ -88,6 +91,7 @@ export class GameState {
     g.discardLog = snap.discardLog.map((e) => ({ ...e })); g.turn = snap.turn; g.phase = snap.phase; g.playerTurns = snap.playerTurns;
     g.drawnInfo = snap.drawnInfo ? { ...snap.drawnInfo } : null; g.pendingDiscard = snap.pendingDiscard ? { ...snap.pendingDiscard } : null;
     g.pendingRob = snap.pendingRob ? { ...snap.pendingRob } : null; g.liable = [...snap.liable];
+    g.kongFedBy = [...(snap.kongFedBy ?? [null, null, null, null])];
     g.paidEvents = snap.paidEvents.map((e) => new Set(e)); g.counts = { ...snap.counts };
     // melds inside claim options must reference the rebuilt players' meld objects where relevant (kong1 uses melds; claims don't), so a plain copy is fine
     g.claimQueue = snap.claimQueue.map((q) => ({ seat: q.seat, options: q.options.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })) }));
@@ -101,7 +105,7 @@ export class GameState {
       wall: this.wall.snapshot(), discardLog: this.discardLog.map((e) => ({ ...e })),
       dealer: this.dealer, prevailingWind: this.prevailingWind, turn: this.turn, phase: this.phase, playerTurns: this.playerTurns,
       drawnInfo: this.drawnInfo ? { ...this.drawnInfo } : null, pendingDiscard: this.pendingDiscard ? { ...this.pendingDiscard } : null,
-      pendingRob: this.pendingRob ? { ...this.pendingRob } : null, liable: [...this.liable],
+      pendingRob: this.pendingRob ? { ...this.pendingRob } : null, liable: [...this.liable], kongFedBy: [...this.kongFedBy],
       paidEvents: this.paidEvents.map((e) => [...e]), counts: { ...this.counts },
       claimQueue: this.claimQueue.map((q) => ({ seat: q.seat, options: q.options.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })) })),
       wanted: this.wanted.map((o) => ({ ...o, tiles: o.tiles ? [...o.tiles] : undefined })),
@@ -218,18 +222,27 @@ export class GameState {
   private finish(winner: number | null, selfDraw: boolean, discarder: number | null, sc: ScoreResult | null, robbed = false): GameResult {
     if (winner !== null && sc) {
       let liable: number | null = this.rules.bao.enabled ? this.liable[winner]! : null;
-      if (this.rules.bao.enabled && discarder !== null && liable === null && !robbed) {   // fed-colour and fresh-tile bao apply to genuine discards only
-        const b = this.rules.bao; const w = this.players[winner]!;
-        const exposed = w.melds.length;
-        const suits = new Set(w.melds.flatMap((m) => m.tiles).filter(isSuited).map(suitOf));
-        const allHon = w.melds.every((m) => isHonour(m.tiles[0]!)), oneSuit = suits.size === 1 && w.melds.every((m) => isHonour(m.tiles[0]!) || suitOf(m.tiles[0]!) === [...suits][0]);
-        if (exposed >= 3 && (allHon || (oneSuit && suits.size === 1)) && ['half_color', 'full_color', 'all_terminal'].includes(sc.combination)) liable = discarder;   // full/half-colour with 3-4 exposed sets fed
-        if (b.fresh_tile_threshold !== null && this.wall.remaining < b.fresh_tile_threshold && liable === null) {
-          const dk = kindOf(this.discardLog[this.discardLog.length - 1]!.tile);
+      const b = this.rules.bao;
+      if (b.enabled && discarder !== null && !robbed) {   // these apply to genuine discards only
+        const w = this.players[winner]!;
+        const dk = kindOf(this.discardLog[this.discardLog.length - 1]!.tile);
+        // Winning on a bao tile transfers the liability exactly as claiming one does - the house
+        // rule is "take it or win on it". So this OVERRIDES an earlier feeder rather than deferring
+        // to them: shoot the tile they win on and you take the bao off whoever fed the hand.
+        if (this.baoTile(w, dk)) liable = discarder;
+        else if (liable === null && b.fresh_tile_threshold !== null && this.wall.remaining < b.fresh_tile_threshold) {
           const seenBefore = this.discardLog.slice(0, -1).some((e) => kindOf(e.tile) === dk);
           if (!seenBefore) liable = discarder;
         }
+      } else if (b.enabled && discarder === null && b.kong_feed && this.kongFedBy[winner] !== null
+                 && sc.items.some((i) => i.id === 'replacement_win')) {
+        liable = this.kongFedBy[winner] ?? null;   // 杠上开花 off a kong you fed
       }
+      // `lastLiable` is what the result, the recorder and every dataset consumer read to find out
+      // who carried the hand. It was declared and reported but never assigned, so it has always
+      // come back null - every bao that ever fired was invisible downstream. Recorded here, at the
+      // point the payment is actually decided, and only when it changed who pays.
+      this.lastLiable = liable !== null && liable !== winner ? liable : null;
       const asSelfDraw = discarder === null || sc.combination === 'shi_san_yao';
       const pays = this.rules.money
         ? winPaymentsMoney(sc.fan, winner, asSelfDraw ? null : discarder, this.rules.money, liable, this.rules)
@@ -301,10 +314,24 @@ export class GameState {
         if (sc.valid && meetsMinimum(sc.fan, false, this.cfg)) os.push({ kind: 'win', seat: s, score: sc });
         else if (sc.valid) this.blockedWins[s]!++;                 // could have won on it, but under the minimum
       }
+      // A call you cannot discard out of is not a call, it is a dead end: you owe the table a tile
+      // and every one you hold is a wildcard. Only the FOURTH meld can do this - with three or fewer
+      // down, stranding would take more than four wildcards and the table has four - which is why
+      // all 195 of these in a 150,000-hand run were a fourth pong or chow.
+      //
+      // The engine used to offer them, the hand became unplayable, and `throwable` broke the
+      // no-wildcard-discard rule to let the turn continue. Refusing the call is the honest fix: the
+      // player keeps three melds and a hand they can still play out. A kong is exempt because it
+      // draws a replacement before any discard is owed.
+      const strands = (used: TileInstance[]) => {
+        if (this.rules.jokers.discardable) return false;
+        const rest = q.hand.filter((t) => !used.includes(t));
+        return rest.length > 0 && rest.every((t) => isJoker(kindOf(t)));
+      };
       const same = q.hand.filter((t) => kindOf(t) === dk);
       if (same.length >= 3) os.push({ kind: 'kong3', seat: s, tiles: same.slice(0, 3) });
-      if (same.length >= 2) os.push({ kind: 'pong', seat: s, tiles: same.slice(0, 2) });
-      if (off === 1) for (const pair of this.legalChows(q, dk)) os.push({ kind: 'chow', seat: s, tiles: pair });
+      if (same.length >= 2 && !strands(same.slice(0, 2))) os.push({ kind: 'pong', seat: s, tiles: same.slice(0, 2) });
+      if (off === 1) for (const pair of this.legalChows(q, dk)) if (!strands(pair)) os.push({ kind: 'chow', seat: s, tiles: pair });
       if (os.length) this.claimQueue.push({ seat: s, options: os });
     }
   }
@@ -337,6 +364,8 @@ export class GameState {
   /** Run engine-driven phases until a bot decision is needed (or the hand ends). */
   advance(): void {
     for (let guard = 0; guard < 64 && !this.finished; guard++) {
+      // Before anyone is asked for a tile: can they actually produce one?
+      if (this.phase === 'discard' && this.strandedBao()) return;
       if (this.phase === 'draw' || this.phase === 'replacement') {
         const p = this.players[this.turn]!;
         const raw = this.phase === 'draw' ? this.wall.draw() : this.wall.drawReplacement();
@@ -351,7 +380,7 @@ export class GameState {
         const fj = this.fourJokerWin(p); if (fj) { this.finish(this.turn, true, null, fj); return; }
         this.selfOptions = this.computeSelfOptions();
         if (this.selfOptions.length) { this.phase = 'self'; return; }
-        this.phase = 'discard'; return;
+        this.phase = 'discard'; continue;      // continue, not return: the stranded check is at the top
       }
       if (this.phase === 'claim' && this.claimQueue.length === 0) { this.resolveClaims(); continue; }
       return; // self / discard / claim-with-queue: a decision is pending
@@ -400,17 +429,53 @@ export class GameState {
     if (feeder !== null) { this.payAllOpponents(to, each); return each; }
     this.payAllOpponents(to, each); return each;
   }
-  /** Pay-All: after seat `q` claims an honour set from `from`, does `from` become liable for q's eventual win? */
+  /**
+   * Pay-All: after seat `q` claims a set from `from`, does `from` become liable for q's eventual win?
+   *
+   * Every rule here attaches at the FEED, not at the winning discard, which is what makes it stick:
+   * `finish` reads `this.liable[winner]` whether or not anybody shot the last tile, so the feeder
+   * still pays when the hand is self-drawn. That is the whole point - the older colour rule in
+   * `finish` looked only at the winning throw, so taking your tile and then self-drawing let you off.
+   *
+   * Liability is a single slot per player and every rule ASSIGNS it, so a later feed replaces an
+   * earlier one: throw a bao tile into a hand somebody else already fed and you take it over from
+   * them. Deliberate - the table transfers bao rather than splitting it.
+   *
+   * The threshold is the THIRD meld throughout (four for winds, there being only four of them):
+   * two of a kind is a plan, three is a hand you can see coming.
+   */
   private noteLiability(q: PlayerState, from: number, dk: TileKind) {
-    const b = this.rules.bao; if (!b.enabled) return;
+    if (this.rules.bao.enabled && this.baoTile(q, dk)) this.liable[q.seat] = from;
+  }
+  /**
+   * Is `q`'s hand one the table can see coming, and is `dk` the tile that carries it?
+   *
+   * Read against the melds as they stand, which on the claim path already INCLUDE the tile just
+   * taken - so "the third meld is the bao" means `melds.length >= 3` here. On the win path the
+   * melds are whatever was showing and `dk` is the winning tile.
+   */
+  private baoTile(q: PlayerState, dk: TileKind): boolean {
+    const b = this.rules.bao;
+    const heads = q.melds.map((m) => m.tiles[0]!);
     const honourSets = q.melds.filter((m) => m.type !== 'chow' && isHonour(m.tiles[0]!));
     const dragons = honourSets.filter((m) => isDragon(m.tiles[0]!)).length, winds = honourSets.filter((m) => isWind(m.tiles[0]!)).length;
-    if (isDragon(dk) && b.dragon_set_feed && dragons === 3) { this.liable[q.seat] = from; return; }
-    if (isWind(dk) && b.wind_set_feed && winds === 4) { this.liable[q.seat] = from; return; }
-    if (b.fan_limit_feed && isHonour(dk)) {
-      const exposedFan = fanInHand({ melds: q.melds, bonus: q.bonus.map(kindOf), seat: this.role(q.seat), prevailingWind: this.prevailingWind });
-      if (exposedFan >= this.cfg.fan_limit) this.liable[q.seat] = from;        // each player carries at most one such infraction; later replaces earlier
+
+    if (isDragon(dk) && b.dragon_set_feed && dragons >= 3) return true;
+    if (isWind(dk) && b.wind_set_feed && winds >= 4) return true;
+    // 混老頭: all pongs, every one an honour, a dragon or a 1/9. A plain all-pong of middle
+    // numbers is not this hand and carries no liability.
+    if (b.terminal_set_feed && isTerminalOrHonour(dk) && q.melds.length >= 3
+        && q.melds.every((m) => m.type !== 'chow') && heads.every(isTerminalOrHonour)) return true;
+    // colour: three melds, all the same suit
+    if (b.colour_set_feed && isSuited(dk) && q.melds.length >= 3 && heads.every(isSuited)
+        && new Set(heads.map(suitOf)).size === 1) return true;
+    // fed the limit: the tile took what the table can SEE of their hand to the fan limit. Only
+    // honours and terminals can do it - those are the tiles that carry tai on their own.
+    if (b.fan_limit_feed && isTerminalOrHonour(dk)) {
+      const seen = visibleTai({ melds: q.melds, bonus: q.bonus.map(kindOf), seat: this.role(q.seat), prevailingWind: this.prevailingWind }, this.rules);
+      if (seen >= this.cfg.fan_limit) return true;
     }
+    return false;
   }
   /** After a kong: can anyone win on the kong tile? (kong4 only robbable for 13 Wonders.) If so, open a claim phase; else take the replacement draw. */
   private robQueue(tile: TileInstance, kong: 'kong1' | 'kong4', from: number): { seat: number; options: ClaimOption[] }[] {
@@ -433,12 +498,30 @@ export class GameState {
     if (this.claimQueue.length) { this.pendingRob = { tile, from: this.turn, kong, meldIndex, feeEach }; this.phase = 'claim'; }
     else this.phase = 'replacement';
   }
-  /** The tiles this seat may legally throw. A wildcard is not one of them unless the table says so;
-   *  a hand of nothing but wildcards still has to be able to move. */
+  /** The tiles this seat may legally throw. A wildcard is not one of them unless the table says so.
+   *  This can come back EMPTY - a hand of nothing but wildcards has no legal throw, and the answer
+   *  to that is `strandedBao`, not breaking the rule to keep the turn moving. */
   private throwable(p: PlayerState): TileInstance[] {
     if (this.rules.jokers.discardable) return p.hand;
-    const std = p.hand.filter((t) => !isJoker(kindOf(t)));
-    return std.length ? std : p.hand;
+    return p.hand.filter((t) => !isJoker(kindOf(t)));
+  }
+  /**
+   * The seat to play owes a discard and holds nothing but wildcards. It cannot win either - two
+   * wildcards behind four melds is a complete hand, but at 0 tai the minimum refuses it - so the
+   * hand is over. The player kena bao: pays `stranded_bao_each` to each of the other three, and
+   * nobody wins.
+   *
+   * Returns true when it fired, so `advance` stops rather than asking for a discard that has no
+   * legal answer.
+   */
+  private strandedBao(): boolean {
+    const p = this.players[this.turn]!;
+    if (this.throwable(p).length) return false;
+    const each = this.rules.jokers.stranded_bao_each;
+    if (each) for (let s = 0; s < 4; s++) if (s !== this.turn) this.pay(this.turn, s, each);
+    this.L(`seat${this.turn} stranded on wildcards - bao ${each ?? 0} each`);
+    this.finish(null, false, null, null);
+    return true;
   }
   private applyDiscard(action: LegalAction) {
     if (action.a !== 'discard') throw new Error('discard expected');
@@ -452,6 +535,7 @@ export class GameState {
     if (!ok.includes(action.tile)) { this.counts.illegal++; throw new Error(`seat ${this.turn} may not discard a wildcard at this table`); }
     this.record('discard', this.turn, v, ok.map((t): LegalAction => ({ a: 'discard', tile: t, kind: kindOf(t) })), action, this.drawnInfo?.tile ?? null);
     this.consecutiveKongs = 0;                     // a discard breaks the kong chain
+    this.kongFedBy[this.turn] = null;              // ...and spends the fed kong's replacement draw
     p.hand.splice(idx, 1); p.discards.push(action.tile);
     if (this.readyTurn[this.turn] === -1 && shanten(p.hand.map(kindOf), p.melds.length) <= 0) this.readyTurn[this.turn] = this.playerTurns;
     const dk = kindOf(action.tile);
@@ -521,7 +605,7 @@ export class GameState {
     this.noteLiability(q, from, kindOf(d));
     this.playerTurns++;
     this.turn = taken.seat;
-    if (taken.kind === 'kong3') { this.kongPayment(this.turn, from, 'kong_3'); this.consecutiveKongs++; this.phase = 'replacement'; }
+    if (taken.kind === 'kong3') { this.kongFedBy[this.turn] = from; this.kongPayment(this.turn, from, 'kong_3'); this.consecutiveKongs++; this.phase = 'replacement'; }
     else { this.phase = 'discard'; this.drawnInfo = null; }
   }
 

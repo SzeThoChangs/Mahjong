@@ -47,7 +47,24 @@ export interface KongScoring {
   /** double again if obtained from the initial 13 tiles */
   initial_hand_double: boolean;
 }
-export interface BaoRules { enabled: boolean; fan_limit_feed: boolean; dragon_set_feed: boolean; wind_set_feed: boolean; fresh_tile_threshold: number | null; }
+export interface BaoRules {
+  enabled: boolean;
+  fan_limit_feed: boolean;
+  dragon_set_feed: boolean;
+  wind_set_feed: boolean;
+  /** feeding the THIRD meld to a player whose melds are all one suit. Two of a colour is a plan;
+   *  three is a hand, and the table holds whoever handed over the third. Liability attaches at the
+   *  feed, so it survives a self-draw - which is the whole point of it. */
+  colour_set_feed: boolean;
+  /** feeding the THIRD pong to a player whose melds are all pongs of honours, dragons and 1s/9s
+   *  (混老頭). A plain all-pong of middle numbers does NOT count - only this shape. */
+  terminal_set_feed: boolean;
+  /** they kong YOUR discard, draw the replacement, and win on it (杠上开花). You handed them the
+   *  draw, so you carry the hand. Unlike the set-feed rules this does not persist: once they
+   *  discard, the replacement is spent and so is the liability. */
+  kong_feed: boolean;
+  fresh_tile_threshold: number | null;
+}
 export interface DealerRules { retain_on_win: boolean; retain_on_draw: boolean; hands_per_wind: number; }
 export interface SpecialHands {
   /** 对对胡 seven pairs - most houses do NOT allow it */
@@ -94,6 +111,18 @@ export interface JokerRules {
   claimable_when_discarded: boolean;
   /** may jokers be used inside exposed pongs / chows / kongs? */
   usable_in_exposed_melds: boolean;
+  /**
+   * What each opponent collects when a player is STRANDED: they owe the table a discard and every
+   * tile they hold is a wildcard, which they may not throw. The player kena bao - bears it - and
+   * pays this to each of the other three; the hand ends with no winner.
+   *
+   * Only reachable with four melds down, and only by drawing into it: a hand of two wildcards
+   * behind four melds is complete but usually worth 0 tai, so it can be neither declared nor
+   * discarded from. null means the table has no such rule and the hand simply ends as a draw.
+   * Never let this be "throw the wildcard" - that is not a legal tile at a table where
+   * `discardable` is false, whatever the position.
+   */
+  stranded_bao_each: number | null;
 }
 
 export interface RulesConfig {
@@ -142,10 +171,10 @@ export const DEFAULT_RULES: RulesConfig = {
   kong_scoring: { kong_1: 2, kong_3: 2, kong_4: 4, animal_set: 4, flower_set: 4, animal_pair: 2, flower_pair: 2, multiplier_by_minimum_tai: { 0: 0.5, 1: 1, 2: 2 }, initial_hand_double: true },
   self_draw_payment: 'all_double',
   discard_win_payment: 'discarder_double',
-  bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, fresh_tile_threshold: 4 },
+  bao: { enabled: false, fan_limit_feed: true, dragon_set_feed: true, wind_set_feed: true, colour_set_feed: true, terminal_set_feed: true, kong_feed: true, fresh_tile_threshold: 4 },
   dealer_rules: { retain_on_win: true, retain_on_draw: true, hands_per_wind: 4 },
   special_hands: { seven_pairs: false, all_green: false, men_qing: false, men_qing_tai: 1, eight_flower_instant_win: false, all_animals_instant_win: false },
-  jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, discardable: false, claimable_when_discarded: false, usable_in_exposed_melds: false },
+  jokers: { count: 0, dealer_all_four_instant_win: true, all_four_tai: 5, discardable: false, claimable_when_discarded: false, usable_in_exposed_melds: false, stranded_bao_each: null },
   money: null,
 };
 
