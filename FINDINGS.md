@@ -184,6 +184,63 @@ early discards so much as most of the separable early discards there are, and a 
 second pack off the same run, will repeat it before it repeats the others. More early questions need
 more hands or deeper play-outs, not a different selection rule.
 
+### The book's benchmark was never our game (2026-09-01)
+
+The player asked whether the book's 23% win / 14% draws / 48 turns includes wildcards. It does not.
+There is not one mention of a joker or wildcard anywhere in `knowledge/` - the source states only
+"Singapore ... Minimum Fan 1 and Fan Limit 5" and adjusts for minimum fan, never for wildcards. Our
+table plays with four. Every time that benchmark was quoted as a sanity check, it was checking a
+different game.
+
+It was also giving false comfort. run-money3 read 21.0% / 15.9% / 49.0 against 23 / 14 / 48 and
+looked close - but wildcards should push wins UP and draws DOWN, and ours were lower and higher.
+Two errors pointing opposite ways, landing near the book by coincidence.
+
+Separating them. The wildcards-on arm runs the production path - `runSession`, six personalities
+drawn per session, 70/15/10/5 randomness, exactly as `worker.ts` does - so it can be checked against
+the dataset before anything is read off it. 20,000 hands for the production arms, 5,000 for the rest:
+
+```
+players             wildcards     win     draw    turns
+production bots     none          9.3%   62.9%    67.9
+production bots        4         21.2%   15.2%    48.6   <- run-money4 is 21.0 / 15.8 / 48.9
+shanten+random      none         18.6%   25.6%    56.2
+shanten+random         4         23.8%    4.7%    42.4
+book coach          none         20.1%   19.7%    55.0
+book coach             4         24.8%    0.9%    40.9
+book (no wildcards)               23.0%   14.0%    48.0
+```
+
+**The harness reproduces the dataset**, so the rest of the grid is trustworthy.
+
+**Wildcards are the larger effect by far.** Holding the players fixed, four of them take the
+production bots from 62.9% drawn hands to 15.2%, and the coach from 19.7% to 0.9%. They are what
+makes the game finish.
+
+**On the book's own game, player strength walks the numbers at the book, monotonically on all
+three.** This is the validation `PLAN.md` set out for the coach and never ran:
+
+```
+                 win     draw   turns
+production       9.3%   62.9%    67.9
+shanten+random  18.6%   25.6%    56.2
+book coach      20.1%   19.7%    55.0
+the book        23.0%   14.0%    48.0
+```
+
+The coach is not merely better than the baselines, it is better in the direction of real play. After
+six measured failures to improve on it, that is the first independent evidence the coach is sound
+rather than just locally unbeatable.
+
+**A limitation of the dataset falls out of this.** run-money4's 15.8% drawn hands is a property of
+weak bots, not of the table - the same rules with competent play draw 0.9%. The player said the draw
+rate looked too high before any of this was measured, and they were right. So the recorded positions
+over-represent hands that drift toward an exhausted wall, and under-represent the sharp end where a
+hand is actually going somewhere. The EVs on each position are still measured correctly; it is the
+MIX of positions that is skewed. Worth knowing before treating the quiz as representative of a real
+table, and worth fixing by generating with stronger bots if the app ever depends on it.
+
+
 ### A lower-variance target does not work either (measured 2026-08-26)
 
 Route 1 below was to attack the 9.8-chip outcome SD by scoring the same play-outs with a
