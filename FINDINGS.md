@@ -241,6 +241,54 @@ MIX of positions that is skewed. Worth knowing before treating the quiz as repre
 table, and worth fixing by generating with stronger bots if the app ever depends on it.
 
 
+### The first idea from the tactics book, and the first thing to beat the coach (2026-09-01)
+
+The coach had never used a line of the 136-tip book. 77 of its tips were read, translated to
+Singapore rules and written into `knowledge/playbook.json` in an earlier session, and NOTHING in any
+package reads that file - the coach runs entirely on the other source, the Data Analytic study.
+Reading the tips against what the coach computes turned up three things it cannot see at all:
+winning tiles that cannot legally win, what an opponent MELDED rather than how many times, and
+anything the discard pool says beyond tile class and freshness.
+
+The first of those is `narrow_can_beat_wide`: at a table with a minimum, a wider wait can be worse,
+because winning tiles that leave you under the minimum are dead. `ukeire` counts tiles that complete
+the hand and never looks at tai, so an 8-tile wait that cannot legally win outscored a 4-tile wait
+that can. This is one of the few tips in a Riichi book that exists BECAUSE of a table minimum rather
+than in spite of one.
+
+`legalWait` in `rank.ts` replaces the acceptance count once the hand is ready: a tile counts fully
+if it reaches the minimum on a discard, 0.47 if only self-drawn, zero if it cannot win. It reuses
+the existing multiplier so nothing was tuned to flatter it, and 0.47 is measured (59,392 of 126,273
+wins in run-money4 were self-drawn) rather than chosen. Each candidate is scored both ways because
+the all-chow rules reject some hands on a discard that are fine self-drawn.
+
+Harness self-check first: the coach against itself returns +0.000 +/- 0.000 over 1,600 paired deals.
+Then, `tools/headtohead.ts`, seven separate wall seeds:
+
+```
+  first batch    3 seeds, 18,000 deals   +0.072 +/- 0.030   t = 2.44
+  confirmation   4 seeds, 32,000 deals   +0.035 +/- 0.022   t = 1.60
+  ALL SEVEN               50,000 deals   +0.048 +/- 0.018   t = 2.74
+  seat-runs: 20 positive, 7 negative, 1 exactly zero (of 28)
+```
+
+**The effect halved when it was tested harder.** That is the single most important line here. A
+first batch at +0.072 and a confirmation at +0.035 is what regression to the mean looks like, and
+the honest reading is that the true figure is nearer the pooled +0.048 than the number that made it
+look exciting. Anyone quoting +0.072 later is quoting the lucky half of the evidence.
+
+What survives that caution: pooled over 50,000 paired deals it clears 2 SE, the pessimistic bound is
+still positive at +0.012, and 20 of 28 seat-runs are ahead (a sign test puts that near 1%). Small,
+but the first positive result after six measured failures.
+
+Worth recording WHY it may differ from those six. Every one of them - the discard model, the claim
+model, both together, the flower route, and two fold rules - re-weighted information the coach
+already had. This one hands it a fact it could not see. That is the distinction to test next, not
+"another weighting".
+
+It stays OFF behind `{ legalWait: true }` and `LegalWaitCoachBot` until the number stops moving.
+
+
 ### A lower-variance target does not work either (measured 2026-08-26)
 
 Route 1 below was to attack the 9.8-chip outcome SD by scoring the same play-outs with a
