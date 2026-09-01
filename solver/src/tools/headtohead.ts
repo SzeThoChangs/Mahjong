@@ -13,7 +13,7 @@
  * error, because a difference smaller than its error bar is not a difference.
  */
 import { readFileSync } from 'node:fs';
-import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
+import { Wall, playGame, makeRng, shuffleWall, shuffleName, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
 import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, AltReadsCoachBot } from '../bot.js';
 import type { ReadsTables } from '../reads.js';
@@ -48,11 +48,20 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
 };
 const armName = process.argv[3] ?? 'policy';
 /**
- * Wall seed base. Fixed at 11 for every run so far, which means every comparison ever made here
- * has been on ONE set of 4,000 deals. Changing it is how you tell a structural effect from an
- * artefact of that particular shuffle - see the seat asymmetry in PLAN.md.
+ * Which deals to play, by name: `--from 1 --count 2000` plays shuffle-00001 to shuffle-02000.
+ *
+ * Named deals rather than a seed number, so a result recorded today can be laid beside one from
+ * last week - both say which shuffles they were measured on. Taking a LATER range is how you get
+ * deals nothing has been fitted on, which is the check that a result is structural rather than an
+ * artefact of one shuffle. The library is endless; there is nothing to generate or run out of.
+ *
+ * shuffle-00001 onwards is, tile for tile, the old "wall seed base 11" sequence, so everything
+ * already in FINDINGS keeps its meaning. `--seed N` still plays the legacy seed-N walls, for
+ * reproducing a figure recorded against another seed before the library existed.
  */
-const seedBase = Number(process.argv[4] ?? 11);
+const legacySeed = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : null;
+const fromShuffle = process.argv.includes('--from') ? Number(process.argv[process.argv.indexOf('--from') + 1]) : 1;
+const seedBase = legacySeed ?? 11;
 const ARM = ARMS[armName];
 if (!ARM) { console.error(`unknown arm ${armName}; expected one of ${Object.keys(ARMS).join(', ')}`); process.exit(1); }
 const cfg: TableConfig = loadTableConfig();
@@ -64,7 +73,9 @@ const rules = loadTableRules();
 function arm(seat: number, makeSeatBot: () => Bot): number[] {
   const out: number[] = [];
   for (let g = 0; g < n; g++) {
-    const wall = new Wall(makeRng(seedBase * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
+    const wall = legacySeed === null
+      ? shuffleWall(fromShuffle + g, cfg.unplayable_tiles, rules.jokers.count)
+      : new Wall(makeRng(legacySeed * 1000003 + g), cfg.unplayable_tiles, rules.jokers.count);
     const bots: Bot[] = [0, 1, 2, 3].map((s) => (s === seat ? makeSeatBot() : new CoachBot()));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
@@ -76,7 +87,10 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.le
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
 const diffs: number[] = [];
-console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats (wall seed base ${seedBase})\n`);
+const deals = legacySeed === null
+  ? `${shuffleName(fromShuffle)}..${shuffleName(fromShuffle + n - 1)}`
+  : `legacy wall seed base ${legacySeed}`;
+console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats (${deals})\n`);
 console.log(`seat   model chips/game   coach chips/game   difference (paired)`);
 for (let seat = 0; seat < 4; seat++) {
   const model = arm(seat, ARM.make);

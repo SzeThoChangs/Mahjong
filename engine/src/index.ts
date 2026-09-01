@@ -10,5 +10,6 @@ export * from './game.js';
 export * from './state.js';
 export * from './bots.js';
 export * from './sim.js';
+export * from './shuffles.js';
 // node-only: import from 'sg-mahjong-engine/node'
 // export * from './config.node.js';
