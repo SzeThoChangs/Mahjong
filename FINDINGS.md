@@ -315,6 +315,61 @@ readiness and wait width and never asked whether winning would be LEGAL. That is
 +0.048.
 
 
+### The second idea from the tactics book is right and pays nothing (2026-09-01)
+
+`no_chance_tiles`: when all four copies of a tile are accounted for, its neighbours are safer,
+because every run containing a tile needs one of its immediate neighbours. Measured as a new
+dimension on the existing reads pipeline - same method, same sample - and the read is emphatically
+correct:
+
+```
+  simple|20|fresh    open 0.65%   walled 0.12%   x0.18
+  simple|30|fresh    open 1.23%   walled 0.39%   x0.32
+  simple|40|fresh    open 1.66%   walled 0.45%   x0.27
+  simple|50|fresh    open 1.77%   walled 1.04%   x0.59
+  terminal|40|seen   open 0.63%   walled 0.06%   x0.10
+```
+
+Three to five times safer, all sixteen cells with the sample for it. And it is worth **nothing**:
+
+```
+  seed 11  +0.038 +/- 0.050    seed 101  -0.017 +/- 0.060
+  seed 23  +0.004 +/- 0.053    seed   7  -0.028 +/- 0.055
+  pooled over 24,000 paired deals:  +0.002 +/- 0.027   t = 0.07
+```
+
+Dead level, and scattered either side of zero rather than leaning.
+
+Checked before writing that down, because a rule that never fires measures zero exactly like a rule
+that fires and does not pay, and this project has already lost a session to that confusion
+(`tools/_wallrate.ts`, 16,088 discard decisions):
+
+```
+  tiles in hand that were walled         2.19%
+  decisions with any walled tile        15.02%
+  ...of those, the throw CHANGED        13.29%
+  so the rule changes the play on        2.00% of all discards
+```
+
+It fires. One discard in fifty is different. The read is simply not decisive when it applies: the
+coach was already close to the best throw, so swapping to the walled tile buys safety and gives back
+roughly the same in hand value. A large discount on a rare tile, cancelled by what the swap costs.
+
+Worth separating two things that are easy to conflate here. The MEASUREMENT is correct and stays -
+it is in the shipped reads table, and "no run can still be waiting on it" is a true and teachable
+fact about a tile. What failed is using it to PRICE a discard. Those are different claims, and only
+the second one was tested and rejected.
+
+The rule stays off behind `{ wall: true }` and `WallCoachBot`, with the arm kept so it can be
+re-tested if the danger weight is ever refitted - `DANGER_WEIGHT = 40` was fitted without this
+dimension existing, which is the one loose end.
+
+That is two of the three gaps found in the tactics book now answered: counting the wait in legal
+tiles WON (+0.048), and reading the wall did not. The third - that the coach sees how MANY melds an
+opponent has but never what they are, so a dragon pong and a chow are the same input - is untouched,
+and is the one the book spends eleven tips on.
+
+
 ### A lower-variance target does not work either (measured 2026-08-26)
 
 Route 1 below was to attack the 9.8-chip outcome SD by scoring the same play-outs with a
