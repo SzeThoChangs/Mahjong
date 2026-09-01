@@ -104,6 +104,17 @@ export class FullPolicyBot extends ClaimBot {
  * the rule is probably right in spirit and wrong in its trigger: it asks whether the hand is armed
  * NOW, which writes off hands that could still draw the flower or animal that arms them.
  */
+/**
+ * The coach, with the wait counted in tiles that can legally win rather than tiles that merely
+ * complete the hand. The first idea tried from the tactics book, which the coach has never used.
+ */
+export class LegalWaitCoachBot extends CoachBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { legalWait: true });
+    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
+  }
+}
+
 export class FoldCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v), { fold: true });

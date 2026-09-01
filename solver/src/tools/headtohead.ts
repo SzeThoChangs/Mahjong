@@ -14,7 +14,7 @@
  */
 import { Wall, playGame, makeRng, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot } from '../bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, LegalWaitCoachBot } from '../bot.js';
 
 
 const n = Number(process.argv[2] ?? 1000);
@@ -24,6 +24,7 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   claim: { label: 'claim model', make: () => new ClaimBot() },
   full: { label: 'both models', make: () => new FullPolicyBot() },
   fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
+  wait: { label: 'coach counting only the tiles that can legally win', make: () => new LegalWaitCoachBot() },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness
   self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
 };

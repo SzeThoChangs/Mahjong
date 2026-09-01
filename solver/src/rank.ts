@@ -1,6 +1,6 @@
 /** Rank the 14 possible discards and explain the choice in plain language. */
 import {
-  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, shanten, suitOf, windKind, type Meld, type TileKind,
+  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, scoreHand, shanten, suitOf, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
@@ -96,6 +96,44 @@ function acceptance(h: HandInput, best: TargetEval, gone: number[] = []): number
 }
 
 /**
+ * The wait, counted in tiles that can ACTUALLY win.
+ *
+ * `acceptance` above counts tiles that improve the hand, which is the right question until the hand
+ * is ready and the wrong one afterwards. At a 2-tai table a tile that completes the hand at 1 tai
+ * completes nothing - you cannot declare it - so counting it makes a wide worthless wait beat a
+ * narrow real one. This is `narrow_can_beat_wide` from the tactics book, and it is one of the few
+ * tips there that exists BECAUSE of a table minimum rather than in spite of one.
+ *
+ * A tile that reaches the minimum only on a self-draw is not dead, only narrower: it can come off
+ * the wall but not off a discard. It is weighted by the measured self-draw share of wins in
+ * run-money4 - 59,392 of 126,273, so 0.47 - rather than by a number chosen to make this look good.
+ *
+ * Returns null when the hand is not ready, where ordinary acceptance is still the right measure.
+ */
+const SELF_DRAW_SHARE = 0.47;
+function legalWait(h: HandInput, ctx: Context, gone: number[]): number | null {
+  if (shanten(h.concealed, h.melds.length) !== 0) return null;
+  let n = 0;
+  const held = new Map<TileKind, number>();
+  for (const k of h.concealed) held.set(k, (held.get(k) ?? 0) + 1);
+  for (let k = 0; k < 34; k++) {
+    const left = 4 - (held.get(k) ?? 0) - h.melds.reduce((a, m) => a + m.tiles.filter((t) => t === k).length, 0) - (gone[k] ?? 0);
+    if (left <= 0) continue;
+    const win = {
+      concealed: [...h.concealed, k], melds: h.melds, bonus: [...ctx.bonus],
+      seat: ctx.seat, prevailingWind: ctx.prevailingWind, winningTile: k,
+    };
+    // scored both ways on purpose: the all-chow rules reject some hands on a DISCARD that are fine
+    // self-drawn, so a tile can be live off the wall and dead off the floor
+    const shot = scoreHand({ ...win, selfDraw: false });
+    if (shot.valid && shot.fan >= ctx.minimumFan) { n += left; continue; }
+    const drawn = scoreHand({ ...win, selfDraw: true });
+    if (drawn.valid && drawn.fan >= ctx.selfDrawMinimumFan) n += left * SELF_DRAW_SHARE;
+  }
+  return n;
+}
+
+/**
  * FOLDING. Two triggers, both off by default and both measured.
  *
  * `fold: true` gives up when the hand has no route to the table minimum. It LOSES 0.039 +/- 0.018
@@ -107,7 +145,7 @@ function acceptance(h: HandInput, best: TargetEval, gone: number[] = []): number
  * is no reason to stop building a hand that is nearly there, and a hopeless hand costs nothing to
  * keep building while nobody is close.
  */
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number } } = {}): Ranking {
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean } = {}): Ranking {
   const threatFold = typeof cfg.fold === 'object' ? cfg.fold : null;
   const foldEnabled = cfg.fold === true;
   const allJokers = concealed.every(isJoker);
@@ -162,7 +200,10 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   const cutoff = opts[0]!.chips - 1.5;
   for (const o of opts) {
     if (o.chips < cutoff) break;
-    o.acceptance = acceptance(hands.get(o.tile)!, o.target, gone);
+    const h = hands.get(o.tile)!;
+    // once ready, count what can legally win instead of what merely improves - same scale, so no
+    // new constant to tune and the comparison is of one idea, not of an idea plus a weight
+    o.acceptance = (cfg.legalWait ? legalWait(h, ctx, gone) : null) ?? acceptance(h, o.target, gone);
     o.chips += o.acceptance * 0.06;
   }
   // what the throw hands the table, priced in the same chips as what it does for the hand
