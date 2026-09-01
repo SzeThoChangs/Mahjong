@@ -6,7 +6,11 @@ cd "$(dirname "$0")/.."
 OUT=${OUT:-../data/gen/run-money3}
 HANDS=${HANDS:-150000}
 DECISIONS=${DECISIONS:-120000}
-VENV=${VENV:-/private/tmp/claude-502/-Users-changshengszetho-Desktop-01-All-Projects-My-Games-Mahjong/12a7a5b9-734f-47e0-a966-762b0e9ab487/scratchpad/venv}
+# Parquet is an export for analysis OUTSIDE this repo - nothing here reads it - so a missing venv
+# skips that step rather than failing a run that has already done its seven hours of work. The old
+# default pointed into a per-session scratchpad that no longer existed, which would have failed the
+# whole run at the very last step.
+VENV=${VENV:-.venv}
 
 fail() { echo "RUN FAILED at ${1} $(date)" >&2; exit 1; }
 # stdout+stderr to a file, but only replace the previous good copy when the step succeeds
@@ -33,5 +37,10 @@ run_to "$OUT/evalstats.txt" evalstats npx tsx src/evalstats.ts "$OUT"
 npx tsx src/profile.ts --dir "$OUT" --out ../web/public/profile --name money || fail profile
 npx tsx src/quizpack.ts --dir "$OUT" --out ../web/public/quiz --name money --max 5000 || fail quizpack
 npx tsx src/export.ts --dir "$OUT" --out ../web/public/replays/money --hands 180 || fail export
-"$VENV/bin/python" scripts/to_parquet.py "$OUT" --rows-per-file 1000000 || fail parquet
-echo "OVERNIGHT RUN COMPLETE $(date)"
+if [ -x "$VENV/bin/python" ]; then
+  "$VENV/bin/python" scripts/to_parquet.py "$OUT" --rows-per-file 1000000 || fail parquet
+  echo "OVERNIGHT RUN COMPLETE $(date)"
+else
+  echo "WARNING: no python venv at $VENV - parquet export SKIPPED. Everything the app reads is built." >&2
+  echo "OVERNIGHT RUN COMPLETE (parquet skipped) $(date)"
+fi
