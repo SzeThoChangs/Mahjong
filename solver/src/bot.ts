@@ -23,7 +23,14 @@ export const ctxOf = (v: PlayerView): Context => ({
     ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.bonus.map(kindOf))),
   ],
   opponentMelds: v.players.map((p, s) => (s === v.seat ? -1 : p.melds.length)).filter((n) => n >= 0),
+  // the same seats unreduced, for the advice only - see `collectingSuit`
+  opponents: v.players.flatMap((p, s) => (s === v.seat ? [] : [{
+    label: WIND[(s - v.dealer + 4) % 4]!,
+    melds: p.melds.map((m) => m.tiles),
+    discards: v.discardLog.filter((d) => d.seat === s).map((d) => kindOf(d.tile)),
+  }])),
 });
+const WIND = ['\u6771', '\u5357', '\u897f', '\u5317'];
 export const meldsOf = (v: PlayerView): Meld[] => v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
 
 export class CoachBot implements Bot {

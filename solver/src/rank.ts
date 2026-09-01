@@ -4,7 +4,7 @@ import {
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
-import { dealInChance, threatScale, maxReadyChance, walled } from './reads.js';
+import { dealInChance, threatScale, maxReadyChance, walled, suitWatch } from './reads.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -224,12 +224,15 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone, accounted); o.chips -= o.risk; }
   opts.sort((a, b) => b.chips - a.chips);
   const top = opts[0]!;
+  const watch = suitWatch(ctx.opponents);
   for (const o of opts) {
     o.delta = o.chips - top.chips;
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
     o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds, gone));
     const safety = safetyReason(o.tile, ctx, gone, accounted);
     if (safety) o.reasons.push(safety);
+    const hit = watch.find((w) => suitOf(o.tile) === w.suit);
+    if (hit) o.reasons.push(`${hit.label} looks to be collecting ${SUIT_NAME[hit.suit as keyof typeof SUIT_NAME]} — feeding it is the risky part, whatever it does for your hand`);
   }
   const t = top.target;
   const where = t.suit ? ` in ${SUIT_NAME[t.suit as keyof typeof SUIT_NAME]}` : '';
@@ -256,6 +259,12 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     } else {
       detail.push(`You are ${ctx.minimumFan - fih} tai short and hold no value pair — the tai has to come from a flower, an animal, or a colour hand.`);
     }
+  }
+  // Somebody visibly collecting a suit. Said out loud and never scored: as a discard weighting it
+  // is worth nothing (-0.034 +/- 0.057 over 16,000 paired deals), because the coach already prices
+  // danger on every throw. The player reading this does not, so the fact is worth telling them.
+  for (const w of watch) {
+    detail.push(`${w.label} has two sets in ${SUIT_NAME[w.suit as keyof typeof SUIT_NAME]} and has barely thrown any — that suit is probably their hand. A ${SUIT_NAME[w.suit as keyof typeof SUIT_NAME]} tile is about twice as likely to hit them as one outside it, and more than that late on.`);
   }
   const tied = opts.filter((o) => o.delta > -0.05).map((o) => o.tile);
 

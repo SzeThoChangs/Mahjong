@@ -55,11 +55,3 @@ three times. The only measure that counts is chips per game from
 **Change the shuffle.** The test tool used one fixed shuffle for every comparison. That made a
 fake pattern look real enough that I called it the project's strongest lead for half a day. Pass a
 different seed as the last argument and see if a result survives.
-
-## Open question for you
-
-At a real table, a player has four melds down and only wildcards left in hand. They can't win —
-the hand is worth 0 tai and the table minimum is 2. They still have to throw something.
-
-What actually happens? The engine currently lets them throw a wildcard, which you've said is
-nonsense. It came up 195 times in 150,000 hands.

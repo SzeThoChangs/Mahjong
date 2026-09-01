@@ -9,6 +9,9 @@ import {
 import { rankDiscards, policyRank, type Ranking, type PolicyRanking, type Context } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
 
+/** seat winds by ROLE (distance from the host), for naming an opponent in the advice */
+const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
+
 export type Phase = 'early' | 'mid' | 'late' | 'any';
 export const PHASE_TURNS: Record<Exclude<Phase, 'any'>, [number, number]> = { early: [1, 15], mid: [16, 35], late: [36, 60] };
 
@@ -102,7 +105,12 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
       ...publicBonus.flat(),
     ];
     const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
-      opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0) };
+      opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0),
+      opponents: view.players.flatMap((p2, s2) => (s2 === view.seat ? [] : [{
+        label: WIND_NAME[(s2 - view.dealer + 4) % 4]!,
+        melds: p2.melds.map((m) => m.tiles),
+        discards: discards.filter((d) => d.seat === s2).map((d) => d.kind),
+      }])) };
     const ranking = rankDiscards(hand, melds, ctx);
     const policyRanking = policyRank(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);

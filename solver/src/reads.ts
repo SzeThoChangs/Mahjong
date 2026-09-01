@@ -21,7 +21,7 @@ export const READS = {
  * agree: the coach prices danger into its ranking, and the model takes the same quantities as
  * features. Two copies of this arithmetic would drift.
  */
-import { isHonour, isJoker, isSuited, isTerminal, type TileKind } from 'sg-mahjong-engine';
+import { isHonour, isJoker, isSuited, isTerminal, suitOf, type TileKind } from 'sg-mahjong-engine';
 
 /** The shape of a reads table, so an alternative one can be played against the shipped one.
  *  `Context.reads` carries it; everything defaults to READS, which is what the coach uses. */
@@ -90,4 +90,51 @@ export function maxReadyChance(opponentMelds: readonly number[] | undefined, pla
   let mx = 0;
   for (const m of opponentMelds) mx = Math.max(mx, R.ready[`${Math.max(0, Math.min(3, m))}|${t}`] ?? 0);
   return mx;
+}
+
+/** What one other seat has shown the table: the tiles in their exposed sets, and what they threw. */
+export interface OpponentPublic {
+  /** how to name them in advice - their wind, usually */
+  label?: string;
+  melds: readonly (readonly TileKind[])[];
+  discards: readonly TileKind[];
+}
+
+/**
+ * Which suit this seat is visibly collecting, from public information only.
+ *
+ * The tactics book calls this the strongest single read available, and it is the one thing the
+ * coach's threat model cannot see: that model is a COUNT of exposed sets, so a dragon pong and a
+ * chow of 3-4-5 are the same input to it.
+ *
+ * Two exposed sets in one suit is not on its own a tell - anyone can be dealt two. The second half
+ * is what makes it: a player assembling a suit does not throw that suit away. Honour melds do not
+ * break the pattern, because Half-Color is one suit plus honours.
+ *
+ * MEASURED on 25,000 hands the coach played against itself: a seat flagged this way really is
+ * building that suit about half the time, and a tile in it deals in to them at twice the rate of a
+ * tile outside it, rising to five times late in the hand. On the RECORDED runs it measures the
+ * other way round, because the bots that played them have no colour target at all - 1.3% of their
+ * wins are colour hands against the coach's 32% - so there is nothing there to find and only the
+ * scarcity of a melded suit is left. See FINDINGS.
+ *
+ * This is REPORTED, never priced. Played as a discard weighting it is worth -0.034 +/- 0.057 chips
+ * a game over 16,000 paired deals, which is nothing; the coach already prices danger on every
+ * throw and is close to the best tile anyway. A person reading the advice does not, which is why
+ * the same fact is worth saying out loud and not worth scoring with.
+ */
+export function collectingSuit(o: OpponentPublic): 'wan' | 'tong' | 'sok' | null {
+  const suited = o.melds.filter((m) => m.length > 0 && isSuited(m[0]!));
+  if (suited.length < 2) return null;
+  const s = suitOf(suited[0]![0]!);
+  if (!s || !suited.every((m) => suitOf(m[0]!) === s)) return null;
+  if (o.discards.filter((k) => suitOf(k) === s).length > 1) return null;
+  return s;
+}
+
+/** Every seat that looks like it is collecting a suit, with the suit. Empty when nothing shows. */
+export function suitWatch(opponents: readonly OpponentPublic[] | undefined): { label: string; suit: string }[] {
+  const out: { label: string; suit: string }[] = [];
+  for (const o of opponents ?? []) { const s = collectingSuit(o); if (s) out.push({ label: o.label ?? 'a player', suit: s }); }
+  return out;
 }

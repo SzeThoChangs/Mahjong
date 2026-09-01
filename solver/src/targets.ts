@@ -4,7 +4,7 @@
  */
 import { fanInHand, isAnimal, isDragon, isFlower, isSeason, windKind, type TileKind } from 'sg-mahjong-engine';
 import { TABLES } from './tables.js';
-import type { ReadsTables } from './reads.js';
+import type { OpponentPublic, ReadsTables } from './reads.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, thirteenBreakdown, type HandInput } from './evaluators.js';
 
 export type TargetId = 'ping_wu' | 'all_chow' | 'half_color' | 'all_pong' | 'chicken' | 'thirteen';
@@ -76,6 +76,11 @@ export interface Context {
    *  ready 39.5% of the time; none means 4.9%. Without it the coach cannot tell a dangerous table
    *  from a quiet one, so it prices every discard as if nobody were close. */
   opponentMelds?: readonly number[];
+  /** The same seats, not reduced to a count: what they MELDED and what they have thrown. Only the
+   *  advice uses it - to say out loud when somebody is visibly collecting a suit - and nothing
+   *  scores off it, because pricing that read is measured at nothing. Optional, so a caller that
+   *  cannot supply it simply gets no such line. */
+  opponents?: readonly OpponentPublic[];
 }
 
 type Row = Record<string, number>;
