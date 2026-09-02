@@ -460,6 +460,60 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### Half of the book's wait ranking is about the tiles, and half is about the table (2026-09-03)
+
+Two cards in the Shapes tab were marked `needs-play`, both for the same reason. `bad_wait_ranking`
+says that waiting on the last two of a terminal or an honour is close to a good wait and that a
+middle tile is the worst place to be. `threes_and_sevens` says a lone 3 or 7 is the best spare to
+keep. Neither is countable. Two hands can be identical tile for tile and differ entirely in what
+the table will throw you, so both claims are about the same hidden thing: which tiles other players
+let go of, and when.
+
+`datagen/src/release.ts` measures exactly that. It plays or replays hands to the end and counts, for
+every kind, the copies that were discarded - once over the whole hand, and again restricted to
+turn 30 and later, because a wait only cares about tiles that come out after you are waiting on
+them. Three populations, because a release rate is a fact about a population and not about mahjong:
+our own coach, `ShantenBot`, and the datagen personalities that played `run-money4`.
+
+`ShantenBot` is the control and it is the reason this finding exists. The coach prices every throw
+against a danger table keyed on exactly the classes being measured here - it already believes an
+honour is safer to throw than a middle tile - so a measurement taken only on coach hands would be
+our own table read back to us. `ShantenBot` has no danger model and no honour rule at all.
+
+The chance at least one of the last two copies comes out after turn 30:
+
+```
+                       coach     shanten    money4
+  a middle tile (4-6)  15.4%   8.5 / 8.8%   28.0%
+  a 2 or an 8          17.0%  10.1 / 10.5%  29.7%
+  a terminal (1 or 9)  19.2%  10.3 / 10.8%  30.7%
+  a wind               22.7%   7.9 / 8.4%   26.7%
+  a dragon             23.1%   7.9 / 8.6%   27.1%
+```
+
+**The terminal half of the tip is true and the honour half is not.** A terminal wait beats a middle
+one in all three populations, by about a quarter. The honour line is the top of the table under the
+coach and the BOTTOM of it under the other two - worse than the shape the book calls worst.
+
+The reason is timing, and it is visible in the same run. Honours are released more than anything
+else over a whole hand, about 45-50% of every copy against 21% for a middle tile. Almost all of it
+happens in the opening. Nobody keeps a lone wind, so under bots with no reason to hold one the
+honours are gone by the middle of the hand and there is nothing left to feed a wait. Our coach holds
+dragons and its seat wind for the tai and throws them late, which is why it alone agrees with the
+book. So the useful form of the rule is not about the tile: an honour wait is good early and dead
+late, and what decides it is how many are already face up.
+
+`threes_and_sevens` survives everywhere, and small. A lone 3 grows into a wait on 1, 2, 4 or 5; a
+lone 5 into a wait on 3, 4, 6 or 7. Late release of the first four against the second four is 8.8%
+vs 7.9% (coach), 4.8% vs 4.4% and 5.0% vs 4.6% (shanten, two seeds), 15.8% vs 15.0% (money4). About
+a tenth more, in the same direction every time, by the mechanism the book gives - the 3 and the 7
+reach the edges, and the edges are where tiles are released. Two shanten seeds agree to within
+0.3 points everywhere, so the run-to-run noise is well under the effect.
+
+Neither has been played for money and neither should be. This is the suit read again: measured true
+and worth teaching is a different finding from worth scoring with, and the coach already prices
+waits continuously. The cards say what is true and claim nothing else.
+
 ### The third gap from the tactics book is real, was invisible in our data, and pays nothing (2026-09-02)
 
 The gap: the coach sees how MANY melds an opponent has and never what they are, so a dragon pong and
