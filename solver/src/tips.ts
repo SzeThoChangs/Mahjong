@@ -30,7 +30,17 @@
 import { parseKinds, shanten, type TileKind } from 'sg-mahjong-engine';
 
 /** `Verdict` is taken by rank.ts, which grades a discard; this grades a TIP. */
-export type TipVerdict = 'confirmed' | 'contradicted' | 'level' | 'needs-play' | 'measured';
+export type TipVerdict = 'confirmed' | 'contradicted' | 'level' | 'needs-play' | 'measured' | 'advice';
+
+/**
+ * Where in a hand the tip applies, which is how the page is ordered.
+ *
+ * These are the playbook's own phases, so a card and the rule it came from can always be lined up.
+ * A hand runs through them in this order: what you are dealt, what you build, what you throw, what
+ * you claim, what you read off the table, and whether to fight at all. `meta` is none of those - it
+ * is advice about playing rather than about a hand.
+ */
+export type Phase = 'deal' | 'build' | 'discard' | 'call' | 'read' | 'push_fold' | 'meta';
 
 export interface Variant {
   label: string;
@@ -60,12 +70,20 @@ export type Claim =
   | { kind: 'upgrades-more'; better: number; than: number }
   | { kind: 'not-countable' };
 
-export interface ShapeTip {
+export interface Tip {
   id: string;
   title: string;
   rule: string;
   why: string[];
   notWhen?: string;
+  phase: Phase;
+  /**
+   * Example hands, where the tip is the sort of thing tiles can show.
+   *
+   * Most of the book is not. "Push or fold, and commit" has no diagram, and inventing one would put
+   * a made-up position in front of a reader and imply it was checked. Those cards carry no tiles and
+   * their claim is `not-countable`, which the test enforces.
+   */
   variants: Variant[];
   claim: Claim;
   /**
@@ -76,7 +94,7 @@ export interface ShapeTip {
    *          reading of it. The verdict then tests OUR example, which is worth less, and the card
    *          says so rather than borrowing the book's authority.
    */
-  shapeFrom: 'book' | 'ours';
+  shapeFrom?: 'book' | 'ours';
   /** compute the expensive upgrade count for this card's hands */
   wantUpgrades?: boolean;
   verdict: TipVerdict;
@@ -106,7 +124,7 @@ export function ukeire(tiles: TileKind[], melds = 0): { count: number; kinds: nu
 }
 
 /** Does a tip's own example still show what it claims? Used by the card and by the test. */
-export function holds(t: ShapeTip): boolean {
+export function holds(t: Tip): boolean {
   const v = t.variants.map((x) => { const tiles = x.blocks.flat(); return { tiles, ...ukeire(tiles) }; });
   const c = t.claim;
   if (c.kind === 'not-countable') return true;
@@ -150,7 +168,7 @@ export function upgrades(tiles: TileKind[]): number {
   return n;
 }
 
-function withCounts(t: ShapeTip): ShapeTip {
+function withCounts(t: Tip): Tip {
   return { ...t, variants: t.variants.map((v) => {
     const tiles = v.blocks.flat();
     const u = ukeire(tiles);
@@ -158,9 +176,10 @@ function withCounts(t: ShapeTip): ShapeTip {
   }) };
 }
 
-const TIPS: ShapeTip[] = [
+const CARDS: Tip[] = [
   {
     id: 'five_blocks',
+    phase: 'build',
     title: 'Count blocks, not tiles',
     rule: 'You need four sets and a pair. That is five blocks. Count blocks, not tiles.',
     why: [
@@ -179,6 +198,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'six_blocks_ok',
+    phase: 'build',
     title: 'When to keep a sixth block',
     rule: 'The card above says cut to five. The book keeps six while the two weakest blocks are gap waits, and lets the wall decide which one to drop.',
     why: [
@@ -199,6 +219,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'pair_rule',
+    phase: 'build',
     title: 'One pair, keep two, break three',
     rule: 'Fix one pair. Keep two. Break three.',
     why: [
@@ -217,6 +238,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'sandwich',
+    phase: 'build',
     title: 'The sandwich: one block, four useful draws',
     rule: 'A pair, a gap, a single, a gap, a pair — 4筒 4筒 6筒 8筒 8筒. Four different tiles turn it into a set and a pair.',
     why: [
@@ -234,6 +256,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'stepping_stones',
+    phase: 'build',
     title: 'The tile bridging two blocks works harder than it looks',
     rule: 'In a hand with no pair, a tile sitting between two part-runs is doing more than it appears. Do not cut it just because it looks spare.',
     why: [
@@ -251,6 +274,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'escape_single_waits',
+    phase: 'build',
     title: 'Break a finished shape to escape a lone-tile wait',
     rule: 'Being ready but waiting on the last copies of one tile is worse than breaking the hand up and waiting again on something open.',
     why: [
@@ -268,6 +292,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'reset_via_runs',
+    phase: 'build',
     title: 'A long run can re-form on a better wait',
     rule: 'Five tiles in a row are not a set plus spares. They are a block that can be taken apart and put back together on a better wait, cheaply.',
     why: [
@@ -285,6 +310,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'perfect_one_away',
+    phase: 'build',
     title: 'The widest hand one away from ready',
     rule: 'Two sets, a pair, and two two-sided waits. Nothing one away from ready accepts more, so do not tidy it.',
     why: [
@@ -305,6 +331,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'sticky_one_away',
+    phase: 'build',
     title: 'A floater with a neighbour beats a lone pair',
     rule: 'Three sets and a pair, with something spare: the spare is worth more sitting next to a tile than sitting alone as a second pair.',
     why: [
@@ -322,6 +349,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'linked_blocks',
+    phase: 'build',
     title: 'A block touching a finished run has hidden upgrades',
     rule: 'Two blocks that need the same number of tiles are not equal. The one sitting against a completed run can improve in ways the other cannot.',
     why: [
@@ -341,6 +369,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'four_tile_ranking',
+    phase: 'build',
     title: 'Which four-tile block to break',
     rule: 'The book names three: four in a row (nobetan), a doubled middle (nakabukure), and a pair on the end (aryanmen). It says the first two are near-equal and the third is clearly weakest.',
     why: [
@@ -362,6 +391,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'threes_and_sevens',
+    phase: 'build',
     title: 'A 3 or a 7 is the best loose tile to keep',
     rule: 'Of the single tiles you might hold, 3 and 7 are the strongest. Counting cannot see why.',
     why: [
@@ -380,6 +410,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'bad_wait_ranking',
+    phase: 'build',
     title: 'Not all bad waits are equally bad',
     rule: 'Waiting on the last two of one tile is weak. Waiting on the last two of a middle tile is the worst of it. A terminal is the best version of a bad wait.',
     why: [
@@ -398,6 +429,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'honour_wait_timing',
+    phase: 'build',
     title: 'An honour wait is good early and dead late',
     rule: 'The book groups a terminal and an honour together as the tolerable bad waits. They are not alike, because an honour is fed early or not at all.',
     why: [
@@ -417,6 +449,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'triplet_adjacency',
+    phase: 'build',
     title: 'A tile next to your own triplet is weak',
     rule: 'Holding three 4s makes a lone 3 worse, not better. You are holding the tiles it needs.',
     why: [
@@ -435,6 +468,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'count_your_outs',
+    phase: 'build',
     title: 'Half your wait can be face up already',
     rule: 'A two-sided wait is eight tiles on the first turn and fewer on every turn after. Once four of them are showing, you are waiting on as few tiles as a gap wait.',
     why: [
@@ -454,6 +488,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'edge_waits_stronger',
+    phase: 'build',
     title: 'Two two-sided waits, and the lower one is better',
     rule: 'Between two waits that accept the same eight tiles, the book takes the one nearer the edge. People let go of edge tiles and hold on to middle ones.',
     why: [
@@ -473,6 +508,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'narrow_can_beat_wide',
+    phase: 'build',
     title: 'A wide wait can be worth less than a narrow one',
     rule: 'At a 2-tai table, a winning tile that leaves you under the minimum is not a winning tile. Count the outs that can actually be declared.',
     why: [
@@ -489,6 +525,7 @@ const TIPS: ShapeTip[] = [
   },
   {
     id: 'pong_pair_quality',
+    phase: 'build',
     title: 'Which pair will actually become a triplet',
     rule: 'Measured on this table: a wind pair completes 69% of the time, a dragon 66%, a terminal 59%, a 2 or 8 48%, a middle tile 39%.',
     why: [
@@ -507,4 +544,4 @@ const TIPS: ShapeTip[] = [
   },
 ];
 
-export const SHAPE_TIPS: ShapeTip[] = TIPS.map(withCounts);
+export const TIPS: Tip[] = CARDS.map(withCounts);

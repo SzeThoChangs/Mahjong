@@ -7,7 +7,7 @@
  * true and worth nothing, so that is the way to bet until measured.
  */
 import { rankDiscards } from '../rank.js';
-import { SHAPE_TIPS } from '../shapes.js';
+import { TIPS } from '../tips.js';
 import { kindName, parseKinds, type TileKind } from 'sg-mahjong-engine';
 import type { Context } from '../targets.js';
 
@@ -16,7 +16,7 @@ const ctx = {
   minimumFan: 2 as const, selfDrawMinimumFan: 1, visible: [],
 } as unknown as Context;
 
-for (const t of SHAPE_TIPS) {
+for (const t of TIPS) {
   console.log(`\n${t.id}`);
   for (const v of t.variants) {
     // give it the hand plus one drawn tile so there is something to throw

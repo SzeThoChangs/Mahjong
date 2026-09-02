@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, SHAPE_TIPS, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, TIPS, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -364,7 +364,7 @@ export default function RealQuiz() {
             {shapeCallsHere.length > 0 && (
               <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-2">
                 {shapeCallsHere.map((c) => {
-                  const tip = SHAPE_TIPS.find((t) => t.id === c.tip);
+                  const tip = TIPS.find((t) => t.id === c.tip);
                   const bestKind = bestAction.a.startsWith('d:') ? Number(bestAction.a.slice(2)) : null;
                   const follows = bestKind !== null && c.says.includes(bestKind);
                   const goesAgainst = bestKind !== null && c.against.includes(bestKind);

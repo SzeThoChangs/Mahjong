@@ -28,10 +28,10 @@
  * when you take the wait the book prefers. Two roads to the same claim is worth more than either.
  */
 import { isHonour, isJoker, isSuited, rankOf, shanten, type TileKind } from 'sg-mahjong-engine';
-import { ukeire } from './shapes.js';
+import { ukeire } from './tips.js';
 
 export interface ShapeCall {
-  /** the id of the card in SHAPE_TIPS */
+  /** the id of the card in TIPS */
   tip: string;
   /** throws that follow the tip */
   says: TileKind[];

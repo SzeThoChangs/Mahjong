@@ -11,17 +11,17 @@
  * hand - and the accepting-tile counts of hands at different distances are not comparable at all.
  */
 import { describe, it, expect } from 'vitest';
-import { SHAPE_TIPS, holds, ukeire } from '../src/shapes.js';
+import { TIPS, holds, ukeire } from '../src/tips.js';
 import { parseKinds } from 'sg-mahjong-engine';
 
 describe('the hand-shape tips', () => {
   it('every card still demonstrates what it claims', () => {
-    const broken = SHAPE_TIPS.filter((t) => !holds(t)).map((t) => t.id);
+    const broken = TIPS.filter((t) => !holds(t)).map((t) => t.id);
     expect(broken).toEqual([]);
   });
 
   it('compares like with like: a claim about width is between hands the same distance from ready', () => {
-    for (const t of SHAPE_TIPS) {
+    for (const t of TIPS) {
       if (t.claim.kind === 'closer-to-ready' || t.claim.kind === 'not-countable') continue;
       const [a, b] = t.claim.kind === 'level' ? [t.claim.a, t.claim.b]
         : t.claim.kind === 'upgrades-more' ? [t.claim.better, t.claim.than]
@@ -32,7 +32,7 @@ describe('the hand-shape tips', () => {
   });
 
   it('every example is a legal 13-tile hand holding at most four of any tile', () => {
-    for (const t of SHAPE_TIPS) for (const v of t.variants) {
+    for (const t of TIPS) for (const v of t.variants) {
       const tiles = v.blocks.flat();
       expect(tiles, `${t.id} / ${v.label}`).toHaveLength(13);
       const n = new Map<number, number>();
@@ -41,9 +41,23 @@ describe('the hand-shape tips', () => {
     }
   });
 
+  it('a card with no example hands claims nothing the counting could check', () => {
+    // most of the book is not about tile shape at all, and a card with no tiles must not pretend to
+    // a verdict that came from counting them
+    for (const t of TIPS.filter((x) => x.variants.length === 0)) {
+      expect(t.claim.kind, `${t.id}: no example hands, so its claim cannot be countable`).toBe('not-countable');
+      expect(['measured', 'needs-play', 'advice', 'contradicted'], `${t.id}`).toContain(t.verdict);
+    }
+  });
+
+  it('every card says which phase of the hand it belongs to', () => {
+    const phases = ['deal', 'build', 'discard', 'call', 'read', 'push_fold', 'meta'];
+    for (const t of TIPS) expect(phases, t.id).toContain(t.phase);
+  });
+
   it('every hand is split into blocks, and the highlighted ones exist', () => {
     // a card about blocks has to show blocks: no example may be one undivided lump
-    for (const t of SHAPE_TIPS) for (const v of t.variants) {
+    for (const t of TIPS) for (const v of t.variants) {
       expect(v.blocks.length, `${t.id} / ${v.label}: not split into blocks`).toBeGreaterThan(1);
       for (const b of v.blocks) expect(b.length, `${t.id}: empty block`).toBeGreaterThan(0);
       for (const i of v.focus) expect(v.blocks[i], `${t.id}: focus ${i} is not a block`).toBeDefined();
@@ -61,13 +75,13 @@ describe('the hand-shape tips', () => {
   it('says whose tiles each card shows', () => {
     // a verdict on OUR reading of a tip is worth less than one on the book's own diagram, so the
     // card must never leave that ambiguous
-    for (const t of SHAPE_TIPS) expect(['book', 'ours'], t.id).toContain(t.shapeFrom);
+    for (const t of TIPS.filter((x) => x.variants.length)) expect(['book', 'ours'], t.id).toContain(t.shapeFrom);
   });
 
   it('says out loud which tips do NOT hold at this table', () => {
     // Not a style check: the page's honesty depends on these staying marked. If a verdict is ever
     // quietly upgraded to make the tutorial tidier, this fails.
-    const byId = Object.fromEntries(SHAPE_TIPS.map((t) => [t.id, t.verdict]));
+    const byId = Object.fromEntries(TIPS.map((t) => [t.id, t.verdict]));
     expect(byId['four_tile_ranking']).toBe('contradicted');
     expect(byId['honour_wait_timing']).toBe('contradicted');
   });
