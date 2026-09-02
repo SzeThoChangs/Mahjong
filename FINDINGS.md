@@ -488,8 +488,10 @@ On the 4,079 discard positions in the money pack (from `run-money4`), 326 are ab
   tip                    about  resolved   follows it   by luck     z
   escape_single_waits      133       129          89%       47%   +9.8
   pair_rule                128        87          31%       66%   -7.3
-  triplet_adjacency         41        32          47%       40%   +0.9
   threes_and_sevens         46        20          50%       52%   -0.2
+  triplet_adjacency         41        32          47%       40%   +0.9
+  bad_wait_ranking          12        10          50%       50%   +0.0
+  edge_waits_stronger        8         2           0%       50%   -1.4
 ```
 
 **`escape_single_waits` is the strongest result any book tip has produced here.** When a hand can
@@ -509,6 +511,13 @@ what a count of accepting tiles cannot see. That is a hypothesis and nothing her
 
 `triplet_adjacency` and `threes_and_sevens` resolve too few positions to say anything, and the card
 for `threes_and_sevens` already rests on a release measurement rather than on this.
+
+The two wait tips are rarer still, and for a reason worth knowing: both need a hand that can be made
+ready in two different ways with waits the same size, which is an uncommon position. Ten resolved
+and two resolved say nothing at all. They stay in the tagger because the coach dataset is larger and
+because these two are the only tips this project can now answer twice over - `release.ts` counts what
+the table throws late, and this counts what the play-outs pay - and two roads to one claim is worth
+more than either.
 
 **What this measurement cannot separate.** A measured best is the best throw in the whole position,
 so it prices danger as well as shape. A tip failing here has failed as ADVICE at this table, which

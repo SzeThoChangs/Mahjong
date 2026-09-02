@@ -87,9 +87,14 @@ const strata = [...seen.entries()].sort((a, b) => b[1] - a[1]);
  * So each stratum draws more decisive positions than it needs and drops the untagged ones first when
  * it trims back to size. The stratum mix is unchanged - every stratum still ends at the same count -
  * and nothing is selected on its ANSWER, only on whether a named shape is what the question is
- * about. Above about 2 the extra replays cost more than the coverage is worth.
+ * about.
+ *
+ * About one discard position in twelve is about a tip, so the share of the pack that can teach one
+ * is roughly this number times that - a quarter of it here, against 8% if the pack were drawn
+ * straight. The cost is pass 2, which replays every candidate hand, so it is the build that gets
+ * slower and not the pack.
  */
-const OVERDRAW = 1.6;
+const OVERDRAW = 2.5;
 const want = new Map<string, number>();
 for (const [stratum, n] of strata) {
   const target = Math.round((n / totalSeen) * maxQ);

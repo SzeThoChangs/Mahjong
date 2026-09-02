@@ -17,10 +17,15 @@
  * is a stronger test of the book than any of the counting in `shapes.ts`. Keeping the two apart is
  * the whole point: this file spots the shape, the play-outs judge it.
  *
- * Four tips are spotted here and the other fifteen are not. These four are the ones a machine can
- * see without ambiguity. `five_blocks` and `six_blocks_ok` need a block decomposition to be agreed
- * on before they mean anything, and `narrow_can_beat_wide` needs the hand scored for tai; those are
- * jobs for later rather than things to guess at.
+ * Six tips are spotted here and the rest are not. These six are the ones a machine can see without
+ * ambiguity. `five_blocks` and `six_blocks_ok` need a block decomposition to be agreed on before
+ * they mean anything, and `narrow_can_beat_wide` needs the hand scored for tai; those are jobs for
+ * later rather than things to guess at.
+ *
+ * The wait tips - `bad_wait_ranking` and `edge_waits_stronger` - are the interesting pair, because
+ * they can now be answered two ways that know nothing about each other. `release.ts` counts what the
+ * table actually throws late in a hand, and this asks whether the play-outs are worth more chips
+ * when you take the wait the book prefers. Two roads to the same claim is worth more than either.
  */
 import { isHonour, isJoker, isSuited, rankOf, shanten, type TileKind } from 'sg-mahjong-engine';
 import { ukeire } from './shapes.js';
@@ -65,6 +70,16 @@ function spares(c: number[]): TileKind[] {
   for (let k = 0 as TileKind; k < 34; k++) {
     if (c[k] !== 1) continue;
     if (isHonour(k) || neighbours(c, k) === 0) out.push(k);
+  }
+  return out;
+}
+
+/** the kinds that would finish a hand already ready */
+function winningKinds(tiles: TileKind[], melds: number): TileKind[] {
+  const c = countsOf(tiles), out: TileKind[] = [];
+  for (let k = 0 as TileKind; k < 34; k++) {
+    if (c[k]! >= 4) continue;
+    if (shanten([...tiles, k], melds) < 0) out.push(k);
   }
   return out;
 }
@@ -117,11 +132,13 @@ export function shapeCalls(concealed: TileKind[], melds: number): ShapeCall[] {
     });
   }
 
-  // escape_single_waits: more than one way to stay ready, and the widths are not close
+  // every throw that leaves the hand ready, with the wait it leaves: the ground the wait tips stand on
   const ready = distinct
     .map((k) => { const rest = concealed.filter((_, i) => i !== concealed.indexOf(k)); return { k, rest }; })
     .filter(({ rest }) => shanten(rest, melds) === 0)
-    .map(({ k, rest }) => ({ k, width: ukeire(rest, melds).count }));
+    .map(({ k, rest }) => { const u = ukeire(rest, melds); return { k, width: u.count, on: winningKinds(rest, melds) }; });
+
+  // escape_single_waits: more than one way to stay ready, and the widths are not close
   if (ready.length >= 2) {
     const widest = Math.max(...ready.map((r) => r.width)), narrowest = Math.min(...ready.map((r) => r.width));
     if (narrowest <= 4 && widest >= 2 * narrowest) {
@@ -130,6 +147,45 @@ export function shapeCalls(concealed: TileKind[], melds: number): ShapeCall[] {
         against: ready.filter((r) => r.width === narrowest).map((r) => r.k),
         because: `Two ways to stay ready. Throwing ${name(ready.find((r) => r.width === widest)!.k)} leaves you waiting on ${widest} tiles; throwing ${name(ready.find((r) => r.width === narrowest)!.k)} leaves ${narrowest}.`,
       });
+    }
+  }
+
+  /**
+   * bad_wait_ranking and edge_waits_stronger: two waits the same size, made of different tiles.
+   *
+   * Both tips say the same thing in different places - a wait is worth what the table will throw
+   * you, and two waits of the same width are not worth the same. So they are spotted the same way:
+   * among the throws that leave the hand ready, look for two whose waits are equally wide and then
+   * ask which tiles they sit on. Anything with a different width is `escape_single_waits`, above.
+   */
+  const byWidth = new Map<number, typeof ready>();
+  for (const r of ready) { let g = byWidth.get(r.width); if (!g) byWidth.set(r.width, g = []); g.push(r); }
+  for (const group of byWidth.values()) {
+    if (group.length < 2) continue;
+    // waiting on one kind: the book ranks a terminal above a 2 or an 8, and both above a middle tile
+    const single = group.filter((r) => r.on.length === 1);
+    const ends = single.filter((r) => isSuited(r.on[0]!) && (rankOf(r.on[0]!) === 1 || rankOf(r.on[0]!) === 9));
+    const middles = single.filter((r) => isSuited(r.on[0]!) && rankOf(r.on[0]!) >= 4 && rankOf(r.on[0]!) <= 6);
+    if (ends.length && middles.length) {
+      calls.push({
+        tip: 'bad_wait_ranking', says: ends.map((r) => r.k), against: middles.map((r) => r.k),
+        because: `Two waits of the same size: throw ${name(ends[0]!.k)} and you wait on ${name(ends[0]!.on[0]!)}, throw ${name(middles[0]!.k)} and you wait on ${name(middles[0]!.on[0]!)}. The terminal keeps coming out all game; the middle tile sits in other hands.`,
+      });
+    }
+    // waiting on two kinds: the book takes the pair of tiles nearer the edge
+    const two = group.filter((r) => r.on.length === 2 && r.on.every(isSuited));
+    if (two.length >= 2) {
+      const edgeness = (r: { on: TileKind[] }) => r.on.reduce((a, k) => a + Math.min(rankOf(k), 10 - rankOf(k)), 0) / 2;
+      const lowest = Math.min(...two.map(edgeness)), highest = Math.max(...two.map(edgeness));
+      const lows = two.filter((r) => edgeness(r) === lowest), highs = two.filter((r) => edgeness(r) === highest);
+      const low = lows[0]!, high = highs[0]!;
+      // one rank apart is the book's own comparison - waiting on 1 and 4 against waiting on 2 and 5
+      if (highest - lowest >= 1) {
+        calls.push({
+          tip: 'edge_waits_stronger', says: lows.map((r) => r.k), against: highs.map((r) => r.k),
+          because: `Two waits of the same size: throw ${name(low.k)} and you wait on ${low.on.map(name).join(' or ')}, throw ${name(high.k)} and you wait on ${high.on.map(name).join(' or ')}. The book takes the pair nearer the edge, because that is where tiles are released.`,
+        });
+      }
     }
   }
 

@@ -60,3 +60,22 @@ describe('spotting the shape a decision is about', () => {
     expect(liveCalls(hand, 0, parseKinds('6s 2t 6t')).map((c) => c.tip)).not.toContain('threes_and_sevens');
   });
 });
+
+describe('the two waits that are the same size and not the same wait', () => {
+  it('spots a terminal wait against a middle one', () => {
+    // one set already exposed, three in hand, and a choice of which single tile to sit on: keep the
+    // 9筒 and wait on the last three 9筒, or keep the 5筒 and wait on the last three 5筒
+    const c = shapeCalls(parseKinds('2w 3w 4w 6w 7w 8w 2s 3s 4s 9t 5t'), 1).find((x) => x.tip === 'bad_wait_ranking')!;
+    expect(c).toBeDefined();
+    expect(c.says).toEqual(parseKinds('5t'));      // throw the 5筒, wait on the 9筒
+    expect(c.against).toEqual(parseKinds('9t'));   // throw the 9筒, wait on the 5筒
+  });
+
+  it('spots two two-sided waits at different heights', () => {
+    // 2筒3筒4筒 spare: throw the 4筒 and you wait on 1筒/4筒, throw the 2筒 and you wait on 2筒/5筒
+    const c = shapeCalls(parseKinds('2w 3w 4w 6w 7w 8w 2s 3s 4s 9s 9s 2t 3t 4t'), 0).find((x) => x.tip === 'edge_waits_stronger')!;
+    expect(c).toBeDefined();
+    expect(c.says).toContain(parseKinds('4t')[0]);
+    expect(c.against).toContain(parseKinds('2t')[0]);
+  });
+});
