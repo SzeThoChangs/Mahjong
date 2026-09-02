@@ -46,14 +46,21 @@ tai. Both are buildable and both would raise the share of the pack that can teac
 
 ## What is left of the book
 
-Of 102 rules, 21 have been touched. The shape work is nearly done: `hand_shape` has 9 untouched
-(`keep_floaters`, `isolate_triplet`, `full_hand_over_partial`, `flush_decided_early`,
-`project_bad_draws`, `break_mediocre_ready`, `weak_start_pivot`, and two more) and `wait_quality` is
-finished.
+Of the 102 rules in `knowledge/playbook.json`, 18 now have cards and every one of them is in the
+`build` phase, which is 18 of that phase's 28. Ten build rules are left: `keep_floaters`,
+`isolate_triplet`, `full_hand_over_partial`, `flush_decided_early`, `project_bad_draws`,
+`break_mediocre_ready`, `weak_start_pivot`, `evaluators`, `mf2_half_color_easier` and
+`threshold_rises`.
 
-The untouched bulk is now elsewhere: 12 rules about calling, 10 about pushing and folding, 8 more
-about reading, 12 about safety. Those are decision rules rather than shape rules, which means most
-of them can be measured the way the reads were - on played hands - rather than by counting.
+Nothing outside `build` has a card at all: 16 rules about discarding, 15 about calling, 13 about
+reading, 12 about pushing and folding, 12 meta and 6 about the deal. Two reading rules were measured
+and played for money without ever becoming cards - `wall_reading` and `value_from_melds` - and both
+paid nothing.
+
+The 16 discard rules are the ones to be careful with. They are almost all about danger, and the
+coach already prices danger continuously; four attempts to price a true read have now returned
+nothing. Measuring them is worth doing, teaching them is worth doing, and putting them in
+`rankDiscards` is the thing that keeps failing.
 
 ## Habits that keep proving themselves
 
