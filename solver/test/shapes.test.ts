@@ -22,8 +22,10 @@ describe('the hand-shape tips', () => {
 
   it('compares like with like: a claim about width is between hands the same distance from ready', () => {
     for (const t of SHAPE_TIPS) {
-      if (t.claim.kind !== 'accepts-more' && t.claim.kind !== 'level') continue;
-      const [a, b] = t.claim.kind === 'accepts-more' ? [t.claim.better, t.claim.than] : [t.claim.a, t.claim.b];
+      if (t.claim.kind === 'closer-to-ready' || t.claim.kind === 'not-countable') continue;
+      const [a, b] = t.claim.kind === 'level' ? [t.claim.a, t.claim.b]
+        : t.claim.kind === 'upgrades-more' ? [t.claim.better, t.claim.than]
+        : [t.claim.better, t.claim.than];
       expect(t.variants[a]!.shanten, `${t.id}: comparing hands at different shanten proves nothing`)
         .toBe(t.variants[b]!.shanten);
     }
@@ -58,6 +60,7 @@ describe('the hand-shape tips', () => {
     const byId = Object.fromEntries(SHAPE_TIPS.map((t) => [t.id, t.verdict]));
     expect(byId['four_tile_ranking']).toBe('contradicted');
     expect(byId['triplet_adjacency']).toBe('contradicted');
+    expect(byId['perfect_one_away']).toBe('contradicted');
     expect(byId['threes_and_sevens']).toBe('needs-play');
     expect(byId['bad_wait_ranking']).toBe('needs-play');
   });

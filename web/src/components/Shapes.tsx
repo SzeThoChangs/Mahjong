@@ -57,6 +57,8 @@ function TipCard({ t }: { t: ShapeTip }) {
                   {x.ukeire} tiles
                 </b>{' '}
                 improve it, from {x.kinds} kinds
+                {/* only on cards whose claim is about width the shanten count cannot see */}
+                {x.upgrades !== undefined && <> · <b className="text-foreground">{x.upgrades}</b> widen it without bringing it closer</>}
               </span>
             </div>
             <Hand tiles={x.tiles} focus={x.focus} />

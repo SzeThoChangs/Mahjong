@@ -39,6 +39,8 @@ export interface Variant {
   focus: TileKind[];
   /** computed by `withCounts`, never written by hand */
   ukeire?: number; kinds?: number; shanten?: number;
+  /** only for cards whose claim is about width the shanten count cannot see */
+  upgrades?: number;
 }
 
 /** What this tip asserts, in a form a test can check. */
@@ -46,6 +48,8 @@ export type Claim =
   | { kind: 'accepts-more'; better: number; than: number }
   | { kind: 'closer-to-ready'; better: number; than: number }
   | { kind: 'level'; a: number; b: number }
+  /** equal on acceptance, but one of them widens more from tiles that are not progress */
+  | { kind: 'upgrades-more'; better: number; than: number }
   | { kind: 'not-countable' };
 
 export interface ShapeTip {
@@ -56,6 +60,8 @@ export interface ShapeTip {
   notWhen?: string;
   variants: Variant[];
   claim: Claim;
+  /** compute the expensive upgrade count for this card's hands */
+  wantUpgrades?: boolean;
   verdict: TipVerdict;
   /** what the verdict means, said plainly */
   verdictNote: string;
@@ -85,11 +91,48 @@ export function holds(t: ShapeTip): boolean {
   const a = v[c.kind === 'level' ? c.a : c.better]!, b = v[c.kind === 'level' ? c.b : c.than]!;
   if (c.kind === 'accepts-more') return a.sh === b.sh && a.count > b.count;
   if (c.kind === 'closer-to-ready') return a.sh < b.sh;
+  if (c.kind === 'upgrades-more') return a.sh === b.sh && a.count === b.count && upgrades(a.tiles) > upgrades(b.tiles);
   return a.sh === b.sh && a.count === b.count;
 }
 
+/**
+ * Tiles that do NOT bring the hand closer, but make it WIDER when they arrive.
+ *
+ * `ukeire` counts progress and cannot see this at all, and several of the book's tips are about
+ * exactly what it cannot see - `linked_blocks` says a block touching a finished run "carries hidden
+ * upgrades", which is a claim about tiles that keep you the same distance away and leave you
+ * waiting on more. Measured here by drawing each tile, trying every throw, and asking whether any
+ * of them leaves the hand the same distance out and wider than it started.
+ *
+ * Expensive - a few thousand shanten calls per hand - so it is computed only for the cards that
+ * need it, flagged by `wantUpgrades`.
+ */
+export function upgrades(tiles: TileKind[]): number {
+  const base = ukeire(tiles);
+  const held = new Map<TileKind, number>();
+  for (const k of tiles) held.set(k, (held.get(k) ?? 0) + 1);
+  let n = 0;
+  for (let k = 0; k < 34; k++) {
+    const left = 4 - (held.get(k) ?? 0);
+    if (left <= 0) continue;
+    const withK = [...tiles, k];
+    if (shanten(withK, 0) < base.sh) continue;                 // that is progress, not an upgrade
+    let best = base.count;
+    for (const drop of new Set(withK)) {
+      const rest = [...withK]; rest.splice(rest.indexOf(drop), 1);
+      const u = ukeire(rest);
+      if (u.sh === base.sh && u.count > best) best = u.count;
+    }
+    if (best > base.count) n += left;
+  }
+  return n;
+}
+
 function withCounts(t: ShapeTip): ShapeTip {
-  return { ...t, variants: t.variants.map((v) => { const u = ukeire(v.tiles); return { ...v, ukeire: u.count, kinds: u.kinds, shanten: u.sh }; }) };
+  return { ...t, variants: t.variants.map((v) => {
+    const u = ukeire(v.tiles);
+    return { ...v, ukeire: u.count, kinds: u.kinds, shanten: u.sh, upgrades: t.wantUpgrades ? upgrades(v.tiles) : undefined };
+  }) };
 }
 
 const TIPS: ShapeTip[] = [
@@ -158,6 +201,89 @@ const TIPS: ShapeTip[] = [
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'confirmed',
     verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw.',
+  },
+  {
+    id: 'escape_single_waits',
+    title: 'Break a finished shape to escape a lone-tile wait',
+    rule: 'Being ready but waiting on the last copies of one tile is worse than breaking the hand up and waiting again on something open.',
+    why: [
+      'A finished shape feels like an achievement, so it is hard to take apart. But what matters is not how tidy the hand is, it is how many tiles can end it.',
+      'Sitting on one tile means three copies at most, often fewer once the table has seen some. Opening the hand back up trades that for a wait several times wider.',
+    ],
+    variants: [
+      { label: 'Ready, but stuck on one tile', tiles: T('2w 3w 4w 5w 6w 7w 2t 3t 4t 6t 7t 8t 5s'), focus: T('5s') },
+      { label: 'Broken up — still ready, and open again', tiles: T('2w 3w 4w 5w 6w 7w 2t 3t 4t 6t 7t 5s 5s'), focus: T('6t 7t 5s 5s') },
+    ],
+    claim: { kind: 'accepts-more', better: 1, than: 0 },
+    verdict: 'confirmed',
+    verdictNote: 'Confirmed, and by more than you would guess. Both hands are ready; the one that gave up its finished shape waits on 8 tiles against 3. Nearly three times the chance to win, for a hand that looks worse.',
+  },
+  {
+    id: 'reset_via_runs',
+    title: 'A long run can re-form on a better wait',
+    rule: 'Five tiles in a row are not a set plus spares. They are a block that can be taken apart and put back together on a better wait, cheaply.',
+    why: [
+      'Three-four-five-six-seven can be read as 345 with 67 spare, or 567 with 34 spare, or a run plus a pair-to-be. Nothing is committed.',
+      'The same five tiles split into two rigid pieces cannot do any of that. Every tile is already spoken for.',
+    ],
+    variants: [
+      { label: 'One continuous run, 3w to 7w', tiles: T('3w 4w 5w 6w 7w 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('3w 4w 5w 6w 7w') },
+      { label: 'Same five tiles, split and rigid', tiles: T('3w 4w 5w 8w 9w 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('3w 4w 5w 8w 9w') },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'Confirmed by counting, both hands ready: the continuous run waits on 11 tiles from 3 kinds against 4 from 1. Same number of tiles, nearly three times the wait.',
+  },
+  {
+    id: 'sticky_one_away',
+    title: 'A floater with a neighbour beats a lone pair',
+    rule: 'Three sets and a pair, with something spare: the spare is worth more sitting next to a tile than sitting alone as a second pair.',
+    why: [
+      'A spare tile beside a neighbour can finish as a run, from either side. A spare pair can only ever finish as a triplet, from the two copies left.',
+      'The pair looks more solid, which is why it gets kept. It is the narrower of the two.',
+    ],
+    variants: [
+      { label: 'Spare tile with a neighbour (7w 8w)', tiles: T('2w 3w 4w 7w 8w 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('7w 8w') },
+      { label: 'Spare kept as a second pair (9w 9w)', tiles: T('2w 3w 4w 9w 9w 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('9w 9w') },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'Confirmed by counting, both ready: the neighbour waits on 8 tiles, the second pair on 4. Twice the wait for the shape that looks less finished.',
+  },
+  {
+    id: 'linked_blocks',
+    title: 'A block touching a finished run has hidden upgrades',
+    rule: 'Two blocks that need the same number of tiles are not equal. The one sitting against a completed run can improve in ways the other cannot.',
+    why: [
+      'Count the tiles that finish the hand and these two look identical, because they are.',
+      'The difference is in the tiles that are not progress at all — the ones that leave you the same distance away but waiting on more. A block touching a run has somewhere to grow. An isolated block has nowhere.',
+      'This is the tip that shows why counting acceptance is not the whole story, and it is why the card below shows a second number.',
+    ],
+    variants: [
+      { label: 'Block touching the run (4w5w6w + 7w9w)', tiles: T('4w 5w 6w 7w 9w 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('4w 5w 6w 7w 9w') },
+      { label: 'Block standing alone (4w5w6w + 2s4s)', tiles: T('4w 5w 6w 2s 4s 2t 3t 4t 6t 7t 8t 5s 5s'), focus: T('2s 4s') },
+    ],
+    claim: { kind: 'upgrades-more', better: 0, than: 1 },
+    wantUpgrades: true,
+    verdict: 'confirmed',
+    verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses.',
+  },
+  {
+    id: 'perfect_one_away',
+    title: 'Two open part-runs plus a pair',
+    rule: 'The book calls this the widest shape you can hold one tile from ready, and says not to tidy it.',
+    why: [
+      'Both part-runs can finish from either end and the pair is already settled, so on paper nothing competes for the same job.',
+      'It looks untidy, which is the reason people break it up.',
+    ],
+    variants: [
+      { label: 'Two open part-runs and a pair', tiles: T('2w 3w 4w 5w 6w 7w 3t 4t 6t 7t 5s 5s 9s'), focus: T('3t 4t 6t 7t 5s 5s') },
+      { label: '"Tidied" — one part-run traded for a pair', tiles: T('2w 3w 4w 5w 6w 7w 3t 4t 6t 6t 5s 5s 9s'), focus: T('3t 4t 6t 6t 5s 5s') },
+    ],
+    claim: { kind: 'level', a: 0, b: 1 },
+    wantUpgrades: true,
+    verdict: 'contradicted',
+    verdictNote: 'Not shown here. The two are exactly level on acceptance — 12 tiles each — and on the second measure the "tidied" version is ahead, 30 upgrade tiles against 14. Whatever makes this shape special at a Riichi table, it is not width at ours, and the tidier hand is not obviously worse.',
   },
   {
     id: 'four_tile_ranking',
