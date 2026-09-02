@@ -58,6 +58,12 @@ describe('the hand-shape tips', () => {
     expect(u.count).toBe(3);         // three 9s left
   });
 
+  it('says whose tiles each card shows', () => {
+    // a verdict on OUR reading of a tip is worth less than one on the book's own diagram, so the
+    // card must never leave that ambiguous
+    for (const t of SHAPE_TIPS) expect(['book', 'ours'], t.id).toContain(t.shapeFrom);
+  });
+
   it('says out loud which tips do NOT hold at this table', () => {
     // Not a style check: the page's honesty depends on these staying marked. If a verdict is ever
     // quietly upgraded to make the tutorial tidier, this fails.

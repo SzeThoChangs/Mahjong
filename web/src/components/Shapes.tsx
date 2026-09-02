@@ -54,7 +54,15 @@ function TipCard({ t }: { t: ShapeTip }) {
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">{t.title}</CardTitle>
-          <Badge className={cn('font-medium', v.tone)}>{v.label}</Badge>
+          <div className="flex items-center gap-2">
+            {/* whose tiles these are. The book gives a diagram for some tips and only words for
+                others, and a verdict on OUR reading of a tip is worth less than one on the book's
+                own shape. Say which, rather than borrowing its authority. */}
+            <Badge variant="outline" className="text-xs font-normal">
+              {t.shapeFrom === 'book' ? "the book's own shape" : 'our example'}
+            </Badge>
+            <Badge className={cn('font-medium', v.tone)}>{v.label}</Badge>
+          </div>
         </div>
         <p className="text-sm">{t.rule}</p>
       </CardHeader>

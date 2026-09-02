@@ -67,6 +67,15 @@ export interface ShapeTip {
   notWhen?: string;
   variants: Variant[];
   claim: Claim;
+  /**
+   * Where the tiles come from.
+   *
+   * `book` - the shape is the book's own diagram, read off the page.
+   * `ours` - the book states the rule in words with no diagram we can read, so the shape is our
+   *          reading of it. The verdict then tests OUR example, which is worth less, and the card
+   *          says so rather than borrowing the book's authority.
+   */
+  shapeFrom: 'book' | 'ours';
   /** compute the expensive upgrade count for this card's hands */
   wantUpgrades?: boolean;
   verdict: TipVerdict;
@@ -147,12 +156,13 @@ const TIPS: ShapeTip[] = [
   {
     id: 'five_blocks',
     title: 'Count blocks, not tiles',
-    rule: 'A hand is four sets and a pair. Five blocks. Count those, not tiles.',
+    rule: 'You need four sets and a pair. That is five blocks. Count blocks, not tiles.',
     why: [
-      'Every winning hand is five pieces. So the only question a shape asks is whether it is one of your five.',
-      'A sixth block costs you. Every tile in it is a tile you will throw later, and while you hold it you are short somewhere else.',
+      'Every winning hand is five pieces. So ask of any shape: is this one of my five?',
+      'A sixth block is tiles you will throw later. While you hold it you are short somewhere else.',
     ],
-    notWhen: 'Keep six when your two weakest are both middle waits. Let the wall pick.',
+    notWhen: 'Keep six if your two worst blocks are both middle waits. Let the wall choose.',
+    shapeFrom: 'ours',
     variants: [
       { label: 'Five blocks', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t 4t'), T('5t 6t'), T('9s 9s')], focus: [3, 4] },
       { label: 'Six blocks — the pair broken for a spare', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t 4t'), T('5t 6t'), T('9s'), T('2s')], focus: [4, 5] },
@@ -164,11 +174,12 @@ const TIPS: ShapeTip[] = [
   {
     id: 'pair_rule',
     title: 'One pair, keep two, break three',
-    rule: 'One pair is what you need. Two is fine, because the spare can become a triplet. Three is too many.',
+    rule: 'Fix one pair. Keep two. Break three.',
     why: [
-      'You need one pair. A second is useful too, because it can become a triplet.',
-      'A third adds nothing. All three finish the same way, so they compete with each other.',
+      'You need one pair to win. A second is still useful: if it becomes a triplet, the first is still your pair.',
+      'Three is too many. The book: with three pairs "each pair is doing less work than it would in a two-pair setup", because they all finish the same way.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Two pairs', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t'), T('5s 5s'), T('9s 9s'), T('4s')], focus: [3, 4] },
       { label: 'Three pairs', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 2t'), T('5s 5s'), T('9s 9s'), T('4s')], focus: [2, 3, 4] },
@@ -190,6 +201,7 @@ const TIPS: ShapeTip[] = [
       { label: 'The sandwich, in a hand', blocks: [T('4t 4t 6t 8t 8t'), T('2w 3w 4w'), T('6w 7w 8w'), T('3s 4s')], focus: [0] },
     ],
     claim: { kind: 'not-countable' },
+    shapeFrom: 'book',
     verdict: 'confirmed',
     verdictNote: 'This is the book\u2019s own example and its own claim, and it checks out exactly: 4筒, 5筒, 7筒 and 8筒 each leave one set and one pair, and nothing else does. Four kinds, from one block of five tiles.',
   },
@@ -198,9 +210,10 @@ const TIPS: ShapeTip[] = [
     title: 'The tile bridging two blocks works harder than it looks',
     rule: 'In a hand with no pair, a tile sitting between two part-runs is doing more than it appears. Do not cut it just because it looks spare.',
     why: [
-      'A 5 between 3-4 and 6-7 does two jobs. It extends either side, and it can pair up.',
-      'It gets thrown because it looks loose. It is the opposite.',
+      'A 5 sitting between 3-4 and 6-7 does two jobs. It joins either side, and it can pair up.',
+      'It gets thrown because it looks spare. It is the opposite.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Bridge kept — 5w joins 3-4w to 6-7w', blocks: [T('3w 4w 5w 6w 7w'), T('2t 3t'), T('6t 7t'), T('3s 4s'), T('7s 8s')], focus: [0] },
       { label: 'Bridge cut, a lone tile kept instead', blocks: [T('3w 4w'), T('6w 7w'), T('9s'), T('2t 3t'), T('6t 7t'), T('3s 4s'), T('7s 8s')], focus: [0, 1, 2] },
@@ -214,9 +227,10 @@ const TIPS: ShapeTip[] = [
     title: 'Break a finished shape to escape a lone-tile wait',
     rule: 'Being ready but waiting on the last copies of one tile is worse than breaking the hand up and waiting again on something open.',
     why: [
-      'A finished shape is hard to break up. But what counts is how many tiles can end the hand, not how tidy it looks.',
-      'One tile means three copies at most, usually fewer. Opening the hand up buys a much wider wait.',
+      'A finished hand is hard to break up. But what counts is how many tiles can end it, not how tidy it looks.',
+      'Waiting on one tile means three copies left at most, usually fewer. Breaking it open buys a much wider wait.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Ready, waiting on one tile', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s')], focus: [4] },
       { label: 'Broken up — still ready, now open', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t'), T('5s 5s')], focus: [3, 4] },
@@ -230,9 +244,10 @@ const TIPS: ShapeTip[] = [
     title: 'A long run can re-form on a better wait',
     rule: 'Five tiles in a row are not a set plus spares. They are a block that can be taken apart and put back together on a better wait, cheaply.',
     why: [
-      '3-4-5-6-7 can be read as 345 with 67 spare, or 567 with 34 spare. Nothing is committed yet.',
+      '3-4-5-6-7 can be read as 345 with 67 left, or 567 with 34 left. Nothing is fixed yet.',
       'The same five tiles in two separate pieces can do none of that. Every tile is already spoken for.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Five in a row, 3w to 7w', blocks: [T('3w 4w 5w 6w 7w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [0] },
       { label: 'Same five tiles, split apart', blocks: [T('3w 4w 5w'), T('8w 9w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [0, 1] },
@@ -246,9 +261,10 @@ const TIPS: ShapeTip[] = [
     title: 'A floater with a neighbour beats a lone pair',
     rule: 'Three sets and a pair, with something spare: the spare is worth more sitting next to a tile than sitting alone as a second pair.',
     why: [
-      'A spare beside a neighbour can finish as a run, from either side. A spare pair can only become a triplet, from the two copies left.',
+      'A spare tile with a neighbour can finish as a run, from either side. A spare pair can only become a triplet, from the two copies left.',
       'The pair looks solid, so it gets kept. It is the narrower one.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Spare with a neighbour', blocks: [T('2w 3w 4w'), T('7w 8w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [1] },
       { label: 'Spare kept as a second pair', blocks: [T('2w 3w 4w'), T('9w 9w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [1] },
@@ -262,10 +278,11 @@ const TIPS: ShapeTip[] = [
     title: 'A block touching a finished run has hidden upgrades',
     rule: 'Two blocks that need the same number of tiles are not equal. The one sitting against a completed run can improve in ways the other cannot.',
     why: [
-      'Count the tiles that finish the hand and these two are identical. They really are.',
-      'The difference is in tiles that are not progress: ones that leave you the same distance out but waiting on more. A block touching a run can grow. A lone block cannot.',
-      'This is why the card shows a second number.',
+      'Count the tiles that finish the hand and these two are the same. They really are.',
+      'The difference is in tiles that are not progress: ones that leave you the same distance out, but waiting on more. A block touching a run can grow. A lone block cannot.',
+      'That is why this card shows a second number.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Block touching the run', blocks: [T('4w 5w 6w 7w 9w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [0] },
       { label: 'Block on its own', blocks: [T('4w 5w 6w'), T('2s 4s'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [1] },
@@ -289,6 +306,7 @@ const TIPS: ShapeTip[] = [
       { label: 'Pair on the end — aryanmen', blocks: [T('2w 2w 3w 4w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s'), T('9s')], focus: [0] },
     ],
     claim: { kind: 'level', a: 1, b: 2 },
+    shapeFrom: 'book',
     verdict: 'contradicted',
     verdictNote: 'Half of it does not hold. Four in a row accepts 41 tiles; the other two accept 29 each. So the doubled middle is NOT near-equal to it — it is level with the shape the book calls weakest. Note what was tested: how many tiles improve the hand. The book is ranking the QUALITY of the wait you are left with, which counting does not see. Either way the practical rule here is simpler than the book\u2019s: keep the four in a row.',
   },
@@ -297,9 +315,10 @@ const TIPS: ShapeTip[] = [
     title: 'A 3 or a 7 is the best loose tile to keep',
     rule: 'Of the single tiles you might hold, 3 and 7 are the strongest. Counting cannot see why.',
     why: [
-      'A lone tile is worth what it can grow into. A 3 can become 1-2-3, 2-3-4 or 3-4-5. Two of those end at the edge.',
-      'Edge runs are easier to finish, because people throw edge tiles. A 5 has the same number of runs, but every one waits on a middle tile others are holding.',
+      'A lone tile is worth what it can grow into. A 3 can become 1-2-3, 2-3-4 or 3-4-5.',
+      'Two of those end at the edge, and people throw edge tiles. A 5 has as many runs, but each one waits on a middle tile that others keep.',
     ],
+    shapeFrom: 'ours',
     notWhen: 'This only decides which spare tile to keep. It never beats keeping a block you already have.',
     variants: [
       { label: 'Keep the 3', blocks: [T('3w'), T('2t 3t 4t'), T('6t 7t 8t'), T('2s 3s 4s'), T('6s 7s'), T('9s')], focus: [0] },
@@ -314,9 +333,10 @@ const TIPS: ShapeTip[] = [
     title: 'Not all bad waits are equally bad',
     rule: 'Waiting on the last two of one tile is weak — but a terminal or honour is close to a good wait, and a middle tile is the worst place to be.',
     why: [
-      'You need one of the two copies left. Everything depends on whether anyone will throw it.',
-      'Terminals and honours get thrown early, because they are worth little to most hands. A middle tile is useful to everyone, so your copies sit in other hands until the wall runs out.',
+      'You need one of the two copies left. It all depends on whether anyone will throw it.',
+      'People throw terminals and honours early, because they are worth little. A middle tile is useful to everyone, so your two copies sit in other hands until the wall runs out.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Waiting on the last two 9s', blocks: [T('9w 9w'), T('2t 3t 4t'), T('6t 7t 8t'), T('2s 3s 4s'), T('6s 6s')], focus: [0] },
       { label: 'Waiting on the last two 5s', blocks: [T('5w 5w'), T('2t 3t 4t'), T('6t 7t 8t'), T('2s 3s 4s'), T('6s 6s')], focus: [0] },
@@ -330,9 +350,10 @@ const TIPS: ShapeTip[] = [
     title: 'Tiles beside your own triplet',
     rule: 'The book says a tile next to a triplet you hold is weak, because you hold three of the copies it needs.',
     why: [
-      'The idea is that a tile is worth what can still arrive to join it, and you are holding much of that yourself.',
-      'But it cuts both ways. The triplet can lend a tile to a run: three 4s and a 3 is a set and a part-run at once.',
+      'The idea: a tile is worth what can still come to join it, and you are holding much of that yourself.',
+      'But it cuts both ways. The triplet can lend one tile to a run. Three 4s and a 3 is a set and a part-run at the same time.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: '3w beside your own three 4s', blocks: [T('3w'), T('4w 4w 4w'), T('2t 3t 4t'), T('6t 7t 8t'), T('2s 3s'), T('9s')], focus: [0, 1] },
       { label: 'A lone 9w instead', blocks: [T('9w'), T('4w 4w 4w'), T('2t 3t 4t'), T('6t 7t 8t'), T('2s 3s'), T('9s')], focus: [0, 1] },
@@ -346,9 +367,10 @@ const TIPS: ShapeTip[] = [
     title: 'A wide wait can be worth less than a narrow one',
     rule: 'At a 2-tai table, a winning tile that leaves you under the minimum is not a winning tile. Count the outs that can actually be declared.',
     why: [
-      'Every other tip about waits assumes any tile that completes the hand ends it. Here it does not. You can finish and still not be allowed to declare.',
-      'So an eight-tile wait worth 0 tai is worth nothing. A four-tile wait that reaches 2 tai is worth having.',
+      'Every other wait tip assumes any tile that completes the hand ends it. Here it does not. You can finish and still not be allowed to declare.',
+      'So an eight-tile wait worth 0 tai is worth nothing, and a four-tile wait that reaches 2 tai is worth having.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'Ready, waiting on 4w and 7w — eight tiles, all dead', blocks: [T('2w 2w 2w'), T('3w 3w'), T('5w 6w'), T('7t 7t'), T('8t 8t'), T('9t 9t')], focus: [2] },
     ],
@@ -361,10 +383,11 @@ const TIPS: ShapeTip[] = [
     title: 'Which pair will actually become a triplet',
     rule: 'Measured on this table: a wind pair completes 69% of the time, a dragon 66%, a terminal 59%, a 2 or 8 48%, a middle tile 39%.',
     why: [
-      'You finish a triplet from a tile someone throws, or one you draw. Middle tiles stay in other hands because they are useful there, so your copies never come out.',
-      'Winds and dragons are the opposite. They are useless to anyone without a pair already, so they come out early and you claim them.',
-      'This is also why a value pair is worth more than it looks here. Easiest to finish, and it arms the hand.',
+      'You finish a triplet from a tile someone throws, or one you draw. Middle tiles stay in other hands, so your copies never come out.',
+      'Winds and dragons are the opposite. They are no use to anyone without a pair already, so they come out early and you claim them.',
+      'That is also why a value pair is worth more than it looks here. Easiest to finish, and it arms the hand.',
     ],
+    shapeFrom: 'ours',
     variants: [
       { label: 'A wind pair — completes 69% of the time', blocks: [T('E E'), T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t 4t'), T('6t 7t')], focus: [0] },
       { label: 'A middle pair — 39%', blocks: [T('5s 5s'), T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t 4t'), T('6t 7t')], focus: [0] },
