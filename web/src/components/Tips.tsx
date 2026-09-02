@@ -27,7 +27,8 @@ const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }
   level: { label: 'Level', tone: 'bg-muted text-muted-foreground', blurb: 'The two shapes come out the same.' },
   'needs-play': { label: 'Cannot be settled by counting', tone: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200', blurb: 'The claim is about what opponents throw, so only played hands can answer it. Not measured yet.' },
   measured: { label: 'Measured on real hands', tone: 'bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200', blurb: 'Measured over played hands at this table rather than adapted from the book.' },
-  advice: { label: 'Advice, not a claim', tone: 'bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200', blurb: 'About how to play rather than about tiles, so nothing here can test it. Kept because it is worth reading, not because it was checked.' },
+  'table-rule': { label: 'How this table works', tone: 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100', blurb: 'A rule of this table, read off the table configuration. Not a theory and not a measurement.' },
+  advice: { label: 'Advice, not a claim', tone: 'bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200', blurb: 'A way of playing or thinking rather than something that can be true or false, so nothing here can test it. Kept because it is worth reading, not because it was checked.' },
 };
 
 /** The order a hand happens in, which is the order the page runs in. */

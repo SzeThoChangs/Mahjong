@@ -46,7 +46,7 @@ describe('the hand-shape tips', () => {
     // a verdict that came from counting them
     for (const t of TIPS.filter((x) => x.variants.length === 0)) {
       expect(t.claim.kind, `${t.id}: no example hands, so its claim cannot be countable`).toBe('not-countable');
-      expect(['measured', 'needs-play', 'advice', 'contradicted'], `${t.id}`).toContain(t.verdict);
+      expect(['measured', 'needs-play', 'advice', 'contradicted', 'table-rule'], `${t.id}`).toContain(t.verdict);
     }
   });
 
