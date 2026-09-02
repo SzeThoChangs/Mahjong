@@ -370,6 +370,52 @@ opponent has but never what they are, so a dragon pong and a chow are the same i
 and is the one the book spends eleven tips on.
 
 
+### The one thing we shipped is worth about a third of what we claimed (2026-09-02)
+
+`legalWait` is the only change this project has ever made to the coach, and it went in at
++0.048 +/- 0.013 chips a game over 90,000 paired deals on twelve wall seeds. Its own entry above
+carries the warning that the effect halved when it was tested harder - 0.072 in the first batch,
+0.035 in the second - and the honest reading recorded there was that the truth was nearer the
+pooled figure than the exciting one.
+
+The named shuffle library made a real test possible for the first time: `shuffle-200001` onwards is
+a range nothing in this project has ever been fitted, swept or confirmed on. The arm REMOVES the
+rule, so a real effect reads negative:
+
+```
+  120,000 paired deals, shuffle-200001..230000, coach WITHOUT the rule
+
+  seat 1   -0.01 +/- 0.02        seat 3   -0.05 +/- 0.02
+  seat 2   -0.02 +/- 0.03        seat 4   +0.01 +/- 0.02
+
+  overall  -0.018 +/- 0.012      t = -1.5, inside two standard errors
+```
+
+**So the rule is worth about +0.018, not +0.048, and on deals it was never fitted to it does not
+clear two standard errors.** The sequence over the whole life of this result is 0.072, then 0.035,
+then 0.049, pooling to 0.048 across twelve fitted seeds - and then 0.018 on virgin deals. That is
+what the winner's curse looks like from the inside. Every stage of it was measured honestly and the
+number still came down by two thirds the moment it met deals nobody had chosen.
+
+**The rule fires, so this is a verdict and not an empty measurement.** `tools/_waitrate.ts` over
+9,992 discard decisions: a throw leaves the hand ready on 13.55% of them, which is the only place
+the rule speaks at all, and it changes the throw on 4.06% of those - one discard in 180. A rule that
+never fired would have returned this same near-zero, and FINDINGS already carries a session lost to
+exactly that confusion, so the check comes first now.
+
+**It stays on.** The point estimate is still on its side, three of the four seats lean the right
+way, and the reasoning is sound in a way that does not depend on the measurement: counting winning
+tiles that the table's minimum forbids you to declare is wrong on its face, whatever it is worth in
+chips. Keeping it costs nothing if it is truly zero. But the claim in the app and in this file is
+now +0.018 +/- 0.012 on unseen deals, not +0.048, and nobody should quote the larger number again.
+
+**What this says about the other results here.** Every figure in this file measured before
+2026-09-02 was measured on deals that were, in one way or another, chosen - a handful of seeds, all
+of them tried, the good ones reported. This is the first result measured on deals picked in advance
+by name and never looked at before. The one thing it was pointed at shrank by two thirds. That is
+not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
+strong reason to re-run any POSITIVE result on a fresh range before believing its size.
+
 ### The third gap from the tactics book is real, was invisible in our data, and pays nothing (2026-09-02)
 
 The gap: the coach sees how MANY melds an opponent has and never what they are, so a dragon pong and

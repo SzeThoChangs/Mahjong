@@ -46,19 +46,32 @@ chair 1 is East a quarter of the time - and that output reads as a seat-wind edg
 `.claude/launch.json` and `web/vite.config.ts` needed changes to run the dev server at all, because
 the repo path contains a ':'.
 
-## Running overnight (started 2026-09-02, ~07:10)
+## The overnight run finished, and it cut our headline result by two thirds
 
-`headtohead.ts 30000 plainwait --from 200001` -> `data/gen/h2h-plainwait-fresh.log`.
+`legalWait` - the ONLY change this project has ever shipped - was tested on `shuffle-200001..230000`,
+a range nothing here has ever been fitted or swept on. 120,000 paired deals:
 
-The only change this project has ever shipped is `legalWait`, at +0.048 +/- 0.013. It was fitted and
-confirmed on twelve wall seeds, and its effect already halved once when tested harder (0.072 in the
-first batch, 0.035 in the second). It has never been tried on deals nothing was fitted on. Now that
-deals have names, shuffle-200001 onwards is a range nothing here has ever touched.
+```
+  coach WITHOUT the rule:  -0.018 +/- 0.012      t = -1.5, inside two standard errors
+```
 
-The arm REMOVES the rule, so a real effect reads about **-0.048**. Near zero means the rule is worth
-nothing on fresh deals and should come off by default. A large positive would mean the flag has come
-unwired, not that the rule is bad. Harness self-check on the same range returned exactly
-+0.000 +/- 0.000 before it started.
+It shipped at **+0.048 +/- 0.013**. On deals nobody chose it is worth about **+0.018** and does not
+clear two standard errors. The whole history reads 0.072, 0.035, 0.049, pooled 0.048 on twelve
+fitted seeds, then 0.018 on virgin deals - the winner's curse, measured honestly at every stage and
+still shrinking by two thirds the moment the deals were picked in advance.
+
+The rule FIRES, so this is a verdict and not an empty measurement: `tools/_waitrate.ts` says a throw
+leaves the hand ready on 13.55% of decisions - the only place the rule speaks - and it changes the
+throw on 4.06% of those, one discard in 180.
+
+**It stays on**, because the point estimate still favours it, three of four seats lean the right way,
+and counting winning tiles the table forbids you to declare is wrong on its face whatever it pays.
+But the honest number is +0.018 +/- 0.012 and the larger one should not be quoted again.
+
+**The rule this suggests for everything else here.** Every positive result in FINDINGS was measured
+on deals that were chosen - a few seeds, all tried, the good ones reported. Re-run any positive
+result on a fresh named range before believing its SIZE. The negative results had no incentive to be
+lucky and can stand.
 
 ## Next, asked for on 2026-09-02: hand shapes in the quiz
 
