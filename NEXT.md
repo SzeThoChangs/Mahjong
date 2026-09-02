@@ -44,23 +44,32 @@ Six tips are tagged. The rest need something the tagger does not have: `five_blo
 `six_blocks_ok` need an agreed block decomposition, `narrow_can_beat_wide` needs the hand scored for
 tai. Both are buildable and both would raise the share of the pack that can teach a shape.
 
-## What is left of the book
+## The book is all on the page now, and 32 of it is untested
 
-Of the 102 rules in `knowledge/playbook.json`, 18 now have cards and every one of them is in the
-`build` phase, which is 18 of that phase's 28. Ten build rules are left: `keep_floaters`,
-`isolate_triplet`, `full_hand_over_partial`, `flush_decided_early`, `project_bad_draws`,
-`break_mediocre_ready`, `weak_start_pivot`, `evaluators`, `mf2_half_color_easier` and
-`threshold_rises`.
+Every rule in `knowledge/playbook.json` has a card in the Tips tab - 102 of them, plus one of our
+own about honour waits. They are grouped by where in a hand they apply, and each carries a badge
+saying what backs it: 9 settled by counting, 40 measured, 3 measured against the book, 5 that are
+rules of this table, 14 that are advice about the player, and 32 untested.
 
-Nothing outside `build` has a card at all: 16 rules about discarding, 15 about calling, 13 about
-reading, 12 about pushing and folding, 12 meta and 6 about the deal. Two reading rules were measured
-and played for money without ever becoming cards - `wall_reading` and `value_from_melds` - and both
-paid nothing.
+**The 32 are the work that is left.** They are real claims nobody here has checked, and several are
+cheap with tools that already exist:
 
-The 16 discard rules are the ones to be careful with. They are almost all about danger, and the
-coach already prices danger continuously; four attempts to price a true read have now returned
-nothing. Measuring them is worth doing, teaching them is worth doing, and putting them in
-`rankDiscards` is the thing that keeps failing.
+- what an opponent declined to claim (`two_discard_piles`) - the recorded hands hold it and nothing
+  reads it
+- whether shedding a pair makes its neighbours safe (`pair_discards_rule_out`) - the same shape of
+  claim as the walled-tile read, which the reads pipeline answered in an afternoon
+- which copy of a value tile gets claimed (`second_copy_call`) - fires often here and needs only the
+  meld log
+- whether a wind thrown to the player before you buys the turn it is supposed to
+  (`wind_discard_order`) - turns are worth real money at this table
+
+**Be careful with the danger ones.** Most of the discard rules are about safety, the coach already
+prices safety continuously, and four true reads have now returned nothing when priced. Measure them,
+teach them, and do not put them in `rankDiscards`.
+
+**The largest known blind spot is `value_from_melds`.** The coach counts how many sets an opponent
+has exposed and never looks at what they are, so a dragon pong and a run of 3-4-5 are the same input
+to it. Eleven of the book's tips turn on that difference.
 
 ## Habits that keep proving themselves
 

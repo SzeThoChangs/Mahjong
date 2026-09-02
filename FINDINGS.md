@@ -460,6 +460,47 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### Every rule in the playbook now has a card, and most of them are untested (2026-09-03)
+
+The Shapes tab is the Tips tab, and it carries all 102 rules in `knowledge/playbook.json` rather
+than the 18 shape ones. 103 cards, grouped by where in a hand they apply, each with the rule in
+plain English, the reasoning, and a badge saying what backs it.
+
+The mix is the useful output, because it is an honest inventory of what this project actually knows:
+
+```
+  settled by counting the tiles on the card       9
+  measured on played hands                       40
+  measured and came out against the book          3
+  rules of this table rather than advice          5
+  advice about the player, not about tiles       14
+  untested                                       32
+```
+
+**Half of the measured ones are not ours.** They come from the data-analytic study this table's
+numbers were taken from, and the cards say so line by line rather than letting the badge imply we
+ran them. The distinction matters: the study's author simulated this table, we simulated ours, and
+where the two can be compared they agree - the study puts the colour hand at 32% of the opening book
+at a 2 tai minimum, and four of our coaches choosing for themselves win a colour hand 31.7% of the
+time.
+
+**Where they disagree is more interesting.** The study reports 14% of hands drawn at a 2 tai
+minimum. Four coaches playing each other draw under 1%. Neither is wrong: a draw rate is a fact
+about the players, and four bots that all reliably reach 2 tai will not draw. That is the same
+lesson as the suit read, in a place nobody would have looked for it.
+
+**One card is now marked as contradicted for a reason worth keeping.** `binary_commitment` says push
+or fold and never both. Measured here, the in-between is what wins: a rule that switched the coach
+into folding lost twice, and pricing every throw continuously - what it does for the hand minus what
+it hands the table - is what is shipped and what beat it. What was tested is a coach that can price
+in chips rather than a person who cannot, and the card says that too.
+
+**32 untested cards is the real finding.** Most of the book has never been checked here, and the
+page now says so on each card rather than presenting all of it with the same confidence. Several are
+cheap to settle with tools that already exist: what an opponent declined to claim, whether a shed
+pair makes its neighbours safe, which copy of a dragon gets called, and whether a wind thrown to the
+player before you buys the turn it is supposed to.
+
 ### The good waits rank the same way the bad ones do, and by about as little (2026-09-03)
 
 `edge_waits_stronger` says that between two two-sided waits the one nearer the edge wins, because
