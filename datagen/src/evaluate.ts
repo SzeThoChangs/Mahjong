@@ -8,7 +8,7 @@
  * EV = mean chips delta for the acting seat at the end of the hand, over n rollouts per action.
  */
 import { Worker, parentPort, workerData } from 'node:worker_threads';
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
@@ -34,7 +34,7 @@ import { SE_VERSION } from './se.js';
  * plan they cannot execute.
  */
 export type Policy = 'fast' | 'shanten' | 'efficiency' | 'coach';
-export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean }
+export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean; only?: ReadonlySet<string> }
 /** Outcome mix for one action, from the acting seat's point of view.
  *  `w` keys are `<role><fan>` where role is: W self-draw win, D discard win, s pays the shooter share,
  *  o pays the other share, z pays a self-draw share, l pays everything (pay-all), n pays nothing, d draw.
@@ -172,8 +172,25 @@ export function decisionsOfHand(hand: HandRecord, rules: RulesConfig, randomness
   return out;
 }
 
-/** Pick decisions to evaluate: `hands` sampled hands (deterministic), `perHand` decisions each, only decisions with a real choice. */
+/**
+ * Pick decisions to evaluate: `hands` sampled hands (deterministic), `perHand` decisions each, only
+ * decisions with a real choice.
+ *
+ * `a.only` overrides all of that and grades exactly the listed decisions, keyed `g:h:d`.
+ *
+ * It exists because the expensive graders are ruinously slow and most decisions are not worth their
+ * time. Only about 4% of decisions come out with a best action the play-outs can separate, and those
+ * are the only ones any comparison can use - the rest are ties, where two graders disagree simply
+ * because there is nothing to agree about. Grading cheaply first, keeping the decisions that came
+ * out clear, and spending the slow grader ONLY on those turns an eight-hour run worth 58 usable
+ * comparisons into one worth about 1,400.
+ *
+ * It is also the right population rather than merely the affordable one: the quiz picks its
+ * questions by exactly this test, so "positions the shipped grader is sure about" is the set we
+ * actually care about agreeing on.
+ */
 export function selectDecisions(dir: string, a: EvalArgs, rules: RulesConfig): { hand: HandRecord; decisions: DecisionRecord[] }[] {
+  if (a.only) return selectListed(dir, a, rules, a.only);
   const hands = loadHands(dir).filter((_, i) => i % a.workers === a.workerIndex);
   const rng = makeRng(a.seed + a.workerIndex);
   const chosen = new Map<string, HandRecord>();
@@ -191,6 +208,32 @@ export function selectDecisions(dir: string, a: EvalArgs, rules: RulesConfig): {
     out.push({ hand, decisions: pick });
   }
   if (drifted) console.error(`[w${a.workerIndex}] ${drifted} hands did not replay under the current engine and were skipped`);
+  return out;
+}
+
+/** Grade exactly the decisions named in `only`, sharded across workers by hand. */
+function selectListed(dir: string, a: EvalArgs, rules: RulesConfig, only: ReadonlySet<string>): { hand: HandRecord; decisions: DecisionRecord[] }[] {
+  const wanted = new Map<string, Set<number>>();
+  for (const key of only) {
+    const bits = key.split(':');
+    if (bits.length !== 3) throw new Error(`bad decision key ${key}, expected g:h:d`);
+    const hk = `${bits[0]}:${bits[1]}`;
+    (wanted.get(hk) ?? wanted.set(hk, new Set()).get(hk)!).add(Number(bits[2]));
+  }
+  const hands = loadHands(dir).filter((x) => wanted.has(`${x.g}:${x.h}`));
+  const mine = hands.filter((_, i) => i % a.workers === a.workerIndex);
+  const out: { hand: HandRecord; decisions: DecisionRecord[] }[] = [];
+  let drifted = 0, missing = 0;
+  for (const hand of mine) {
+    const all = decisionsOfHand(hand, rules, a.randomness);
+    if (!all) { drifted++; continue; }
+    const want = wanted.get(`${hand.g}:${hand.h}`)!;
+    const pick = all.filter((d) => want.has(d.d));
+    missing += want.size - pick.length;
+    if (pick.length) out.push({ hand, decisions: pick.sort((x, y) => x.d - y.d) });
+  }
+  if (drifted) console.error(`[w${a.workerIndex}] ${drifted} listed hands did not replay and were skipped`);
+  if (missing) console.error(`[w${a.workerIndex}] ${missing} listed decisions were not found in their hand`);
   return out;
 }
 
@@ -233,6 +276,8 @@ if (parentPort) {
   const base: Omit<EvalArgs, 'workerIndex'> = {
     dir, hands: Number(arg('hands', '50')), perHand: Number(arg('per-hand', '4')), rollouts: Number(arg('rollouts', '32')),
     mode: (arg('mode', 'sampled') as 'sampled' | 'oracle'), policy: (arg('policy', 'shanten') as Policy), seed: Number(arg('seed', '1')), workers, adaptive: process.argv.includes('--adaptive'), resume: process.argv.includes('--resume'),
+    // --only <file>: one `g:h:d` per line, grade exactly those and nothing else
+    only: arg('only') ? new Set(readFileSync(arg('only')!, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)) : undefined,
     coupled: !process.argv.includes('--no-coupled'),   // position-keyed rollout randomness; --no-coupled reproduces pre-2026-08-26 runs
     rulesOverride: arg('rules') ? JSON.parse(arg('rules')!) : {}, randomness: arg('randomness') ? JSON.parse(arg('randomness')!) : { ranked: [0.7, 0.15, 0.1], random: 0.05 },
   };
