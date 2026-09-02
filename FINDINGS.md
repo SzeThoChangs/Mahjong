@@ -460,6 +460,51 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### The dataset is regenerated, and the tips were scored again on it (2026-09-03)
+
+`run-coach2` is graded. 150,000 hands played by four coaches, 7,233,486 decisions recorded in 45
+minutes, and 479,889 of them graded in 8h 8m at 16.4 decisions a second, with 0 errors and 0 failed
+workers. Every check from NEXT passed: the manifest records `['coach','coach','coach','coach']`,
+generation ran at 56 hands/s rather than the 329 of the run where `--bots coach` silently did
+nothing, and the replay is exact - `quizpack` reports 0 drifted hands and 0 mismatched decisions
+over 10,161 replayed hands.
+
+The quiz pack and the film room are rebuilt from it. 4,999 questions and 180 replay hands, both
+sitting beside the old `run-money4` ones rather than replacing them, so the two populations can be
+compared inside the app.
+
+**The pack is early-light and it is the run's own fault, not the sampler's.** Only 1.5% of early
+discards separate by two standard errors, against 6.5% at mid and 16.6% late, so the early stratum
+had 2,432 decisive positions to fill about 1,700 places and the pack came out 30% early against the
+run's 41%. Closer than the old pack, which was 17% early against 37%, and still not level.
+
+**Scoring the tips on it replicates the two big results exactly.**
+
+```
+                       coach pack (4,147 discards)      money pack (4,079 discards)
+  escape_single_waits   303 resolved  89%  47%  +14.7    129 resolved  89%  47%   +9.8
+  pair_rule             222 resolved  30%  66%  -11.9     87 resolved  31%  66%   -7.3
+  threes_and_sevens      48 resolved  56%  47%   +1.3     20 resolved  50%  52%   -0.2
+  triplet_adjacency      50 resolved  12%  41%   -4.3     32 resolved  47%  40%   +0.9
+```
+
+`escape_single_waits` gives 89% against 47% in both, on two populations that play differently.
+`pair_rule` fails in both, in every split: restricted to positions where the alternative is a spare
+number tile it is z = -11.6 on coach hands and -7.4 on the old ones, and restricted to hands two or
+more tiles from ready it is -2.7 and -3.7. Two populations, four ways of cutting it, same answer.
+
+**`triplet_adjacency` is where they disagree, and the disagreement is the finding.** The tip says
+a spare beside your own triplet is weak because you are holding the tiles it needs. Counting agrees
+and always did. But the tile the tip points at is in the biggest suit of the hand 63% of the time,
+while the spare it prefers you keep is in that suit only 25% of the time. So the tip is largely
+telling you to throw your longest suit. Against bots that never collect a suit that costs little;
+at a table of coaches, whose biggest suit is 61% of the tiles they hold against 53% for the old
+bots, it is wrong 88% of the time. Same tip, same counting, opposite advice, and the thing that
+decides it is whether the table plays colour hands.
+
+That is the same lesson as the suit read and the honour wait, which is now three for three: a claim
+about what to do with a tile cannot be measured without saying who else is at the table.
+
 ### The pair rule is right about width and wrong about what to throw (2026-09-03)
 
 Counting settles what a shape ACCEPTS and nothing else, and every verdict in the Shapes tab until

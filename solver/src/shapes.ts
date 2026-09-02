@@ -429,8 +429,9 @@ const TIPS: ShapeTip[] = [
     ],
     claim: { kind: 'accepts-more', better: 1, than: 0 },
     shapeFrom: 'ours',
-    verdict: 'confirmed',
-    verdictNote: 'Confirmed, and this card was WRONG until now. It said "not true here" because the old test compared the 3w against a different, weaker floater. The right test keeps the 3w and moves the triplet: 22 tiles when you hold the 4s, 35 when you do not. A third of the acceptance, for the same tile.',
+    notWhen: 'It stops meaning what it says when the tile beside the triplet is in the suit you are collecting, which is most of the time.',
+    verdict: 'measured',
+    verdictNote: 'The counting is not in doubt: 22 tiles when you hold the three 4\u842c, 35 when the triplet is somewhere else, for the same 3\u842c. Whether it is good ADVICE depends on who is at the table. On 50 graded positions from hands the coach played, the measured best threw the other spare instead 88% of the time against 59% expected; on hands played by the weaker bots it leant the tip\u2019s way, on 32 positions, which is too few to lean on. The reason is probably which tile the tip points at. The tile beside your triplet is in the biggest suit of your hand 63% of the time and the other spare only 25%, so at a table that collects suits the tip keeps telling you to throw the suit you are collecting.',
   },
   {
     id: 'count_your_outs',
