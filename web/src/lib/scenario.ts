@@ -48,7 +48,11 @@ export interface Scenario {
   melds: Meld[];
   bonus: TileKind[];
   ranking: Ranking;           // the book coach - now the EXPLAINER, not the grader
-  policyRanking: PolicyRanking; // the learned model - the grader (it is $0.56/decision better)
+  /** The learned model's opinion. NOT the grader - the coach is, because the coach is what wins
+   *  money: this model picks the measured-best tile more often (69.8% against 52.8%) and loses
+   *  0.544 +/- 0.144 chips a game, measured three times. The comment here used to call it "the
+   *  grader ($0.56/decision better)", written before it was ever played for money. */
+  policyRanking: PolicyRanking;
   interesting: boolean;
   naivePick: TileKind;       // what the baseline bot would discard
   discards: { seat: number; kind: TileKind; claimed: boolean }[];   // the pool, in order thrown
