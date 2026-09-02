@@ -460,6 +460,82 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### Three of the untested reads, answered: one real, one empty, one backwards (2026-09-03)
+
+NEXT named four reads as cheap to settle with the tools that already exist. Three of them are now
+measured on both populations - 25,000 hands the coach played against itself, and 25,000 replayed
+from `run-money4` whose bots have no value model at all. All three are asked PER OPPONENT, because
+pooling three seats lets two players who never saw the tile dilute a read about the one who did.
+
+**`pair_discards_rule_out` is real, and it is the first read here that does not depend on who is
+playing.** When a seat throws two copies of the same tile out of hand, the tiles beside it are
+measurably safer against that seat:
+
+```
+                        one rank away   elsewhere   ratio      z
+  coach hands              0.419%        0.609%     x0.69    -9.6
+  run-money4               0.229%        0.318%     x0.72    -6.1
+```
+
+About a third safer, at every stage of the hand, and the two populations agree to three points.
+Two ranks away is smaller and inconsistent - x0.65 against the coaches, x0.86 against the weak bots -
+so the rule to carry is the immediate neighbour and nothing wider. The book's exception, that a 2 or
+an 8 pair leaves a terminal wait live, has not been tested separately.
+
+**`two_discard_piles` is the discard pile.** The book calls the tiles an open hand declined the
+richest read available here. Mechanised as "a copy of this went past that seat uncalled", it is
+worth about half:
+
+```
+                     passed them   never thrown   their own discards
+  coach hands           0.359%        0.586%           0.085%
+  run-money4            0.220%        0.317%           0.116%
+```
+
+Which looks strong until it is put beside the discount everybody already has. The plain
+already-been-thrown discount on the same hands is x0.41-0.50 for a middle tile at the coach table,
+and the per-opponent version is x0.57-0.64. In every cell of both populations the per-opponent read
+is the same size or WEAKER than simply noticing the tile is on the floor.
+
+The reason is obvious after the fact and was not before: every tile that gets discarded goes past
+all three opponents, so "they declined it" and "it has been thrown" are nearly the same event. The
+column worth keeping is the third one - a seat's OWN discards deal in four to eight times less often
+than a fresh tile, which is far stronger than either. The book's narrower claim, about a tile that
+would obviously complete their VISIBLE shape passing uncalled, needs a claim-eligibility model and
+remains untested.
+
+**`second_copy_call` comes apart into a half that survives and a half that is backwards.** The tip
+says a player who claims only the second copy of a dragon is cheap but assembled. Every seat was
+grouped by its first honour claim and the hand played to the end:
+
+```
+  coach hands, 20,000       seats   ready at the end   won    tai when they won
+    took the first copy     14,887       53.9%        32.5%        3.45
+    took a later copy          764       64.4%        38.1%        3.73
+    claimed no honour       64,349       40.9%        22.9%        2.91
+```
+
+"Assembled" is right and it survives its control. A later copy is thrown later, so a seat claiming
+one is claiming later in the hand, and a hand that has run longer is further along whatever it
+claimed - but held at the turn of the claim the gap stays: 55.9% against 63.7% for claims from turn
+20, and 65.1% against 72.6% from turn 40.
+
+"Cheap" is false. Those hands were worth the same or more, 3.73 tai against 3.45, and won more
+often. Against `run-money4` there is no readiness gap at all in any band. So the read is
+population-dependent where it works and wrong where it does not, and following it would tell you to
+relax about the player you should fear most.
+
+What is not in doubt is the coarse version underneath it. Any seat that has claimed a dragon or a
+wind is ready far more often than one that has not - 54 to 64% against 41% - and that is a bigger
+signal than anything about which copy.
+
+**Four reads have now been measured and priced, and none of them was worth chips.** The wall, the
+suit, the melds, and the danger sweep. Two more are now measured and not yet priced, and one of them
+is not worth pricing at all. The pattern is consistent enough to stop asking "is this read true" as
+if that were the interesting question: the coach already prices every discard continuously, and a
+better estimate of the PROBABILITY of dealing in has never moved the money. What has never been
+tried is the price - what a deal-in costs when the opponent's visible hand is expensive.
+
 ### Every rule in the playbook now has a card, and most of them are untested (2026-09-03)
 
 The Shapes tab is the Tips tab, and it carries all 102 rules in `knowledge/playbook.json` rather

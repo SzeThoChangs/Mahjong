@@ -1249,8 +1249,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and not modelled either: nothing in the coach records what an opponent declined. The information is in the recorded hands, so this is measurable with the tools that already exist.',
+    verdict: 'measured',
+    verdictNote: 'Measured, and the mechanical version of it turns out to be the ordinary discard pool wearing different clothes. A tile that went past a seat uncalled deals in to that seat about half as often as one that has never been thrown — but that is the same discount you already get from the tile simply being on the floor, and in every cell of both populations it is the same size or slightly weaker. The reason is obvious once measured: every tile that is discarded goes past everybody, so "they declined it" and "it has been thrown" are nearly the same event. Their OWN discards are the genuinely safe ones, four to eight times safer than a fresh tile. The book\u2019s narrower claim — a tile that would obviously complete their VISIBLE shape passing uncalled — is a different measurement and is still untested.',
   },
   {
     id: 'discard_provenance',
@@ -1277,8 +1277,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here. It is the same shape of claim as the walled-tile read, which was true at three to five times and worth nothing in chips, so a good guess is that this is real and also unprofitable — but that is a guess.',
+    verdict: 'measured',
+    verdictNote: 'Measured on both populations and it holds in both. Against a seat that has thrown two copies of a tile out of hand, a tile one rank away from it deals in to THEM at 0.42% against 0.61% for a tile elsewhere in the hand — about a third safer, and the same answer against the weaker bots, 0.23% against 0.32%. It holds at every stage of the hand and it is one of the few reads that does not depend on who is playing. The book\u2019s exception for a 2 or an 8 has not been tested separately.',
   },
   {
     id: 'discarded_value_pair',
@@ -1305,8 +1305,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here. It is the most specific read in the book and it fires often at this table, because honours are worth a tai each and hands open early — which makes it one of the better things to point the reads pipeline at next.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on both populations, and the two halves of the tip come apart. "Assembled" survives against strong players: at a table of coaches a seat that claimed a later copy was ready at the end 64% of the time against 54% for one that took the first copy, and it holds inside every turn band, so it is not just that a later copy is claimed later. Against the weaker bots there is no gap at all. "Cheap" is false in both — those hands scored the same or more when they won, 3.73 tai against 3.45 at the coach table, and won more often. So the read points the wrong way exactly where it matters, telling you to relax about the player you should be most worried about. What is not in doubt is the coarser version: any seat that has claimed a dragon or a wind is ready far more often than one that has not, 54-64% against 41%.',
   },
   {
     id: 'concealed_kong_signal',
