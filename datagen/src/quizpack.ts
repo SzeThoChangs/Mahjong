@@ -14,6 +14,7 @@ import { pairedSe, separationT, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
+import { liveCalls } from 'sg-mahjong-solver';
 import type { HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
@@ -75,10 +76,26 @@ const totalSeen = [...seen.values()].reduce((a, b) => a + b, 0);
 const chosen: Ref[] = [];
 const shortfall: string[] = [], drawnThin: string[] = [];
 const strata = [...seen.entries()].sort((a, b) => b[1] - a[1]);
+/**
+ * How many candidates each stratum draws for every question it will keep.
+ *
+ * The pack is meant to TEACH the shape tips as well as ask questions, and a tip can only be named
+ * on a position it is actually about - three pairs in the hand, a spare beside your own triplet, two
+ * ways to stay ready. Those positions are a minority, so a pack drawn straight from the decisive
+ * pool names a shape on very few of its questions and some tips never come up at all.
+ *
+ * So each stratum draws more decisive positions than it needs and drops the untagged ones first when
+ * it trims back to size. The stratum mix is unchanged - every stratum still ends at the same count -
+ * and nothing is selected on its ANSWER, only on whether a named shape is what the question is
+ * about. Above about 2 the extra replays cost more than the coverage is worth.
+ */
+const OVERDRAW = 1.6;
+const want = new Map<string, number>();
 for (const [stratum, n] of strata) {
   const target = Math.round((n / totalSeen) * maxQ);
+  want.set(stratum, target);
   const pool = shuffle(decisive.get(stratum) ?? []);
-  const take = pool.slice(0, target);
+  const take = pool.slice(0, Math.round(target * OVERDRAW));
   if (take.length < target) {
     // not enough decisive positions in this stratum: fall back to its closest calls, hardest first
     const backfill = (close.get(stratum) ?? []).sort((a, b) => b.sep - a.sep).slice(0, target - take.length);
@@ -87,7 +104,7 @@ for (const [stratum, n] of strata) {
   }
   // How much of the stratum's decisive pool a pack this size consumes. Above ~50% the questions stop
   // being a sample of the position type and start being most of the positions of that type there are.
-  if (pool.length && take.length / pool.length > 0.5) drawnThin.push(`${stratum} ${Math.round(100 * take.length / pool.length)}% of ${pool.length}`);
+  if (pool.length && target / pool.length > 0.5) drawnThin.push(`${stratum} ${Math.round(100 * target / pool.length)}% of ${pool.length}`);
   chosen.push(...take);
 }
 shuffle(chosen);
@@ -112,7 +129,10 @@ for (const f of readdirSync(dir).filter((x) => x.startsWith('hands-') && x.endsW
 // `disc` is the discard pool as [seat, kind, claimedBy] - what the player can actually see on the
 // table, and what tells them which tiles are dead. `pm` / `pb` are every seat's exposed melds and
 // bonus tiles. Together they are the visible information the coach was previously reasoning without.
-interface Q { id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+// `tp` is the ids of the shape tips this position is about, from `shapetag.ts` - not stored for the
+// app to read (it works them out again from the hand, so the wording stays in one place) but for the
+// pack summary, which reports how many questions each tip can be taught on.
+interface Q { tp: string[]; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -127,7 +147,11 @@ for (const [key, list] of byHand) {
     const melds: Meld[] = d.me.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
     const fih = fanInHand({ melds, bonus: d.me.b, seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w });
     const last = d.pub.dl[d.pub.dl.length - 1];
+    // which of the book's shape tips this decision is actually about, given the throws on offer
+    const throws = e.k === 'discard' ? e.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))) : [];
+    const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws).map((c) => c.tip) : [];
     questions.push({
+      tp,
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
@@ -141,14 +165,39 @@ for (const [key, list] of byHand) {
   }
   if (++handsDone % 500 === 0) process.stdout.write(`\r${handsDone}/${byHand.size} hands replayed`);
 }
+/**
+ * Trim each stratum back to the size it was always going to be, dropping untagged questions first.
+ *
+ * Only the ORDER within a stratum changes here. Every stratum ends at the count the run's own
+ * proportions asked for, so the pack is still a discard trainer in the same measure as before, and a
+ * question is never kept or dropped for having an easy answer - the tag says what the position is
+ * about, not what the answer was.
+ */
+const kept: Q[] = [];
+const byStratum = new Map<string, Q[]>();
+for (const q of questions) {
+  const key = stratumOf(q.k, q.t);
+  let list = byStratum.get(key); if (!list) byStratum.set(key, list = []);
+  list.push(q);
+}
+for (const [stratum, list] of byStratum) {
+  list.sort((a, b) => (b.tp.length ? 1 : 0) - (a.tp.length ? 1 : 0));
+  kept.push(...list.slice(0, want.get(stratum) ?? list.length));
+}
+shuffle(kept);
+const tagged = kept.filter((q) => q.tp.length).length;
+const perTip = new Map<string, number>();
+for (const q of kept) for (const t of q.tp) perTip.set(t, (perTip.get(t) ?? 0) + 1);
+console.log(`\n${tagged} of ${kept.length} questions have a shape tip to teach on  [${[...perTip].sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} ${n}`).join(', ') || 'none'}]`);
+
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', questions }));
+writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', questions: kept }));
 const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => {
   const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money: boolean; unit: string; questions: unknown[] };
   return { id: f.replace('.json', ''), money: p.money, unit: p.unit, questions: p.questions.length };
 });
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
-console.log(`\n${questions.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
+console.log(`\n${kept.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
 // Phase is a selection key now, so this is the check that it worked rather than a warning that it
 // did not. The two rows should agree to within rounding; a gap means a stratum was backfilled or
 // ran dry, and the lines above say which.

@@ -86,16 +86,21 @@ export interface ShapeTip {
 
 const T = (s: string) => parseKinds(s);
 
-/** Tiles that improve the hand: every kind that lowers shanten, counted by copies still available. */
-export function ukeire(tiles: TileKind[]): { count: number; kinds: number; sh: number } {
-  const sh = shanten(tiles, 0);
+/**
+ * Tiles that improve the hand: every kind that lowers shanten, counted by copies still available.
+ *
+ * The cards below are all concealed hands, so `melds` defaults to none. `shapetag.ts` asks the same
+ * question about real positions, where some of the hand is already on the table.
+ */
+export function ukeire(tiles: TileKind[], melds = 0): { count: number; kinds: number; sh: number } {
+  const sh = shanten(tiles, melds);
   const held = new Map<TileKind, number>();
   for (const k of tiles) held.set(k, (held.get(k) ?? 0) + 1);
   let count = 0, kinds = 0;
   for (let k = 0; k < 34; k++) {
     const left = 4 - (held.get(k) ?? 0);
     if (left <= 0) continue;
-    if (shanten([...tiles, k], 0) < sh) { count += left; kinds++; }
+    if (shanten([...tiles, k], melds) < sh) { count += left; kinds++; }
   }
   return { count, kinds, sh };
 }
@@ -206,8 +211,9 @@ const TIPS: ShapeTip[] = [
       { label: 'Three pairs', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 2t'), T('5s 5s'), T('9s 9s'), T('4s')], focus: [2, 3, 4] },
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
-    verdict: 'confirmed',
-    verdictNote: 'Both hands are one away from ready. The third pair costs about a third of the accepting tiles.',
+    notWhen: 'This is the one tip on the page the play-outs argue with, so treat it as a fact about width rather than as advice about what to throw.',
+    verdict: 'measured',
+    verdictNote: 'Counting agrees with the book \u2014 both hands are one away, and the third pair costs about a third of the accepting tiles. Playing it out does not. On 87 graded positions holding three pairs, the measured best throw was the loose tile, keeping all three, 69% of the time against 34% expected from the number of tiles each side offers. That held whether the alternative was a spare number tile or an honour, and whether the hand was near ready or far from it. One reason may be the table: All Pungs is 2 tai here and the minimum is 2, so a third pair is a route to a hand you are allowed to declare, which no count of accepting tiles can see.',
   },
   {
     id: 'sandwich',

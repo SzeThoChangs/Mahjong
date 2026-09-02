@@ -460,6 +460,67 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### The pair rule is right about width and wrong about what to throw (2026-09-03)
+
+Counting settles what a shape ACCEPTS and nothing else, and every verdict in the Shapes tab until
+now rested on it. There is a much harder question available for free. Every position in a quiz pack
+has been played out 128 times per option, so it already carries a measured best throw. If something
+can say which positions a tip is ABOUT, the tip becomes a claim that can be scored against those
+play-outs.
+
+`solver/src/shapetag.ts` is that something. It reads a hand and returns the tips in play, each with
+the throws that follow the tip and the throws it warns against. Four tips can be spotted without
+ambiguity: `pair_rule`, `triplet_adjacency`, `threes_and_sevens` and `escape_single_waits`. The
+others need a block decomposition or a hand score first, so they are not guessed at.
+
+`datagen/src/tiptest.ts` scores them. Two corrections carry the measurement:
+
+- Only positions the tip RESOLVES count - the measured best is a throw it points at or one it warns
+  against. If the best is a third tile, the tip had no opinion.
+- The baseline is a coin weighted by the tip's own share of the choice. A tip pointing at 3 of 5
+  candidate throws is right 60% of the time by luck, and only beating its own share means anything.
+  Without this correction `pair_rule` looks 21% right and `triplet_adjacency` 37%, and the ordering
+  is an artifact of how many tiles each tip points at.
+
+On the 4,079 discard positions in the money pack (from `run-money4`), 326 are about one of the four:
+
+```
+  tip                    about  resolved   follows it   by luck     z
+  escape_single_waits      133       129          89%       47%   +9.8
+  pair_rule                128        87          31%       66%   -7.3
+  triplet_adjacency         41        32          47%       40%   +0.9
+  threes_and_sevens         46        20          50%       52%   -0.2
+```
+
+**`escape_single_waits` is the strongest result any book tip has produced here.** When a hand can
+stay ready in more than one way and the widths differ by a factor of two, the play-outs take the
+wide wait 89% of the time against 47% by luck. Break the finished shape.
+
+**`pair_rule` fails, and it fails the other way round.** The book says fix one pair, keep two, break
+three. On positions holding three pairs the measured best throw was the LOOSE tile - keeping all
+three - 69% of the time, against 34% expected. It is not the honours doing it: restricted to
+positions where the alternative is a spare number tile the answer is the same, 30% following against
+71% by luck, z = -7.4. Nor is it hands that are already ready on a two-pair wait, where breaking a
+pair breaks the wait: hands two or more away from ready still go against the tip at z = -3.7.
+
+One reason may be the table rather than the tiles. All Pungs is 2 tai here and the minimum to
+declare is 2, so a third pair is a route to a hand you are ALLOWED to win with, and that is exactly
+what a count of accepting tiles cannot see. That is a hypothesis and nothing here tests it.
+
+`triplet_adjacency` and `threes_and_sevens` resolve too few positions to say anything, and the card
+for `threes_and_sevens` already rests on a release measurement rather than on this.
+
+**What this measurement cannot separate.** A measured best is the best throw in the whole position,
+so it prices danger as well as shape. A tip failing here has failed as ADVICE at this table, which
+is what the app teaches, and not necessarily as a claim about shape. `pair_rule`'s counting result
+still stands: the third pair really does cost about a third of the accepting tiles.
+
+**It is also one population and one pack.** These positions come from `run-money4`, whose bots score
+discards on hand shape alone, and they are the positions where one throw separated from the rest by
+more than two standard errors. The coach-played dataset now being graded gives a second pack from a
+population that plays colour hands, and this table should be re-run on it before any of it is
+treated as settled.
+
 ### Half of the book's wait ranking is about the tiles, and half is about the table (2026-09-03)
 
 Two cards in the Shapes tab were marked `needs-play`, both for the same reason. `bad_wait_ranking`

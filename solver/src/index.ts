@@ -6,4 +6,5 @@ export { TABLES } from './tables.js';
 export * from './policy.js';
 export * from './claim.js';
 export * from './shapes.js';
+export * from './shapetag.js';
 export * from './copy.js';

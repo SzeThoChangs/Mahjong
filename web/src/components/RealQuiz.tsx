@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, SHAPE_TIPS, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -157,6 +157,18 @@ export default function RealQuiz() {
 
   // If the evaluator recorded an outcome mix, re-price every action under the table config the user set.
   // Both memos stay above the early returns below: a hook that only runs on some renders breaks the hook order.
+  /**
+   * The shape tips this position is about, worked out from the hand rather than stored in the pack.
+   *
+   * Shown only after the answer. A question that says "this one is about the pair rule" has given
+   * away the part that is actually hard, which is noticing that the pair rule is what you are
+   * looking at. The pack is built to contain these positions; naming them is this file's job.
+   */
+  const shapeCallsHere = useMemo(() => {
+    if (!q || q.k !== 'discard') return [];
+    const throws = q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2)));
+    return liveCalls(q.h, q.m.length, throws);
+  }, [q]);
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];
@@ -347,6 +359,27 @@ export default function RealQuiz() {
                 {q.k === 'claim' && picked !== null && picked !== bestAction.a && coach.reasonForAction(picked).length > 0 && (
                   <div><span className="text-muted-foreground">Your {actionText(picked).toLowerCase()}:</span> {coach.reasonForAction(picked).join(' · ')}</div>
                 )}
+              </div>
+            )}
+            {shapeCallsHere.length > 0 && (
+              <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-2">
+                {shapeCallsHere.map((c) => {
+                  const tip = SHAPE_TIPS.find((t) => t.id === c.tip);
+                  const bestKind = bestAction.a.startsWith('d:') ? Number(bestAction.a.slice(2)) : null;
+                  const follows = bestKind !== null && c.says.includes(bestKind);
+                  const goesAgainst = bestKind !== null && c.against.includes(bestKind);
+                  return (
+                    <div key={c.tip} className="space-y-0.5">
+                      <div><span className="text-muted-foreground">A shape you have a card for:</span> <b>{tip?.title ?? c.tip}</b></div>
+                      <div className="text-muted-foreground">{c.because}</div>
+                      <div>
+                        {follows ? <span className="text-emerald-700 dark:text-emerald-300">The measured best does what the tip says.</span>
+                          : goesAgainst ? <span className="text-amber-700 dark:text-amber-300">The measured best goes the other way here. One position settles nothing, but it is worth asking what this hand has that the tip does not know about.</span>
+                          : <span className="text-muted-foreground">The measured best is a third tile, so the tip did not decide this one.</span>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
             {actions.map((a) => {
