@@ -39,7 +39,7 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   claim: { label: 'claim model', make: () => new ClaimBot() },
   full: { label: 'both models', make: () => new FullPolicyBot() },
   fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
-  plainwait: { label: 'coach WITHOUT the legal-wait rule (expect roughly -0.048)', make: () => new PlainWaitCoachBot() },
+  plainwait: { label: 'coach WITHOUT the legal-wait rule (expect roughly -0.02 on fresh deals)', make: () => new PlainWaitCoachBot() },
   wall: { label: 'coach discounting tiles no run can be waiting on', make: () => new WallCoachBot() },
   // the same coach, pricing danger off a table measured on a different population of players
   altreads: { label: `coach reading danger off ${readsPath}`, make: () => new AltReadsCoachBot(loadReads(readsPath)) },

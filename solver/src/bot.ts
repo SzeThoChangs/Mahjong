@@ -122,8 +122,8 @@ export class FullPolicyBot extends ClaimBot {
  * including the ones that complete it below the table minimum and therefore cannot be declared.
  *
  * Kept so the rule that is now shipped can still be measured. Running this arm should return
- * roughly the mirror of the +0.048 the rule won, and a result near zero would mean the flag stopped
- * being wired to anything.
+ * roughly the mirror of what the rule won - about -0.02 on deals nobody chose, more on the seeds it
+ * was fitted on - and a result near zero would mean the flag stopped being wired to anything.
  */
 export class PlainWaitCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {

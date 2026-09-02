@@ -17,7 +17,8 @@
  *    hands can be identical on paper and differ entirely in what the table will throw you. Those
  *    need the reads pipeline over played hands, and they are marked `needs-play`.
  *  - A claim that following the tip WINS MONEY needs `headtohead.ts`: a coach that obeys it against
- *    one that does not. No shape tip has been through that yet.
+ *    one that does not. One tip has been through that - `narrow_can_beat_wide`, worth about +0.018
+ *    chips a game on deals nobody chose - and it is the only one.
  *
  * And "true" and "worth playing" are different findings. The suit read is the warning: measured at
  * twice the deal-in rate, correct, teachable, and worth -0.034 +/- 0.057 chips a game when priced.
@@ -172,6 +173,26 @@ const TIPS: ShapeTip[] = [
     verdictNote: 'The five-block hand is ready; the six-block one is a tile further away. It accepts more tiles, which is exactly the trap — a wider hand that is further from done.',
   },
   {
+    id: 'six_blocks_ok',
+    title: 'When to keep a sixth block',
+    rule: 'The card above says cut to five. The book keeps six while the two weakest blocks are gap waits, and lets the wall decide which one to drop.',
+    why: [
+      'Cutting to five early means choosing between two blocks before anything has happened to tell you which is better.',
+      'Holding both costs nothing in distance here. The sixth block is made of tiles that would otherwise be spares, so the hand is the same distance from ready either way.',
+      'What it costs is room. A hand that is nothing but blocks has no tile left to improve with, and the second number on this card is where that shows up.',
+    ],
+    notWhen: 'It ends the moment one of the weak blocks fills or turns two-sided. Then you have your five and the sixth is just tiles.',
+    shapeFrom: 'ours',
+    variants: [
+      { label: 'Six blocks, the two weakest are gap waits', blocks: [T('2w 3w 4w'), T('9w 9w'), T('3t 4t'), T('6t 8t'), T('3s 4s'), T('6s 8s')], focus: [3, 5] },
+      { label: 'One of them cut, two lone honours kept instead', blocks: [T('2w 3w 4w'), T('9w 9w'), T('3t 4t'), T('6t 8t'), T('3s 4s'), T('E'), T('S')], focus: [5, 6] },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    wantUpgrades: true,
+    verdict: 'confirmed',
+    verdictNote: 'Both hands are two away, and the six-block one accepts 24 tiles against 20 — a fifth more, from tiles that were doing nothing else. The second number is the other half of the trade: 2 tiles widen the six-block hand and 26 widen the one holding honours, because there every draw replaces something dead. The book’s condition did not survive, though. Run the same comparison with two-sided blocks instead of gap waits and the sixth block is worth MORE, 32 against 24, so width is not what makes the rule about gap waits. The real reason is a tile you will waste later cutting the block you did not need, and no count can see that.',
+  },
+  {
     id: 'pair_rule',
     title: 'One pair, keep two, break three',
     rule: 'Fix one pair. Keep two. Break three.',
@@ -255,6 +276,26 @@ const TIPS: ShapeTip[] = [
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'confirmed',
     verdictNote: 'Confirmed by counting, both hands ready: the continuous run waits on 11 tiles from 3 kinds against 4 from 1. Same number of tiles, nearly three times the wait.',
+  },
+  {
+    id: 'perfect_one_away',
+    title: 'The widest hand one away from ready',
+    rule: 'Two sets, a pair, and two two-sided waits. Nothing one away from ready accepts more, so do not tidy it.',
+    why: [
+      'A two-sided wait is finished by two kinds of tile, eight copies. Two of those, and a pair that is already made, is sixteen tiles that put you ready.',
+      'Trade one of them for a gap wait and it is twelve. Trade both and it is eight, in a hand that looks just as neat.',
+      'It looks untidy because one tile is left over with nothing to do. That spare is what the shape costs, not a fault in it.',
+    ],
+    notWhen: 'The two waits have to be apart. Two of them sharing a tile — 3-4 and 6-7 in one suit — accept 12 rather than 16, because the 5 is doing both jobs.',
+    shapeFrom: 'ours',
+    variants: [
+      { label: 'Two two-sided waits and a pair', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('R R'), T('3t 4t'), T('6s 7s'), T('W')], focus: [3, 4] },
+      { label: 'One of them traded for a gap wait', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('R R'), T('3t 4t'), T('6s 8s'), T('W')], focus: [3, 4] },
+      { label: 'Both traded for gap waits', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('R R'), T('3t 5t'), T('6s 8s'), T('W')], focus: [3, 4] },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one.',
   },
   {
     id: 'sticky_one_away',
@@ -386,6 +427,43 @@ const TIPS: ShapeTip[] = [
     verdictNote: 'Confirmed, and this card was WRONG until now. It said "not true here" because the old test compared the 3w against a different, weaker floater. The right test keeps the 3w and moves the triplet: 22 tiles when you hold the 4s, 35 when you do not. A third of the acceptance, for the same tile.',
   },
   {
+    id: 'count_your_outs',
+    title: 'Half your wait can be face up already',
+    rule: 'A two-sided wait is eight tiles on the first turn and fewer on every turn after. Once four of them are showing, you are waiting on as few tiles as a gap wait.',
+    why: [
+      'Both hands below wait on the same shapes people rank by name: the first is the good wait, the second is the bad one.',
+      'But the good one is only good while its tiles are unseen. Four copies gone — two in the discards, two in a meld — and the two hands are the same size.',
+      'Nothing on this page can see that for you. The count beside a hand always assumes every tile you cannot see is still live, which is the exact illusion this tip is about. You have to look at the table.',
+    ],
+    notWhen: 'The book’s next step, that this is the moment to call rather than hold out, has not been tested here. What is on this card is the arithmetic, not the advice.',
+    shapeFrom: 'ours',
+    variants: [
+      { label: 'Two-sided wait — 2筒 and 5筒, eight tiles', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2s 3s 4s'), T('5s 5s'), T('3t 4t')], focus: [4] },
+      { label: 'Gap wait — 4筒 only, four tiles', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2s 3s 4s'), T('5s 5s'), T('3t 5t')], focus: [4] },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'This one is arithmetic rather than a measurement, and the arithmetic is the whole tip. Eight tiles against four, and four of the eight can be face up by the middle of the hand, at which point the wait everyone calls good has become the one everyone calls bad. The two are still not identical, because which tiles they wait on decides how freely they come out — that is the card below.',
+  },
+  {
+    id: 'edge_waits_stronger',
+    title: 'Two two-sided waits, and the lower one is better',
+    rule: 'Between two waits that accept the same eight tiles, the book takes the one nearer the edge. People let go of edge tiles and hold on to middle ones.',
+    why: [
+      'Both hands below are ready and both wait on eight tiles. Counting has nothing more to say about them.',
+      'The difference is who will throw you the tile. A 1 is worth little to anyone, so it comes out. A 4 or a 7 is in the middle of three possible runs, so it stays in hands until the wall runs out.',
+      'This is the same claim as the one about bad waits, made about good ones, and it is measured the same way: count the copies of each kind that come out after the half-way point.',
+    ],
+    shapeFrom: 'ours',
+    variants: [
+      { label: 'Waiting on 1筒 and 4筒', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2s 3s 4s'), T('5s 5s'), T('2t 3t')], focus: [4] },
+      { label: 'Waiting on 4筒 and 7筒', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2s 3s 4s'), T('5s 5s'), T('5t 6t')], focus: [4] },
+    ],
+    claim: { kind: 'level', a: 0, b: 1 },
+    verdict: 'needs-play',
+    verdictNote: 'Level on paper: both ready, both waiting on 8 tiles from 2 kinds. Which one the table actually feeds is not in the tiles, so this card waits on the same measurement that settled the two cards above.',
+  },
+  {
     id: 'narrow_can_beat_wide',
     title: 'A wide wait can be worth less than a narrow one',
     rule: 'At a 2-tai table, a winning tile that leaves you under the minimum is not a winning tile. Count the outs that can actually be declared.',
@@ -399,7 +477,7 @@ const TIPS: ShapeTip[] = [
     ],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'The one tip from the book that has been played for money and won: +0.048 chips a game over 90,000 paired deals, and it is on by default in the coach. Completed, this hand is 222w + 345w + 33w + 789t + 789t — a chicken hand at 0 tai that the table will not let you declare. The count below says eight tiles. The truthful number is zero.',
+    verdictNote: 'The only tip here that has been played for money. It measured +0.048 chips a game on twelve wall seeds we had picked, then +0.018 +/- 0.012 on 120,000 paired deals from a range chosen in advance \u2014 that second number is the honest one, and it does not clear two standard errors. It stays on in the coach anyway, because counting winning tiles the table forbids you to declare is wrong whatever it pays. Completed, this hand is 222w + 345w + 33w + 789t + 789t — a chicken hand at 0 tai that the table will not let you declare. The count below says eight tiles. The truthful number is zero.',
   },
   {
     id: 'pong_pair_quality',

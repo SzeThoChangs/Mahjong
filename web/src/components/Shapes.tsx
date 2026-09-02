@@ -7,8 +7,8 @@
  *
  * The verdict badge is the point of the page. A tip being in the book is not evidence it is true
  * here: the book is Riichi-derived and this table has a 2-tai minimum, four wildcards and a chicken
- * hand nobody else plays. Two of the eight tips turn out to be wrong at this table, and saying so is
- * more useful than a page of confident advice.
+ * hand nobody else plays. Some of these tips turn out to be wrong at this table, and the page counts
+ * them off in its own opening line, which is more useful than a page of confident advice.
  */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
