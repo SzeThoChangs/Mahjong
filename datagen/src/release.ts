@@ -146,3 +146,21 @@ for (const r of [2, 3, 4, 5, 6, 7, 8]) {
   const ks = waitRanks(r).flatMap(ranked);
   console.log(`    a lone ${r} waits on ${waitRanks(r).join('/')}`.padEnd(34) + `   ${pct(groupRate(ks, true))} late`);
 }
+
+/**
+ * `edge_waits_stronger`, answered.
+ *
+ * A two-sided block of r and r+1 is finished by r-1 and r+2 - eight copies, none of them in your
+ * hand. So the chance the table feeds it after turn 30 is 1 - (1-p)^4 for each of the two kinds
+ * together, with the same independence caveat as above: read the gap between rows, not the level.
+ *
+ * The book says that between two of these the lower one wins, because its tiles are the ones people
+ * let go of. Both hands are identical on paper - ready, eight tiles, two kinds - so counting has
+ * nothing to say and this table is the whole answer.
+ */
+const eightLeft = (a: number, b: number) =>
+  1 - (1 - groupRate(ranked(a), true)) ** 4 * (1 - groupRate(ranked(b), true)) ** 4;
+console.log('\n  edge_waits_stronger - a two-sided wait, and how often it is fed late:');
+for (const r of [2, 3, 4, 5, 6, 7]) {
+  console.log(`    ${r}-${r + 1} waits on ${r - 1}/${r + 2}`.padEnd(34) + `   ${pct(eightLeft(r - 1, r + 2))}`);
+}
