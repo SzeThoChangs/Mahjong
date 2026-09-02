@@ -33,16 +33,20 @@ describe('the hand-shape tips', () => {
 
   it('every example is a legal 13-tile hand holding at most four of any tile', () => {
     for (const t of SHAPE_TIPS) for (const v of t.variants) {
-      expect(v.tiles, `${t.id} / ${v.label}`).toHaveLength(13);
+      const tiles = v.blocks.flat();
+      expect(tiles, `${t.id} / ${v.label}`).toHaveLength(13);
       const n = new Map<number, number>();
-      for (const k of v.tiles) n.set(k, (n.get(k) ?? 0) + 1);
+      for (const k of tiles) n.set(k, (n.get(k) ?? 0) + 1);
       for (const [k, c] of n) expect(c, `${t.id}: five copies of kind ${k}`).toBeLessThanOrEqual(4);
     }
   });
 
-  it('the highlighted tiles are actually in the hand', () => {
+  it('every hand is split into blocks, and the highlighted ones exist', () => {
+    // a card about blocks has to show blocks: no example may be one undivided lump
     for (const t of SHAPE_TIPS) for (const v of t.variants) {
-      for (const k of v.focus) expect(v.tiles, `${t.id} / ${v.label}`).toContain(k);
+      expect(v.blocks.length, `${t.id} / ${v.label}: not split into blocks`).toBeGreaterThan(1);
+      for (const b of v.blocks) expect(b.length, `${t.id}: empty block`).toBeGreaterThan(0);
+      for (const i of v.focus) expect(v.blocks[i], `${t.id}: focus ${i} is not a block`).toBeDefined();
     }
   });
 

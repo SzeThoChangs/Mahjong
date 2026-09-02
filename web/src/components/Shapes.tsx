@@ -25,11 +25,23 @@ const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }
   measured: { label: 'Measured on real hands', tone: 'bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200', blurb: 'Measured over played hands at this table rather than adapted from the book.' },
 };
 
-function Hand({ tiles, focus }: { tiles: number[]; focus: number[] }) {
+/**
+ * The hand drawn as the pieces it is made of, with the ones the tip is about ringed.
+ *
+ * It used to be thirteen loose tiles with some of them dimmed, which asked the reader to do the
+ * grouping the tip is trying to teach. A card about blocks has to show blocks.
+ */
+function Hand({ blocks, focus }: { blocks: number[][]; focus: number[] }) {
   const hot = new Set(focus);
   return (
-    <div className="flex flex-wrap items-end gap-0.5">
-      {tiles.map((k, i) => <Tile key={i} kind={k} size="sm" dim={!hot.has(k)} highlight={hot.has(k)} />)}
+    <div className="flex flex-wrap items-end gap-2">
+      {blocks.map((b, i) => (
+        <div key={i}
+          className={cn('flex gap-0.5 rounded-md border-2 p-1',
+            hot.has(i) ? 'border-primary bg-primary/5' : 'border-transparent opacity-55')}>
+          {b.map((k, j) => <Tile key={j} kind={k} size="sm" />)}
+        </div>
+      ))}
     </div>
   );
 }
@@ -56,12 +68,12 @@ function TipCard({ t }: { t: ShapeTip }) {
                 <b className={cn('text-foreground', t.variants.length > 1 && x.ukeire === best && 'text-emerald-700 dark:text-emerald-300')}>
                   {x.ukeire} tiles
                 </b>{' '}
-                improve it, from {x.kinds} kinds
+improve it, from {x.kinds} kinds
                 {/* only on cards whose claim is about width the shanten count cannot see */}
                 {x.upgrades !== undefined && <> · <b className="text-foreground">{x.upgrades}</b> widen it without bringing it closer</>}
               </span>
             </div>
-            <Hand tiles={x.tiles} focus={x.focus} />
+            <Hand blocks={x.blocks} focus={x.focus} />
           </div>
         ))}
         <Separator />
