@@ -73,57 +73,46 @@ on deals that were chosen - a few seeds, all tried, the good ones reported. Re-r
 result on a fresh named range before believing its SIZE. The negative results had no incentive to be
 lucky and can stand.
 
-## Where the fast coach got to (2026-09-02, end of session)
+## The dataset is unblocked (2026-09-02)
 
-The dataset cannot be regenerated until something plays the coach's game at a cheap bot's speed,
-because every EV means "worth this much IF PLAY CONTINUES LIKE THE BOT THAT PLAYED IT OUT" and the
-bots that graded everything we hold finish a colour hand 1.5-3.5% of the time against the coach's
-36.2%.
+The thing that blocked regenerating the dataset all day was an argument, not a measurement, and the
+measurement says it is wrong.
 
-Measured before building anything: discards are 88.2% of the coach's cost and claims 10.6%
-(`tools/_profile.ts`); inside a discard the hot spot is `acceptance`, which calls an evaluator 34
-times per candidate (`tools/_hotspot.ts`). Pruning that exactly would buy 2-3x and we need ~35x, so
-an imitation is genuinely required rather than an optimisation.
-
-`datagen/src/coachcopy.ts` trains one by copying the coach's own MOVE - unlimited, free,
-self-consistent labels, unlike the three failed models that learned the noisy measured-best action.
-The missing piece was suit: `policyFeatures` has none, so `solver/src/copy.ts` adds four.
+The argument: our grader cannot finish a colour hand (1.5-3.5% against the coach's 34.6%), so
+grading coach-played positions - a third of them colour hands - would give good positions with wrong
+answers. Measured on the confident decisions each population actually yields:
 
 ```
-  bot          ms/hand   colour hands
-  shanten         0.95         1.5%
-  coach          89.37        36.2%
-  FAST COACH     11.35        17.1%      held-out agreement with the coach 58.1%
+                        graders          disagree
+  run-money4            weak vs weak      0.9%   (n=330)
+  run-money4            coach vs weak     4.0%   (n=329)
+  coach-played hands    weak vs weak      0.7%   (n=432)
+  coach-played hands    coach vs weak     2.4%   (n=420)
 ```
 
-**Half a success.** It learned colour play, which is what the suit features bought and the first
-evidence the approach works at all. It is not the coach's rate, and agreement plateaus at 58% -
-25 numbers cannot express which plan a hand is on.
+**A colour-capable grader changes FEWER labels on coach positions than on the old ones.** A position
+with a clear answer has a clear answer whoever plays it out, and coach hands are sharper anyway
+(10.6% decisive against 8.4%).
 
-**It is 12x too slow, and we know exactly why:** claims still run the real coach, which is the 10.6%
-the profile said would be left. Fast claims are the next piece and without them the discard work
-buys nothing.
+**So: regenerate with coach-played hands and the grader we already have.** The fast coach is not
+needed. `coachcopy.ts` and `FastCoachBot` stay as a record - the copy did learn colour play,
+1.5% -> 17.1% - but nothing waits on them.
 
-## The decision waiting for Changs
+## The regeneration, when it is run
 
-Before finishing the fast coach, find out whether it is needed. Does a grader that CAN play colour
-hands pick different best tiles from the one we use? `--policy coach` now exists in the evaluator
-for exactly this. A first attempt at 24 rollouts said no - 27.0% agreement between two weak graders,
-26.5% between weak and coach - but only 4 of 400 decisions were confident enough to count, so it
-proves nothing.
+`tsx src/generate.ts --hands N --workers 8 --out ../data/gen/run-coachN --seed S --bots coach`
+then `evaluate.ts` as before. Checks that must pass first, all of which passed on the 3,000-hand
+probe in `data/gen/run-coach1`:
 
-The coach grades at **0.05 decisions/sec** at 128 rollouts (measured, not extrapolated). So:
+- the hands record `['coach','coach','coach','coach']` - `--bots coach` silently did nothing at
+  first, because the multi-worker path did not pass the option, and it recorded random
+  personalities at 329 hands/s. The SPEED is the tell: the coach runs at about 35-60 hands/s.
+- they replay exactly: 0 errors, no "did not replay" lines. The grader silently drops hands it
+  cannot replay, so a broken run looks like a small one.
+- the population is right: 38% colour hands against run-money4's 1.3%.
 
-- **plain run tonight**: ~1,440 decisions in eight hours, ~4% of them confident, so ~58 usable
-  comparisons. Enough to catch a large difference and nothing else.
-- **filter first**: grade with shanten at 35/sec, keep only the confident ones, spend the coach's
-  time on those alone. Same night, ~1,400 usable comparisons. Needs ~20 lines in `evaluate.ts` (an
-  `--only <file>` of `g:h:d` keys) and a check that it grades exactly the listed decisions.
-
-The second is 25x better and is also the right population - the quiz picks its questions by
-confidence from the shipped grader, so "positions the shipped grader is sure about" is what we care
-about. Recommended, and NOT started: writing new code late and running it unattended is how the
-wasted runs happened.
+Generation is cheap: 3,000 hands in 50s on 8 workers. The evaluator is the long pole, ~7 hours for
+480k decisions, unchanged.
 
 ## Next, asked for on 2026-09-02: hand shapes in the quiz
 

@@ -370,6 +370,50 @@ opponent has but never what they are, so a dragon pong and a chow are the same i
 and is the one the book spends eleven tips on.
 
 
+### The grader does not need to be strong, so the dataset is unblocked (2026-09-02)
+
+The dataset could not be regenerated because of an argument that turned out to be wrong. Every EV we
+hold means "worth this much IF PLAY CONTINUES LIKE THE BOT THAT PLAYED IT OUT", and the bots that
+graded everything finish a colour hand 1.5-3.5% of the time against the coach's 34.6%. Generating
+positions from coach play - a third of them colour hands - while grading with a bot that cannot
+finish one looked like a guaranteed way to produce good positions with wrong answers.
+
+It was worth checking before building a fast coach to fix it. `--policy coach` grades a small sample
+with the bot the positions come from; `--only` spends that expensive grader on the ~10% of decisions
+that are decisive, which is the only subset any comparison can use and also exactly what the quiz
+draws from. That turns an eight-hour comparison worth 58 usable answers into a 26-minute one worth
+794.
+
+Two populations, each against its own baseline of two WEAK graders disagreeing with each other:
+
+```
+                        graders          disagree on confident decisions
+  run-money4            weak vs weak      0.9%   (n=330)
+  run-money4            coach vs weak     4.0%   (n=329)    +3.0 points, z = 2.5
+
+  coach-played hands    weak vs weak      0.7%   (n=432)
+  coach-played hands    coach vs weak     2.4%   (n=420)    +1.7 points, z = 2.0
+```
+
+**On the positions we would actually generate, a colour-capable grader changes FEWER labels, not
+more.** 2.4% against 4.0%. The prediction was backwards.
+
+The reason, as far as it can be told: a position with a clear answer has a clear answer whoever
+plays it out. Coach hands are also sharper - 10.6% of their decisions are decisive against 8.4% of
+run-money4's - so the subset that survives the 2-SE filter is the subset where the play-out policy
+matters least. The weak grader misprices colour hands, but not the ones it is confident about.
+
+**So the fast coach is not needed for grading.** `datagen/src/coachcopy.ts` and `FastCoachBot` stay
+as a measured record - the copy learned colour play, 1.5% -> 17.1%, which is the first evidence that
+imitating the coach works at all - but nothing is waiting on them. The dataset can be regenerated
+with coach-played hands and the shanten grader, at a cost of about one label in forty differing from
+what a stronger grader would say, which is fewer than differ today.
+
+**What was actually blocking it was never measured until now.** The whole argument rested on a
+mechanism that sounded obviously right - weak bot cannot play the plan, therefore misgrades the plan
+- and it took a 26-minute experiment to find out it does not survive the 2-SE filter. Worth
+remembering the next time a chain of reasoning stands between us and a night of compute.
+
 ### The one thing we shipped is worth about a third of what we claimed (2026-09-02)
 
 `legalWait` is the only change this project has ever made to the coach, and it went in at
