@@ -460,6 +460,38 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### The good waits rank the same way the bad ones do, and by about as little (2026-09-03)
+
+`edge_waits_stronger` says that between two two-sided waits the one nearer the edge wins, because
+opponents let go of edge tiles and hold middle ones. That is the same claim `bad_wait_ranking` makes
+about the last two copies of a tile, so `release.ts` answers it from the same counts: for a block of
+r and r+1, the chance at least one of the eight copies of r-1 and r+2 comes out after turn 30.
+
+Four measurements - our coach, `ShantenBot` on two seeds, and the recorded `run-money4`:
+
+```
+                        coach    shanten s21   shanten s37    money4
+  2-3, waits on 1/4     53.1%       32.3%         33.5%       75.1%
+  3-4, waits on 2/5     50.9%       32.3%         32.4%       74.4%
+  4-5, waits on 3/6     48.4%       30.5%         30.4%       72.7%
+  5-6, waits on 4/7     48.3%       30.2%         31.6%       72.9%
+  6-7, waits on 5/8     50.7%       32.5%         32.5%       74.4%
+  7-8, waits on 6/9     53.2%       32.9%         33.8%       75.2%
+```
+
+**The book is right, the shape is a U, and the effect is small.** Every population puts the two
+outermost waits at the top and the two middle ones at the bottom, and does it in the same order. The
+gap between best and worst runs from 3% at `run-money4` to 10% at a table of coaches. The levels
+differ hugely between populations - 32% against 75% - because they differ in how much they throw at
+all, which is why only the ordering is worth reading.
+
+It is also symmetric, which the card now says: a wait on 6 and 9 is as good as one on 1 and 4. The
+rule is not "prefer low tiles", it is "prefer a wait that reaches an edge".
+
+The play-out test cannot help here. A hand that can be made ready two ways on waits of the same
+width is rare, so the quiz packs resolve 3 positions between them. The release count is the whole
+evidence, and one tenth is what it is worth.
+
 ### The dataset is regenerated, and the tips were scored again on it (2026-09-03)
 
 `run-coach2` is graded. 150,000 hands played by four coaches, 7,233,486 decisions recorded in 45

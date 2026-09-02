@@ -467,8 +467,9 @@ const TIPS: ShapeTip[] = [
       { label: 'Waiting on 4筒 and 7筒', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2s 3s 4s'), T('5s 5s'), T('5t 6t')], focus: [4] },
     ],
     claim: { kind: 'level', a: 0, b: 1 },
-    verdict: 'needs-play',
-    verdictNote: 'Level on paper: both ready, both waiting on 8 tiles from 2 kinds. Which one the table actually feeds is not in the tiles, so this card waits on the same measurement that settled the two cards above.',
+    notWhen: 'It only decides between waits of the same size. A wider wait beats a better-placed narrow one every time.',
+    verdict: 'measured',
+    verdictNote: 'Level on paper \u2014 both ready, both waiting on 8 tiles from 2 kinds \u2014 and the table settles it in the book\u2019s favour, by a little. Counting the copies thrown after the half-way point, a wait on 1 and 4 is fed 53.1% of the time at a table of coaches against 48.3% for a wait on 3 and 6. The same ordering came out of all four measurements \u2014 our coach, two ShantenBot seeds and the old recorded run \u2014 and it is symmetric: a wait on 6 and 9 is as good as one on 1 and 4, because both reach an edge. The gap runs from 3% to 10% depending on who is playing, so it settles a choice between two equal waits and nothing bigger than that.',
   },
   {
     id: 'narrow_can_beat_wide',
