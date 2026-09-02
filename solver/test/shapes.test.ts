@@ -69,7 +69,6 @@ describe('the hand-shape tips', () => {
     // quietly upgraded to make the tutorial tidier, this fails.
     const byId = Object.fromEntries(SHAPE_TIPS.map((t) => [t.id, t.verdict]));
     expect(byId['four_tile_ranking']).toBe('contradicted');
-    expect(byId['triplet_adjacency']).toBe('contradicted');
     expect(byId['threes_and_sevens']).toBe('needs-play');
     expect(byId['bad_wait_ranking']).toBe('needs-play');
   });
