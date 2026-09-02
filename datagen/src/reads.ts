@@ -97,6 +97,32 @@ const oppMeld1 = table();
 /** Is the tell true? "<minMelds>" -> what the concealed part of a flagged seat actually holds. */
 const tellPrecision = table();
 /**
+ * `two_discard_piles`: the tiles an opponent DECLINED, asked per opponent.
+ *
+ * The book calls an open hand's second, invisible discard pile the richest read available here,
+ * because hands open early and a lot goes past them. The mechanical version: a copy of this tile was
+ * thrown by somebody else while this opponent sat there and did not claim it. If that means anything,
+ * the tile should deal in to THEM less often afterwards.
+ *
+ * Keyed "<class>|<turn>|<passed|new>" and asked per opponent, because pooling three seats dilutes a
+ * read about one of them. Note the caveat: this counts every uncalled discard, and some of them were
+ * uncalled because this table's rolling locked-discard rule forbade the claim rather than because
+ * the player did not want it.
+ */
+const oppPassed = table();
+/**
+ * `pair_discards_rule_out`: what a shed pair says about the tiles beside it.
+ *
+ * When a player throws two copies of the same tile out of their own hand, the book says the tiles
+ * just outside it are near-safe, because nearly every wait that would make them dangerous needed the
+ * pair that was given up. Tagged `adj1` for a tile one rank away from a pair they shed, `adj2` for
+ * two ranks away, `away` for everything else.
+ *
+ * Only counted for opponents who have shed at least one pair, so the comparison is between tiles in
+ * the same position rather than between a developed opponent and an undeveloped one.
+ */
+const oppShed = table();
+/**
  * `dangerSafe` under the definition of "already seen" that the COACH actually uses.
  *
  * The table splits fresh from seen on the discard pool alone. `rank.ts` looks the answer up with
@@ -225,13 +251,40 @@ for (const { g, bots } of sources()) {
         if (c1) { bump(tellPrecision, '1|five', concealedIn(c1) >= 5); bump(tellPrecision, '1|pure', purity(c1)); }
       }
       const oppTag = (k: TileKind, c: string | null) => (!c ? 'plain' : suitOf(k) === c ? 'in' : 'off');
+      // what each seat has let go past uncalled, and which pairs they have thrown out of hand
+      const passedBy = [0, 1, 2, 3].map((s) => {
+        const set = new Set<TileKind>();
+        for (const e of g.discardLog) if (e.seat !== s && e.claimedBy !== s) { const kk = kindOf(e.tile); if (kk < 34) set.add(kk); }
+        return set;
+      });
+      const shedPairs = [0, 1, 2, 3].map((s) => {
+        const n = new Map<TileKind, number>();
+        for (const t of g.players[s]!.discards) { const kk = kindOf(t); if (kk < 34) n.set(kk, (n.get(kk) ?? 0) + 1); }
+        return [...n.entries()].filter(([, c]) => c >= 2).map(([kk]) => kk);
+      });
+      /** one rank from a pair they shed, two ranks, or neither */
+      const shedTag = (k: TileKind, pairs: TileKind[]): 'adj1' | 'adj2' | 'away' => {
+        if (!isSuited(k)) return 'away';
+        let best: 'adj1' | 'adj2' | 'away' = 'away';
+        for (const x of pairs) {
+          if (!isSuited(x) || suitOf(x) !== suitOf(k)) continue;
+          const d = Math.abs((k % 9) - (x % 9));
+          if (d === 1) return 'adj1';
+          if (d === 2) best = 'adj2';
+        }
+        return best;
+      };
       for (const act of p.legal) {
         if (act.a !== 'discard') continue;
         const k = act.kind;
         for (const o of opps) {
           const hit = truth[o.seat]!.sh === 0 && truth[o.seat]!.outs.has(k);
-          bump(oppMeld2, `${tileClass(k)}|${turn}|${seen.has(k) ? 'seen' : 'fresh'}|${oppTag(k, o.c2)}`, hit);
-          bump(oppMeld1, `${tileClass(k)}|${turn}|${seen.has(k) ? 'seen' : 'fresh'}|${oppTag(k, o.c1)}`, hit);
+          const f = seen.has(k) ? 'seen' : 'fresh';
+          bump(oppMeld2, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c2)}`, hit);
+          bump(oppMeld1, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c1)}`, hit);
+          bump(oppPassed, `${tileClass(k)}|${turn}|${passedBy[o.seat]!.has(k) ? 'passed' : 'new'}`, hit);
+          const pairs = shedPairs[o.seat]!;
+          if (pairs.length && isSuited(k)) bump(oppShed, `${tileClass(k)}|${turn}|${shedTag(k, pairs)}`, hit);
         }
         const deadly = truth.some((t, s) => s !== me && t.sh === 0 && t.outs.has(k));
         const fresh = seen.has(k) ? 'seen' : 'fresh';
@@ -251,7 +304,7 @@ for (const { g, bots } of sources()) {
 
 mkdirSync(outDir, { recursive: true });
 const pct = (t: Record<string, Cell>) => Object.fromEntries(Object.entries(t).filter(([, c]) => c.n >= 30).map(([k, c]) => [k, { p: c.hit / c.n, n: c.n }]));
-writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: coachHands > 0 ? `coach-seed${coachSeed}` : dir.split('/').pop(), hands, sampled, ready: pct(ready), suitTell: pct(suitTell), danger: pct(danger), dangerSafe: pct(dangerSafe), dangerVisible: pct(dangerVisible), dangerWall: pct(dangerWall), dangerMeld2: pct(dangerMeld2), dangerMeld1: pct(dangerMeld1), oppMeld2: pct(oppMeld2), oppMeld1: pct(oppMeld1) }));
+writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: coachHands > 0 ? `coach-seed${coachSeed}` : dir.split('/').pop(), hands, sampled, ready: pct(ready), suitTell: pct(suitTell), danger: pct(danger), dangerSafe: pct(dangerSafe), dangerVisible: pct(dangerVisible), dangerWall: pct(dangerWall), dangerMeld2: pct(dangerMeld2), dangerMeld1: pct(dangerMeld1), oppMeld2: pct(oppMeld2), oppMeld1: pct(oppMeld1), oppPassed: pct(oppPassed), oppShed: pct(oppShed) }));
 console.log(`reads: ${hands} hands, ${sampled} sampled moments -> ${outDir}/${name}.json`);
 const show = (label: string, t: Record<string, Cell>, keys: string[]) => {
   console.log(`\n${label}`);
@@ -364,4 +417,58 @@ show('...split by whether the tile was already discarded once', dangerSafe, ['si
       + `visible: fresh ${p(c)} seen ${p(d)} ${gap(c, d)}`);
   }
   console.log(rows.join('\n'));
+}
+
+// `two_discard_piles` and `pair_discards_rule_out`, the two reads NEXT called cheap to settle.
+//
+// Both are asked per opponent for the same reason the suit read had to be: pooling three seats lets
+// two players who never saw the tile dilute a read about the one who did. Both hold the opponent's
+// development fixed - `passed` against `new` is the same seat at the same turn, and the shed-pair
+// rows only count seats that have actually shed one.
+{
+  const z = (a: Cell, b: Cell) => {
+    const pa = a.hit / a.n, pb = b.hit / b.n;
+    const se = Math.sqrt(pa * (1 - pa) / a.n + pb * (1 - pb) / b.n);
+    return se > 0 ? (pa - pb) / se : 0;
+  };
+  const add = (acc: Cell, c?: Cell) => { if (c) { acc.n += c.n; acc.hit += c.hit; } };
+  const pc = (c: Cell) => `${(100 * c.hit / c.n).toFixed(3)}%`;
+
+  console.log('\ntwo_discard_piles - does a tile they let go past deal in to THEM less often?');
+  {
+    const rows: string[] = [];
+    const pool = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 } };
+    for (const tn of [20, 30, 40, 50]) {
+      const acc = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 } };
+      for (const cls of ['simple', 'terminal', 'honour']) {
+        add(acc.passed, oppPassed[`${cls}|${tn}|passed`]); add(acc.fresh, oppPassed[`${cls}|${tn}|new`]);
+      }
+      add(pool.passed, acc.passed); add(pool.fresh, acc.fresh);
+      if (Math.min(acc.passed.n, acc.fresh.n) < 200) continue;
+      rows.push(`  turn ${String(tn).padEnd(6)}passed ${pc(acc.passed)}  never seen by them ${pc(acc.fresh)}`
+        + `   x${((acc.passed.hit / acc.passed.n) / Math.max(1e-9, acc.fresh.hit / acc.fresh.n)).toFixed(2)}`
+        + `  z=${z(acc.passed, acc.fresh).toFixed(2)}   (n=${acc.passed.n}/${acc.fresh.n})`);
+    }
+    console.log(rows.length ? rows.join('\n') : '  (no cell had the sample for it)');
+    if (pool.passed.n && pool.fresh.n) console.log(`  pooled:  passed ${pc(pool.passed)}  new ${pc(pool.fresh)}`
+      + `   x${((pool.passed.hit / pool.passed.n) / Math.max(1e-9, pool.fresh.hit / pool.fresh.n)).toFixed(2)}  z=${z(pool.passed, pool.fresh).toFixed(2)}`);
+  }
+
+  console.log('\npair_discards_rule_out - are the tiles beside a pair they threw away safer?');
+  {
+    const rows: string[] = [];
+    const pool = { adj1: { n: 0, hit: 0 }, adj2: { n: 0, hit: 0 }, away: { n: 0, hit: 0 } };
+    for (const tn of [20, 30, 40, 50]) {
+      const acc = { adj1: { n: 0, hit: 0 }, adj2: { n: 0, hit: 0 }, away: { n: 0, hit: 0 } };
+      for (const cls of ['simple', 'terminal']) for (const tag of ['adj1', 'adj2', 'away'] as const) add(acc[tag], oppShed[`${cls}|${tn}|${tag}`]);
+      for (const tag of ['adj1', 'adj2', 'away'] as const) add(pool[tag], acc[tag]);
+      if (Math.min(acc.adj1.n, acc.away.n) < 200) continue;
+      rows.push(`  turn ${String(tn).padEnd(6)}one rank away ${pc(acc.adj1)}  two ${pc(acc.adj2)}  elsewhere ${pc(acc.away)}`
+        + `   x${((acc.adj1.hit / acc.adj1.n) / Math.max(1e-9, acc.away.hit / acc.away.n)).toFixed(2)}`
+        + `  z=${z(acc.adj1, acc.away).toFixed(2)}   (n=${acc.adj1.n}/${acc.away.n})`);
+    }
+    console.log(rows.length ? rows.join('\n') : '  (no cell had the sample for it)');
+    if (pool.adj1.n && pool.away.n) console.log(`  pooled:  one rank ${pc(pool.adj1)}  two ranks ${pc(pool.adj2)}  elsewhere ${pc(pool.away)}`
+      + `   x${((pool.adj1.hit / pool.adj1.n) / Math.max(1e-9, pool.away.hit / pool.away.n)).toFixed(2)}  z=${z(pool.adj1, pool.away).toFixed(2)}`);
+  }
 }
