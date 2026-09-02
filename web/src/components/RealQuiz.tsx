@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, policyRank, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -121,7 +121,7 @@ export default function RealQuiz() {
   // What the learned models would do here. Grading stays on the measured EVs - those are the
   // authority in this tab - but the models are what the Train tab teaches, so showing their answer
   // beside the measurement is how you find out where they are wrong.
-  const modelPick = useMemo(() => {
+  const coachPick = useMemo(() => {
     if (!q) return null;
     try {
       const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
@@ -134,7 +134,13 @@ export default function RealQuiz() {
         minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
         visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
-      if (q.k === 'discard' && q.h.length % 3 === 2) return `d:${policyRank(q.h, melds, ctx).best}`;
+      // The COACH, not the learned model. This block said "the learned model would..." while
+      // running the model for discards and the coach's own `claimRank` for claims - one label over
+      // two different players. It is the coach in both now, which is also the honest comparison to
+      // draw here: the Train tab teaches the coach, so where the coach and the measurement disagree
+      // is worth seeing. The model was dropped from the app on 2026-09-02; it loses 0.544 chips a
+      // game and its accuracy is measured against a grader that cannot play a colour hand.
+      if (q.k === 'discard' && q.h.length % 3 === 2) return `d:${rankDiscards(q.h, melds, ctx).best.tile}`;
       if (q.k === 'claim' && q.ld) {
         const offered = q.ld[1]!;
         const acts = q.actions.map((a) => a.a);
@@ -308,12 +314,12 @@ export default function RealQuiz() {
           <CardContent className="space-y-1">
             {coach && (
               <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-1">
-                {/* The models are what the Train tab teaches. Measured EVs are the authority here,
-                    so this is the place their disagreements with the measurement show up. */}
-                {modelPick !== null && (
+                {/* The coach is what the Train tab teaches. Measured EVs are the authority here,
+                    so this is the place the coach's disagreements with the measurement show up. */}
+                {coachPick !== null && (
                   <div className="pb-1 mb-1 border-b">
-                    <span className="text-muted-foreground">The learned model would</span> <b>{actionText(modelPick).toLowerCase()}</b>.
-                    {modelPick === bestAction.a
+                    <span className="text-muted-foreground">The coach would</span> <b>{actionText(coachPick).toLowerCase()}</b>.
+                    {coachPick === bestAction.a
                       ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
                       : <span className="text-amber-700 dark:text-amber-300"> The measurement disagrees — trust the bars here.</span>}
                   </div>

@@ -90,9 +90,6 @@ export default function Trainer() {
   const gradedPick = coachPick;
   const gradedTied = coachTied;
   const gradedAnswerOpt = scenario.ranking.best;
-  // the model's opinion, shown alongside: it is right more often per decision, which is exactly the
-  // tension worth showing rather than hiding
-  const modelPick = scenario.policyRanking.best;
 
   const choose = (k: TileKind) => {
     if (pick !== null) return;
@@ -215,12 +212,6 @@ export default function Trainer() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              {/* The two disagree often, and which one is "right" depends on how you measure. Say so. */}
-              <div className="rounded-md border bg-secondary/40 p-3">
-                {modelPick === gradedPick
-                  ? <><span className="text-muted-foreground">The learned model agrees:</span> <b>{tileLabel(modelPick)}</b>.</>
-                  : <><span className="text-muted-foreground">The learned model would throw</span> <b>{tileLabel(modelPick)}</b> <span className="text-muted-foreground">instead. It picks the measured-best tile more often than the coach does — but played out over thousands of hands the coach still wins more money, so the coach is what you are scored on.</span></>}
-              </div>
               <div>
                 <div className="font-medium">Plan: {scenario.ranking.plan}</div>
                 <ul className="mt-1 list-disc pl-5 text-muted-foreground space-y-0.5">{scenario.ranking.planDetail.map((l, i) => <li key={i}>{l}</li>)}</ul>

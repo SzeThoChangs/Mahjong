@@ -6,7 +6,7 @@ import {
   Wall, makeRng, playGame, IsolationBot, kindOf, makeRules,
   type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig, type RulesConfig,
 } from 'sg-mahjong-engine';
-import { rankDiscards, policyRank, type Ranking, type PolicyRanking, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, type Ranking, type Context } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
 
 /** seat winds by ROLE (distance from the host), for naming an opponent in the advice */
@@ -50,11 +50,6 @@ export interface Scenario {
   melds: Meld[];
   bonus: TileKind[];
   ranking: Ranking;           // the book coach - now the EXPLAINER, not the grader
-  /** The learned model's opinion. NOT the grader - the coach is, because the coach is what wins
-   *  money: this model picks the measured-best tile more often (69.8% against 52.8%) and loses
-   *  0.544 +/- 0.144 chips a game, measured three times. The comment here used to call it "the
-   *  grader ($0.56/decision better)", written before it was ever played for money. */
-  policyRanking: PolicyRanking;
   interesting: boolean;
   /**
    * What kind of question this is, judged by the coach.
@@ -129,7 +124,6 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
         discards: discards.filter((d) => d.seat === s2).map((d) => d.kind),
       }])) };
     const ranking = rankDiscards(hand, melds, ctx);
-    const policyRanking = policyRank(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);
     // ---- is this hand worth asking, and what KIND of question is it? ----
@@ -154,7 +148,7 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const trap = naivePick !== ranking.best.tile;
     const difficulty: Difficulty = !decided ? 'toss-up' : trap ? 'trap' : 'plain';
     const interesting = difficulty === 'trap';
-    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, policyRanking, interesting, difficulty, gap, naivePick, discards, publicMelds, publicBonus };
+    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, interesting, difficulty, gap, naivePick, discards, publicMelds, publicBonus };
     if (!wantInteresting) return sc;
     // Prefer a trap, settle for a hand that at least HAS an answer, and only serve a toss-up when
     // sixteen deals produced nothing better. A plain yes/no test starved this: measured over 250
