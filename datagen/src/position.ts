@@ -8,17 +8,19 @@
 import { GameState, Wall, makeRng, tableConfigOf, isBonus, kindOf, type RulesConfig, type Bot, type Snapshot, type TileInstance } from 'sg-mahjong-engine';
 import { makeBot, type RandomnessConfig, DEFAULT_RANDOMNESS } from './bots.js';
 import { botSeed } from './session.js';
+import { scriptedBots } from './scripted.js';
 import type { HandRecord } from './records.js';
 
 export function botsFor(rec: HandRecord, randomness: RandomnessConfig = DEFAULT_RANDOMNESS): Bot[] {
   return rec.bots.map((t, seat) => makeBot(t, makeRng(botSeed(rec.seed, seat)), randomness));
 }
 
+
 /** Replay hand `rec` until decision index `d` is pending. Returns the live state and the bots (with rng state advanced). */
 export function positionAt(rec: HandRecord, d: number, rules: RulesConfig, randomness: RandomnessConfig = DEFAULT_RANDOMNESS): { g: GameState; bots: Bot[] } | null {
   const cfg = tableConfigOf(rules);
   const g = GameState.deal(cfg, new Wall(makeRng(rec.seed), rules.unplayable_tiles, rules.jokers.count), { dealer: rec.dl, prevailingWind: rec.w, rules });
-  const bots = botsFor(rec, randomness);
+  const bots = scriptedBots(rec.seq) ?? botsFor(rec, randomness);
   let idx = 0;
   g.advance();
   while (!g.finished) {

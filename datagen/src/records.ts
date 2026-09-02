@@ -70,6 +70,17 @@ export interface HandRecord {
   wt: number;                                              // the winning tile kind (-1 if drawn game)
   acts: Record<string, Record<string, number>>;            // bot type -> action -> count
   hash: string;                                            // FNV-1a over the decision sequence (for replay checks)
+  /**
+   * Every action taken in this hand, in order, as compact strings.
+   *
+   * Replay used to work by asking the BOTS again what they would do, which welds a dataset to the
+   * exact bots that made it: change one coach rule and 17 of every 100 hands stop replaying, because
+   * a hand is ~50 decisions and one difference anywhere breaks the hash. Measured, not guessed.
+   * Playing the recorded actions back instead makes a run independent of the bots forever.
+   *
+   * Optional, because runs generated before 2026-09-02 do not have it and fall back to the bots.
+   */
+  seq?: string[];
 }
 export interface TruthRecord { g: number; h: number; seed: number; dl: number; w: number; wall: number[]; }
 

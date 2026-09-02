@@ -167,7 +167,7 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
 export function decisionsOfHand(hand: HandRecord, rules: RulesConfig, randomness: RandomnessConfig): DecisionRecord[] | null {
   const out: DecisionRecord[] = [];
   const scoresBefore = hand.scores.map((s, i) => s - hand.delta[i]!);
-  const { record } = playHand({ sessionId: hand.g, handIdx: hand.h, seed: hand.seed, dealer: hand.dl, prevailingWind: hand.w, botTypes: hand.bots, scores: scoresBefore }, rules, randomness, { decision: (r) => out.push(r), hand: () => {} }, true);
+  const { record } = playHand({ sessionId: hand.g, handIdx: hand.h, seed: hand.seed, dealer: hand.dl, prevailingWind: hand.w, botTypes: hand.bots, scores: scoresBefore, seq: hand.seq }, rules, randomness, { decision: (r) => out.push(r), hand: () => {} }, true);
   if (record.hash !== hand.hash || record.winner !== hand.winner || record.turns !== hand.turns) return null;
   return out;
 }

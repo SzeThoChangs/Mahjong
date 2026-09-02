@@ -269,23 +269,6 @@ const TIPS: ShapeTip[] = [
     verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses.',
   },
   {
-    id: 'perfect_one_away',
-    title: 'Two open part-runs plus a pair',
-    rule: 'The book calls this the widest shape you can hold one tile from ready, and says not to tidy it.',
-    why: [
-      'Both part-runs can finish from either end and the pair is already settled, so on paper nothing competes for the same job.',
-      'It looks untidy, which is the reason people break it up.',
-    ],
-    variants: [
-      { label: 'Two open part-runs and a pair', tiles: T('2w 3w 4w 5w 6w 7w 3t 4t 6t 7t 5s 5s 9s'), focus: T('3t 4t 6t 7t 5s 5s') },
-      { label: '"Tidied" — one part-run traded for a pair', tiles: T('2w 3w 4w 5w 6w 7w 3t 4t 6t 6t 5s 5s 9s'), focus: T('3t 4t 6t 6t 5s 5s') },
-    ],
-    claim: { kind: 'level', a: 0, b: 1 },
-    wantUpgrades: true,
-    verdict: 'contradicted',
-    verdictNote: 'Not shown here. The two are exactly level on acceptance — 12 tiles each — and on the second measure the "tidied" version is ahead, 30 upgrade tiles against 14. Whatever makes this shape special at a Riichi table, it is not width at ours, and the tidier hand is not obviously worse.',
-  },
-  {
     id: 'four_tile_ranking',
     title: 'Which four-tile block to break',
     rule: 'The book ranks them: extended run (2-3-4-5) and bulging run (3-4-4-5) near-equal, pair-attached (2-3-3-4) clearly weakest.',

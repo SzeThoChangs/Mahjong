@@ -1,7 +1,8 @@
 /** Plays a session of hands (dealer rotation, prevailing wind, running scores) with recording. */
 import { Wall, makeRng, playGame, tableConfigOf, type RulesConfig, type Decision } from 'sg-mahjong-engine';
 import { makeBot, type BotType, type RandomnessConfig, DEFAULT_RANDOMNESS } from './bots.js';
-import { encodeDecision, fnv1a, type DecisionRecord, type HandRecord, type TruthRecord } from './records.js';
+import { scriptedBots } from './scripted.js';
+import { encAction, encodeDecision, fnv1a, type DecisionRecord, type HandRecord, type TruthRecord } from './records.js';
 
 export interface SessionSink {
   decision(r: DecisionRecord): void;
@@ -18,20 +19,29 @@ export const handSeed = (sessionSeed: number, handIdx: number) => (fnv1a(`${sess
 /** Deterministic bot rng seed per hand and seat. */
 export const botSeed = (hSeed: number, seat: number) => (fnv1a(`${hSeed}:bot:${seat}`) || 1);
 
-export interface HandSetup { sessionId: number; handIdx: number; seed: number; dealer: number; prevailingWind: number; botTypes: BotType[]; scores: number[] }
+export interface HandSetup {
+  sessionId: number; handIdx: number; seed: number; dealer: number; prevailingWind: number;
+  botTypes: BotType[]; scores: number[];
+  /** the recorded action sequence, when this hand is being replayed rather than played */
+  seq?: string[];
+}
 
 /** Play one hand from a full setup. Used by the session loop and by replay. */
 export function playHand(setup: HandSetup, rules: RulesConfig, randomness: RandomnessConfig, sink?: SessionSink, recordDecisions = true) {
   const cfg = tableConfigOf(rules);
   const wall = new Wall(makeRng(setup.seed), rules.unplayable_tiles, rules.jokers.count);
   const wallOrder = wall.snapshot().order;
-  const bots = setup.botTypes.map((t, seat) => makeBot(t, makeRng(botSeed(setup.seed, seat)), randomness));
+  // when the hand is being REPLAYED, play back what was recorded rather than asking the bots what
+  // they would do now - see scripted.ts. Generation passes no seq and uses the real bots.
+  const bots = scriptedBots(setup.seq) ?? setup.botTypes.map((t, seat) => makeBot(t, makeRng(botSeed(setup.seed, seat)), randomness));
   let decisionIdx = 0; let hash = 0x811c9dc5;
   const acts: Record<string, Record<string, number>> = {};
+  const seq: string[] = [];                                  // what was actually done, for bot-free replay
   const recorder = {
     record: (d: Decision) => {
       const bot = setup.botTypes[d.seat]!;
       hash = fnv1a(`${d.kind}:${d.seat}:${JSON.stringify(d.selected)}`, hash);
+      seq.push(encAction(d.selected));
       (acts[bot] ??= {})[d.selected.a] = ((acts[bot] ??= {})[d.selected.a] ?? 0) + 1;
       if (sink && recordDecisions) sink.decision(encodeDecision(d, { g: setup.sessionId, h: setup.handIdx, d: decisionIdx, seed: setup.seed, sc: setup.scores, bot }));
       decisionIdx++;
@@ -42,7 +52,7 @@ export function playHand(setup: HandSetup, rules: RulesConfig, randomness: Rando
   const rec: HandRecord = {
     g: setup.sessionId, h: setup.handIdx, seed: setup.seed, dl: setup.dealer, w: setup.prevailingWind, bots: setup.botTypes,
     winner: r.winner, sd: r.selfDraw, disc: r.discarder, fan: r.score?.fan ?? null, combo: r.score?.combination ?? null,
-    turns: r.playerTurns, cnt: r.counts, delta: r.chipsDelta, scores: scoresAfter, acts, hash: (hash >>> 0).toString(16),
+    turns: r.playerTurns, cnt: r.counts, delta: r.chipsDelta, scores: scoresAfter, acts, seq, hash: (hash >>> 0).toString(16),
     led: r.ledger.map((l) => [l.kongConcealed, l.kongExposed, l.kongFed, l.biteFlowerHidden, l.biteFlowerOpen, l.biteAnimalHidden, l.biteAnimalOpen]),
     liable: r.liable, draws: r.draws, blocked: r.blockedWins, ready: r.readyTurn, wt: r.winTile,
   };
