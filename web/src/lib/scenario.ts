@@ -39,6 +39,8 @@ export const RULES: RulesConfig = makeRules({
 /** wildcards in the wall, from the table config (4 at this table) */
 export const JOKERS = RULES.jokers.count;
 
+export type Difficulty = 'toss-up' | 'plain' | 'trap';
+
 export interface Scenario {
   id: number;
   phase: Exclude<Phase, 'any'>;
@@ -54,6 +56,16 @@ export interface Scenario {
    *  grader ($0.56/decision better)", written before it was ever played for money. */
   policyRanking: PolicyRanking;
   interesting: boolean;
+  /**
+   * What kind of question this is, judged by the coach.
+   *
+   * `toss-up`  several tiles are equal-best, so there is nothing to get right. Not worth asking.
+   * `plain`    there is a clear best tile and it is the obvious one. Worth playing, teaches little.
+   * `trap`     there is a clear best tile and the obvious throw is NOT it. This is the one to keep.
+   */
+  difficulty: Difficulty;
+  /** chips between the coach's best tile and its runner-up: what getting it wrong actually costs */
+  gap: number;
   naivePick: TileKind;       // what the baseline bot would discard
   discards: { seat: number; kind: TileKind; claimed: boolean }[];   // the pool, in order thrown
   publicMelds: Meld[][];     // per seat, exposed sets (empty for the player's own seat)
@@ -91,6 +103,7 @@ function capture(seed: number, phase: Exclude<Phase, 'any'>): { view: PlayerView
 export function makeScenario(seed: number, phase: Phase, wantInteresting: boolean): Scenario {
   const ph: Exclude<Phase, 'any'> = phase === 'any' ? (['early', 'mid', 'late'] as const)[seed % 3]! : phase;
   let fallback: Scenario | null = null;
+  let decidedFallback: Scenario | null = null;   // has a right answer, but the obvious tile is it
   for (let attempt = 0; attempt < 16; attempt++) {
     const cap = capture(seed * 101 + attempt, ph);
     if (!cap) continue;
@@ -119,16 +132,40 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const policyRanking = policyRank(hand, melds, ctx);
     const naive = new IsolationBot(makeRng(1)).chooseDiscard(view);
     const naivePick = kindOf(naive);
-    // "Interesting" now keys off the GRADER, so hand selection and scoring agree: a hand is worth
-    // asking when the model separates the options and the naive throw is not already the answer.
-    const spread = (policyRanking.options[policyRanking.options.length - 1]?.p ?? 0) / Math.max(1e-9, policyRanking.options[0]!.p);
-    const hasWrongAnswers = spread < 0.25;
-    const interesting = hasWrongAnswers && naivePick !== policyRanking.best;
-    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, policyRanking, interesting, naivePick, discards, publicMelds, publicBonus };
+    // ---- is this hand worth asking, and what KIND of question is it? ----
+    //
+    // Two different things were being called "interesting" and only one of them is difficulty.
+    //
+    // First, is there a right answer at all? If several tiles are equal-best the question is not
+    // hard, it is unanswerable, and asking it teaches nothing but doubt. Second, is the answer the
+    // one you would reach for anyway? A hand where the lazy throw is also the correct throw teaches
+    // nothing either. A question needs BOTH: a real answer, and a real reason to miss it.
+    //
+    // Both now come from the COACH. Selection used to key off the learned model while the scoring
+    // keyed off the coach, so the app chose your hands by one standard and marked them by another -
+    // and the model is the one that loses 0.544 chips a game.
+    //
+    // The threshold is the coach's own: it calls a throw within 0.75 chips of best "also fine", so
+    // a runner-up further off than that is genuinely a mistake. Borrowing the existing boundary
+    // keeps this from being one more invented constant.
+    const runnerUp = ranking.options[1];
+    const gap = runnerUp ? ranking.best.chips - runnerUp.chips : Infinity;
+    const decided = ranking.tied.length === 1 && gap >= 0.75;
+    const trap = naivePick !== ranking.best.tile;
+    const difficulty: Difficulty = !decided ? 'toss-up' : trap ? 'trap' : 'plain';
+    const interesting = difficulty === 'trap';
+    const sc: Scenario = { id: seed, phase: ph, seat: view.seat, dealer: view.dealer, prevailingWind: view.prevailingWind, playerTurns: view.playerTurns, hand, drawn: drawn === null ? null : kindOf(drawn), melds, bonus, ranking, policyRanking, interesting, difficulty, gap, naivePick, discards, publicMelds, publicBonus };
     if (!wantInteresting) return sc;
-    if (interesting) return sc;
+    // Prefer a trap, settle for a hand that at least HAS an answer, and only serve a toss-up when
+    // sixteen deals produced nothing better. A plain yes/no test starved this: measured over 250
+    // deals, 2% are traps, 8% are plain and 90% are toss-ups, because the median hand's runner-up
+    // is only 0.14 chips behind the best. That is not a flaw in the test - most discards genuinely
+    // have no answer worth asking about, which is the same 4%-separable wall the evaluator hits.
+    if (sc.difficulty === 'trap') return sc;
+    if (sc.difficulty === 'plain') decidedFallback ??= sc;
     fallback ??= sc;
   }
+  if (decidedFallback) return decidedFallback;
   if (fallback) return fallback;
   throw new Error('could not generate a scenario');
 }

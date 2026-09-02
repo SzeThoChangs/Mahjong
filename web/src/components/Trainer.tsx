@@ -10,7 +10,7 @@ import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
-import { makeScenario, CONFIG, type Phase, type Scenario } from '@/lib/scenario';
+import { makeScenario, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
 import { recordMistake } from '@/lib/mistakes';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +22,12 @@ const VERDICT_STYLE: Record<Verdict, string> = {
   mistake: 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50', blunder: 'bg-red-600 text-white',
 };
 const VERDICT_TEXT: Record<Verdict, string> = { best: 'Best', fine: 'Also fine', mistake: 'Mistake', blunder: 'Big mistake' };
+/** What kind of question the hand was, so you know whether missing it meant anything. */
+const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  'toss-up': 'no clear answer',
+  plain: 'the obvious throw is right',
+  trap: 'trap — the obvious throw is wrong',
+};
 const EQUAL_TEXT = 'Equal best';
 
 /**
@@ -191,7 +197,15 @@ export default function Trainer() {
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[gradedTied.length > 1 && gradedTied.includes(picked.tile) ? 'best' : (pickedVerdict ?? 'fine')])}>{gradedTied.length > 1 && gradedTied.includes(picked.tile) ? EQUAL_TEXT : VERDICT_TEXT[pickedVerdict ?? 'fine']}</Badge>
+                {/* what KIND of question that was - the label the hand was selected on */}
+                <Badge variant="outline" className="text-xs">{DIFFICULTY_LABEL[scenario.difficulty]}</Badge>
                 <div className="text-sm">
+                  {scenario.difficulty === 'trap' && (
+                    <p className="mb-1 text-muted-foreground">
+                      A trap: the lazy throw here is <b className="text-foreground">{tileLabel(scenario.naivePick)}</b>, and it is wrong.
+                      Getting it right is worth {scenario.gap.toFixed(1)} chips over the next-best tile.
+                    </p>
+                  )}
                   You discarded <b>{tileLabel(picked.tile)}</b>.{' '}
                   {gradedTied.length > 1 && gradedTied.includes(picked.tile)
                     ? <>Equal best — {gradedTied.map(tileLabel).join(', ')} are all the same here, so pick whichever you like.</>
