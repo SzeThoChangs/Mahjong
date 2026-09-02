@@ -113,7 +113,7 @@ for (const [stratum, n] of strata) {
   chosen.push(...take);
 }
 shuffle(chosen);
-console.log(`selected ${chosen.length} of ${maxQ} at gap > ${clear} SE  [${strata.map(([k, n]) => `${k} ${(decisive.get(k) ?? []).length}/${n} decisive`).join(', ')}]`);
+console.log(`drew ${chosen.length} candidates for a pack of ${maxQ} at gap > ${clear} SE  [${strata.map(([k, n]) => `${k} ${(decisive.get(k) ?? []).length}/${n} decisive`).join(', ')}]`);
 if (shortfall.length) console.log(`  backfilled from close calls - ${shortfall.join('; ')}`);
 if (drawnThin.length) console.log(`  drawn thin - ${drawnThin.join(', ')}`);
 
