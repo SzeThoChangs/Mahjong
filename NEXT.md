@@ -73,6 +73,58 @@ on deals that were chosen - a few seeds, all tried, the good ones reported. Re-r
 result on a fresh named range before believing its SIZE. The negative results had no incentive to be
 lucky and can stand.
 
+## Where the fast coach got to (2026-09-02, end of session)
+
+The dataset cannot be regenerated until something plays the coach's game at a cheap bot's speed,
+because every EV means "worth this much IF PLAY CONTINUES LIKE THE BOT THAT PLAYED IT OUT" and the
+bots that graded everything we hold finish a colour hand 1.5-3.5% of the time against the coach's
+36.2%.
+
+Measured before building anything: discards are 88.2% of the coach's cost and claims 10.6%
+(`tools/_profile.ts`); inside a discard the hot spot is `acceptance`, which calls an evaluator 34
+times per candidate (`tools/_hotspot.ts`). Pruning that exactly would buy 2-3x and we need ~35x, so
+an imitation is genuinely required rather than an optimisation.
+
+`datagen/src/coachcopy.ts` trains one by copying the coach's own MOVE - unlimited, free,
+self-consistent labels, unlike the three failed models that learned the noisy measured-best action.
+The missing piece was suit: `policyFeatures` has none, so `solver/src/copy.ts` adds four.
+
+```
+  bot          ms/hand   colour hands
+  shanten         0.95         1.5%
+  coach          89.37        36.2%
+  FAST COACH     11.35        17.1%      held-out agreement with the coach 58.1%
+```
+
+**Half a success.** It learned colour play, which is what the suit features bought and the first
+evidence the approach works at all. It is not the coach's rate, and agreement plateaus at 58% -
+25 numbers cannot express which plan a hand is on.
+
+**It is 12x too slow, and we know exactly why:** claims still run the real coach, which is the 10.6%
+the profile said would be left. Fast claims are the next piece and without them the discard work
+buys nothing.
+
+## The decision waiting for Changs
+
+Before finishing the fast coach, find out whether it is needed. Does a grader that CAN play colour
+hands pick different best tiles from the one we use? `--policy coach` now exists in the evaluator
+for exactly this. A first attempt at 24 rollouts said no - 27.0% agreement between two weak graders,
+26.5% between weak and coach - but only 4 of 400 decisions were confident enough to count, so it
+proves nothing.
+
+The coach grades at **0.05 decisions/sec** at 128 rollouts (measured, not extrapolated). So:
+
+- **plain run tonight**: ~1,440 decisions in eight hours, ~4% of them confident, so ~58 usable
+  comparisons. Enough to catch a large difference and nothing else.
+- **filter first**: grade with shanten at 35/sec, keep only the confident ones, spend the coach's
+  time on those alone. Same night, ~1,400 usable comparisons. Needs ~20 lines in `evaluate.ts` (an
+  `--only <file>` of `g:h:d` keys) and a check that it grades exactly the listed decisions.
+
+The second is 25x better and is also the right population - the quiz picks its questions by
+confidence from the shipped grader, so "positions the shipped grader is sure about" is what we care
+about. Recommended, and NOT started: writing new code late and running it unattended is how the
+wasted runs happened.
+
 ## Next, asked for on 2026-09-02: hand shapes in the quiz
 
 Changs asked that the book's hand-shape tips be measured and taught, not just the reading tips.
