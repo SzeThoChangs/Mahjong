@@ -26,7 +26,7 @@ const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }
   contradicted: { label: 'Not true here', tone: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200', blurb: 'The counting disagrees with the book at this table.' },
   level: { label: 'Level', tone: 'bg-muted text-muted-foreground', blurb: 'The two shapes come out the same.' },
   'needs-play': { label: 'Cannot be settled by counting', tone: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200', blurb: 'The claim is about what opponents throw, so only played hands can answer it. Not measured yet.' },
-  measured: { label: 'Measured on real hands', tone: 'bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200', blurb: 'Measured over played hands at this table rather than adapted from the book.' },
+  measured: { label: 'Measured', tone: 'bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200', blurb: 'Counted over played hands rather than reasoned about. The note says who measured it — us, or the study this table\u2019s numbers come from.' },
   'table-rule': { label: 'How this table works', tone: 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-100', blurb: 'A rule of this table, read off the table configuration. Not a theory and not a measurement.' },
   advice: { label: 'Advice, not a claim', tone: 'bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-200', blurb: 'A way of playing or thinking rather than something that can be true or false, so nothing here can test it. Kept because it is worth reading, not because it was checked.' },
 };
@@ -122,27 +122,48 @@ export default function Tips() {
   const measured = TIPS.filter((t) => t.verdict === 'measured').length;
   const wrong = TIPS.filter((t) => t.verdict === 'contradicted').length;
   const open = TIPS.filter((t) => t.verdict === 'needs-play').length;
+  const table = TIPS.filter((t) => t.verdict === 'table-rule').length;
+  const advice = TIPS.filter((t) => t.verdict === 'advice').length;
+  const withTiles = TIPS.filter((t) => t.variants.length).length;
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-4">
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Tips</h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          The playbook, one card each, in the order a hand happens. Every card says the tip in plain English,
+          Every tip we hold, one card each, in the order a hand happens. Each card says the tip in plain English,
           says why it is supposed to work, and carries a badge saying what actually backs it.
         </p>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          The badge is the point. A tip being in the book is not evidence it is true here: the book is mostly
-          adapted from Riichi, and this table has a 2 tai minimum, four wildcards, animals and a chicken hand
-          nobody else plays. Of {TIPS.length} cards, {counted} are settled exactly by counting the tiles on the
-          card, {measured} were measured on played hands, {wrong} came out against the book, and {open} are
-          claims about what opponents do that nobody has measured yet.
+          The badge is the point. A tip being in a book is not evidence it is true here: most of them are adapted
+          from Riichi, and this table has a 2 tai minimum, a 5 tai cap, four wildcards, animals, bao and a cheap
+          hand nobody else plays. Of {TIPS.length} cards, {counted} are settled exactly by counting the tiles on
+          the card, {measured} were measured on played hands, {wrong} came out against the book, {table} are rules
+          of this table rather than anybody's advice, {advice} are about how to play rather than about tiles, and{' '}
+          {open} are untested — real claims that nobody here has measured yet.
         </p>
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Only {withTiles} of them can be shown in tiles, and those are the hand-shape ones. The rest carry no
+          example hand on purpose: inventing a position for "push or fold, and commit" would put a made-up hand in
+          front of you and imply somebody had checked it.
+        </p>
+      </div>
+      {/* 103 cards is a long page, so the phases are also the way around it */}
+      <div className="flex flex-wrap gap-2 text-sm">
+        {PHASES.map((p) => {
+          const n = TIPS.filter((t) => t.phase === p.id).length;
+          return (
+            <a key={p.id} href={`#tips-${p.id}`}
+              className="rounded-md border px-2 py-1 text-muted-foreground hover:bg-secondary hover:text-foreground">
+              {p.title} <span className="tabular-nums">{n}</span>
+            </a>
+          );
+        })}
       </div>
       {PHASES.map((p) => {
         const cards = TIPS.filter((t) => t.phase === p.id);
         if (!cards.length) return null;
         return (
-          <div key={p.id} className="flex flex-col gap-3">
+          <div key={p.id} id={`tips-${p.id}`} className="flex flex-col gap-3 scroll-mt-4">
             <div className="flex flex-col gap-1 border-t pt-4">
               <h3 className="text-lg font-semibold">{p.title}</h3>
               <p className="max-w-3xl text-sm text-muted-foreground">{p.blurb}</p>
