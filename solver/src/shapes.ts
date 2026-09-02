@@ -306,9 +306,12 @@ const TIPS: ShapeTip[] = [
       { label: 'Pair on the end — aryanmen', blocks: [T('2w 2w 3w 4w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s'), T('9s')], focus: [0] },
     ],
     claim: { kind: 'level', a: 1, b: 2 },
-    shapeFrom: 'book',
+    // The three four-tile blocks are the book's. The hand around them is ours, and so is the
+    // measure - the book ranks these by the wait they leave, not by how many tiles improve the
+    // hand - so this is OUR test, not the book's, and the badge says so.
+    shapeFrom: 'ours',
     verdict: 'contradicted',
-    verdictNote: 'Half of it does not hold. Four in a row accepts 41 tiles; the other two accept 29 each. So the doubled middle is NOT near-equal to it — it is level with the shape the book calls weakest. Note what was tested: how many tiles improve the hand. The book is ranking the QUALITY of the wait you are left with, which counting does not see. Either way the practical rule here is simpler than the book\u2019s: keep the four in a row.',
+    verdictNote: 'We counted the tiles that improve the hand: four in a row 41, doubled middle 29, pair on the end 29. So the doubled middle is not near-equal to four in a row \u2014 it is level with the shape the book calls weakest. But the book ranks these by the WAIT you are left with, and counting cannot see that. So read this as a simpler rule for our table, not as the book being wrong: keep the four in a row.',
   },
   {
     id: 'threes_and_sevens',
