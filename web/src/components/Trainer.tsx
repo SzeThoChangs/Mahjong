@@ -11,6 +11,7 @@ import { tileLabel } from '@/lib/tiles';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { makeScenario, CONFIG, type Phase, type Scenario } from '@/lib/scenario';
+import { recordMistake } from '@/lib/mistakes';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['東', '南', '西', '北'];
@@ -90,8 +91,17 @@ export default function Trainer() {
   const choose = (k: TileKind) => {
     if (pick !== null) return;
     setPick(k);
-    const v = scenario.ranking.options.find((o) => o.tile === k)!.verdict;
+    const opt = scenario.ranking.options.find((o) => o.tile === k)!;
+    const v = opt.verdict;
     setScore((s) => ({ ...s, [v]: s[v] + 1, streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
+    // A mistake you never meet again is a mistake you keep making. The position is rebuilt from the
+    // seed, so the record is a few bytes rather than a hand.
+    if (v === 'mistake' || v === 'blunder') {
+      recordMistake({
+        seed, phase, picked: k, coachPick, verdict: v, cost: opt.delta,
+        why: scenario.ranking.best.reasons[0] ?? '',
+      });
+    }
   };
   const next = () => { setPick(null); setShowAll(false); setSeed((s) => s + 1); };
 
