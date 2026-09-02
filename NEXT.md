@@ -1,8 +1,37 @@
-# Where we left off — 2026-09-02
+# Where we left off — 2026-09-03
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
-## Nothing is running
+## The regeneration is running (started 2026-09-02 20:05)
+
+`run-coach2` is generated: 150,000 hands played by four coaches, 7.2 million decisions, 45 minutes
+at 56 hands/s. The evaluator has been grading it since, with `--hands 120000 --per-hand 4
+--rollouts 128 --adaptive --policy shanten --workers 8 --seed 41 --resume`. At 01:20 on 2026-09-03
+it was at 281,000 of about 480,000 decisions, roughly 54,000 an hour, so about four hours left.
+It is resumable, so a kill costs only the current batch.
+
+Nothing should be started that competes for the eight workers. Two 4,000-hand measurement runs did,
+and slowed it by a fifth while they ran.
+
+When it finishes, the quiz pack and the film room can be rebuilt from a population that plays the
+game the coach teaches - 38% colour hands against `run-money4`'s 1.3% - which is the whole point of
+the exercise.
+
+## The two shape tips that needed play are measured (2026-09-03)
+
+Both `needs-play` cards are settled and the full write-up is in FINDINGS. `threes_and_sevens` is
+true everywhere and small. `bad_wait_ranking` splits in half: a terminal wait beats a middle one in
+every population, and the book's claim that an honour is just as good is an artifact of who is
+playing. Honours are thrown more than anything else and almost all of it happens in the opening, so
+a late honour wait is fed less than a middle one unless the table has a reason to hold honours -
+which only our own coach does. That half is now its own card, `honour_wait_timing`.
+
+The control is the lesson worth keeping. Measured on coach hands alone the book looked right about
+honours, and it looked right because the coach's danger table already assumes honours are safe to
+throw. `ShantenBot`, which has no danger model at all, gave the opposite answer. Any measurement of
+what opponents do needs a population that was not built out of the belief being tested.
+
+## Nothing else is running
 
 All three ideas found in the tactics book have now been played for money. Counting the wait in tiles
 that can legally win WON (+0.048) and is shipped. Reading the wall did not. Reading what an opponent
