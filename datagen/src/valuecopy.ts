@@ -58,8 +58,22 @@ function* sources(): Generator<{ g: GameState; bots: Bot[] }> {
 }
 
 type Group = 'first' | 'later' | 'none';
-const stat = { first: blank(), later: blank(), none: blank() };
 function blank() { return { seats: 0, ready: 0, won: 0, fan: 0, chips: 0 }; }
+const stat = { first: blank(), later: blank(), none: blank() };
+/**
+ * The same split, held at the turn the claim happened.
+ *
+ * A later copy is thrown later, so a seat that claims one is claiming later in the hand, and a hand
+ * that is further along by then is not the same evidence as a hand that got there faster. Bucketing
+ * by the claim's own turn is the cheapest way to see whether the difference is about WHICH copy or
+ * only about WHEN.
+ */
+const byTurn = new Map<string, ReturnType<typeof blank>>();
+const at = (g: Group, t: number) => {
+  const key = `${g}|${Math.min(40, Math.floor(t / 20) * 20)}`;
+  let c = byTurn.get(key); if (!c) byTurn.set(key, c = blank());
+  return c;
+};
 let hands = 0;
 
 for (const { g, bots } of sources()) {
@@ -70,22 +84,27 @@ for (const { g, bots } of sources()) {
 
   // classify every seat by its first honour claim: was that copy the first of its kind to be thrown?
   const group: Group[] = ['none', 'none', 'none', 'none'];
+  const claimTurn = [-1, -1, -1, -1];
   const thrownBefore = new Map<TileKind, number>();
   for (const e of g.discardLog) {
     const k = kindOf(e.tile);
     if (isHonour(k) && e.claimedBy !== null && e.claimKind !== 'win' && group[e.claimedBy] === 'none') {
       group[e.claimedBy] = (thrownBefore.get(k) ?? 0) > 0 ? 'later' : 'first';
+      claimTurn[e.claimedBy] = e.turn;
     }
     if (k < 34) thrownBefore.set(k, (thrownBefore.get(k) ?? 0) + 1);
   }
 
   for (let s = 0; s < 4; s++) {
-    const acc = stat[group[s]!];
-    acc.seats++;
     const q = g.players[s]!;
-    if (shanten(q.hand.map(kindOf), q.melds.length) <= 0) acc.ready++;
-    if (r.winner === s) { acc.won++; acc.fan += r.score?.fan ?? 0; }
-    acc.chips += r.chipsDelta[s] ?? 0;
+    const isReady = shanten(q.hand.map(kindOf), q.melds.length) <= 0;
+    const won = r.winner === s, fan = won ? (r.score?.fan ?? 0) : 0, chips = r.chipsDelta[s] ?? 0;
+    for (const acc of [stat[group[s]!], ...(claimTurn[s]! >= 0 ? [at(group[s]!, claimTurn[s]!)] : [])]) {
+      acc.seats++;
+      if (isReady) acc.ready++;
+      if (won) { acc.won++; acc.fan += fan; }
+      acc.chips += chips;
+    }
   }
 }
 
@@ -99,4 +118,14 @@ for (const g of ['first', 'later', 'none'] as const) {
   console.log(`  ${label.padEnd(24)}${String(a.seats).padStart(6)}   ${pct(a.ready, a.seats).padStart(14)}`
     + `   ${pct(a.won, a.seats).padStart(7)}   ${(a.won ? (a.fan / a.won).toFixed(2) : '-').padStart(14)}`
     + `   ${(a.chips / a.seats).toFixed(3).padStart(10)}`);
+}
+console.log('\n  held at the turn the claim happened, because a later copy is thrown later:');
+for (const t of [0, 20, 40]) {
+  const first = byTurn.get(`first|${t}`), later = byTurn.get(`later|${t}`);
+  if (!first || !later || Math.min(first.seats, later.seats) < 50) continue;
+  const line = (label: string, a: ReturnType<typeof blank>) =>
+    `  claimed at turn ${String(t).padStart(2)}+ ${label.padEnd(14)}${String(a.seats).padStart(6)}   ${pct(a.ready, a.seats).padStart(14)}`
+    + `   ${pct(a.won, a.seats).padStart(7)}   ${(a.won ? (a.fan / a.won).toFixed(2) : '-').padStart(14)}   ${(a.chips / a.seats).toFixed(3).padStart(10)}`;
+  console.log(line('the first copy', first));
+  console.log(line('a later copy', later));
 }

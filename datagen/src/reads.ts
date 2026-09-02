@@ -104,10 +104,17 @@ const tellPrecision = table();
  * thrown by somebody else while this opponent sat there and did not claim it. If that means anything,
  * the tile should deal in to THEM less often afterwards.
  *
- * Keyed "<class>|<turn>|<passed|new>" and asked per opponent, because pooling three seats dilutes a
- * read about one of them. Note the caveat: this counts every uncalled discard, and some of them were
- * uncalled because this table's rolling locked-discard rule forbade the claim rather than because
- * the player did not want it.
+ * Keyed "<class>|<turn>|<passed|own|new>" and asked per opponent, because pooling three seats dilutes
+ * a read about one of them. Three tags, not two, and the third one is the whole reason this is worth
+ * doing: `own` is a tile they discarded THEMSELVES, which is the safest thing on the table and would
+ * otherwise sit inside the comparison group and flatter it.
+ *
+ * The comparison that means anything is `passed` against `new`, and then that against the ordinary
+ * already-thrown discount in `dangerSafe`. If they are the same size, the second discard pile is
+ * just the discard pile - every tile that is thrown goes past everybody.
+ *
+ * Caveat: this counts every uncalled discard, and some were uncalled because this table's rolling
+ * locked-discard rule forbade the claim rather than because the player did not want it.
  */
 const oppPassed = table();
 /**
@@ -257,6 +264,7 @@ for (const { g, bots } of sources()) {
         for (const e of g.discardLog) if (e.seat !== s && e.claimedBy !== s) { const kk = kindOf(e.tile); if (kk < 34) set.add(kk); }
         return set;
       });
+      const ownDiscards = [0, 1, 2, 3].map((s) => new Set(g.players[s]!.discards.map(kindOf)));
       const shedPairs = [0, 1, 2, 3].map((s) => {
         const n = new Map<TileKind, number>();
         for (const t of g.players[s]!.discards) { const kk = kindOf(t); if (kk < 34) n.set(kk, (n.get(kk) ?? 0) + 1); }
@@ -282,7 +290,8 @@ for (const { g, bots } of sources()) {
           const f = seen.has(k) ? 'seen' : 'fresh';
           bump(oppMeld2, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c2)}`, hit);
           bump(oppMeld1, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c1)}`, hit);
-          bump(oppPassed, `${tileClass(k)}|${turn}|${passedBy[o.seat]!.has(k) ? 'passed' : 'new'}`, hit);
+          const pTag = ownDiscards[o.seat]!.has(k) ? 'own' : passedBy[o.seat]!.has(k) ? 'passed' : 'new';
+          bump(oppPassed, `${tileClass(k)}|${turn}|${pTag}`, hit);
           const pairs = shedPairs[o.seat]!;
           if (pairs.length && isSuited(k)) bump(oppShed, `${tileClass(k)}|${turn}|${shedTag(k, pairs)}`, hit);
         }
@@ -437,21 +446,22 @@ show('...split by whether the tile was already discarded once', dangerSafe, ['si
   console.log('\ntwo_discard_piles - does a tile they let go past deal in to THEM less often?');
   {
     const rows: string[] = [];
-    const pool = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 } };
+    const pool = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 }, own: { n: 0, hit: 0 } };
     for (const tn of [20, 30, 40, 50]) {
-      const acc = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 } };
+      const acc = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 }, own: { n: 0, hit: 0 } };
       for (const cls of ['simple', 'terminal', 'honour']) {
         add(acc.passed, oppPassed[`${cls}|${tn}|passed`]); add(acc.fresh, oppPassed[`${cls}|${tn}|new`]);
+        add(acc.own, oppPassed[`${cls}|${tn}|own`]);
       }
-      add(pool.passed, acc.passed); add(pool.fresh, acc.fresh);
+      add(pool.passed, acc.passed); add(pool.fresh, acc.fresh); add(pool.own, acc.own);
       if (Math.min(acc.passed.n, acc.fresh.n) < 200) continue;
-      rows.push(`  turn ${String(tn).padEnd(6)}passed ${pc(acc.passed)}  never seen by them ${pc(acc.fresh)}`
-        + `   x${((acc.passed.hit / acc.passed.n) / Math.max(1e-9, acc.fresh.hit / acc.fresh.n)).toFixed(2)}`
+      rows.push(`  turn ${String(tn).padEnd(6)}passed ${pc(acc.passed)}  never thrown at all ${pc(acc.fresh)}  their own ${acc.own.n ? pc(acc.own) : '-'}`
+        + `   passed/new x${((acc.passed.hit / acc.passed.n) / Math.max(1e-9, acc.fresh.hit / acc.fresh.n)).toFixed(2)}`
         + `  z=${z(acc.passed, acc.fresh).toFixed(2)}   (n=${acc.passed.n}/${acc.fresh.n})`);
     }
     console.log(rows.length ? rows.join('\n') : '  (no cell had the sample for it)');
-    if (pool.passed.n && pool.fresh.n) console.log(`  pooled:  passed ${pc(pool.passed)}  new ${pc(pool.fresh)}`
-      + `   x${((pool.passed.hit / pool.passed.n) / Math.max(1e-9, pool.fresh.hit / pool.fresh.n)).toFixed(2)}  z=${z(pool.passed, pool.fresh).toFixed(2)}`);
+    if (pool.passed.n && pool.fresh.n) console.log(`  pooled:  passed ${pc(pool.passed)}  never thrown ${pc(pool.fresh)}  their own ${pc(pool.own)}`
+      + `   passed/new x${((pool.passed.hit / pool.passed.n) / Math.max(1e-9, pool.fresh.hit / pool.fresh.n)).toFixed(2)}  z=${z(pool.passed, pool.fresh).toFixed(2)}`);
   }
 
   console.log('\npair_discards_rule_out - are the tiles beside a pair they threw away safer?');
