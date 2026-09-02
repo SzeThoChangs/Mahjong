@@ -127,6 +127,39 @@ const TIPS: ShapeTip[] = [
     verdictNote: 'Both hands are one away from ready. The third pair costs about a third of the accepting tiles.',
   },
   {
+    id: 'sandwich',
+    title: 'One block can be the set AND the pair',
+    rule: 'A run with a tile doubled at its edge — 4-5-6-6 — gives you a set and your pair out of one block. So no other block has to be the pair.',
+    why: [
+      'Read 4-5-6-6 as one thing and it settles two of your five pieces at once: the run, and the pair you were going to need somewhere.',
+      'Miss it and you go looking for a pair elsewhere, keep one, and end up holding three pairs — which is the shape the pair rule says to break.',
+      'That is why this tip is really about reading rather than about width. Seeing it tells you what the rest of the hand is allowed to be.',
+    ],
+    variants: [
+      { label: 'Sandwich: 4-5-6-6 supplies the set and the pair', tiles: T('4w 5w 6w 6w 2t 3t 6t 7t 3s 4s 7s 8s 9s'), focus: T('4w 5w 6w 6w') },
+      { label: 'No sandwich: a plain run, pair needed elsewhere', tiles: T('4w 5w 6w 9w 2t 3t 6t 7t 3s 4s 7s 8s 9s'), focus: T('4w 5w 6w 9w') },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'Confirmed, but read the margin honestly: both hands are two away and the sandwich accepts a little more, not a lot. The value of this tip is not the extra tiles — it is knowing your pair is already settled, so you stop hoarding a second one.',
+  },
+  {
+    id: 'stepping_stones',
+    title: 'The tile bridging two blocks works harder than it looks',
+    rule: 'In a hand with no pair, a tile sitting between two part-runs is doing more than it appears. Do not cut it just because it looks spare.',
+    why: [
+      'A 5 between 3-4 and 6-7 is not one tile with one job. It extends either side, and it can pair up to become the pair the hand still needs.',
+      'It looks like the loose tile because it is not obviously part of anything. That is exactly why it gets thrown.',
+    ],
+    variants: [
+      { label: 'Bridge kept: 5w links 3-4w and 6-7w', tiles: T('3w 4w 5w 6w 7w 2t 3t 6t 7t 3s 4s 7s 8s'), focus: T('3w 4w 5w 6w 7w') },
+      { label: 'Bridge cut for an isolated tile', tiles: T('3w 4w 6w 7w 9s 2t 3t 6t 7t 3s 4s 7s 8s'), focus: T('3w 4w 6w 7w 9s') },
+    ],
+    claim: { kind: 'accepts-more', better: 0, than: 1 },
+    verdict: 'confirmed',
+    verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw.',
+  },
+  {
     id: 'four_tile_ranking',
     title: 'Which four-tile block to break',
     rule: 'The book ranks them: extended run (2-3-4-5) and bulging run (3-4-4-5) near-equal, pair-attached (2-3-3-4) clearly weakest.',

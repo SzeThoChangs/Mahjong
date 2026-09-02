@@ -8,7 +8,7 @@ import { JsonlGzWriter } from './writer.js';
 import { BOT_TYPES, type BotType, type RandomnessConfig } from './bots.js';
 import { fnv1a } from './records.js';
 
-export interface WorkerArgs { workerIndex: number; workers: number; handQuota: number; out: string; baseSeed: number; truth: boolean; rulesOverride: object; rules?: RulesConfig; randomness: RandomnessConfig; maxHands: number; decisions: boolean }
+export interface WorkerArgs { workerIndex: number; workers: number; handQuota: number; out: string; baseSeed: number; truth: boolean; rulesOverride: object; rules?: RulesConfig; randomness: RandomnessConfig; maxHands: number; decisions: boolean; botTypes?: BotType[] }
 
 export function runWorker(a: WorkerArgs, progress?: (hands: number) => void) {
   const rules = a.rules ?? makeRules({ ...loadTableRulesOverride(), ...a.rulesOverride });
@@ -22,7 +22,7 @@ export function runWorker(a: WorkerArgs, progress?: (hands: number) => void) {
     const seed = fnv1a(`${a.baseSeed}:${sessionId}`) || 1;
     // personalities: seeded shuffle of the pool, 4 drawn with replacement bias toward variety
     const rng = makeRng(seed ^ 0x9e3779b9);
-    const botTypes: BotType[] = [0, 1, 2, 3].map(() => BOT_TYPES[Math.floor(rng() * BOT_TYPES.length)]!);
+    const botTypes: BotType[] = a.botTypes ?? [0, 1, 2, 3].map(() => BOT_TYPES[Math.floor(rng() * BOT_TYPES.length)]!);
     const { hands: hs } = runSession({ sessionId, seed, rules, botTypes, randomness: a.randomness, maxHands: Math.min(a.maxHands, a.handQuota - done), sink, recordDecisions: a.decisions });
     done += hs.length; sessions++;
     progress?.(done);
