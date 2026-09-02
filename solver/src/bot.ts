@@ -1,9 +1,11 @@
 /** A bot that plays by the solver's advice. Exists to verify the advice in the simulator. */
-import { kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type Meld } from 'sg-mahjong-engine';
+import { kindOf, discardFeatures, unseenCounts, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld } from 'sg-mahjong-engine';
 import { rankDiscards } from './rank.js';
 import { type Context } from './targets.js';
 import { type ReadsTables } from './reads.js';
-import { policyRank } from './policy.js';
+import { policyRank, policyTable } from './policy.js';
+import { copyFeatures, copyScore, suitTable } from './copy.js';
+import { COPY } from './copy.weights.js';
 import { claimRank, claimAdvice, type ClaimCandidate } from './claim.js';
 
 /**
@@ -167,4 +169,43 @@ export class AltReadsCoachBot extends CoachBot {
   private readonly tables: ReadsTables;
   constructor(tables: ReadsTables) { super(); this.tables = tables; }
   protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), reads: this.tables }; }
+}
+
+/**
+ * The fast copy of the coach: same discard decision, a few hundred times cheaper.
+ *
+ * The point is not to play well. It is to play LIKE THE COACH at a cheap bot's speed, so it can be
+ * the evaluator's play-out policy. Every EV in the dataset means "worth this much if play continues
+ * like the bot that played it out", and the bots that graded everything we hold finish a colour hand
+ * 2-4% of the time against the coach's 34.6% - so they grade a plan they cannot carry out.
+ *
+ * Claims still go through the coach, which is 10.6% of its cost against the discard's 88.2%
+ * (`tools/_profile.ts`). Discards first; if the speed is still short after that, claims are next.
+ *
+ * Judge it on `tools/_rates.ts`, not on how often it agrees with the coach. Per-decision agreement
+ * has failed to predict anything in this project three times. The question is whether it finishes
+ * colour hands at the coach's rate.
+ */
+export class FastCoachBot extends CoachBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const hand = v.hand.map(kindOf);
+    const kinds = [...new Set(hand)].filter((k) => k < 34);
+    if (kinds.length <= 1) return super.chooseDiscard(v);
+    const ctx = this.ctx(v), melds = meldsOf(v);
+    const unseen = unseenCounts({
+      hand,
+      allMelds: v.players.flatMap((p) => p.melds.flatMap((m) => m.tiles)),
+      allDiscards: v.discardLog.map((d) => kindOf(d.tile)),
+    });
+    const byKind = new Map(discardFeatures(hand, melds, unseen).map((f) => [f.k, f]));
+    const tbl = policyTable(ctx), suits = suitTable(hand);
+    let best: TileKind | null = null, bestScore = -Infinity;
+    for (const k of kinds) {
+      const f = byKind.get(k); if (!f) continue;
+      const sc = copyScore(copyFeatures(f, ctx.seat, ctx.prevailingWind, ctx.playerTurns, tbl, suits), COPY);
+      if (sc > bestScore) { bestScore = sc; best = k; }
+    }
+    if (best === null) return super.chooseDiscard(v);
+    return v.hand.find((t) => kindOf(t) === best) ?? super.chooseDiscard(v);
+  }
 }

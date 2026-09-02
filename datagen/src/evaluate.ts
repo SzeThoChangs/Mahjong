@@ -19,10 +19,21 @@ import { makeBot, type RandomnessConfig } from './bots.js';
 import { loadHands, eachJsonlGz } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { rulesForDir } from './tablerules.js';
+import { CoachBot } from 'sg-mahjong-solver';
 import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
 import { SE_VERSION } from './se.js';
 
-export type Policy = 'fast' | 'shanten' | 'efficiency';
+/**
+ * Who plays the hand out after the tile under test is thrown. This decides every label in the
+ * dataset: an EV means "worth this much IF PLAY CONTINUES LIKE THIS BOT", never "worth this much".
+ *
+ * `coach` is 120x slower than the rest and cannot grade a whole run - it exists so a small sample
+ * can be graded by a bot that plays the same game the positions come from, and compared. The three
+ * fast policies all fail at the same thing: a colour hand. They finish one 2-4% of the time where
+ * the coach does it 34.6%, so on any position whose best plan is a colour hand they are grading a
+ * plan they cannot execute.
+ */
+export type Policy = 'fast' | 'shanten' | 'efficiency' | 'coach';
 export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean }
 /** Outcome mix for one action, from the acting seat's point of view.
  *  `w` keys are `<role><fan>` where role is: W self-draw win, D discard win, s pays the shooter share,
@@ -71,7 +82,10 @@ class CoupledBot implements Bot {
 
 export function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig, coupled = true): Bot[] {
   const build = (rng: () => number): Bot =>
-    policy === 'fast' ? new IsolationBot(rng, 0.6, 0.4) : policy === 'shanten' ? new ShantenBot(rng) : makeBot('efficiency', rng, randomness);
+    policy === 'fast' ? new IsolationBot(rng, 0.6, 0.4)
+    : policy === 'shanten' ? new ShantenBot(rng)
+    : policy === 'coach' ? new CoachBot()
+    : makeBot('efficiency', rng, randomness);
   return [0, 1, 2, 3].map((s) => {
     if (!coupled) return build(makeRng(seed * 4 + s));
     let stream = makeRng(seed * 4 + s);                                    // until the first decision re-keys it
