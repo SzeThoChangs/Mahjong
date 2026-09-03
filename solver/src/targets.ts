@@ -68,6 +68,32 @@ export interface Context {
    *  agreement has repeatedly failed to predict chips - see PLAN.md. Sweeping it against money is
    *  a different question from the one that produced it. */
   dangerWeight?: number;
+  /** Drop the cheap hand (Chicken) from the plans the coach scores.
+   *
+   *  The coach's whole value model is this list: it scores four plans every turn and keeps the best
+   *  one, and the cheap hand is nearly always among them. That is the book's hybrid - build towards
+   *  something worth having, take the quick legal win if it turns up first - and nobody here has
+   *  ever measured what it is worth. With this on, the coach only ever plays for a pattern hand.
+   *
+   *  It exists to answer a question about the coach rather than to be shipped: if removing the
+   *  largest single piece of the value machinery costs nothing, the coach is insensitive on the
+   *  value side as well as the danger side, and there is nothing left to improve in it.
+   *
+   *  Dropping it cannot leave the hand with no plan at all - a hand with a pong meld and a chow
+   *  meld in another suit has only Chicken - so the filter keeps the list when Chicken is all
+   *  there is.
+   */
+  noCheap?: boolean;
+  /** Keep ONLY the cheap hand among the plans: the mirror of `noCheap`.
+   *
+   *  `noCheap` asks what the coach loses by never planning for the quick legal win. On its own a
+   *  null there is hard to read, because the coach can still stumble into a cheap hand and still
+   *  declare it - the flag changes what it PLANS for, not what it accepts. This flag pushes the
+   *  same dial the other way: the coach plays for the cheap hand and nothing else, and never
+   *  builds towards a pattern. If neither direction moves chips, the plan list is not steering the
+   *  play at all, and no amount of re-fitting the value tables will help.
+   */
+  onlyCheap?: boolean;
   /** Drawable tiles left in the wall. Needed to price the flower/animal route: a hand that is one
    *  Fan short at turn 12 has a real chance of drawing it and at turn 44 has almost none. Optional
    *  so older callers keep working - without it the bonus route is priced as unavailable. */
@@ -183,7 +209,18 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
   const tw = thirteenBreakdown(h);
   if (tw >= 9) out.push({ id: 'thirteen', value: tw, armed: true, chips: byTurn(T.thirteen_chips![mf === 'mf2' ? 'mf2' : 'mf1']! ?? T.thirteen_chips!['mf1']!, ctx.playerTurns, tw) });
 
-  return out.sort((a, b) => b.chips - a.chips);
+  // Both filters keep the list whenever they would empty it: a hand with a pong meld and a chow
+  // meld in another suit has only Chicken, and a hand can be too far gone for Chicken to be listed.
+  let plans = out;
+  if (ctx.noCheap && out.some((t) => t.id !== 'chicken')) plans = out.filter((t) => t.id !== 'chicken');
+  // ARMED, not merely listed. A hand with no route to the table minimum still lists Chicken, priced
+  // -9 and flagged unarmed, and if that is the only plan left then no throw improves anything and
+  // the danger term alone decides - the arm stops building and quietly plays like a folder. Measured
+  // at 41.7% of its decisions against the coach's own 10.1%, which is most of what the first version
+  // of this arm was losing. Falling back to the full list keeps the arm to the question it was
+  // built for: take the cheap route whenever it is really available, and otherwise play normally.
+  else if (ctx.onlyCheap && out.some((t) => t.id === 'chicken' && t.armed)) plans = out.filter((t) => t.id === 'chicken');
+  return plans.sort((a, b) => b.chips - a.chips);
 }
 
 const tileName = (k: TileKind): string => {

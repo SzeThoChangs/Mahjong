@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { Wall, playGame, makeRng, shuffleWall, shuffleName, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, ValueDangerCoachBot, AltReadsCoachBot } from '../bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, ValueDangerCoachBot, AltReadsCoachBot, NoCheapCoachBot, OnlyCheapCoachBot } from '../bot.js';
 import type { ReadsTables } from '../reads.js';
 
 /**
@@ -42,6 +42,10 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   plainwait: { label: 'coach WITHOUT the legal-wait rule (expect roughly -0.02 on fresh deals)', make: () => new PlainWaitCoachBot() },
   wall: { label: 'coach discounting tiles no run can be waiting on', make: () => new WallCoachBot() },
   value: { label: 'coach pricing what a deal-in would COST, not just its chance', make: () => new ValueDangerCoachBot() },
+  // the first arm on the VALUE side: the coach with the cheap hand removed from its plans
+  nocheap: { label: 'coach with the cheap hand REMOVED from its plans (expected to lose clearly)', make: () => new NoCheapCoachBot() },
+  // the mirror of it: the coach playing for the cheap hand and nothing else
+  onlycheap: { label: 'coach playing ONLY for the cheap hand, never for a pattern', make: () => new OnlyCheapCoachBot() },
   // the same coach, pricing danger off a table measured on a different population of players
   altreads: { label: `coach reading danger off ${readsPath}`, make: () => new AltReadsCoachBot(loadReads(readsPath)) },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness

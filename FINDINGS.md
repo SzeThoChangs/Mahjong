@@ -840,6 +840,86 @@ Neither has been played for money and neither should be. This is the suit read a
 and worth teaching is a different finding from worth scoring with, and the coach already prices
 waits continuously. The cards say what is true and claim nothing else.
 
+### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
+
+Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach
+might be just as deaf on the other side - in which case there is nothing left to improve and the bot
+is finished. It is not deaf. Swing what the coach thinks a hand is WORTH and the money moves by two
+orders of magnitude more than anything on the danger side has ever managed.
+
+**The obvious test of the book's claim returned nothing, because it was not the book's claim.**
+`hybrid_fallback` (`playbook.json:836`) is the largest strategic finding the book has, and it says to
+keep Chicken alive as a fallback while building a pattern, worth +3.4 chips a game. The `nocheap` arm
+drops Chicken from the plan list, so the coach only ever builds a pattern:
+
+```
+  six shards of 20,000    +0.051 +/- 0.030    t = +1.67
+  three batches of 10,000 +0.018 +/- 0.061    t = +0.29
+  pooled, 150,000 paired deals on fresh ranges    +0.044 +/- 0.027    t = +1.62
+```
+
+Inside two standard errors, and leaning the wrong way if it leans at all. But read the book's
+sentence again: the +3.4 is measured **over a pure All-Pong strategy** - a player locked into one
+pattern who never bails out. `nocheap` keeps every pattern, switches freely between them, and still
+DECLARES a cheap win when one lands, because the engine offers the win and the bot takes it. All it
+gives up is planning for one. So this null does not touch the book's claim. It answers a narrower
+question the book never asked, and the answer is that having Chicken in the list is worth nothing
+once the coach is already free to take a cheap win when it appears.
+
+**The mirror is what actually answered the question.** `onlyCheap` leaves nothing but Chicken, so the
+coach plays every hand for the quick legal win and never builds. That is a far bigger intervention -
+it changes the throw on 21% of discards against `nocheap`'s 15% and the danger arms' 1.5% - and it
+loses heavily:
+
+```
+  four ranges of 8,000 paired deals, shuffle-720001 onwards
+
+  -2.030   -1.912   -1.907   -1.860     each +/- 0.150
+
+  pooled, 32,000 paired deals    -1.928 +/- 0.075     t = -25.8
+```
+
+The four ranges scatter by 0.072, less than the 0.150 that noise alone would give. Nothing else in
+this project has produced a number like this: every danger arm ever measured sits within 0.03 of
+zero, and this is sixty times further out.
+
+**The first version of the mirror was wrong, and the shape check is what caught it.** It read -3.662
+and -3.734, nearly twice the truth. The cause is that a hand with no route to the table minimum still
+LISTS Chicken, priced -9 and flagged unarmed, so when Chicken was the only plan left the coach's best
+plan was worth -9, no throw improved anything, the danger term alone decided, and the bot quietly
+played like a folder. Measured at 41.7% of its decisions against the coach's own 10.1%. The tell was
+in the shape run before the number was believed: the arm reached ready LATER than the coach (34.5
+against 33.5), which is the opposite of what playing for a fast cheap hand should do. Filtering on
+`armed` rather than on the plan being listed puts it back to 10.05%, and the corrected arm gets ready
+FASTER, which is what the strategy actually predicts.
+
+**What the arm gives up, now that it is measuring the right thing.** 8,000 games a side:
+
+```
+                          coach   onlycheap        z
+  wins                   24.75%      20.45%     +6.5
+    at the minimum       40.86%      56.42%     -9.3
+    four fan or more     36.21%      21.03%    +10.0
+  average fan winning      3.07        2.52
+  reached ready          45.98%      42.02%
+    average turn           34.1        33.6
+  deals in               15.11%      15.90%     -1.4
+```
+
+It gets ready sooner and wins cheaper, exactly as advertised, and it is not worth it: the big hands
+it stops making are worth more than the speed it buys. The deal-in rate is the control and it does
+not move, so this is a clean measurement of the value half with the danger half untouched.
+
+**What follows from it.** The plan list is not decoration, and `solver/src/tables.ts` - which turns a
+hand into a number of chips, and which is auto-generated from the book author's simulations rather
+than from ours - is now worth re-fitting on our own 150,000 hands. That is the first time any part of
+this project has earned that sentence on evidence rather than on hope. The danger side stays closed.
+
+**Two arms and two tools stay in the tree**: `nocheap` and `onlycheap` in `headtohead.ts`, with
+`tools/_cheaprate.ts` for how often an arm fires and `tools/_cheapshape.ts` for what it does to the
+hands that get won. The second of those is the one that saved this finding from being reported at
+twice its size, and it is worth running on any future arm whose result is either surprising or zero.
+
 ### The third gap from the tactics book is real, was invisible in our data, and pays nothing (2026-09-02)
 
 The gap: the coach sees how MANY melds an opponent has and never what they are, so a dragon pong and

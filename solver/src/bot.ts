@@ -166,6 +166,44 @@ export class ValueDangerCoachBot extends CoachBot {
   }
 }
 
+/**
+ * The coach WITHOUT the cheap hand among its plans.
+ *
+ * Everything ever measured here has been on the danger side, and all of it came back at zero. This
+ * is the first arm pointed at the other half: what the coach thinks a hand is WORTH. It scores four
+ * plans every turn and usually keeps the cheap one, which is the book's hybrid - play for something
+ * good, take the quick legal win if it arrives first. Nobody has priced that. The study the tables
+ * came from puts it at +3.4 chips a game, which would be the largest effect anyone has claimed in
+ * this project.
+ *
+ * The flag rides on the context rather than on `rankDiscards`, so it reaches the claim decision as
+ * well as the discard - both ask `handValue`, and a coach that no longer plans for a cheap hand
+ * should not pong for one either.
+ *
+ * This arm is expected to LOSE, and to lose clearly. If it does not, the coach is as insensitive on
+ * the value side as it is on the danger side, and the bot is finished.
+ */
+export class NoCheapCoachBot extends CoachBot {
+  protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), noCheap: true }; }
+}
+
+/**
+ * The coach with NOTHING BUT the cheap hand among its plans - the mirror of `NoCheapCoachBot`.
+ *
+ * `nocheap` on its own cannot settle the question it was built for. That arm still declares a
+ * cheap win when one lands, because the engine offers the win and the bot takes it; all it gives
+ * up is planning for one. So a null there has two readings: the plan list does not steer the play,
+ * or the coach reaches cheap hands anyway without aiming at them.
+ *
+ * This arm separates them by pushing the same dial the other way. It never builds towards a colour
+ * hand, an all-pong hand or the thirteen, and plays every hand for the quick legal win. Between
+ * the two arms the coach's plan list is swung from one end to the other, and if neither end costs
+ * or wins chips then the value machinery is inert and re-fitting its tables cannot help.
+ */
+export class OnlyCheapCoachBot extends CoachBot {
+  protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), onlyCheap: true }; }
+}
+
 export class FoldCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { fold: true });
