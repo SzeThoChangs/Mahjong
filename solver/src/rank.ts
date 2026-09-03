@@ -1,6 +1,6 @@
 /** Rank the 14 possible discards and explain the choice in plain language. */
 import {
-  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, scoreHand, shanten, suitOf, windKind, type Meld, type TileKind,
+  fanInHand, isDragon, isHonour, isJoker, isSuited, isTerminal, kindName, rankOf, scoreHand, shanten, suitOf, visibleTai, windKind, type Meld, type TileKind,
 } from 'sg-mahjong-engine';
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
@@ -58,10 +58,64 @@ const TARGET_NAME: Record<string, string> = { ping_wu: 'Ping Wu', all_chow: 'All
 // it is also standing in for the other reasons a already-safe tile tends to be a good throw.
 const DANGER_WEIGHT = 40;
 
-function dealInChips(k: TileKind, ctx: Context, gone: number[], accounted?: number[]): number {
+/**
+ * What a shot at a hand of this size costs the discarder, in chips, on this table.
+ *
+ * Straight off `data/table.config.json`: the shooter pays the whole thing, 7 chips at the 2 tai
+ * minimum and 40 at the 5 tai cap. The jump from 4 to 5 is the reason this matters at all - the
+ * cheapest legal hand and the most expensive one differ by nearly six times, and until now the
+ * coach has priced every deal-in the same.
+ */
+const SHOOT_TOTAL: Record<number, number> = { 2: 7, 3: 11, 4: 20, 5: 40 };
+const shotChips = (tai: number) => SHOOT_TOTAL[Math.max(2, Math.min(5, Math.round(tai)))]!;
+
+/**
+ * The average shot cost across real positions, which is what the term is divided by.
+ *
+ * The point of dividing is that this must REDISTRIBUTE caution, not add it. Turning the coach's
+ * caution up loses money monotonically - measured, out to 4.5 standard errors - so a term that
+ * multiplied every danger by something above 1 would be a slower way of repeating that experiment.
+ * Normalised, the coach becomes more afraid of the expensive hands and correspondingly less afraid
+ * of the cheap ones, and the total stays where the sweep put it.
+ *
+ * Measured by `tools/_valuerate.ts` over coach-played hands: 8.76 chips is the average shot at this
+ * table, which is above the 7 a minimum hand pays because the occasional visible 4 or 5 tai hand
+ * pulls it up. Set so the mean scale comes out at 1.00 - the term moves caution around, it does not
+ * add any.
+ */
+const TYPICAL_SHOT = 8.76;
+
+/**
+ * How much more (or less) than usual a deal-in would cost right now.
+ *
+ * `visibleTai` is the engine's own answer to "what can the table see this hand is worth" - the tai
+ * already settled by somebody's exposed melds and their face-up flowers, counted the way a player
+ * sitting opposite would count it. The coach has never looked at it. Its whole threat model is a
+ * COUNT: three exposed sets means fear, none means relax, and a dragon pong and a chow of 3-4-5 are
+ * the same input.
+ *
+ * That is a claim about the PROBABILITY of dealing in. Four true reads have now been priced into
+ * that side and every one returned nothing. This is the other side: what it costs when it happens.
+ */
+export function shotScale(ctx: Context): number {
+  const opps = ctx.opponents;
+  if (!opps?.length) return 1;
+  let worst = 0;
+  for (const o of opps) {
+    const melds: Meld[] = o.melds.map((tiles) => ({
+      type: tiles.length >= 3 && tiles[0] === tiles[1] ? (tiles.length === 4 ? 'kong' : 'pong') : 'chow',
+      tiles: [...tiles], concealed: false,
+    }));
+    const tai = visibleTai({ melds, bonus: [...(o.bonus ?? [])], seat: o.role ?? 0, prevailingWind: ctx.prevailingWind });
+    if (tai > worst) worst = tai;
+  }
+  return shotChips(Math.max(ctx.minimumFan, worst)) / TYPICAL_SHOT;
+}
+
+function dealInChips(k: TileKind, ctx: Context, gone: number[], accounted?: number[], cost = 1): number {
   if (isJoker(k)) return 0;
   const isWalled = accounted ? walled(k, accounted) : false;
-  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0, ctx.reads, isWalled) * threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads) * (ctx.dangerWeight ?? DANGER_WEIGHT);
+  return dealInChance(k, ctx.playerTurns, gone[k] ?? 0, ctx.reads, isWalled) * threatScale(ctx.opponentMelds, ctx.playerTurns, ctx.reads) * (ctx.dangerWeight ?? DANGER_WEIGHT) * cost;
 }
 
 /** Say out loud what the discard pool means for this tile, so the advice can be argued with. */
@@ -147,8 +201,10 @@ function legalWait(h: HandInput, ctx: Context, gone: number[]): number | null {
  * is no reason to stop building a hand that is nearly there, and a hopeless hand costs nothing to
  * keep building while nobody is close.
  */
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean; wall?: boolean } = {}): Ranking {
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean; wall?: boolean; valueDanger?: boolean } = {}): Ranking {
   const threatFold = typeof cfg.fold === 'object' ? cfg.fold : null;
+  // OFF by default: scale the cost of a deal-in by what the table can see the opponents are worth
+  const shot = cfg.valueDanger ? shotScale(ctx) : 1;
   const foldEnabled = cfg.fold === true;
   const allJokers = concealed.every(isJoker);
   const kinds = [...new Set(concealed)].filter((k) => allJokers || !isJoker(k));   // never offer a wildcard as a discard
@@ -183,7 +239,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     ? maxReadyChance(ctx.opponentMelds, ctx.playerTurns, ctx.reads) >= threatFold.ready && shanten(concealed, melds.length) >= threatFold.shanten
     : foldEnabled && kinds.every((k) => handValue(hands.get(k)!, ctx).all.every((t) => !t.armed));
   if (folding) {
-    for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone, accounted);
+    for (const o of opts) o.risk = dealInChips(o.tile, ctx, gone, accounted, shot);
     opts.sort((a, b) => a.risk - b.risk);
     const safest = opts[0]!;
     for (const o of opts) {
@@ -222,7 +278,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
     o.chips += o.acceptance * 0.06;
   }
   // what the throw hands the table, priced in the same chips as what it does for the hand
-  for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone, accounted); o.chips -= o.risk; }
+  for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone, accounted, shot); o.chips -= o.risk; }
   opts.sort((a, b) => b.chips - a.chips);
   const top = opts[0]!;
   const watch = suitWatch(ctx.opponents);

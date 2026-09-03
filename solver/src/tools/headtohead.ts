@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { Wall, playGame, makeRng, shuffleWall, shuffleName, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, AltReadsCoachBot } from '../bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, ValueDangerCoachBot, AltReadsCoachBot } from '../bot.js';
 import type { ReadsTables } from '../reads.js';
 
 /**
@@ -41,6 +41,7 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   fold: { label: 'coach WITH the give-up rule', make: () => new FoldCoachBot() },
   plainwait: { label: 'coach WITHOUT the legal-wait rule (expect roughly -0.02 on fresh deals)', make: () => new PlainWaitCoachBot() },
   wall: { label: 'coach discounting tiles no run can be waiting on', make: () => new WallCoachBot() },
+  value: { label: 'coach pricing what a deal-in would COST, not just its chance', make: () => new ValueDangerCoachBot() },
   // the same coach, pricing danger off a table measured on a different population of players
   altreads: { label: `coach reading danger off ${readsPath}`, make: () => new AltReadsCoachBot(loadReads(readsPath)) },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness

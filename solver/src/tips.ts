@@ -193,8 +193,8 @@ const CARDS: Tip[] = [
       { label: 'Six blocks — the pair broken for a spare', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('2t 3t 4t'), T('5t 6t'), T('9s'), T('2s')], focus: [4, 5] },
     ],
     claim: { kind: 'closer-to-ready', better: 0, than: 1 },
-    verdict: 'confirmed',
-    verdictNote: 'The five-block hand is ready; the six-block one is a tile further away. It accepts more tiles, which is exactly the trap — a wider hand that is further from done.',
+    verdict: 'measured',
+    verdictNote: 'The counting is clear on this pair of hands: the five-block one is ready and the six-block one is a tile further away, and it accepts more tiles, which is exactly the trap. The play-outs are not clear at all. On 90 graded positions holding six blocks where one could be cut for nothing, the measured best cut it 59% of the time against 56% expected — no difference worth the name. So keep the rule for how it makes you SEE a hand, and do not treat the sixth block as an error.',
   },
   {
     id: 'six_blocks_ok',

@@ -27,8 +27,31 @@
  * table actually throws late in a hand, and this asks whether the play-outs are worth more chips
  * when you take the wait the book prefers. Two roads to the same claim is worth more than either.
  */
-import { isHonour, isJoker, isSuited, rankOf, shanten, type TileKind } from 'sg-mahjong-engine';
+import { countsAndJokers, isHonour, isJoker, isSuited, rankOf, scoreHand, shanten, winningKinds as engineWinningKinds, type Meld, type TileKind } from 'sg-mahjong-engine';
 import { ukeire } from './tips.js';
+
+/**
+ * What a card needs to know about the table, for the tips that cannot be read off the tiles alone.
+ *
+ * `narrow_can_beat_wide` is the reason this exists: whether a winning tile can actually be declared
+ * depends on the minimum, on your seat wind, on the round, and on the flowers in front of you. A
+ * caller that cannot supply this gets the tile-only detectors and nothing else.
+ */
+export interface TableView {
+  bonus: readonly TileKind[];
+  seat: number;
+  prevailingWind: number;
+  minimumFan: number;
+  selfDrawMinimumFan: number;
+  /**
+   * The sets already on the table, which a hand cannot be scored without.
+   *
+   * Optional, and the detector that needs it stays quiet rather than guessing: scoring a melded hand
+   * as though it were concealed would call a legal wait dead and put a wrong card in front of a
+   * reader. Must match the meld COUNT passed alongside it or it is ignored.
+   */
+  melds?: readonly Meld[];
+}
 
 export interface ShapeCall {
   /** the id of the card in TIPS */
@@ -74,6 +97,47 @@ function spares(c: number[]): TileKind[] {
   return out;
 }
 
+/**
+ * The most blocks a hand can be read as - sets, pairs and two-tile pieces that could become runs.
+ *
+ * The book's first rule is that a winning hand is five blocks and a sixth is tiles you will throw
+ * later. To spot a position where that decision is live, something has to agree on what a block is.
+ * This takes the most generous reading: at each rank, try it as a triplet, as a run, as a pair, as
+ * two adjacent tiles, as two tiles with a gap, or as a spare, and keep whichever branch yields the
+ * most. Honours can only be triplets or pairs.
+ *
+ * Generous on purpose. A tip about cutting the sixth block should only fire where six can honestly
+ * be seen, and a mean counter would call a six-block hand five and never fire at all.
+ */
+export function blockCount(tiles: TileKind[]): number {
+  const c = countsOf(tiles);
+  let blocks = 0;
+  for (let k = 27; k < 34; k++) blocks += c[k]! >= 3 ? 1 : c[k]! >= 2 ? 1 : 0;
+  for (const base of [0, 9, 18]) blocks += suitBlocks(c.slice(base, base + 9), 0, new Map());
+  return blocks;
+}
+function suitBlocks(n: number[], i: number, memo: Map<string, number>): number {
+  while (i < 9 && n[i] === 0) i++;
+  if (i >= 9) return 0;
+  const key = `${i}:${n.join('')}`;
+  const hit = memo.get(key); if (hit !== undefined) return hit;
+  let best = 0;
+  const take = (drops: [number, number][]) => {
+    for (const [at, howMany] of drops) n[at]! -= howMany;
+    const got = suitBlocks(n, i, memo);
+    for (const [at, howMany] of drops) n[at]! += howMany;
+    return got;
+  };
+  if (n[i]! >= 3) best = Math.max(best, 1 + take([[i, 3]]));
+  if (i + 2 < 9 && n[i]! >= 1 && n[i + 1]! >= 1 && n[i + 2]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 1, 1], [i + 2, 1]]));
+  if (n[i]! >= 2) best = Math.max(best, 1 + take([[i, 2]]));
+  if (i + 1 < 9 && n[i + 1]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 1, 1]]));
+  if (i + 2 < 9 && n[i + 2]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 2, 1]]));
+  best = Math.max(best, take([[i, 1]]));           // a spare, worth no block at all
+  memo.set(key, best);
+  return best;
+}
+
 /** the kinds that would finish a hand already ready */
 function winningKinds(tiles: TileKind[], melds: number): TileKind[] {
   const c = countsOf(tiles), out: TileKind[] = [];
@@ -91,7 +155,7 @@ function winningKinds(tiles: TileKind[], melds: number): TileKind[] {
  * number of sets already exposed. A hand holding a joker or a bonus tile is not tagged at all: every
  * tip here is about ordinary tile shape, and a wildcard makes the shape mean something else.
  */
-export function shapeCalls(concealed: TileKind[], melds: number): ShapeCall[] {
+export function shapeCalls(concealed: TileKind[], melds: number, view?: TableView): ShapeCall[] {
   if (concealed.some((k) => isJoker(k) || k >= 34)) return [];
   const c = countsOf(concealed);
   const distinct = [...new Set(concealed)];
@@ -189,6 +253,54 @@ export function shapeCalls(concealed: TileKind[], melds: number): ShapeCall[] {
     }
   }
 
+  // five_blocks: six blocks on the board, and a throw that would cut one
+  if (blockCount(concealed) >= 6) {
+    const cuts: TileKind[] = [], keeps: TileKind[] = [];
+    for (const k of distinct) {
+      const rest = concealed.filter((_, i) => i !== concealed.indexOf(k));
+      if (shanten(rest, melds) !== shanten(concealed, melds)) continue;   // only throws that cost nothing
+      (blockCount(rest) <= 5 ? cuts : keeps).push(k);
+    }
+    if (cuts.length && keeps.length) {
+      calls.push({
+        tip: 'five_blocks', says: cuts, against: keeps,
+        because: `There are six blocks here and a hand needs five. Throwing ${name(cuts[0]!)} cuts one and costs nothing; throwing ${name(keeps[0]!)} keeps all six.`,
+      });
+    }
+  }
+
+  // narrow_can_beat_wide: a wait that cannot be declared, and a narrower one that can
+  if (view && (view.melds?.length ?? 0) === melds) {
+    const declarable = (rest: TileKind[]) => {
+      const cj = countsAndJokers(rest);
+      let live = 0, dead = 0;
+      for (const k of engineWinningKinds(cj.counts, 4 - melds)) {
+        const held = rest.filter((x) => x === k).length;
+        const left = 4 - held;
+        if (left <= 0) continue;
+        const win = { concealed: [...rest, k], melds: [...(view.melds ?? [])] as Meld[], bonus: [...view.bonus], seat: view.seat, prevailingWind: view.prevailingWind, winningTile: k, selfDraw: false };
+        const shot = scoreHand(win);
+        if (shot.valid && shot.fan >= view.minimumFan) live += left; else dead += left;
+      }
+      return { live, dead };
+    };
+    const ready = distinct
+      .map((k) => ({ k, rest: concealed.filter((_, i) => i !== concealed.indexOf(k)) }))
+      .filter(({ rest }) => shanten(rest, melds) === 0)
+      .map(({ k, rest }) => ({ k, ...declarable(rest) }));
+    if (ready.length >= 2) {
+      const best = ready.reduce((a, b) => (b.live > a.live ? b : a));
+      const widest = ready.reduce((a, b) => (b.live + b.dead > a.live + a.dead ? b : a));
+      // the trap: the widest-looking wait is not the one that can actually be declared
+      if (widest.dead > 0 && best.live > widest.live && widest.k !== best.k) {
+        calls.push({
+          tip: 'narrow_can_beat_wide', says: [best.k], against: [widest.k],
+          because: `Throwing ${name(widest.k)} leaves ${widest.live + widest.dead} tiles that would finish the hand and only ${widest.live} of them can be declared at this table. Throwing ${name(best.k)} leaves ${best.live + best.dead}, and ${best.live} of those count.`,
+        });
+      }
+    }
+  }
+
   return calls;
 }
 
@@ -199,7 +311,7 @@ export function shapeCalls(concealed: TileKind[], melds: number): ShapeCall[] {
  * every throw the tip warns about has already been made, or the tile it points at is not in the
  * hand, naming the tip afterwards teaches nothing about the decision that was in front of them.
  */
-export function liveCalls(concealed: TileKind[], melds: number, options: TileKind[]): ShapeCall[] {
+export function liveCalls(concealed: TileKind[], melds: number, options: TileKind[], view?: TableView): ShapeCall[] {
   const on = new Set(options);
-  return shapeCalls(concealed, melds).filter((c) => c.says.some((k) => on.has(k)) && c.against.some((k) => on.has(k)));
+  return shapeCalls(concealed, melds, view).filter((c) => c.says.some((k) => on.has(k)) && c.against.some((k) => on.has(k)));
 }

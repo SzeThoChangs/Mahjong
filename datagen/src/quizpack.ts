@@ -154,7 +154,12 @@ for (const [key, list] of byHand) {
     const last = d.pub.dl[d.pub.dl.length - 1];
     // which of the book's shape tips this decision is actually about, given the throws on offer
     const throws = e.k === 'discard' ? e.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))) : [];
-    const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws).map((c) => c.tip) : [];
+    // the table view, so the tips that depend on what can legally be declared can run at all
+    const view = {
+      bonus: d.me.b, seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, melds,
+      minimumFan: rules.minimum_tai, selfDrawMinimumFan: rules.self_draw_minimum_tai,
+    };
+    const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws, view).map((c) => c.tip) : [];
     questions.push({
       tp,
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,

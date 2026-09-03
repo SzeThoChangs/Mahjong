@@ -167,7 +167,11 @@ export default function RealQuiz() {
   const shapeCallsHere = useMemo(() => {
     if (!q || q.k !== 'discard') return [];
     const throws = q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2)));
-    return liveCalls(q.h, q.m.length, throws);
+    const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+    return liveCalls(q.h, q.m.length, throws, {
+      bonus: q.b, seat: (q.seat - (q.dl ?? 0) + 4) % 4, prevailingWind: q.w, melds,
+      minimumFan: CONFIG.minimum_fan, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+    });
   }, [q]);
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {

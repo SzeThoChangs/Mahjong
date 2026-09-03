@@ -98,6 +98,16 @@ export interface OpponentPublic {
   label?: string;
   melds: readonly (readonly TileKind[])[];
   discards: readonly TileKind[];
+  /**
+   * Their seat as a wind - 0 East, 1 South and so on, counted from the dealer.
+   *
+   * Needed to price what their hand is visibly worth, because a pong of their own seat wind is a
+   * tai and a pong of anybody else's is not. Optional so older callers keep working; without it the
+   * value read treats every wind pong as somebody else's.
+   */
+  role?: number;
+  /** their flowers and animals, which are face up and each worth a tai */
+  bonus?: readonly TileKind[];
 }
 
 /**

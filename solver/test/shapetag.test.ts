@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parseKinds } from 'sg-mahjong-engine';
-import { shapeCalls, liveCalls } from '../src/shapetag.js';
+import { shapeCalls, liveCalls, blockCount } from '../src/shapetag.js';
 
 const call = (hand: string, tip: string) => shapeCalls(parseKinds(hand), 0).find((c) => c.tip === tip);
 const tips = (hand: string) => shapeCalls(parseKinds(hand), 0).map((c) => c.tip);
@@ -77,5 +77,41 @@ describe('the two waits that are the same size and not the same wait', () => {
     expect(c).toBeDefined();
     expect(c.says).toContain(parseKinds('4t')[0]);
     expect(c.against).toContain(parseKinds('2t')[0]);
+  });
+});
+
+describe('the two detectors that need more than the tiles', () => {
+  it('counts blocks the generous way', () => {
+    // three sets, a pair and two two-tile pieces: six blocks
+    expect(blockCount(parseKinds('2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s 6s 8s'))).toBe(6);
+    // the same tiles with the loose pieces replaced by lone honours: four blocks
+    expect(blockCount(parseKinds('2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s E S'))).toBe(5);
+  });
+
+  it('spots a hand carrying a sixth block it can drop for free', () => {
+    // six blocks and a lone honour: throwing the honour keeps all six, throwing from a block cuts one
+    const c = shapeCalls(parseKinds('2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s 6s 8s E'), 0).find((x) => x.tip === 'five_blocks')!;
+    expect(c).toBeDefined();
+    expect(c.against).toEqual(parseKinds('E'));
+    expect(c.says).toContain(parseKinds('3t')[0]);
+  });
+
+  // a real position from the coach pack, where one way of staying ready wins nothing declarable
+  const deadWait = parseKinds('3s 2s 4s 8w 6w 3s 4t 3s 8t 7t 4s 5t 7w 9t');
+  const view = { bonus: parseKinds('S1 F4 S3'), seat: 2, prevailingWind: 1, minimumFan: 2, selfDrawMinimumFan: 1 };
+
+  it('spots a wide wait that cannot be declared', () => {
+    const c = shapeCalls(deadWait, 0, view).find((x) => x.tip === 'narrow_can_beat_wide')!;
+    expect(c).toBeDefined();
+    expect(c.because).toMatch(/can be declared at this table/);
+  });
+
+  it('says nothing about declaring when the caller cannot say what table it is', () => {
+    expect(shapeCalls(deadWait, 0).map((x) => x.tip)).not.toContain('narrow_can_beat_wide');
+  });
+
+  it('stays quiet on a melded hand it cannot score', () => {
+    // the meld count says one set is on the table but the view does not carry it
+    expect(shapeCalls(deadWait.slice(0, 11), 1, view).map((x) => x.tip)).not.toContain('narrow_can_beat_wide');
   });
 });

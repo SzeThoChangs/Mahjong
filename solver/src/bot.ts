@@ -30,6 +30,8 @@ export const ctxOf = (v: PlayerView): Context => ({
     label: WIND[(s - v.dealer + 4) % 4]!,
     melds: p.melds.map((m) => m.tiles),
     discards: v.discardLog.filter((d) => d.seat === s).map((d) => kindOf(d.tile)),
+    role: (s - v.dealer + 4) % 4,
+    bonus: p.bonus.map(kindOf),
   }])),
 });
 const WIND = ['\u6771', '\u5357', '\u897f', '\u5317'];
@@ -141,6 +143,25 @@ export class PlainWaitCoachBot extends CoachBot {
 export class WallCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { wall: true });
+    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
+  }
+}
+
+/**
+ * The coach, plus what a deal-in would COST rather than only how likely it is.
+ *
+ * Every read this project has priced so far sharpened the same thing: the chance of dealing in. The
+ * wall, the suit, the melds and the danger sweep were all that, and all four returned nothing. This
+ * arm changes the other half. The coach's danger term is a probability multiplied by a constant, and
+ * the constant treats a cheap chicken hand and a visible colour hand with a dragon pong as the same
+ * loss, when at this table they are 7 chips and 40.
+ *
+ * Normalised so it adds no caution overall - see `shotScale`. It changes the throw on 1.57% of
+ * discards, about one in 64, which is the same order as the two rules already measured here.
+ */
+export class ValueDangerCoachBot extends CoachBot {
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { valueDanger: true });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
