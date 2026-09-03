@@ -7,6 +7,7 @@ import Replay from '@/components/Replay';
 import RealQuiz from '@/components/RealQuiz';
 import TableSetup from '@/components/TableSetup';
 import AskHand from '@/components/AskHand';
+import Spot from '@/components/Spot';
 
 export default function App() {
   const [tab, setTab] = useState('train');
@@ -18,6 +19,7 @@ export default function App() {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-max">
             <TabsTrigger value="train">Train</TabsTrigger>
+            <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="real">Real quiz</TabsTrigger>
             <TabsTrigger value="ask">Your hand</TabsTrigger>
             <TabsTrigger value="review">Review</TabsTrigger>
@@ -27,7 +29,7 @@ export default function App() {
           </TabsList>
         </Tabs>
       </div>
-      {tab === 'train' ? <Trainer /> : tab === 'real' ? <RealQuiz /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review /> : tab === 'table' ? <TableSetup /> : <Replay />}
+      {tab === 'train' ? <Trainer /> : tab === 'spot' ? <Spot /> : tab === 'real' ? <RealQuiz /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review /> : tab === 'table' ? <TableSetup /> : <Replay />}
     </div>
   );
 }
