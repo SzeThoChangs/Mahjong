@@ -27,6 +27,9 @@ Generator flags: `--hands N` `--workers W` `--out DIR` `--seed S` `--truth` (wri
 | `src/worker.ts` / `src/generate.ts` | worker_threads fan-out, shard files per worker, manifest |
 | `src/stats.ts` | validation statistics and suspicious-behaviour flags |
 | `src/replay.ts` | reproduce a hand from (session, hand) and compare |
+| `src/valuefit.ts` | join every recorded decision to what that seat finally won, and aggregate into value-table cells |
+| `src/valuetables.ts` | turn those cells into a drop-in replacement for the solver's `TABLES`, with shrinkage and a global scale |
+| `src/valuerows.ts` | lay our numbers against the study's row by row: how much of its ordering we reproduce, and what scale each row would need on its own |
 | `scripts/to_parquet.py` | Parquet conversion, typed columns |
 
 ## Records

@@ -18,6 +18,7 @@ answer a question and then to still be runnable when the answer is doubted later
 | `_cheapshape.ts` | WHAT does an arm give up - win rate, fan when winning, deal-ins, when it gets ready, wins it may not declare. Run it whenever a money result is surprising or zero; it is what caught the `onlycheap` arm quietly playing like a folder. |
 | `_fitrate.ts` | do re-fitted value tables change the coach's plan or throw, and do they flatten the gap between its top two plans? Only differences between plans reach a decision, so a table can look very different and be worth nothing. |
 | `valueday.sh` | plays the re-fitted value tables against the shipped coach across several variants and ranges. Resumable - a shard with a pooled line in its log is skipped - so it can be left running for hours. |
+| `baketables.ts` | regenerates `src/tables.ts` from the pristine study snapshot, applying the measured row corrections. Always reads the snapshot rather than its own output, so running it twice is the same as running it once. `--plain` writes the study's numbers untouched. |
 
 Two things every one of these takes: a game count, and — since 2026-08-30 — a **wall seed base**.
 The seed used to be hardcoded, which let a single shuffle fake a per-seat pattern convincingly

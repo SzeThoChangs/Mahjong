@@ -840,6 +840,195 @@ Neither has been played for money and neither should be. This is the suit read a
 and worth teaching is a different finding from worth scoring with, and the coach already prices
 waits continuously. The cards say what is true and claim nothing else.
 
+### The wind ordering rule is a null on both populations, and the mechanism says why (2026-09-04)
+
+The last of the four rules NEXT called cheap, and the only one of them still genuinely untested -
+the other three were answered on 2026-09-03 and NEXT was stale about them.
+
+The book says that among winds you do not need, you should release first the one belonging to the
+player immediately before you. The reasoning is tempo rather than danger. Play advances to the next
+seat, so if the player before you pongs your discard the turn jumps to them and the two players in
+between are skipped, and you come round sooner. A pong by the player after you skips nobody.
+
+That is a claim about turns, which is why the reads pipeline cannot answer it: its outcome is a
+deal-in probability and this one's outcome is draws. `datagen/src/windorder.ts` is the tool, forked
+from `valuecopy.ts` because that one is outcome-based too. Every wind thrown is grouped by whose
+seat wind it was, as an offset from the thrower, and against each we record how often it was
+ponged, by whom, how many seats the claim skipped for the thrower, and the draws and chips the
+thrower ended the hand with.
+
+```
+                                 20,000 coach hands            20,000 hands of run-money4
+                              before me   after me           before me   after me
+  winds thrown                   24,873     24,756              30,755     30,540
+  ponged at all                   7.46%      7.38%               5.02%      5.03%
+  ...by the wind's own owner      2.57%      2.61%               1.72%      1.66%
+  seats skipped for me            0.076      0.071               0.051      0.052
+  my draws in that hand            9.75       9.76               12.32      12.32
+```
+
+Nothing, on either population, at every turn band, on 55,000 wind discards a side. The z on the
+pong rate is 0.3 and on the draws it is -0.2.
+
+**The mechanism is where it fails, and that is the useful part.** The rule needs the wind's owner to
+want it. They do not. A wind is ponged about 7.5% of the time at a coach table and its owner
+accounts for 2.57 of those points - almost exactly a third, which is what three opponents claiming
+at random would give. So a seat has no special appetite for its own wind, the skip almost never
+happens for the reason the book gives, and the whole chain comes apart at the first link. Even when
+it does fire it is worth 0.076 skipped seats a throw, so the tempo it buys is a rounding error
+against the eleven draws a hand.
+
+This is a rule about opponent behaviour, so it is worth saying plainly that both populations agree
+here, which is not something the last few reads managed. The suit read, the honour wait and
+`triplet_adjacency` all split by population. This one is dead in both.
+
+### Our own value tables lose, and the one part worth keeping is the smallest (2026-09-04)
+
+`solver/src/tables.ts` turns a hand into a number of chips. It is auto-generated from the study
+author's simulations, it was the largest piece of the coach never checked against anything we
+measured, and re-fitting it on our own hands was the first job in NEXT. It is now fitted from all
+7,233,486 recorded decisions, played for money four ways, and it loses.
+
+```
+  2,000 paired deals a seat on four fresh ranges, shuffle-820001 / 840001 / 860001 / 880001
+  32,000 paired deals a row
+
+  scale 2.17    -0.832 +/- 0.082
+  scale 3       -0.932 +/- 0.083
+  scale 4.3     -0.945 +/- 0.085
+  scale 5.5     -1.093 +/- 0.086
+```
+
+**The fitted coach plays for the cheap hand, and that is what the loss is made of.** 1,500 deals a
+seat, all four seats, from `tools/_cheapshape.ts --arm fitted`:
+
+```
+                             scale 2.17    coach       scale 4.3    coach
+  won the hand                   24.10%   24.63%          23.60%   24.87%
+    ...at the table minimum      50.76%   39.38%          54.73%   44.91%
+    ...four fan or more          26.14%   37.69%          21.68%   33.04%
+  won with a half-colour hand    17.70%   32.34%          15.89%   28.02%
+  won with the cheap hand        32.57%   22.80%          29.17%   23.53%
+  reached ready, average turn      32.2     34.1            31.5     33.6
+  dealt in                       15.02%   14.83%          14.70%   15.72%
+```
+
+It gets ready sooner, wins about as often, and wins smaller. The deal-in rate is the control and it
+does not move, so this is a clean change to the value half. It is the `onlycheap` arm in milder
+form, and that arm costs 1.928 chips a game, which is why the fitted tables lose and why they lose
+more the more of our own numbers they use.
+
+**Why they compress, which is the part worth remembering.** `valuefit.ts` averages what a seat
+finally won over every decision where a plan was on top. That is the value of the POSITION under a
+coach that switches plans whenever the ranking changes, and it is not what the table is asked for.
+The table is asked what a plan is worth if you play for it. The two come apart in proportion to how
+often the coach abandons the plan, so the cheap hand converts quickly and keeps its spread while a
+late half-colour hand rarely converts and loses four fifths of its. That is a property of the
+estimator rather than a fact about mahjong, and it is why fitting realised outcomes made the coach
+prefer whatever finishes soonest. Fitting the value of COMMITTING is the version nobody has tried,
+and it needs hands generated by bots that pick a plan and keep it.
+
+**The scale sweep was testing a confound rather than the tables.** Our numbers are far smaller than
+the study's, so `valuetables.ts` offered one global multiplier and `valueday.sh` swept it. That
+assumes the two sets differ by a single gain. `datagen/src/valuerows.ts` checks the assumption
+instead of making it, regressing our realised chips on the study's number inside one row - one plan
+at one turn - weighted by hands:
+
+```
+  table                     turn    hands   slope  1/slope    R2     x
+  half_color_chips             0  227,861   0.279     3.59  0.97  0.88
+  half_color_chips            20  325,681   0.223     4.49  0.98  0.70
+  half_color_chips            40  201,374   0.181     5.51  0.86  0.57
+  ping_wu_chips                0   78,801   0.389     2.57  0.96  1.23
+  ping_wu_chips               20  116,749   0.310     3.22  0.95  0.98
+  ping_wu_chips               40   43,122   0.286     3.49  0.93  0.90
+  all_pong_chips               0  109,022   0.289     3.47  0.94  0.91
+  all_pong_chips              20   68,999   0.296     3.38  0.92  0.94
+  all_pong_chips              40   36,525   0.313     3.19  0.99  0.99
+  all_chow_table_10_3_turn0    0   37,944   0.332     3.01  0.48  1.05
+  chicken_chance               0   57,047   0.538     1.86  0.99  1.70
+  chicken_chance              20  186,518   0.523     1.91  0.97  1.65
+  chicken_chance              40   98,511   0.478     2.09  1.00  1.51
+```
+
+Two things follow and they point opposite ways.
+
+**Inside a plan the study is right and we have nothing to add.** Our own hands reproduce its
+ordering and its spacing at an R-squared of 0.86 to 1.00 in every row but one. So the part of the
+re-fit that swaps the study's numbers for ours is swapping numbers that agree for numbers that
+agree, and the money says the study's version does it slightly better.
+
+**Between plans they disagree, and no single multiplier can say so.** The rows want scales from 1.86
+to 5.51, a spread of three times. Whatever one number is chosen, the cheap hand and a late
+half-colour hand end up on different footings and the coach compares plans that are no longer in the
+same units. Every variant the sweep played carried that defect.
+
+**So the fit's one real claim was tested on its own, and it is worth chips.** `valuerows.ts --out`
+keeps the study's numbers everywhere and multiplies each row by its own slope, normalised so the
+hands-weighted average multiplier is one. 128 numbers change and the rows our data cannot speak to,
+13 Wonders among them, keep the study's values exactly. What it says is that the cheap hand is worth
+about 1.6 times what the study gives it and a late half-colour hand about 0.57 times.
+
+```
+  2,000 paired deals a seat, ranges named in the message that launched each run
+
+  first four,  shuffle-940001 / 950001 / 960001 / 970001        +0.132 +/- 0.056
+  confirmation, shuffle-980001 / 990001 / 1000001 / 1010001     +0.097 +/- 0.056
+  all eight, 64,000 paired deals                                +0.115 +/- 0.040
+```
+
+Seven of the eight ranges are positive and so are all four seats, at +0.152, +0.134, +0.049 and
++0.138 over 8,000 paired deals each. A ninth range agrees from a different tool: the shape run on
+shuffle-1020001 puts the arm at +0.120 over 6,000 games.
+
+**And the control says the gain is bigger than it looks.** The corrected set comes out about a fifth
+flatter than the shipped one, because several things sit outside these tables - the MF2 correction,
+the late-turn decay, the value-pair credit, the rows we have no data for. A flatter value side is
+arithmetically the same as defending more, so `valuerows.ts --flat` builds the matched control: every
+row multiplied by the same constant, chosen so the coach is exactly as decisive as the corrected set
+and no more, with the plans left on the study's own footing.
+
+```
+  re-weighted rows        64,000 paired deals   +0.115 +/- 0.040
+  flattening alone        32,000 paired deals   -0.163 +/- 0.058
+  the re-weighting itself                       +0.278 +/- 0.070
+```
+
+The flattening loses on its own, which is what the danger sweep predicted and is a second
+confirmation of it from a direction that knows nothing about danger. So the correction was paying a
+toll it did not need to pay.
+
+**Handing the toll back is what shipped.** `valuerows.ts --gain` raises every multiplier by one
+constant, which moves the whole corrected set without touching the weight of one plan against
+another. The gain was chosen at 1.35 because `_fitrate` puts the coach's top-two gap at 10.82
+chips there against the shipped 11.15 - so it was picked on decisiveness, before any money was
+played, rather than tuned on the result.
+
+```
+  2,000 paired deals a seat, ranges named in the message that launched each run
+
+  first four,   shuffle-1080001 / 1090001 / 1100001 / 1110001    +0.190 +/- 0.058
+  confirmation, shuffle-1120001 / 1130001 / 1140001 / 1150001    +0.210 +/- 0.057
+  all eight, 64,000 paired deals                                 +0.200 +/- 0.041     t = +4.9
+```
+
+Positive on all eight ranges, and the confirmation came in slightly HIGHER rather than shrinking,
+which is what `legalWait` did not do. So this is the second change ever shipped to the coach and
+about eleven times the size of the first.
+
+`solver/src/tools/baketables.ts` is the generator that applies it. `tables.ts` carried an
+"AUTO-GENERATED" header with nothing behind it, exactly as `reads.ts` did before `bakereads.ts`,
+and this is that generator. It reads a pristine snapshot of the study's own numbers at
+`knowledge/sources/tables.study.json` rather than its own output, so running it twice is the same
+as running it once and the correction cannot compound quietly. `--plain` writes the study's numbers
+untouched, and that round-trips the old file exactly, which is the check that the generator is only
+applying the correction and not quietly reformatting the book.
+
+**What is left of the original idea.** Almost nothing, and that is the honest summary. Fitting our
+own numbers was the plan and it loses about a chip a game. What survived is one constant per table
+row, thirteen numbers in all, keeping every one of the study's own values and changing only how
+much each plan's spread counts against another's. The rest of the fit measured the wrong quantity.
+
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 
 Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach

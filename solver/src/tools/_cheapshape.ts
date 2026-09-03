@@ -14,16 +14,28 @@
  */
 import { playGame, shuffleWall, type Bot } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, NoCheapCoachBot, OnlyCheapCoachBot } from '../bot.js';
+import { readFileSync } from 'node:fs';
+import { CoachBot, NoCheapCoachBot, OnlyCheapCoachBot, FittedCoachBot } from '../bot.js';
 
 const cfg = loadTableConfig(), rules = loadTableRules();
 const n = Number(process.argv[2] ?? 1000);
 const FROM = Number(process.argv[3] ?? 450001);
 /** which end of the plan list to swing: `nocheap` removes the cheap hand, `onlycheap` leaves
- *  nothing else. Both tables in FINDINGS came from this tool, so both have to be reachable from it. */
+ *  nothing else. Both tables in FINDINGS came from this tool, so both have to be reachable from it.
+ *
+ *  `fitted` plays the coach off value tables fitted on our own hands (`--tables <file>`, and
+ *  `--dw N` for a different danger weight), exactly as the `fitted` arm of `headtohead` does. The
+ *  scale sweep put every fitted variant behind the coach by about a chip a game, and chips alone
+ *  cannot say what the fitted coach is doing differently - settling for cheap hands, chasing lost
+ *  ones, or paying more - which is the question this tool exists to answer. */
 const ARM = process.argv.includes('--arm') ? process.argv[process.argv.indexOf('--arm') + 1]! : 'nocheap';
-const MAKE = ARM === 'onlycheap' ? () => new OnlyCheapCoachBot() : () => new NoCheapCoachBot();
-if (ARM !== 'nocheap' && ARM !== 'onlycheap') { console.error(`unknown arm ${ARM}; expected nocheap or onlycheap`); process.exit(1); }
+const TABLES_PATH = process.argv.includes('--tables') ? process.argv[process.argv.indexOf('--tables') + 1]! : '../data/gen/tables-fit.json';
+const DW = process.argv.includes('--dw') ? Number(process.argv[process.argv.indexOf('--dw') + 1]) : undefined;
+if (ARM !== 'nocheap' && ARM !== 'onlycheap' && ARM !== 'fitted') { console.error(`unknown arm ${ARM}; expected nocheap, onlycheap or fitted`); process.exit(1); }
+const MAKE = ARM === 'onlycheap' ? () => new OnlyCheapCoachBot()
+  : ARM === 'fitted' ? (() => { const t: unknown = JSON.parse(readFileSync(TABLES_PATH, 'utf8')); return () => new FittedCoachBot(t, DW); })()
+  : () => new NoCheapCoachBot();
+const ARM_LABEL = ARM === 'onlycheap' ? 'cheap only' : ARM === 'fitted' ? 'fitted tables' : 'no cheap plan';
 
 interface Shape {
   games: number; wins: number; selfDraws: number; winChips: number; winTai: number;
@@ -62,8 +74,8 @@ for (let seat = 0; seat < 4; seat++) { play(seat, MAKE, arm); play(seat, () => n
 
 const pc = (a: number, b: number) => `${(100 * a / Math.max(1, b)).toFixed(2)}%`;
 const row = (label: string, a: string, b: string) => console.log(`  ${label.padEnd(34)} ${a.padStart(12)}   ${b.padStart(12)}`);
-console.log(`${n} deals per seat, all four seats, shuffle-${FROM}..${FROM + n - 1}\n`);
-console.log(`  ${''.padEnd(34)} ${(ARM === 'onlycheap' ? 'cheap only' : 'no cheap plan').padStart(12)}   ${'book coach'.padStart(12)}`);
+console.log(`${n} deals per seat, all four seats, shuffle-${FROM}..${FROM + n - 1}${ARM === 'fitted' ? `, tables ${TABLES_PATH}${DW === undefined ? '' : ` at danger weight ${DW}`}` : ''}\n`);
+console.log(`  ${''.padEnd(34)} ${ARM_LABEL.padStart(12)}   ${'book coach'.padStart(12)}`);
 row('games', String(arm.games), String(coach.games));
 row('chips per game', (arm.chips / arm.games).toFixed(3), (coach.chips / coach.games).toFixed(3));
 row('won the hand', pc(arm.wins, arm.games), pc(coach.wins, coach.games));
