@@ -1,4 +1,4 @@
-# Where we left off — 2026-09-03 (04:30)
+# Where we left off — 2026-09-03 (10:30)
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
@@ -78,7 +78,35 @@ being finer.
 
 **So the value half is where anything is left.** Every measurement here now points the same way: the
 coach's danger is good enough and its estimate of what a hand is WORTH is where the money would be.
-Nothing in this project has tried to improve that since the four evaluators were fitted.
+Nothing in this project has tried to improve that since the four evaluators were fitted, and every
+arm ever measured is on the danger side or is one of the two learned models.
+
+## Where to start next, in order
+
+**1. Prove the value side is even live. One evening.** The coach scores four plans every turn and
+keeps the cheap hand among them, which is the book's hybrid - play for something, take the cheap win
+if it arrives. Nobody has measured what that is worth. The study behind our tables puts it at +3.4
+chips a game, the largest effect anyone has claimed here. The experiment is an arm that DROPS the
+cheap hand from the target scoring, played for money on a fresh shuffle range. It should lose, and
+lose clearly. If it does, the value machinery moves chips and improving it is worth real work. If it
+costs nothing, the coach is insensitive on both sides and the bot is finished - which would be the
+most useful thing this project could learn.
+
+**2. If it is live: re-fit the value tables on our own data. A day plus compute.** `solver/src/tables.ts`
+is auto-generated from the study author's simulations, not ours. We now hold 150,000 coach-played
+hands with outcomes and 480,000 graded decisions. Fit our own evaluator-to-chips tables and play them
+head-to-head against the study's.
+
+**3. The app is missing one part of the method. A day.** `CLAUDE.md` asks for five components and the
+app has four: the pattern library is the Tips page, working-it-out and mixed practice are the Real
+quiz, and the mistake record with its spaced schedule is the Review tab. There is no spotting drill -
+a position shown for a few seconds and then a question about what is going on in it, which the
+research says trains a separate skill from solving. This one is for the player rather than the bot.
+
+**Still open, and it is a preference rather than a finding.** The old `run-money4` quiz pack and film
+room are 14MB of tracked files. They earn their place only if the two populations are worth having
+side by side in the app; `run-money4` stays on disk either way, so they can be rebuilt in half an
+hour.
 
 ## Habits that keep proving themselves
 
