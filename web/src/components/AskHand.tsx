@@ -281,8 +281,8 @@ export default function AskHand() {
                   </>}
             </div>
             {!fromLeft && <div className="text-xs text-muted-foreground">Only the player immediately before you may chow; pong and kong are open to everyone.</div>}
-            {claim && claim.none && <div className="text-muted-foreground">You cannot claim it — nothing in your hand matches.</div>}
-            {claim && !claim.none && (
+            {claim?.none === true && <div className="text-muted-foreground">You cannot claim it — nothing in your hand matches.</div>}
+            {claim?.none === false && (
               <>
                 <div className="text-base font-medium">
                   {claim.best.kind === 'pass' ? 'Pass.' : `Take it — ${claim.best.kind === 'chow' ? 'chow' : claim.best.kind === 'pong' ? 'pong' : 'kong'}.`}

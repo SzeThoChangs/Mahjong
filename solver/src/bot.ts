@@ -218,7 +218,11 @@ export class OnlyCheapCoachBot extends CoachBot {
  * coach is better off believing what actually happens to hands like this one.
  */
 export class FittedCoachBot extends CoachBot {
-  constructor(private readonly tables: unknown, private readonly dangerWeight?: number) { super(); }
+  // Written out as fields rather than as constructor parameter properties: the web build runs with
+  // `erasableSyntaxOnly`, which rejects the shorthand because it emits code rather than only types.
+  private readonly tables: unknown;
+  private readonly dangerWeight?: number;
+  constructor(tables: unknown, dangerWeight?: number) { super(); this.tables = tables; this.dangerWeight = dangerWeight; }
   protected override ctx(v: PlayerView): Context {
     return { ...ctxOf(v), tables: this.tables, ...(this.dangerWeight === undefined ? {} : { dangerWeight: this.dangerWeight }) };
   }
