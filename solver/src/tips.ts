@@ -895,8 +895,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured. Turns are worth real money at this table — a player gets about eleven of them in a hand — so this is a cheap idea to test and nobody has tested it.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-04 over 110,000 wind discards, and there is nothing in it. The wind of the player before you is ponged 7.46% of the time against 7.38% for the wind of the player after you at a coach table, and 5.02% against 5.03% on the recorded run, with the same draws in the hand either way and the same answer at every turn. The reason is that the rule needs a wind\'s owner to want it, and they do not: the owner accounts for barely a third of the pongs, which is what three opponents claiming at random would give. Throw whichever useless wind is safest instead.',
   },
   {
     id: 'chow_danger',
