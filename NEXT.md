@@ -89,6 +89,11 @@ book's +3.4, because the book measures the hybrid against a pure All-Pong strate
 every pattern and still takes a cheap win when one lands. Different comparison, so do not record it
 as a failed replication.
 
+One batch of 10,000 on shuffle-440001 landed after that pooling and is not in it, at +0.277 +/-
+0.105. Pooled in, the null becomes +0.059 +/- 0.026 and crosses two standard errors - which is
+precisely the pattern this project distrusts, so it is written down in FINDINGS and quoted from
+nowhere. If the narrow arm is ever worth settling, settle it on a range named in advance.
+
 ## Where to start next, in order
 
 **1. Re-fit the value tables on our own data. A day plus compute.** This was conditional on the

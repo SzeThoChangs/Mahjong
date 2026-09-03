@@ -858,8 +858,37 @@ drops Chicken from the plan list, so the coach only ever builds a pattern:
   pooled, 150,000 paired deals on fresh ranges    +0.044 +/- 0.027    t = +1.62
 ```
 
-Inside two standard errors, and leaning the wrong way if it leans at all. But read the book's
-sentence again: the +3.4 is measured **over a pure All-Pong strategy** - a player locked into one
+Inside two standard errors, and leaning the wrong way if it leans at all.
+
+A fourth batch of 10,000 on shuffle-440001 finished after that figure was pooled and is not in it:
++0.277 +/- 0.105. Adding it would move the pooled number to +0.059 +/- 0.026 and just outside two
+standard errors, which is exactly the shape this project has learned to distrust - a positive that
+appears when one more batch is added to a pool assembled for another purpose. It is recorded here
+so nobody finds it later and thinks it was hidden. Nothing should be quoted from it until the arm
+is re-run on a range chosen in advance.
+
+**The narrow arm does change the game, so the null is not inertness.** `tools/_cheapshape.ts` over
+12,000 deals on shuffle-450001 onwards, the arm rotated through all four seats:
+
+```
+                            coach    nocheap
+  won the hand             24.83%     24.27%
+    ...tai per win           3.11       3.24
+    ...chips per win        19.87      20.55
+  won with Chicken         20.94%     12.64%
+  won with a colour hand   30.20%     33.72%
+  dealt in                 15.37%     15.95%
+```
+
+Two fifths of its cheap wins become pattern wins. It then wins slightly less often, wins slightly
+more when it does, and pays slightly more often, and those three cancel almost exactly. So the plan
+list steers the play hard at this end as well as at the other - it is the exchange that is fair, not
+the machinery that is deaf. Taken with the mirror arm, the two ends bracket the question: forcing
+every hand down the cheap route costs 1.928, removing the cheap route costs nothing, and the border
+between them sits on a flat part of the curve.
+
+**None of that refutes the book, because the book asked a different question.** Read its sentence
+again: the +3.4 is measured **over a pure All-Pong strategy** - a player locked into one
 pattern who never bails out. `nocheap` keeps every pattern, switches freely between them, and still
 DECLARES a cheap win when one lands, because the engine offers the win and the bot takes it. All it
 gives up is planning for one. So this null does not touch the book's claim. It answers a narrower
