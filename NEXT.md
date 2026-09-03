@@ -63,13 +63,22 @@ cheap with tools that already exist:
 - whether a wind thrown to the player before you buys the turn it is supposed to
   (`wind_discard_order`) - turns are worth real money at this table
 
-**Be careful with the danger ones.** Most of the discard rules are about safety, the coach already
-prices safety continuously, and four true reads have now returned nothing when priced. Measure them,
-teach them, and do not put them in `rankDiscards`.
+**Stop pricing danger. Five for five.** The wall read, the suit read, the meld read, the danger
+sweep, and now the cost of a deal-in have all been priced into the coach and all five came back at
+zero. The last of them was the strongest remaining idea - it changed WHAT a deal-in costs rather
+than how likely it is, using the engine's own `visibleTai` - and it returned -0.001 +/- 0.013 over
+120,000 paired deals on a fresh range while firing on one discard in 64. Measure the danger rules,
+teach them on the Tips page, and do not put them in `rankDiscards`.
 
-**The largest known blind spot is `value_from_melds`.** The coach counts how many sets an opponent
-has exposed and never looks at what they are, so a dragon pong and a run of 3-4-5 are the same input
-to it. Eleven of the book's tips turn on that difference.
+The one shape of that idea left untested is a PER-OPPONENT danger model: "this tile is dangerous to
+the expensive player and safe to the cheap ones". The shipped deal-in table is pooled across the
+three seats, so it cannot say that; the reads pipeline does have per-opponent tables. It is a real
+build rather than an afternoon, and after five results like these it needs a better reason than
+being finer.
+
+**So the value half is where anything is left.** Every measurement here now points the same way: the
+coach's danger is good enough and its estimate of what a hand is WORTH is where the money would be.
+Nothing in this project has tried to improve that since the four evaluators were fitted.
 
 ## Habits that keep proving themselves
 

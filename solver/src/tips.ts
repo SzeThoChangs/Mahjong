@@ -1231,12 +1231,12 @@ const CARDS: Tip[] = [
     rule: 'Look at what they have exposed and add it up. A dragon pong or their seat wind is 1 tai each, a colour is 2 or 4, visible animals and flowers 1 each. A cheap hand you can afford to feed; an expensive one you cannot.',
     why: [
       'Deciding whether to push is a question about the price of being wrong, and the melds tell you the price directly.',
-      'It is also the read our coach cannot make: it counts how many sets an opponent has exposed and never looks at what they are, so a dragon pong and a run of 3-4-5 are the same thing to it.',
+      'It is also the read our coach does not make: it counts how many sets an opponent has exposed and never looks at what they are, so a dragon pong and a run of 3-4-5 are the same thing to it. Teaching it to look was measured and cost nothing, which is a fact about the coach rather than about you.',
     ],
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'needs-play',
-    verdictNote: 'The tai arithmetic is this table’s own and is not in doubt. Whether pricing it changes what you should throw is untested here — and eleven of the book’s tips turn on the distinction the coach cannot see, which makes this the largest known blind spot in the app.',
+    verdictNote: 'The tai arithmetic is this table’s own and is not in doubt, and it is worth knowing at the table. Pricing it into the coach is worth nothing: an arm that scaled the cost of a deal-in by what the table can see each opponent is worth returned -0.001 +/- 0.013 chips a game over 120,000 paired deals on a range nothing had been fitted on, in six batches scattered either side of zero. It changes the throw on one discard in 64, so that is a verdict and not an empty measurement. Five ideas about danger have now been priced into the coach and every one came back at zero.',
   },
   {
     id: 'two_discard_piles',

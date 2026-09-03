@@ -460,6 +460,58 @@ by name and never looked at before. The one thing it was pointed at shrank by tw
 not a reason to distrust the negative results, which had no incentive to be lucky, but it is a
 strong reason to re-run any POSITIVE result on a fresh range before believing its size.
 
+### Pricing what a deal-in COSTS is worth nothing either (2026-09-03)
+
+Four reads have been priced into the coach and every one returned zero. All four sharpened the same
+quantity: the chance that a discard deals in. This is the other half of the same term, and the last
+form of the idea that had never been tried.
+
+The coach's danger is `dealInChance x threatScale x DANGER_WEIGHT`. The first two are probabilities.
+The third is a constant, and it says a deal-in costs the same whether the opponent has a cheap
+chicken hand or a visible colour hand with a dragon pong - which on this table is 7 chips against
+40. The engine already knows the difference: `visibleTai` computes what the table can see a hand is
+worth off its exposed melds and face-up flowers, and it is what the bao rules run on. The coach had
+never looked at it.
+
+**The term redistributes rather than adds, which is the only version worth testing.** Turning the
+coach's caution up loses money monotonically, measured, so a multiplier above 1 would be a slow way
+of repeating that experiment. `tools/_valuerate.ts` measured the average shot at 8.76 chips over
+real positions, and the term divides by it, so the mean multiplier is exactly 1.000: the coach gets
+less careful in the 84% of positions where nothing expensive is showing (x0.80) and much more careful
+in the 2.5% where a big hand is (x4.57).
+
+**It fires.** 1.57% of discards change, one in 64 - the same order as the wall rule at 2.0% and the
+legal-wait rule at 0.55%. Checked before the money ran, because a rule that never fires and a rule
+that fires and does not pay both measure zero.
+
+**120,000 paired deals on shuffle-310001 onwards, a range nothing here has been fitted on, in six
+independent batches of 20,000:**
+
+```
+  -0.010   -0.009   +0.004   +0.045   -0.028   -0.007
+  pooled: -0.001 +/- 0.013 chips/game     t = -0.06     two of six batches lean positive
+```
+
+Zero, and tightly zero: the batches scatter either side with a standard deviation of 0.025, which is
+what six honest samples of nothing look like.
+
+**That is five for five.** The wall read, the suit read, the meld read, the danger sweep, and now
+the cost of a deal-in. Every one of them true or reasonable, every one worth nothing in chips. The
+explanation that fits all five is the one FINDINGS reached after the fold experiment: the coach
+already prices every discard continuously against what the tile does for the hand, and at the
+margin those two numbers are close, so a better estimate on the danger side swaps one nearly-equal
+throw for another. The value half is where the money is, and nothing here has moved it.
+
+**What was NOT tested, and is the only remaining shape of the idea.** This is a position-level
+multiplier: it asks what the most expensive visible hand at the table is worth and scales the whole
+danger by it. It cannot say "this particular tile is dangerous to the expensive player and safe to
+the cheap ones", because the shipped deal-in table is pooled across the three opponents. The reads
+pipeline does have per-opponent tables. A per-opponent danger model, priced by each opponent's own
+visible value, is a real build rather than an afternoon, and after five results like these it should
+not be started without a reason better than "this time it is finer".
+
+The arm stays in the tree as `value`, off by default, so the number can be reproduced.
+
 ### Three of the untested reads, answered: one real, one empty, one backwards (2026-09-03)
 
 NEXT named four reads as cheap to settle with the tools that already exist. Three of them are now
