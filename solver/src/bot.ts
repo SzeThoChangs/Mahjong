@@ -204,6 +204,26 @@ export class OnlyCheapCoachBot extends CoachBot {
   protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), onlyCheap: true }; }
 }
 
+/**
+ * The coach pricing its PLANS off tables fitted on our own hands rather than the study author's.
+ *
+ * `AltReadsCoachBot` is this bot's opposite number on the danger side, and the danger side is closed:
+ * five reads measured true and every one paid nothing. This is the same experiment where the money
+ * actually is. `solver/src/tables.ts` turns a hand into a number of chips, it is auto-generated from
+ * simulations that are not ours, and no part of it has ever been checked against the 150,000 hands
+ * this project has recorded.
+ *
+ * Fitted tables estimate the value of a position UNDER THE COACH'S OWN PLAY, so a first pass is
+ * policy evaluation and not best play. That is the honest thing to test first: it asks whether the
+ * coach is better off believing what actually happens to hands like this one.
+ */
+export class FittedCoachBot extends CoachBot {
+  constructor(private readonly tables: unknown, private readonly dangerWeight?: number) { super(); }
+  protected override ctx(v: PlayerView): Context {
+    return { ...ctxOf(v), tables: this.tables, ...(this.dangerWeight === undefined ? {} : { dangerWeight: this.dangerWeight }) };
+  }
+}
+
 export class FoldCoachBot extends CoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { fold: true });

@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { Wall, playGame, makeRng, shuffleWall, shuffleName, type Bot, type TableConfig } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, ValueDangerCoachBot, AltReadsCoachBot, NoCheapCoachBot, OnlyCheapCoachBot } from '../bot.js';
+import { CoachBot, PolicyBot, ClaimBot, FullPolicyBot, FoldCoachBot, PlainWaitCoachBot, WallCoachBot, ValueDangerCoachBot, AltReadsCoachBot, NoCheapCoachBot, OnlyCheapCoachBot, FittedCoachBot } from '../bot.js';
 import type { ReadsTables } from '../reads.js';
 
 /**
@@ -28,6 +28,16 @@ function loadReads(path: string): ReadsTables {
     Object.fromEntries(Object.entries(t ?? {}).map(([k, c]) => [k, c.p]));
   return { dangerSafe: flat(j.dangerSafe), danger: flat(j.danger), ready: flat(j.ready), dangerWall: flat(j.dangerWall) };
 }
+const tablesArg = process.argv.indexOf('--tables');
+const tablesPath = tablesArg >= 0 ? process.argv[tablesArg + 1]! : '../data/gen/tables-fit.json';
+/** Value tables fitted by `datagen/src/valuetables.ts`, in the same shape as the shipped `TABLES`. */
+const loadTables = (path: string): unknown => JSON.parse(readFileSync(path, 'utf8'));
+/** `--dw N` re-balances the danger term against a value table of a different scale. The fitted
+ *  tables are flatter than the shipped ones, and hand value is weighed against danger, so leaving the
+ *  weight at 40 would be testing the imbalance rather than the tables. Undefined keeps the fitted 40. */
+const dwArg = process.argv.indexOf('--dw');
+const dangerWeight = dwArg >= 0 ? Number(process.argv[dwArg + 1]) : undefined;
+
 const readsArg = process.argv.indexOf('--reads');
 const readsPath = readsArg >= 0 ? process.argv[readsArg + 1]! : '../data/gen/reads-coach.json';
 
@@ -48,6 +58,8 @@ const ARMS: Record<string, { label: string; make: () => Bot }> = {
   onlycheap: { label: 'coach playing ONLY for the cheap hand, never for a pattern', make: () => new OnlyCheapCoachBot() },
   // the same coach, pricing danger off a table measured on a different population of players
   altreads: { label: `coach reading danger off ${readsPath}`, make: () => new AltReadsCoachBot(loadReads(readsPath)) },
+  // the value-side counterpart of altreads: plans priced off tables fitted on our own hands
+  fitted: { label: `coach pricing plans off ${tablesPath}${dangerWeight === undefined ? '' : ` at danger weight ${dangerWeight}`}`, make: () => new FittedCoachBot(loadTables(tablesPath), dangerWeight) },
   // identical bots on both sides: the difference must be exactly zero, which checks the harness
   self: { label: 'the coach against itself (harness check)', make: () => new CoachBot() },
 };

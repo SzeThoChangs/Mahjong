@@ -63,6 +63,14 @@ export interface Context {
   /** An alternative reads table to price danger with. Defaults to the shipped one; exists so a
    *  regenerated table can be PLAYED against the current one before it replaces it. */
   reads?: ReadsTables;
+  /** An alternative set of value tables to price PLANS with. Defaults to the shipped ones, which are
+   *  auto-generated from the study author's simulations rather than from anything we measured.
+   *
+   *  The same idea as `reads` one field up, on the other half of the coach: a table fitted on our own
+   *  hands can be played against the shipped one before it is allowed to replace it. `tables.ts` is
+   *  the largest piece of the coach that has never been checked against our data, and the value side
+   *  is now known to be worth 1.928 +/- 0.075 chips a game, so it is worth checking. */
+  tables?: unknown;
   /** How heavily to price deal-in risk against hand value. Defaults to the fitted 40. It exists as
    *  a knob because the 40 was fitted against per-decision AGREEMENT with the play-outs, and
    *  agreement has repeatedly failed to predict chips - see PLAN.md. Sweeping it against money is
@@ -139,7 +147,7 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
   const fan = fanInHand({ melds: h.melds, bonus: ctx.bonus, seat: ctx.seat, prevailingWind: ctx.prevailingWind });
   const hasBonus = ctx.bonus.some((k) => isFlower(k) || isSeason(k) || isAnimal(k));
   const out: TargetEval[] = [];
-  const T = TABLES as unknown as Record<string, Record<string, Record<string, Row>>>;
+  const T = (ctx.tables ?? TABLES) as unknown as Record<string, Record<string, Record<string, Row>>>;
 
   // Half-Color
   const hc = rule961(h);
@@ -152,7 +160,7 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
     else {
       // All-Chow is 1 Fan: on a discard it needs 1 more Fan in hand at MF2; self-draw is fine at 1.
       const armed = ctx.minimumFan <= 1 || fan >= 1;
-      const turn0 = lookup(TABLES.all_chow_table_10_3_turn0_mf1 as unknown as Row, ac.value);
+      const turn0 = lookup(T.all_chow_table_10_3_turn0_mf1 as unknown as Row, ac.value);
       // scale the turn-0 figure by the ping-wu turn decay
       const decay = byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, ac.value) - byTurn(T.ping_wu_chips![mf]!, 0, ac.value);
       const chips = turn0 + decay;
@@ -233,10 +241,10 @@ const tileName = (k: TileKind): string => {
 /** What a target would be worth at evaluator score `v` and the current turn - used to find a switch point. */
 export function valueOfTargetAt(id: TargetId, v: number, ctx: Context): number | null {
   const mf = ctx.minimumFan === 2 ? 'mf2' : 'mf1';
-  const T = TABLES as unknown as Record<string, Record<string, Record<string, Row>>>;
+  const T = (ctx.tables ?? TABLES) as unknown as Record<string, Record<string, Record<string, Row>>>;
   if (id === 'half_color') return byTurn(T.half_color_chips![mf]!, ctx.playerTurns, v);
   if (id === 'ping_wu') return byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, v);
-  if (id === 'all_chow') { const turn0 = lookup(TABLES.all_chow_table_10_3_turn0_mf1 as unknown as Row, v); return turn0 + byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, v) - byTurn(T.ping_wu_chips![mf]!, 0, v); }
+  if (id === 'all_chow') { const turn0 = lookup(T.all_chow_table_10_3_turn0_mf1 as unknown as Row, v); return turn0 + byTurn(T.ping_wu_chips![mf]!, ctx.playerTurns, v) - byTurn(T.ping_wu_chips![mf]!, 0, v); }
   return null;
 }
 
