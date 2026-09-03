@@ -30,12 +30,13 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { liveCalls } from 'sg-mahjong-solver';
+import type { Meld } from 'sg-mahjong-engine';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
 const quizDir = arg('quiz', '../web/public/quiz')!;
 const only = arg('pack');
 
-interface PackQ { k: string; h: number[]; m: number[][]; actions: { a: string }[]; best: string }
+interface PackQ { k: string; seat: number; dl: number; w: number; b: number[]; h: number[]; m: number[][]; actions: { a: string }[]; best: string }
 interface Score { seen: number; resolved: number; follows: number; expected: number; variance: number }
 
 const files = readdirSync(quizDir)
@@ -50,7 +51,12 @@ for (const f of files) {
     discards++;
     const throws = q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2)));
     const best = Number(q.best.slice(2));
-    const calls = liveCalls(q.h, q.m.length, throws);
+    // the table this hand was played at, so the tips that turn on what can be declared can run
+    const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+    const calls = liveCalls(q.h, q.m.length, throws, {
+      bonus: q.b, seat: (q.seat - q.dl + 4) % 4, prevailingWind: q.w, melds,
+      minimumFan: 2, selfDrawMinimumFan: 1,
+    });
     if (calls.length) tagged++;
     for (const c of calls) {
       const says = c.says.filter((k) => throws.includes(k)), against = c.against.filter((k) => throws.includes(k));

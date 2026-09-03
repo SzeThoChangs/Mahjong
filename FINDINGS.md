@@ -758,6 +758,16 @@ what a count of accepting tiles cannot see. That is a hypothesis and nothing her
 `triplet_adjacency` and `threes_and_sevens` resolve too few positions to say anything, and the card
 for `threes_and_sevens` already rests on a release measurement rather than on this.
 
+**Added 2026-09-03, after the tagger learned to score a hand for tai: the one rule this project ever
+shipped is confirmed from a second direction.** `narrow_can_beat_wide` says a winning tile that
+leaves you under the table minimum is not a winning tile. On 35 graded positions where a hand could
+be made ready two ways and one of the waits could not be declared, the measured best took the
+declarable one 94% of the time against 50% by luck (z = +5.2), and 88% on the eight such positions
+in the old pack. That sits beside the money result of +0.018 +/- 0.012 without contradicting it: the
+decision is nearly always right, and it comes up on about one discard in 180, so what it is worth in
+chips is small. A rule can be correct and cheap at the same time, and this is the clearest example
+of it here.
+
 The two wait tips are rarer still, and for a reason worth knowing: both need a hand that can be made
 ready in two different ways with waits the same size, which is an uncommon position. Ten resolved
 and two resolved say nothing at all. They stay in the tagger because the coach dataset is larger and
