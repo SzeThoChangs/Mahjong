@@ -8,6 +8,15 @@
 # if it is killed, or the machine restarts, running it again picks up where it stopped rather than
 # repeating deals that are already measured.
 #
+# WHY A SCALE SWEEP. A first triage of 1,200 paired deals put every fitted variant behind the coach,
+# and ordered them by how much of the study's scale they kept: the raw swap lost 1.43 +/- 0.44 and
+# the version rescaled by 2.17 lost 0.56 +/- 0.40. That points at the scale rather than at the
+# numbers. `_fitrate` measures the coach's decisiveness as the gap between its top two plans - 10.75
+# chips on the shipped tables - and the fitted tables reach that at a scale near 4.3 while STILL
+# changing the throw on 28% of discards. So at 4.3 the two table sets are equally decisive and
+# disagree only about which plan is better, which is the question worth a day of compute. The sweep
+# runs either side of it so the answer is a curve rather than a single point.
+#
 # WHY MORE THAN ONE VARIANT. The fitted tables are about 2.2x flatter than the shipped ones - a
 # strong half-colour hand at turn 40 is 41 chips in the study and 4.2 in our games. `rankDiscards`
 # scores a throw as hand value MINUS danger, so flattening the value side is arithmetically the same
@@ -25,10 +34,10 @@ FROMS=${FROMS:-"820001 840001 860001 880001"}  # four fresh ranges, none used fo
 
 # name | tables file | danger weight ("-" keeps the shipped 40)
 VARIANTS=(
-  "raw-dw40|$OUT/tables-fit-k500.json|-"
-  "raw-dw18|$OUT/tables-fit-k500.json|18"
-  "scaled-dw40|$OUT/tables-fit-k500-scaled.json|-"
-  "k2000-dw30|$OUT/tables-fit-k2000.json|30"
+  "s2.17|$OUT/tables-fit-s2.17.json|-"
+  "s3|$OUT/tables-fit-s3.json|-"
+  "s4.3|$OUT/tables-fit-s4.3.json|-"
+  "s5.5|$OUT/tables-fit-s5.5.json|-"
 )
 
 echo "=== value-table day started $(date '+%F %T') - $N deals/seat, ranges: $FROMS ==="
