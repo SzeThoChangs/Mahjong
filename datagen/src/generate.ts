@@ -22,7 +22,7 @@ const decisions = !process.argv.includes('--no-decisions');
 const maxHands = Number(arg('max-hands', '32'));
 const randomness = arg('randomness') ? JSON.parse(arg('randomness')!) : DEFAULT_RANDOMNESS;
 /** `--bots coach` seats the shipped coach in all four chairs instead of drawing personalities. */
-const botTypes = arg('bots') ? (arg('bots')!.split(',').length === 4 ? arg('bots')!.split(',') : [0, 1, 2, 3].map(() => arg('bots')!)) as BotType[] : undefined;
+const botTypes = arg('bots') ? (arg('bots')!.split(',').length === 4 ? arg('bots')!.split(',') : [0, 1, 2, 3].map(() => arg('bots')!)) as (BotType | 'pool')[] : undefined;
 const rulesOverride = arg('rules') ? JSON.parse(arg('rules')!) : {};
 const rules = makeRules({ ...(process.argv.includes('--book-rules') ? {} : loadTableRulesOverride()), ...rulesOverride });   // effective rules: table config + overrides (or --book-rules for engine defaults)
 
