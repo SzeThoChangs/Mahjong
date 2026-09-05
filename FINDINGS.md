@@ -1645,27 +1645,33 @@ The confirmation came in level with the first four rather than shrinking, which 
 `legalWait` failed and the row scaling passed. It is half the size of the shipped change and at
 half its t.
 
-**What the win is made of.** 1,200 deals a seat on shuffle-1280001, the tested seat only:
+**What the win is made of.** 1,500 deals a seat on shuffle-1280001, 6,000 games, the tested seat
+only:
 
 ```
                              committed    coach
-  won the hand                  26.44%   24.77%
-    ...chips per win             17.79    18.89
-    ...at the table minimum     47.60%   44.15%
-    ...four fan or more         31.60%   34.82%
-  reached ready                 49.38%   46.54%
-    ...average turn               32.2     32.9
-  dealt in                      15.40%   15.38%
-  won with a half-colour hand   18.68%   24.89%
-  won with the cheap hand       18.99%   22.37%
+  won the hand                  26.45%   24.80%
+    ...chips per win             18.05    19.26
+    ...at the table minimum     46.44%   42.14%
+    ...four fan or more         31.82%   35.69%
+  reached ready                 49.60%   46.87%
+    ...average turn               32.2     33.0
+  dealt in                      15.65%   15.32%
+    ...chips per deal-in         -15.34   -15.78
+  won with a half-colour hand   19.41%   26.34%
+  won with the cheap hand       19.16%   21.57%
 ```
 
-It wins more often and smaller, gets ready more often and two thirds of a turn sooner, and the
-deal-in rate does not move, which is the control that says this is a clean change to the value half.
+It wins more often and smaller, and gets ready more often and most of a turn sooner. The danger side
+is the control and it very nearly holds still: deal-ins are 0.33 points higher and each one costs
+0.44 chips less, both inside the noise of 6,000 games, so this is a change to the value half and not
+a bought-back-by-defence result. A smaller 1,200-deal run of the same tool had the deal-in rate dead
+level at 15.40% against 15.38%; the honest version is "does not move much", not "does not move".
+
 The direction is worth staring at, because it is the SAME direction the fitted tables took when they
 lost a chip a game: fewer half-colour hands, more wins at the table minimum. The difference is what
 it buys. The fitted arm gave up half-colour and won no more often, so it simply won less; this one
-gives up rather less half-colour and converts it into a win rate 1.7 points higher. A trade that
+gives up rather less half-colour and converts it into a win rate 1.65 points higher. A trade that
 narrow could plausibly go the other way on a table that plays differently, and nothing here has been
 measured against anything but the coach.
 
