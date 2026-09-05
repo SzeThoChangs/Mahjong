@@ -1,82 +1,63 @@
-# Where we left off — 2026-09-06
+# Where we left off — 2026-09-06, evening
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
-## The playbook is finished: every one of 103 cards has a verdict
+## Three things happened today, in the order they were asked for
 
-Two days ago 29 rules were badged untested. None are now. Of 103 cards, 59 are measured, 18
-contradicted, 4 confirmed by counting, 6 are rules of the table and 16 are advice that states no
-testable claim. The tools that did it, in the order they were built: `datagen/src/calltest.ts` for
-the claiming tips, `datagen/src/discardtest.ts` for the throwing tips, `datagen/src/tells.ts` for
-the reads, `datagen/src/buildrare.ts` for the three shapes real play never produces, and
-`datagen/src/packlib.ts` for the scoring they all share, including the matched baseline.
+**1. Every mistake now has a cause.** The method's eighth idea, and the first product change in
+days. `solver/src/cause.ts` reads what it can off the position - the shape tip the throw broke, a
+throw that cost a step, the wrong plan, the more dangerous tile - and the Train tab asks one
+question at the moment of the mistake with that suggestion marked. `mistakes.ts` keeps the
+suggestion and the answer; Review shows the tally in every state of the tab and names the cause
+that keeps coming up. Checked in the browser end to end. What is not done: nothing yet points the
+Train tab AT the leading cause - a "practise this" that draws hands where that cause bites is the
+next step on that screen, and the natural one.
 
-**The matched baseline is the thing to keep.** Every verdict is scored twice: against the coin its
-own split implies, and against a baseline that knows what each action is - for a throw, whether it
-costs distance, whether a block wants it, honour or terminal or simple; for a claim, whether it
-makes the hand ready, costs nothing, costs a step, or is a pass. The second column is the one to
-quote. It overturned four published verdicts on 2026-09-05 and nearly promoted one wrongly on
-2026-09-06 until the control row was read. Print the control rows.
-
-**Two mechanisms are worth more than any single card.** A suited tile deals in mostly by completing
-a run, so every card whose safety argument is "nobody can hold a pair of it" fails, and there were
-three. And what a seat threw early is what it never had - `wall_reading` confirmed it,
-`locate_the_fourth` is the same fact read backwards.
-
-## The value side: what won against coaches loses against everyone else
-
-The committed-slope table baked on 2026-09-06 at +0.101 +/- 0.031 over 128,000 paired deals, t =
-3.3, against three coaches. `datagen/src/fieldtest.ts` then put the datagen personalities in the
-other three chairs - the population the recorded runs are played by - on eight ranges named before
-the first ran:
+**2. A table fitted across both fields wins on one and loses on the other.** The generator can
+now pin one seat to a plan and draw the other three from the personality pool (`--bots
+plan_x,pool,pool,pool`), so committed value runs exist against the field as well as against
+coaches. The two fields disagree about weights and not about ordering, which is the case where one
+table across both makes sense. Pooled by hands and played at the usual gain, against the shipped
+row-scaled coach:
 
 ```
-  committed minus the previous table, against the field
-  64,000 paired deals   -0.210 +/- 0.043   t = -4.9, negative on 8 of 8
+  against three coaches    32,000 paired deals   +0.131 +/- 0.054   t = +2.4, 4 of 4
+  against the field        32,000 paired deals   -0.098 +/- 0.055   t = -1.8, 1 of 4
 ```
 
-It loses by twice what it won, on the same trade: wins more often and smaller, deal-in rate
-untouched. A coach table punishes a slow hand, so speed is worth the size given up; a field that
-never collects a suit does not, so the bigger hand cashes.
+Half the field loss gone, not all of it. Not baked; tracked as `tables-both-g1.30.json` beside the
+committed candidate. The two untried knobs are both one line in `valuerows.ts`: weight the field's
+cells above half, and pick the gain on the field's decisiveness rather than the coach table's.
 
-The same test one change back says the row scaling that shipped before it HOLDS against the field:
-+0.125 +/- 0.056 over 32,000 paired deals, t = 2.2, about the size it had against coaches. So the
-programme was not fitted to one opponent from the start. One step was.
+**3. A third field exists.** `NoisyCoachBot` is the coach with the personalities' randomness over
+its own ranking - the nearest thing here to a competent player who is not a machine - and
+`fieldtest.ts --field noisy` plays it. The pooled table against it, on 1570001..1600001: +0.089
++/- 0.059, t = 1.5, positive on 4 of 4. So a noisy coach sits on the coach side, not the
+personality side - the three fields line up as coaches +0.131, noisy coaches +0.089, personalities
+-0.098 - which says the personality field is a different KIND of opponent, one that never plays
+for a colour hand and never punishes a slow hand, rather than a careless one. Noise is not what
+separates the fields. Whether anything is in the middle is the open question, and no human has
+been measured.
 
-**The bake is reverted.** The row-scaled table wins against both fields; the committed one won
-against coaches by 0.10 and lost to the field by 0.21; no human has been measured against either.
-So the shipped coach is the row-scaled table again, checked with `_fitrate` at zero plan changes
-against that file, and the committed table stays tracked beside it as the candidate it was.
+## Standing facts
 
-The ping-wu row is answered: its committed slope falls with turn on a second seed too, and pooling
-the two runs moves 0.66% of throws, under the 2% bar. Pooled cells and the rebuilt table are at
-`knowledge/sources/fitted/` for the next rebuild.
-
-## Housekeeping
-
-The fitted tables, their cells, the plain study table and the committed candidate are all tracked
-under `knowledge/sources/fitted/`, and the shipped coach rebuilds from a clean clone byte for byte.
-There is no git remote: `main` is fast-forwarded to this branch at the end of each session, nothing
-is pushed, and the local typecheck, tests and build are the only checks. The web build passes.
+The shipped coach is the row-scaled table, which holds on both fields. Any value change plays on
+both fields before it bakes; that is the bar. The playbook has a verdict on all 103 cards and the
+matched baseline is the column to quote. `main` is fast-forwarded to this branch at the end of each
+session; there is no remote and the local checks are the checks.
 
 ## Where to start next, in order
 
-**1. A third field, if the two-field picture is to be trusted for a person.** The one closest to a
-player is probably the coach with its randomness turned up, and `fieldtest.ts` takes any bot the
-generator can make. Any future value change should be played against both fields before it bakes;
-that is now the bar.
+**1. Point the Train tab at the leading cause.** The record now knows what keeps going wrong. A
+mode that draws hands where that cause bites - danger-heavy positions for "misjudged the safety",
+shape traps for "did not see it", plan forks for "wrong plan" - closes the loop the framework
+describes: learn, spot, retrieve, decide, review, sort, meet again. The scenario generator already
+labels traps; it needs to label by cause.
 
-**2. Fit for both fields at once.** The value tables are keyed by plan, breakdown and turn. Nothing
-stops a fit from being weighted across two opponent populations, and a table that is level on both
-fields is a better thing to ship than one that wins on one and loses on the other. The committed
-runs and `valuefit.ts --committed` are the machinery; what is missing is a second set of committed
-runs against the personality field.
+**2. Turn the two knobs on the two-field fit.** Field weight above half, and gain matched to the
+field. Each is a seven-minute rebuild plus two four-range money runs. Bake only if positive on
+both fields, and on the noisy field too now that it exists.
 
-**3. Done on 2026-09-06: the mistake record has a cause.** `solver/src/cause.ts` reads what it can
-off the position - the shape tip the throw broke, a throw that cost a step, the wrong plan, the
-more dangerous tile - and the Train tab asks one question at the moment of the mistake with that
-suggestion marked. `mistakes.ts` stores both the suggestion and the answer, Review shows the tally
-under every state of the tab and names the cause that keeps coming up, and a reviewed hand can be
-re-sorted. Older records count as unsorted until they come back. What is not done: nothing yet
-points the Train tab AT the leading cause - a "practise this" that draws hands where that cause
-bites is the next step on that screen.
+**3. The Spot drill has no cause either.** The same question, asked after a wrong answer there,
+would sort spotting failures from deciding failures, which is the distinction the framework says
+matters most.

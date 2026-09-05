@@ -1842,6 +1842,78 @@ With that, every rule in the playbook has a verdict. Of 103 cards, 59 are measur
 4 confirmed by counting, 6 are rules of the table and 16 are advice that states no testable claim.
 Nothing is left badged untested.
 
+### A value table fitted across both fields (2026-09-06)
+
+The committed table won against coaches and lost against the personality field, and the row
+scaling held against both. The bar for any value change is now both fields, and nothing had been
+fitted to clear it. This is the attempt.
+
+**Committed runs against the field.** The generator gained a `pool` seat marker - `--bots
+plan_half_color,pool,pool,pool` locks one seat to a plan and draws the other three per session from
+the recorded population - and five runs of 20,000 hands each were played that way, at about 225
+hands a second because the personalities are cheap. `valuefit.ts --committed` on those gives the
+value of committing to each plan AGAINST THE FIELD, to set beside the same thing against coaches:
+
+```
+  committed multipliers    coach field            personality field
+                           t0    t20   t40        t0    t20   t40
+  half_color              0.68  0.70  0.58       0.89  0.78  0.58
+  ping_wu                 1.36  1.02  0.82       1.11  0.92  0.73
+  all_pong                1.17  1.15  1.07       1.47  1.12  0.72
+  all_chow                1.77    -     -        1.31    -     -
+  chicken                 1.60  1.06  1.19       1.65  1.01  1.27
+```
+
+The two fields disagree about weights and not about everything: the ordering inside every row is
+the same (R-squared 0.68 to 0.99 on both), and where they differ it is about how much a plan is
+worth relative to the others - early half-colour and early all-pong are worth more against the
+field, late all-pong and all-chow less. That is exactly the case where one table across both makes
+sense, so the two cell sets are pooled - `mergecells.ts` sums them, which makes the regression
+hands-weighted across both populations - and fitted:
+
+```
+  pooled, both fields      t0    t20   t40
+  half_color              0.78  0.74  0.63
+  ping_wu                 1.20  0.98  0.79
+  all_pong                1.32  1.16  0.97
+  all_chow                1.51    -     -
+  chicken                 1.66  1.03  1.13
+```
+
+Gain 1.30 by the usual rule - the top-two plan gap lands at 10.96 against the shipped 10.92 - and at
+that gain the table changes the coach's plan on 7.5% of discards and its throw on 6.5%. The table
+is `knowledge/sources/fitted/tables-both-g1.30.json`, with its cells beside it.
+
+**Played on both fields, ranges named before the first ran.** Against three coaches on
+1490001..1520001 through `headtohead.ts`, and against the personality field on 1530001..1560001
+through `fieldtest.ts`, both as the new table minus the shipped row-scaled one:
+
+```
+  against three coaches   1490001 +0.086   1500001 +0.189   1510001 +0.204   1520001 +0.043
+                          32,000 paired deals   +0.131 +/- 0.054   t = +2.4, positive on 4 of 4
+  against the field       1530001 -0.060   1540001 -0.292   1550001 -0.093   1560001 +0.055
+                          32,000 paired deals   -0.098 +/- 0.055   t = -1.8, positive on 1 of 4
+```
+
+**Half the field loss gone, not all of it, so it does not bake.** Pooling the two populations by
+hands moved the field result from -0.210 to -0.098 while keeping the coach result at about the
+committed table's level. That says the direction is right and the weighting is not: the pool is
+close to half and half by hands, and a table that is level on both fields needs the field's cells
+to count for more than half - or a different gain, because the gain was matched to the coach
+table's decisiveness and nothing says the field wants the same. Both are one line each in
+`valuerows.ts` and neither has been tried. The table stays tracked as a candidate.
+
+**A third field, the coach with its randomness turned up.** `NoisyCoachBot` is `pickRanked` over
+the coach's own ranking with the personalities' randomness - the nearest thing here to a competent
+player who is not a machine. The pooled table against three of them, on 1570001..1600001 named
+before the run: +0.089 +/- 0.059 over 32,000 paired deals, t = 1.5, positive on 4 of 4, and the
+hands look exactly as they do against coaches - more wins, smaller, a touch more ready, deal-ins
+level. So the three fields line up as coaches +0.131, noisy coaches +0.089, personalities -0.098.
+Noise is not what separates them. The personality field is a different kind of opponent - it never
+plays for a colour hand and never punishes a slow one - and that, not carelessness, is what turns
+the trade round. It means "both fields" really is two ends, and it means the honest question about
+any of these tables is which end a person is nearer, which nothing here can answer.
+
 ### The committed table loses against a table that is not three coaches (2026-09-06)
 
 Every money figure in this file was measured with the coach in the other three chairs. The
