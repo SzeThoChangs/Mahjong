@@ -1352,6 +1352,70 @@ positions against 536. Those are small because the five new tips are all rare. `
 the tool that finds real positions for a detector, and every test for these five is a hand somebody
 actually played rather than one invented to pass.
 
+### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
+
+Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged
+untested on the grounds that testing them was expensive. That was wrong, and cheaply so. A quiz pack
+grades claim decisions exactly as it grades throws, 128 play-outs an option, so every one of these
+positions already carried a measured best; the only thing missing was a filter per tip. There are
+1,646 claim positions across the two packs and 1,392 of them are a real call-or-pass choice, the
+rest being positions where the hand could simply be declared. `datagen/src/calltest.ts` is the tool
+and it runs in under two seconds.
+
+**The first number to know is that calling beats passing 72% of the time, with no condition at all.**
+That is 997 of 1,392, and it is 75% at the coach table and 69% on the recorded run. Every one of
+these five tips has the form "call rather than pass", so a tip that scores 80% against a 50% coin
+looks like a strong finding and is actually below average. Three of the five looked convincing until
+this control was run, which is the single most useful thing measured here.
+
+**`call_to_upgrade` is confirmed, and the confirmation is a contrast rather than a rate.** Starting
+from hands that are already ready, a call that leaves the hand ready on MORE live tiles is the
+measured best 78% of the time, 40 of 51. A call that leaves it ready on the same number or fewer is
+best 27% of the time, 27 of 100, and there the answer is to pass. Six standard errors apart, same
+direction on both populations. The 78% on its own is barely above the 72% base rate, so what the
+play-outs endorse is not "call when you are ready" but "call when it widens you", which is the same
+condition the discard version of this tip already survived at 89%.
+
+**`take_ready_under_pressure` gives the right action for the wrong reason.** A call that turns a
+not-ready hand into a ready one is the measured best 89% of the time when an opponent holds three
+melds, 40 of 45. With nobody holding as many as two melds it is 94%, 168 of 179, and at two melds
+85%. So taking the ready hand is among the strongest things on the page, and the pressure condition
+does not select for it - if anything a committed opponent is a mild reason to hesitate, which is the
+opposite of the card. This one matters beyond its own tip, because "somebody has three melds" is the
+threat signal the coach already prices, and it is doing no work here.
+
+**`call_to_skip_draw` names the wrong positions.** Take a call that does not leave the hand further
+from ready, which is the card's "keeps your shape". Unconditionally it is the measured best 72% of
+the time. Under the card's own condition, late with somebody on two melds, it is 60%, on 204
+positions, against 75% in the early and mid positions where nobody is committed. Splitting the
+condition, being late alone gives 60% and somebody being committed alone gives 68%: the lateness is
+doing all of it and the danger half adds nothing. Calling still edges passing there, so this is not
+advice that loses money - it is advice that points at the positions where calling is least reliable
+as though they were where it pays. Since a measured best already prices deal-in, a call that was
+genuinely defensive would have shown up here.
+
+**`never_break_your_pair` is not detectable, and the first version of the test was confounded.**
+The honest comparison takes the hands the card is about, exactly one pair and no joker, and the
+positions offering one call against one pass, then splits them by whether the call kills the pair.
+Passing was best 47% of the time when it did, on 94 positions, and 39% when the call left a pair
+standing, on 130. That is 1.2 standard errors, and the pair-killing call is still the better action
+more often than not, so "never" is too strong. The first cut looked far worse for the call, best 51%
+against 78%, but its control was drawn from hands holding two pairs, which are pong-friendly hands
+rather than the same hands. Matching the population removed nearly all of the effect. Worth
+remembering the next time a control is chosen for being easy to write.
+
+**`pon_over_chii` cannot be settled this way and the card now says so.** Both packs together offer a
+pong and a chow on the same tile 9 times, and 3 of those resolve. That is about the game, not the
+packs: holding a pair of a tile and the two tiles it runs with, at the moment somebody throws it, is
+rare. It needs positions built to order and played out.
+
+**What this costs and what it does not prove.** The filters for the three interpreted tips - "a
+dangerous hand", "visibly going for it", "keeps your shape" - are ours, written out in the tool
+beside each one, so those three have failed or passed AS WE STATED THEM. And the standing caveat
+from `tiptest.ts` applies unchanged: a measured best is the best action in the whole position, so it
+prices value and danger as well as the thing the tip is about, and a pack is not a random sample of
+the game.
+
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 
 Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach

@@ -995,8 +995,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, though it could be: the tile counter on this page would show the pair-breaking call as further from ready in most hands. The card is honest about not having done it rather than implying the counting was run.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions in both quiz packs, and it is not detectable. Take the hands the card is about — exactly one pair and no joker — and the positions offering one call against one pass, then split them by whether the call would kill that pair. Passing was the measured best 47% of the time when the call killed the pair, on 94 positions, and 39% when the call left a pair standing, on 130. That gap is 1.2 standard errors, so the pair-killing call is still the better action more often than not and “never” is too strong here. The first cut looked far worse for the call, best 51% of the time against 78%, but that compared it with calls made from hands holding two pairs, which are different hands; matching the hands removed nearly all of it. Both populations agree. The tool is `calltest.ts`.',
   },
   {
     id: 'pon_over_chii',
@@ -1010,7 +1010,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'needs-play',
-    verdictNote: 'Not measured here. The coach scores both and takes the higher, so it has no default at all, which means this is a testable difference rather than an agreement.',
+    verdictNote: 'Tried on 2026-09-05 and it cannot be settled this way. Both quiz packs together offer a pong and a chow on the same tile 9 times, and 3 of those resolve, which decides nothing. The reason is the game rather than the packs: holding a pair of a tile AND the two tiles it runs with, at the moment somebody throws it, is simply rare. Settling this needs positions built to order and played out, not positions sampled from real hands.',
   },
   {
     id: 'call_to_upgrade',
@@ -1023,8 +1023,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured as a call rule. The discard version of it is measured and strong — the play-outs take the wider wait 89% of the time against 47% by luck — but a call also costs a concealed tile and a turn, and nobody has priced that here.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions, and the card’s condition turns out to be the whole of it. Starting from hands that are already ready: when a call would leave the hand ready on MORE live tiles, the measured best was that call 78% of the time, 40 of 51. When the call would leave it ready on the same number or fewer, the best was to pass, and the call was right only 27% of the time, 27 of 100. The gap is six standard errors and both populations agree. The 78% needs the right baseline to read: calling beats passing 72% of the time across every claim position in these packs, so being ready and calling is not in itself better than average. What separates the two arms is the width, which is the same thing the discard version of this tip says. The tool is `calltest.ts`.',
   },
   {
     id: 'call_to_skip_draw',
@@ -1037,8 +1037,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here. The tempo half of it is measured in the study of this table; the defensive half is not measured anywhere we know of.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05, and it names the wrong positions. Take a call that does not leave the hand further from ready, which is the card’s “keeps your shape”. Across every claim position in both packs such a call is the measured best 72% of the time. Late in the hand with somebody holding two melds, which is the card’s own condition, it falls to 60%, on 204 positions, against 75% in the early and mid positions where nobody is committed. Splitting the condition in two, being late alone gives 60% and somebody being committed alone gives 68%, so the lateness is doing all of it and the danger adds nothing. Calling still edges passing there, so this is not advice that loses money: it is advice that points at the positions where calling is LEAST reliable as though they were where it pays. The play-outs price deal-in, so a genuinely defensive call would have shown up here. The tool is `calltest.ts`.',
   },
   {
     id: 'turn_theft',
@@ -1108,8 +1108,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured as stated. What our own runs do say is that caution is not where the money is: a rule that switches the coach into folding lost twice, and turning its caution up loses steadily, out to four and a half standard errors at the far end. That does not test this tip, but it points the same way.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05, and the action is right while the reason is not. A call that turns a hand that was not ready into a ready one is the measured best 89% of the time when an opponent has three melds, 40 of 45 positions — but 94% when nobody holds as many as two, 168 of 179, and 85% at two melds. So take the ready hand, which is among the strongest things measured on this page, and do not take it BECAUSE somebody is committed. If anything a committed opponent is a mild reason to think twice, which is the opposite of the card. Both populations agree, and the baseline matters: calling beats passing 72% of the time in these positions overall. The tool is `calltest.ts`.',
   },
   {
     id: 'rebuild_waits',
