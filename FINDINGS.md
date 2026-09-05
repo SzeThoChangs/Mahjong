@@ -1675,9 +1675,25 @@ gives up rather less half-colour and converts it into a win rate 1.65 points hig
 narrow could plausibly go the other way on a table that plays differently, and nothing here has been
 measured against anything but the coach.
 
-**Not baked.** The evidence is real and it is weaker than the bar the last change cleared - t = 2.4
-against 4.9, 7 of 8 ranges against 8 of 8. `data/gen/tables-committed-g1.30.json` is the file, and
-baking it is one `baketables.ts --fitted` away.
+**Eight more ranges, and it baked (2026-09-06).** t = 2.4 on eight ranges was below the bar the last
+change cleared, so before anything else a rule was fixed and eight more ranges were named: bake if
+the second eight are positive on their own AND all sixteen pool to t >= 3. Ranges 1290001..1320001
+and 1330001..1360001, none played before, same table, same gain:
+
+```
+  first eight     shuffle-1200001..1270001    64,000 paired deals   +0.102 +/- 0.043   7 of 8
+  second eight    shuffle-1290001..1360001    64,000 paired deals   +0.099 +/- 0.043   6 of 8
+  all sixteen                                128,000 paired deals   +0.101 +/- 0.031   t = +3.3, 13 of 16
+```
+
+The second eight reproduced the first to three thousandths of a chip, which is the confirmation
+shape nothing here has shown before - `legalWait` shrank, the row scaling grew slightly, this one
+held level. Both halves of the rule passed and `baketables.ts` now reads
+`knowledge/sources/fitted/tables-committed-g1.30.json` by default. Checked the strict way: `_fitrate`
+against the committed file reports zero plan changes and zero throw changes, so the shipped coach and
+the file are the same thing. This is the third change ever shipped to the coach, worth half the
+second. The one row to watch is ping-wu, whose committed slopes fall with turn on the smallest sample
+of the five plans; see NEXT.
 
 ### Two tips built to order, because real play never produces them (2026-09-05)
 
