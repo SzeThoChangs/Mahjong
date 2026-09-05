@@ -29,7 +29,7 @@ export default function App() {
           </TabsList>
         </Tabs>
       </div>
-      {tab === 'train' ? <Trainer /> : tab === 'spot' ? <Spot /> : tab === 'real' ? <RealQuiz /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review /> : tab === 'table' ? <TableSetup /> : <Replay />}
+      {tab === 'train' ? <Trainer /> : tab === 'spot' ? <Spot /> : tab === 'real' ? <RealQuiz /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review onPractise={() => setTab('train')} /> : tab === 'table' ? <TableSetup /> : <Replay />}
     </div>
   );
 }

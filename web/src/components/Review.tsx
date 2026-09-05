@@ -24,13 +24,14 @@ import { HandContext } from '@/components/HandContext';
 import { fanInHand } from 'sg-mahjong-engine';
 import { makeScenario, CONFIG } from '@/lib/scenario';
 import { tileLabel } from '@/lib/tiles';
-import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
+import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
+import { PRACTISABLE } from '@/lib/scenario';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
 
-export default function Review() {
+export default function Review({ onPractise }: { onPractise?: (c: Cause) => void } = {}) {
   const [now] = useState(() => Date.now());
   const [tick, setTick] = useState(0);
   const [pick, setPick] = useState<number | null>(null);
@@ -83,6 +84,11 @@ export default function Review() {
                 ? 'Most of these were recorded before the question existed. Sort one when it comes back.'
                 : `The one that keeps coming up is "${causeLabel(tally[0]!.cause as Cause)}". More puzzles do not fix a problem that is really about that.`}
             </p>
+            {tally[0]!.cause !== 'unsorted' && PRACTISABLE.includes(tally[0]!.cause as Cause) && onPractise && (
+              <Button size="sm" className="mt-2" onClick={() => { writePractise(tally[0]!.cause as Cause); onPractise(tally[0]!.cause as Cause); }}>
+                Practise "{causeLabel(tally[0]!.cause as Cause)}" on the Train tab
+              </Button>
+            )}
           </CardContent>
         </Card>
   ) : null;

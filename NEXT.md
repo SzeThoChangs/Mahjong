@@ -48,11 +48,14 @@ session; there is no remote and the local checks are the checks.
 
 ## Where to start next, in order
 
-**1. Point the Train tab at the leading cause.** The record now knows what keeps going wrong. A
-mode that draws hands where that cause bites - danger-heavy positions for "misjudged the safety",
-shape traps for "did not see it", plan forks for "wrong plan" - closes the loop the framework
-describes: learn, spot, retrieve, decide, review, sort, meet again. The scenario generator already
-labels traps; it needs to label by cause.
+**1. Done on 2026-09-06: the Train tab points at the leading cause.** `causeOf` in `scenario.ts`
+runs the record's own `suggestCause` on the TEMPTING throw, so a generated trap is labelled with
+what it teaches before anyone throws; `makeScenarioFor` walks seeds until the label matches.
+Measured before it shipped: 45% of seeds are traps, a third of those teach "miscounted", a fifth
+"wrong plan", and the two rarer labels sit near one in thirty seeds; drawing to order matches 9 to
+12 times in 12 inside a 40-seed walk at 190 to 530 ms a draw. Four causes are about the player and
+not the hand and are not offered. The Train tab has the selector, every hand shows what it
+teaches, and Review's diagnosis hands off with one button. Checked in the browser end to end.
 
 **2. Turn the two knobs on the two-field fit.** Field weight above half, and gain matched to the
 field. Each is a seven-minute rebuild plus two four-range money runs. Bake only if positive on

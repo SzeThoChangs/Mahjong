@@ -6,7 +6,7 @@ import {
   Wall, makeRng, playGame, IsolationBot, kindOf, makeRules,
   type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig, type RulesConfig,
 } from 'sg-mahjong-engine';
-import { rankDiscards, type Ranking, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, suggestCause, type Ranking, type Context, type Cause } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
 
 /** seat winds by ROLE (distance from the host), for naming an opponent in the advice */
@@ -163,3 +163,52 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
   if (fallback) return fallback;
   throw new Error('could not generate a scenario');
 }
+
+
+/**
+ * What a position TEACHES, in the record's own vocabulary.
+ *
+ * A trap is a hand where the tempting throw is wrong. The mistake record sorts every mistake by
+ * why it happened, using `suggestCause` on the tile you threw against the coach's. Run that same
+ * function on the tempting throw instead and a generated position gets the same label before
+ * anybody has thrown anything: this is a hand where the lazy throw is a safety misjudgement, or a
+ * wrong plan, or a shape you have to see. A position that is not a trap teaches no cause.
+ */
+export function causeOf(sc: Scenario): Cause | null {
+  if (sc.difficulty !== 'trap') return null;
+  return suggestCause(sc.hand, sc.melds, {
+    bonus: sc.bonus, seat: (sc.seat - sc.dealer + 4) % 4, prevailingWind: sc.prevailingWind, melds: sc.melds,
+    minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+  }, sc.ranking.options, sc.naivePick, sc.ranking.best.tile).suggested;
+}
+
+/**
+ * Draw a position that teaches `cause`, starting from `seed` and walking forward.
+ *
+ * This is the method's eighth idea turned into practice: the record says which cause keeps coming
+ * up, and this hands you hands where exactly that cause bites. It walks seeds rather than captures
+ * so the Train tab's "next" stays a seed, and it gives up after `maxSeeds` and returns the best
+ * trap it saw, because a practice screen that hangs teaches nothing.
+ */
+export function makeScenarioFor(seed: number, phase: Phase, cause: Cause, maxSeeds = 40): { scenario: Scenario; seed: number; matched: boolean } {
+  let anyTrap: { scenario: Scenario; seed: number } | null = null;
+  let first: { scenario: Scenario; seed: number } | null = null;
+  for (let s = seed; s < seed + maxSeeds; s++) {
+    // a seed whose sixteen captures all fail throws; walking many seeds will meet one, so skip it
+    let sc: Scenario; try { sc = makeScenario(s, phase, true); } catch { continue; }
+    first ??= { scenario: sc, seed: s };
+    if (sc.difficulty !== 'trap') continue;
+    if (causeOf(sc) === cause) return { scenario: sc, seed: s, matched: true };
+    anyTrap ??= { scenario: sc, seed: s };
+  }
+  const fb = anyTrap ?? first;
+  if (fb) return { ...fb, matched: false };
+  return { scenario: makeScenario(seed + maxSeeds, phase, true), seed: seed + maxSeeds, matched: false };
+}
+
+/**
+ * The causes a position can be built for. The other four - never learnt it, never considered the
+ * tile, missed a tile on the table, knew and threw something else - are about the player and not
+ * the hand, and no deal can be labelled with them. Practising "any trap" is the honest offer there.
+ */
+export const PRACTISABLE: Cause[] = ['not-seen', 'miscounted', 'misjudged-safety', 'wrong-plan'];

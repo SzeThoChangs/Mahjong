@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fanInHand, type TileKind } from 'sg-mahjong-engine';
-import { suggestCause, CAUSES, type DiscardOption, type Verdict, type Cause } from 'sg-mahjong-solver';
+import { suggestCause, CAUSES, causeLabel, type DiscardOption, type Verdict, type Cause } from 'sg-mahjong-solver';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +10,8 @@ import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
-import { makeScenario, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
-import { recordMistake, setCause } from '@/lib/mistakes';
+import { makeScenario, makeScenarioFor, causeOf, PRACTISABLE, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
+import { recordMistake, setCause, causeTally, readPractise, writePractise } from '@/lib/mistakes';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['東', '南', '西', '北'];
@@ -73,7 +73,13 @@ export default function Trainer() {
     if (!sc) { const wantInteresting = ((sd * 9301 + 49297) % 233280) / 233280 < 0.7; sc = makeScenario(sd, ph, wantInteresting); cache.current.set(key, sc); }
     return sc;
   };
-  const scenario = useMemo(() => build(seed, phase), [seed, phase]);  // eslint-disable-line react-hooks/exhaustive-deps
+  // Practise mode: draw hands where the cause that keeps coming up in your record actually bites.
+  const [practise, setPractiseState] = useState<Cause | null>(() => readPractise());
+  const setPractise = (c: Cause | null) => { setPractiseState(c); writePractise(c); setPick(null); setSeed((s) => s + 1); };
+  const tally = useMemo(() => (causeTally() as { cause: Cause | 'unsorted'; n: number }[]).filter((t): t is { cause: Cause; n: number } => t.cause !== 'unsorted' && PRACTISABLE.includes(t.cause as Cause)), [pick]);
+  const drawn = useMemo(() => (practise ? makeScenarioFor(seed, phase, practise) : { scenario: build(seed, phase), seed, matched: false }), [seed, phase, practise]);  // eslint-disable-line react-hooks/exhaustive-deps
+  const scenario = drawn.scenario;
+  const teaches = useMemo(() => causeOf(scenario), [scenario]);
   useEffect(() => { const id = window.setTimeout(() => build(seed + 1, phase), 30); return () => window.clearTimeout(id); }, [seed, phase]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortedHand = useMemo(() => {
@@ -119,7 +125,7 @@ export default function Trainer() {
     }
   };
   const chooseCause = (c: Cause) => { setCauseChosen(c); setCause(`${phase}:${seed}`, c); };
-  const next = () => { setPick(null); setShowAll(false); setSuggestion(null); setCauseChosen(null); setSeed((s) => s + 1); };
+  const next = () => { setPick(null); setShowAll(false); setSuggestion(null); setCauseChosen(null); setSeed(drawn.seed + 1); };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -137,6 +143,18 @@ export default function Trainer() {
               <TabsTrigger value="any">Any</TabsTrigger>
             </TabsList>
           </Tabs>
+          {/* the eighth idea, pointed: hands where the cause that keeps coming up actually bites */}
+          {tally.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="text-muted-foreground">Practise:</span>
+              <Button size="sm" variant={practise === null ? 'default' : 'outline'} onClick={() => setPractise(null)}>anything</Button>
+              {tally.slice(0, 4).map((t) => (
+                <Button key={t.cause} size="sm" variant={practise === t.cause ? 'default' : 'outline'} title={`${t.n} of your mistakes`} onClick={() => setPractise(t.cause)}>
+                  {causeLabel(t.cause)} · {t.n}
+                </Button>
+              ))}
+            </div>
+          )}
         </header>
 
         {/* the table: what is already face-up, and therefore dead. The coach counts it. */}
@@ -209,6 +227,8 @@ export default function Trainer() {
                 <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[gradedTied.length > 1 && gradedTied.includes(picked.tile) ? 'best' : (pickedVerdict ?? 'fine')])}>{gradedTied.length > 1 && gradedTied.includes(picked.tile) ? EQUAL_TEXT : VERDICT_TEXT[pickedVerdict ?? 'fine']}</Badge>
                 {/* what KIND of question that was - the label the hand was selected on */}
                 <Badge variant="outline" className="text-xs">{DIFFICULTY_LABEL[scenario.difficulty]}</Badge>
+                {teaches && <Badge variant="secondary" className="text-xs" title="what the tempting throw here gets wrong">teaches: {causeLabel(teaches)}</Badge>}
+                {practise && !drawn.matched && <Badge variant="outline" className="text-xs text-muted-foreground">no {causeLabel(practise)} hand in 40 deals — a trap instead</Badge>}
                 <div className="text-sm">
                   {scenario.difficulty === 'trap' && (
                     <p className="mb-1 text-muted-foreground">

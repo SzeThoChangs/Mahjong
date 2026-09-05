@@ -142,3 +142,12 @@ export function whenDue(due: number, now = Date.now()): string {
   if (days === 1) return 'tomorrow';
   return `in ${days} days`;
 }
+
+/** The cause the Train tab is practising, if any - set from Review, kept across reloads. */
+const PRACTISE_KEY = 'mj.practise.v1';
+export function readPractise(): Cause | null {
+  try { return (localStorage.getItem(PRACTISE_KEY) as Cause | null) || null; } catch { return null; }
+}
+export function writePractise(c: Cause | null): void {
+  try { if (c) localStorage.setItem(PRACTISE_KEY, c); else localStorage.removeItem(PRACTISE_KEY); } catch { /* nothing useful to say */ }
+}
