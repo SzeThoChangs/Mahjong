@@ -73,11 +73,14 @@ stratum tagged-first.
 
 ## Where to start next, in order
 
-**1. The 31 untested playbook rules.** Of what remains, the cheapest are the sub-claims the
-2026-09-03 write-up explicitly left open: the book's exception to `pair_discards_rule_out` for a 2 or
-an 8 pair, and the narrower `two_discard_piles` claim about a tile that would obviously complete a
-visible shape passing uncalled, which needs a claim-eligibility model. Read the badges on the Tips
-page for the rest.
+**1. The 29 untested playbook rules.** The two cheap sub-claims are answered on 2026-09-05, on
+both populations: the 2-or-8 exception to `pair_discards_rule_out` is wrong, and the narrow form of
+`two_discard_piles` is real once "declined" means "could have claimed" - a tile that passed a seat
+from the player on their left is a third to a half safer against that seat than one that passed
+from anywhere else. FINDINGS has the tables. Neither is priced, and the standing rule about the
+danger model still applies; the chow read is the first one to SHARPEN the on-the-floor discount
+rather than restate it, so if that rule is ever revisited this is the read to try. What remains is
+not cheap: read the badges on the Tips page.
 
 **2. Rebuild the quiz packs against the current tagger, or decide not to.** This is the old item 3
 with a second reason attached. The coach's OPINION beside each question is computed live and has

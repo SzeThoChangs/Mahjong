@@ -1085,6 +1085,82 @@ tags at all - it was built on 2026-09-01, before the tagger existed - so the mon
 exist because of it. And `tiptest.ts` had been crashing on `spot.json` since the spotting pack moved
 into the same directory on 2026-09-04; it now skips anything that is not a quiz.
 
+### The two cheap sub-claims: the 2-or-8 exception is wrong, and the second discard pile is real once "declined" means "could have claimed" (2026-09-05)
+
+The 2026-09-03 reads write-up left two things open. Both are answered in `datagen/src/reads.ts` on
+the same two populations as before, with the ranges named before launch: 25,000 hands the coach
+played against itself on a fresh wall seed, 29 rather than the 11 used then, and the first 25,000
+hands of `run-money4` replayed. Logs are `data/gen/reads4-coach.log` and `reads4-money4.log`.
+
+**The exception to `pair_discards_rule_out` is wrong on both tables.** The book says a shed pair of
+2s or 8s leaves the terminal beside it live, because a double-pair wait on the 1 or the 9 survives
+throwing the 2s. Each row here is a tile beside a shed pair against tiles of its OWN class sitting
+away from any shed pair, because a terminal deals in less than a middle tile whatever anyone threw:
+
+```
+                                            coach, seed 29              run-money4
+  the 1 or 9 beside a shed pair of 2s/8s   0.220% vs 0.399%  x0.55     0.114% vs 0.185%  x0.62
+  the 3 or 7 on the other side of it       0.520% vs 0.751%  x0.69     0.270% vs 0.348%  x0.78
+  a middle tile beside any other pair      0.376% vs 0.751%  x0.50     0.239% vs 0.348%  x0.69
+```
+
+The terminal beside a shed 2 or 8 is discounted exactly as much as any other neighbour, at z = -3.5
+and -2.3. Nothing is left live. The main rule reproduces on the fresh seed - one rank away is x0.55
+against coaches and x0.72 on the recorded run, against x0.69 and x0.72 on 2026-09-03 - so the rule
+stands and the exception goes. The card says so.
+
+**`two_discard_piles` is real, and the 2026-09-03 measurement missed it by not asking who could
+claim.** That measurement tagged a tile `passed` if any copy had gone past the seat uncalled, and
+found it no safer than the tile simply being on the floor. The book's claim is narrower: the tile
+went past when they could have TAKEN it. So the tag now needs the seat to have been eligible under
+the rolling rule, and it splits by what was on offer: a tile thrown by the seat before them could
+have been chowed, and one thrown by anybody else could only have been ponged. Only tiles that
+passed exactly once carry a tag, because a tile that has passed twice is safer for having two
+copies gone and would flatter whichever tag it landed in. Deal-in rate to that seat, pooled over
+the hand:
+
+```
+                                     coach, seed 29        run-money4
+  passed once, a chow was on offer      0.230%               0.166%
+  passed once, only a pong              0.517%               0.261%
+  never thrown                          0.655%               0.314%
+  chow against pong                     x0.44  z=-19.4       x0.64  z=-11.3
+  chow against never thrown             x0.35                x0.53
+  pong against never thrown             x0.79                x0.83
+  the plain on-the-floor discount       x0.43-0.49           x0.51-0.60
+```
+
+Same direction on both populations, every turn band, and the size is a third to a half. The
+comparison that matters is the last three lines. A tile that passed from the player on their left
+is safer than the ordinary already-thrown discount says; a tile that passed from anywhere else is
+markedly LESS safe than that discount says. The second discard pile is not the discard pile after
+all. It is one third of it, the third the seat could have chowed, and the other two thirds carry
+less information than a copy on the floor is usually credited with. That is the first read measured
+here that sharpens the on-the-floor discount rather than restating it.
+
+The mechanism is the one the book gives. A suited tile deals in mostly by completing a run, and a
+seat that declined a chow on it has no two-tile piece it completes. A declined pong only says they
+had no pair of it, which rules out much less.
+
+**The book's own wording does not help.** Restricting the read to a tile in the suit the seat
+visibly concentrates in, which is the "obviously complete their visible shape" of the tip, gives
+x0.49 and x0.67 for chow against pong on a fifth of the sample, no sharper than the general form.
+The shape you can see from the melds adds nothing to what claim eligibility already says.
+
+**One control failed and is reported as such.** A `blind` tag was meant to catch tiles that passed
+when the rolling rule forbade the claim, as the case where declining means nothing. It is tiny, 9,000
+rows against 660,000, and it is not clean: a tile that passed a seat exactly once while forbidden is
+nearly always one whose other copy was claimed into somebody's meld, which makes it safe for a
+different reason. The chow-against-pong comparison does not need it, since both sides are tiles that
+passed once while claimable and differ only in who threw them.
+
+**Not priced, and not proposed for pricing.** Five danger-side changes have been played for money
+and none paid, and the reason FINDINGS reached for them - the coach already prices every discard
+continuously and a better deal-in probability swaps one nearly-equal throw for another - applies to
+this one too. It goes on the Tips card as a read to learn. If the standing rule is ever revisited,
+this is the read to try first, because unlike the five it does not restate a discount the coach
+already has.
+
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 
 Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach

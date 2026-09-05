@@ -113,10 +113,32 @@ const tellPrecision = table();
  * already-thrown discount in `dangerSafe`. If they are the same size, the second discard pile is
  * just the discard pile - every tile that is thrown goes past everybody.
  *
- * Caveat: this counts every uncalled discard, and some were uncalled because this table's rolling
- * locked-discard rule forbade the claim rather than because the player did not want it.
+ * Measured 2026-09-03 with two tags, `passed` and `new`, and `passed` came out no safer than the
+ * plain already-thrown discount, because every discard passes everybody. So `passed` is now split by
+ * whether the seat could have CLAIMED it: `chow` when it came from the seat before them, so a chow
+ * was on offer as well as a pong; `pong` when it came from anyone else; and `blind` when the table's
+ * rolling rule forbade the claim - a kind you threw last, or one thrown by anybody since your own
+ * last discard, cannot be claimed. `blind` is the control that was missing: a tile that went past
+ * them when they could not have taken it says nothing about what they hold, so if declining means
+ * anything, `chow` and `pong` must sit below `blind` and not merely below `new`.
+ *
+ * Those three tags are given only to a tile that passed them exactly ONCE. A tile that has passed
+ * twice is safer because two copies are gone, and it is also likelier to have had a chow on offer
+ * at some point, so letting it into `chow` would flatter the read. It goes to `multi` instead.
  */
 const oppPassed = table();
+/**
+ * The book's narrower claim, which is the one it actually makes: "if a tile that would obviously
+ * complete their VISIBLE shape passed uncalled, they do not have that shape".
+ *
+ * The visible shape here is the suit a seat is concentrating in, read off its exposed sets the way
+ * `concentratedSuit` reads it with one set. Keyed "<class>|<turn>|<tag>" and counted only for
+ * candidates IN that suit against an opponent who shows the concentration. `chow` and `pong` mean a
+ * copy passed them uncalled, claimable, AFTER their first exposed set in the suit was on the table -
+ * so the reader could have seen the shape and watched the tile go by. `blind` is a copy that passed
+ * before the set was visible or when the rolling rule forbade the claim. `own` and `new` as above.
+ */
+const oppPassedSuit = table();
 /**
  * `pair_discards_rule_out`: what a shed pair says about the tiles beside it.
  *
@@ -127,6 +149,13 @@ const oppPassed = table();
  *
  * Only counted for opponents who have shed at least one pair, so the comparison is between tiles in
  * the same position rather than between a developed opponent and an undeveloped one.
+ *
+ * The book's own exception, untested on 2026-09-03: a shed pair of 2s or 8s leaves the terminal
+ * beside it live, because a double-pair wait on the 1 or the 9 survives throwing the 2s. So the
+ * one-rank tag is split three ways: `adj1term` is the 1 beside a shed pair of 2s or the 9 beside a
+ * shed pair of 8s, `adj1in` is the 3 or the 7 on the other side of the same pair, and `adj1` is a
+ * neighbour of any other pair. If the exception is right, `adj1term` sits at the ordinary terminal
+ * rate while `adj1` and `adj1in` sit a third below it.
  */
 const oppShed = table();
 /**
@@ -258,26 +287,56 @@ for (const { g, bots } of sources()) {
         if (c1) { bump(tellPrecision, '1|five', concealedIn(c1) >= 5); bump(tellPrecision, '1|pure', purity(c1)); }
       }
       const oppTag = (k: TileKind, c: string | null) => (!c ? 'plain' : suitOf(k) === c ? 'in' : 'off');
-      // what each seat has let go past uncalled, and which pairs they have thrown out of hand
-      const passedBy = [0, 1, 2, 3].map((s) => {
-        const set = new Set<TileKind>();
-        for (const e of g.discardLog) if (e.seat !== s && e.claimedBy !== s) { const kk = kindOf(e.tile); if (kk < 34) set.add(kk); }
-        return set;
-      });
+      // What each seat has let go past uncalled, and whether they could have taken it. The rolling
+      // rule is replayed over the log exactly as `prepareClaims` applies it: a seat may not claim a
+      // kind it threw last, or one anybody has thrown since its own last discard. `afterSet` marks
+      // the passes that came after the seat's first exposed set in the tile's suit, which is the
+      // moment the shape became visible to the table.
+      interface Pass { passes: number; first: 'chow' | 'pong' | 'blind'; firstAfterSet: boolean }
+      const passedBy = [0, 1, 2, 3].map(() => new Map<TileKind, Pass>());
+      {
+        const last: (TileKind | null)[] = [null, null, null, null];
+        const seenSince = [0, 1, 2, 3].map(() => new Set<TileKind>());
+        const firstSet = [0, 1, 2, 3].map(() => new Map<string, number>());
+        g.discardLog.forEach((e, i) => {
+          const kk = kindOf(e.tile);
+          if (kk < 34) {
+            if (e.claimedBy === null) {
+              for (let s = 0; s < 4; s++) {
+                if (s === e.seat) continue;
+                const eligible = !(last[s] === kk || seenSince[s]!.has(kk));
+                const rec = passedBy[s]!.get(kk);
+                if (rec) { rec.passes++; continue; }     // only the first pass is characterised
+                const suit = suitOf(kk), visible = !!suit && firstSet[s]!.has(suit) && firstSet[s]!.get(suit)! < i;
+                passedBy[s]!.set(kk, { passes: 1, first: !eligible ? 'blind' : e.seat === (s + 3) % 4 ? 'chow' : 'pong', firstAfterSet: visible });
+              }
+            } else {
+              const suit = suitOf(kk);
+              if (suit && !firstSet[e.claimedBy]!.has(suit)) firstSet[e.claimedBy]!.set(suit, i);
+            }
+            last[e.seat] = kk; seenSince[e.seat]!.clear();
+            for (let s = 0; s < 4; s++) if (s !== e.seat) seenSince[s]!.add(kk);
+          }
+        });
+      }
       const ownDiscards = [0, 1, 2, 3].map((s) => new Set(g.players[s]!.discards.map(kindOf)));
       const shedPairs = [0, 1, 2, 3].map((s) => {
         const n = new Map<TileKind, number>();
         for (const t of g.players[s]!.discards) { const kk = kindOf(t); if (kk < 34) n.set(kk, (n.get(kk) ?? 0) + 1); }
         return [...n.entries()].filter(([, c]) => c >= 2).map(([kk]) => kk);
       });
-      /** one rank from a pair they shed, two ranks, or neither */
-      const shedTag = (k: TileKind, pairs: TileKind[]): 'adj1' | 'adj2' | 'away' => {
+      /** one rank from a pair they shed - split out when the pair is a 2 or an 8 - two ranks, or neither */
+      const shedTag = (k: TileKind, pairs: TileKind[]): 'adj1' | 'adj1term' | 'adj1in' | 'adj2' | 'away' => {
         if (!isSuited(k)) return 'away';
-        let best: 'adj1' | 'adj2' | 'away' = 'away';
+        let best: 'adj1' | 'adj1term' | 'adj1in' | 'adj2' | 'away' = 'away';
         for (const x of pairs) {
           if (!isSuited(x) || suitOf(x) !== suitOf(k)) continue;
-          const d = Math.abs((k % 9) - (x % 9));
-          if (d === 1) return 'adj1';
+          const rk = (k % 9) + 1, rx = (x % 9) + 1;
+          const d = Math.abs(rk - rx);
+          if (d === 1) {
+            if (rx === 2 || rx === 8) return rk === 1 || rk === 9 ? 'adj1term' : 'adj1in';
+            return 'adj1';
+          }
           if (d === 2) best = 'adj2';
         }
         return best;
@@ -290,8 +349,14 @@ for (const { g, bots } of sources()) {
           const f = seen.has(k) ? 'seen' : 'fresh';
           bump(oppMeld2, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c2)}`, hit);
           bump(oppMeld1, `${tileClass(k)}|${turn}|${f}|${oppTag(k, o.c1)}`, hit);
-          const pTag = ownDiscards[o.seat]!.has(k) ? 'own' : passedBy[o.seat]!.has(k) ? 'passed' : 'new';
+          const pass = passedBy[o.seat]!.get(k);
+          const pTag = ownDiscards[o.seat]!.has(k) ? 'own' : !pass ? 'new' : pass.passes > 1 ? 'multi' : pass.first;
           bump(oppPassed, `${tileClass(k)}|${turn}|${pTag}`, hit);
+          // the narrow claim: only a tile in the suit this opponent visibly concentrates in
+          if (o.c1 && suitOf(k) === o.c1) {
+            const sTag = ownDiscards[o.seat]!.has(k) ? 'own' : !pass ? 'new' : pass.passes > 1 ? 'multi' : pass.firstAfterSet ? pass.first : 'blind';
+            bump(oppPassedSuit, `${tileClass(k)}|${turn}|${sTag}`, hit);
+          }
           const pairs = shedPairs[o.seat]!;
           if (pairs.length && isSuited(k)) bump(oppShed, `${tileClass(k)}|${turn}|${shedTag(k, pairs)}`, hit);
         }
@@ -313,7 +378,7 @@ for (const { g, bots } of sources()) {
 
 mkdirSync(outDir, { recursive: true });
 const pct = (t: Record<string, Cell>) => Object.fromEntries(Object.entries(t).filter(([, c]) => c.n >= 30).map(([k, c]) => [k, { p: c.hit / c.n, n: c.n }]));
-writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: coachHands > 0 ? `coach-seed${coachSeed}` : dir.split('/').pop(), hands, sampled, ready: pct(ready), suitTell: pct(suitTell), danger: pct(danger), dangerSafe: pct(dangerSafe), dangerVisible: pct(dangerVisible), dangerWall: pct(dangerWall), dangerMeld2: pct(dangerMeld2), dangerMeld1: pct(dangerMeld1), oppMeld2: pct(oppMeld2), oppMeld1: pct(oppMeld1), oppPassed: pct(oppPassed), oppShed: pct(oppShed) }));
+writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: coachHands > 0 ? `coach-seed${coachSeed}` : dir.split('/').pop(), hands, sampled, ready: pct(ready), suitTell: pct(suitTell), danger: pct(danger), dangerSafe: pct(dangerSafe), dangerVisible: pct(dangerVisible), dangerWall: pct(dangerWall), dangerMeld2: pct(dangerMeld2), dangerMeld1: pct(dangerMeld1), oppMeld2: pct(oppMeld2), oppMeld1: pct(oppMeld1), oppPassed: pct(oppPassed), oppPassedSuit: pct(oppPassedSuit), oppShed: pct(oppShed) }));
 console.log(`reads: ${hands} hands, ${sampled} sampled moments -> ${outDir}/${name}.json`);
 const show = (label: string, t: Record<string, Cell>, keys: string[]) => {
   console.log(`\n${label}`);
@@ -443,42 +508,58 @@ show('...split by whether the tile was already discarded once', dangerSafe, ['si
   const add = (acc: Cell, c?: Cell) => { if (c) { acc.n += c.n; acc.hit += c.hit; } };
   const pc = (c: Cell) => `${(100 * c.hit / c.n).toFixed(3)}%`;
 
+  const ratio = (a: Cell, b: Cell) => `x${((a.hit / a.n) / Math.max(1e-9, b.hit / b.n)).toFixed(2)}`;
+  const line = (label: string, a: Cell, b: Cell) => `  ${label.padEnd(58)}${pc(a)}  vs ${pc(b)}   ${ratio(a, b)}  z=${z(a, b).toFixed(2)}   (n=${a.n}/${b.n})`;
+
   console.log('\ntwo_discard_piles - does a tile they let go past deal in to THEM less often?');
-  {
+  for (const [label, t] of [['any tile, against any opponent', oppPassed], ['a tile IN the suit they visibly concentrate in', oppPassedSuit]] as const) {
+    console.log(`  ${label}`);
+    const tags = ['chow', 'pong', 'blind', 'multi', 'new', 'own'] as const;
+    const pool = Object.fromEntries(tags.map((x) => [x, { n: 0, hit: 0 }])) as Record<typeof tags[number], Cell>;
     const rows: string[] = [];
-    const pool = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 }, own: { n: 0, hit: 0 } };
     for (const tn of [20, 30, 40, 50]) {
-      const acc = { passed: { n: 0, hit: 0 }, fresh: { n: 0, hit: 0 }, own: { n: 0, hit: 0 } };
-      for (const cls of ['simple', 'terminal', 'honour']) {
-        add(acc.passed, oppPassed[`${cls}|${tn}|passed`]); add(acc.fresh, oppPassed[`${cls}|${tn}|new`]);
-        add(acc.own, oppPassed[`${cls}|${tn}|own`]);
-      }
-      add(pool.passed, acc.passed); add(pool.fresh, acc.fresh); add(pool.own, acc.own);
-      if (Math.min(acc.passed.n, acc.fresh.n) < 200) continue;
-      rows.push(`  turn ${String(tn).padEnd(6)}passed ${pc(acc.passed)}  never thrown at all ${pc(acc.fresh)}  their own ${acc.own.n ? pc(acc.own) : '-'}`
-        + `   passed/new x${((acc.passed.hit / acc.passed.n) / Math.max(1e-9, acc.fresh.hit / acc.fresh.n)).toFixed(2)}`
-        + `  z=${z(acc.passed, acc.fresh).toFixed(2)}   (n=${acc.passed.n}/${acc.fresh.n})`);
+      const acc = Object.fromEntries(tags.map((x) => [x, { n: 0, hit: 0 }])) as Record<typeof tags[number], Cell>;
+      for (const cls of ['simple', 'terminal', 'honour']) for (const x of tags) add(acc[x], t[`${cls}|${tn}|${x}`]);
+      for (const x of tags) add(pool[x], acc[x]);
+      if (Math.min(acc.chow.n, acc.pong.n, acc.new.n) < 200) continue;
+      rows.push(`    turn ${String(tn).padEnd(6)}chow ${pc(acc.chow)}  pong ${pc(acc.pong)}  blind ${pc(acc.blind)}  multi ${pc(acc.multi)}  new ${pc(acc.new)}  own ${acc.own.n ? pc(acc.own) : '-'}`
+        + `   chow/pong ${ratio(acc.chow, acc.pong)} z=${z(acc.chow, acc.pong).toFixed(2)}   (n=${acc.chow.n}/${acc.pong.n})`);
     }
-    console.log(rows.length ? rows.join('\n') : '  (no cell had the sample for it)');
-    if (pool.passed.n && pool.fresh.n) console.log(`  pooled:  passed ${pc(pool.passed)}  never thrown ${pc(pool.fresh)}  their own ${pc(pool.own)}`
-      + `   passed/new x${((pool.passed.hit / pool.passed.n) / Math.max(1e-9, pool.fresh.hit / pool.fresh.n)).toFixed(2)}  z=${z(pool.passed, pool.fresh).toFixed(2)}`);
+    console.log(rows.length ? rows.join('\n') : '    (no cell had the sample for it)');
+    if (pool.pong.n && pool.new.n) {
+      console.log(`    pooled:  chow ${pc(pool.chow)}  pong ${pc(pool.pong)}  blind ${pc(pool.blind)}  multi ${pc(pool.multi)}  new ${pc(pool.new)}  own ${pool.own.n ? pc(pool.own) : '-'}   (n=${pool.chow.n}/${pool.pong.n}/${pool.blind.n}/${pool.multi.n}/${pool.new.n})`);
+      const passed = { n: pool.chow.n + pool.pong.n + pool.blind.n + pool.multi.n, hit: pool.chow.hit + pool.pong.hit + pool.blind.hit + pool.multi.hit };
+      console.log(line('    passed once, a chow on offer vs only a pong', pool.chow, pool.pong));
+      console.log(line('    passed once, claimable vs forbidden by the rolling rule', { n: pool.chow.n + pool.pong.n, hit: pool.chow.hit + pool.pong.hit }, pool.blind));
+      console.log(line('    passed once, claimable vs never thrown', { n: pool.chow.n + pool.pong.n, hit: pool.chow.hit + pool.pong.hit }, pool.new));
+      console.log(line('    any pass vs never thrown (the 2026-09-03 comparison)', passed, pool.new));
+    }
   }
 
   console.log('\npair_discards_rule_out - are the tiles beside a pair they threw away safer?');
   {
+    const tags = ['adj1', 'adj1term', 'adj1in', 'adj2', 'away'] as const;
+    const empty = () => Object.fromEntries(tags.map((x) => [x, { n: 0, hit: 0 }])) as Record<typeof tags[number], Cell>;
+    const pool = { simple: empty(), terminal: empty() };
     const rows: string[] = [];
-    const pool = { adj1: { n: 0, hit: 0 }, adj2: { n: 0, hit: 0 }, away: { n: 0, hit: 0 } };
     for (const tn of [20, 30, 40, 50]) {
-      const acc = { adj1: { n: 0, hit: 0 }, adj2: { n: 0, hit: 0 }, away: { n: 0, hit: 0 } };
-      for (const cls of ['simple', 'terminal']) for (const tag of ['adj1', 'adj2', 'away'] as const) add(acc[tag], oppShed[`${cls}|${tn}|${tag}`]);
-      for (const tag of ['adj1', 'adj2', 'away'] as const) add(pool[tag], acc[tag]);
-      if (Math.min(acc.adj1.n, acc.away.n) < 200) continue;
-      rows.push(`  turn ${String(tn).padEnd(6)}one rank away ${pc(acc.adj1)}  two ${pc(acc.adj2)}  elsewhere ${pc(acc.away)}`
-        + `   x${((acc.adj1.hit / acc.adj1.n) / Math.max(1e-9, acc.away.hit / acc.away.n)).toFixed(2)}`
-        + `  z=${z(acc.adj1, acc.away).toFixed(2)}   (n=${acc.adj1.n}/${acc.away.n})`);
+      const acc = empty();
+      for (const cls of ['simple', 'terminal'] as const) for (const x of tags) { add(acc[x], oppShed[`${cls}|${tn}|${x}`]); add(pool[cls][x], oppShed[`${cls}|${tn}|${x}`]); }
+      const one = { n: acc.adj1.n + acc.adj1term.n + acc.adj1in.n, hit: acc.adj1.hit + acc.adj1term.hit + acc.adj1in.hit };
+      if (Math.min(one.n, acc.away.n) < 200) continue;
+      rows.push(`  turn ${String(tn).padEnd(6)}one rank away ${pc(one)}  two ${pc(acc.adj2)}  elsewhere ${pc(acc.away)}`
+        + `   ${ratio(one, acc.away)}  z=${z(one, acc.away).toFixed(2)}   (n=${one.n}/${acc.away.n})`);
     }
     console.log(rows.length ? rows.join('\n') : '  (no cell had the sample for it)');
-    if (pool.adj1.n && pool.away.n) console.log(`  pooled:  one rank ${pc(pool.adj1)}  two ranks ${pc(pool.adj2)}  elsewhere ${pc(pool.away)}`
-      + `   x${((pool.adj1.hit / pool.adj1.n) / Math.max(1e-9, pool.away.hit / pool.away.n)).toFixed(2)}  z=${z(pool.adj1, pool.away).toFixed(2)}`);
+    const all = empty();
+    for (const cls of ['simple', 'terminal'] as const) for (const x of tags) add(all[x], pool[cls][x]);
+    const one = { n: all.adj1.n + all.adj1term.n + all.adj1in.n, hit: all.adj1.hit + all.adj1term.hit + all.adj1in.hit };
+    if (one.n && all.away.n) console.log(`  pooled:  one rank ${pc(one)}  two ranks ${pc(all.adj2)}  elsewhere ${pc(all.away)}   ${ratio(one, all.away)}  z=${z(one, all.away).toFixed(2)}`);
+    // The exception. Each row is compared with tiles of its OWN class sitting away from any shed
+    // pair, because a terminal deals in less than a middle tile whatever anyone has thrown.
+    console.log('  the 2-or-8 exception, each against its own class elsewhere:');
+    console.log(line('    the 1 or 9 beside a shed pair of 2s or 8s', pool.terminal.adj1term, pool.terminal.away));
+    console.log(line('    the 3 or 7 beside a shed pair of 2s or 8s', pool.simple.adj1in, pool.simple.away));
+    console.log(line('    a middle tile beside any other shed pair', pool.simple.adj1, pool.simple.away));
   }
 }
