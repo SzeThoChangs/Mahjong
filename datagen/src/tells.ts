@@ -137,6 +137,28 @@ function walk(make: (r: { record: (d: Decision) => void }) => GameState, bots: B
         bump(T('lastchance'), `${accounted[kk]! >= 3 ? 'three' : 'fewer'}|${tb}`, dealsIn);
       }
 
+      // --- locate_the_fourth: a threatening seat threw a kind early and no copy has appeared since.
+      //     The card says assume they hold another. Sampled once per hand late on, per committed
+      //     opponent, for every standard kind, tagged by what the table has shown of that kind.
+      if (turn >= 24 && seats[me]!.lateAllMiddle === null) {
+        const shown = new Uint8Array(34);
+        for (const e of v.discardLog) { const kk = kindOf(e.tile); if (kk < 34) shown[kk]!++; }
+        for (let s = 0; s < 4; s++) for (const mm of v.players[s]!.melds) for (const t of mm.tiles) if (t < 34) shown[t]!++;
+        for (let s = 0; s < 4; s++) {
+          if (s === me || v.players[s]!.melds.length < 2) continue;
+          const held = new Set(truth[s]!.kinds.filter((x) => x < 34));
+          const early = new Set(seats[s]!.earlyDiscards);
+          const mine = new Set(v.discardLog.filter((e) => e.seat === s).map((e) => kindOf(e.tile)));
+          for (let kk = 0 as TileKind; kk < 34; kk++) {
+            const tag = early.has(kk) && shown[kk] === 1 ? 'threw early, none since'
+              : early.has(kk) ? 'threw early, more since'
+              : mine.has(kk) ? 'threw late'
+              : shown[kk] === 0 ? 'never seen' : 'seen from others only';
+            bump(T('locate'), tag, held.has(kk));
+          }
+        }
+      }
+
       // --- wall_reading, sampled once per hand late on: does a seat hold the neighbours of what
       //     it threw early?
       if (turn >= 24 && seats[me]!.lateAllMiddle === null) {
@@ -223,6 +245,7 @@ show('concealed_kong_signal: is a seat with a concealed kong nearer to ready?', 
 show('discarded_value_pair: is a seat that shed a dragon or seat-wind pair nearer to ready?', T('valuepair'), 'tag|turn -> that seat is one tile away or better');
 show('last_chance_timing: does the last copy deal in more often late?', T('lastchance'), 'copies accounted|turn -> throwing it would have dealt in');
 show('wall_reading: does a seat hold the neighbours of what it threw early?', T('wallread'), 'distance from an early discard -> that seat holds the tile late in the hand');
+show('locate_the_fourth: does a committed seat hold a kind it threw early with nothing seen since?', T('locate'), 'what the table shows of the kind -> that seat holds a copy late in the hand');
 show('fear_the_chaser: does the player who commits later win more?', T('chaser'), 'order of becoming ready -> that seat won the hand', true);
 show('value_from_melds: what the exposed melds are worth against what the hand pays', T('valuemelds'), 'visible tai -> that seat won the hand', true);
 show('middle_tile_hands_undefended: does a hand of middles deal in more?', T('middles'), 'hand at turn 24 -> that seat dealt in');

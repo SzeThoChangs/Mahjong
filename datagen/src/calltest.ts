@@ -30,11 +30,11 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { shanten, isJoker, type TileKind } from 'sg-mahjong-engine';
+import { loadPacks, scorePacks, fitNull, type Arm, type NullModel } from './packlib.js';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
 const quizDir = arg('quiz', '../web/public/quiz')!;
 const only = arg('pack');
-const verbose = process.argv.includes('--verbose');
 
 interface PackQ {
   k: string; seat: number; dl: number; w: number; t: number; h: number[]; b: number[]; m: number[][];
@@ -329,56 +329,45 @@ const FILTERS: Record<string, { note: string; f: Filter }> = {
   },
 };
 
-interface Score { seen: number; resolved: number; follows: number; expected: number; variance: number }
-const blank = (): Score => ({ seen: 0, resolved: 0, follows: 0, expected: 0, variance: 0 });
-const pooled = new Map<string, Score>();
+interface Ctx { acts: Act[]; seen: Uint8Array; shNow: number }
 
-const report = (title: string, table: Map<string, Score>) => {
-  console.log(`\n${title}`);
-  console.log('  tip                        about  resolved   follows it   by luck      z   follows/resolved');
-  for (const [t, s] of [...table].sort((a, b) => b[1].seen - a[1].seen)) {
-    if (!s.seen) continue;
-    const rate = s.resolved ? s.follows / s.resolved : 0, luck = s.resolved ? s.expected / s.resolved : 0;
-    const z = s.variance > 0 ? (s.follows - s.expected) / Math.sqrt(s.variance) : 0;
-    console.log(`  ${t.padEnd(26)} ${String(s.seen).padStart(4)}  ${String(s.resolved).padStart(8)}   ${`${(100 * rate).toFixed(0)}%`.padStart(10)}  ${`${(100 * luck).toFixed(0)}%`.padStart(8)}  ${`${z >= 0 ? '+' : ''}${z.toFixed(1)}`.padStart(5)}   ${s.follows}/${s.resolved}`);
-  }
-};
-
-const files = readdirSync(quizDir).filter((f) => f.endsWith('.json') && f !== 'index.json' && (!only || f === `${only}.json`));
-let packsRead = 0;
-
-for (const f of files) {
-  const pack = JSON.parse(readFileSync(join(quizDir, f), 'utf8')) as { questions?: PackQ[] };
-  if (!pack.questions) continue;
-  packsRead++;
-  const st = new Map<string, Score>();
-  let claims = 0, usable = 0;
-  for (const q of pack.questions) {
-    if (q.k !== 'claim') continue;
-    claims++;
-    // A position where the hand can simply be declared is not a question about calling.
-    if (q.actions.some((a) => a.a === 'win')) continue;
-    usable++;
-    const offered = q.ld ? (q.ld[1] as TileKind) : null;
-    const acts = q.actions.map((a) => parseAct(a.a, offered));
-    const seen = seenCounts(q);
-    for (const [tip, { f: filter }] of Object.entries(FILTERS)) {
-      const split = filter(q, acts, seen);
-      if (!split) continue;
-      const s = st.get(tip) ?? blank(), g = pooled.get(tip) ?? blank();
-      s.seen++; g.seen++;
-      const hit = split.says.includes(q.best), miss = split.against.includes(q.best);
-      if (hit || miss) {
-        const p = split.says.length / (split.says.length + split.against.length);
-        for (const x of [s, g]) { x.resolved++; x.follows += hit ? 1 : 0; x.expected += p; x.variance += p * (1 - p); }
-        if (verbose) console.log(`  ${tip} ${f} best=${q.best} says=[${split.says}] against=[${split.against}] ${hit ? 'FOLLOWS' : 'breaks'}`);
-      }
-      st.set(tip, s); pooled.set(tip, g);
-    }
-  }
-  report(`${f}: ${usable} claim positions with something to decide, of ${claims}`, st);
+/** the same filters, given the prepared context - a position where the hand can simply be declared is not a question about calling */
+function prepare(q: PackQ): Ctx | null {
+  if (q.k !== 'claim') return null;
+  if (q.actions.some((a) => a.a === 'win')) return null;
+  const offered = q.ld ? (q.ld[1] as TileKind) : null;
+  return { acts: q.actions.map((a) => parseAct(a.a, offered)), seen: seenCounts(q), shNow: shanten(q.h, q.m.length) };
 }
 
-if (packsRead > 1) report(`pooled over ${packsRead} packs - the number to quote`, pooled);
-console.log('\nfilters:');
-for (const [tip, { note }] of Object.entries(FILTERS)) console.log(`  ${tip.padEnd(26)} ${note}`);
+/**
+ * THE MATCHED BASELINE, as `discardtest.ts` has it. A claim action is one of four things a beginner
+ * can read off the table - a pass, a call that makes the hand ready, a call that costs it nothing,
+ * or a call that costs it a step - and each of those is the measured best at a very different
+ * rate. Weighting each action by that rate is the baseline a calling rule has to beat to know
+ * something the shape of the choice does not already say. The explicit control arms above did
+ * this job by hand on 2026-09-05; this is the same correction applied uniformly.
+ */
+const claimKey = (q: PackQ, c: Ctx, act: Act) => {
+  if (!act.call) return 'pass';
+  const sh = afterCall(q, act).sh;
+  return sh === 0 && c.shNow > 0 ? 'call|makes ready' : sh <= c.shNow ? 'call|costs nothing' : 'call|costs a step';
+};
+function fit(): NullModel {
+  const rows: { key: string; best: boolean }[] = [];
+  for (const { questions } of loadPacks(quizDir, only)) for (const q of questions as PackQ[]) {
+    const c = prepare(q); if (!c) continue;
+    for (const a of c.acts) rows.push({ key: claimKey(q, c, a), best: q.best === a.a });
+  }
+  return fitNull(rows);
+}
+const NULL = fit();
+console.log('the matched baseline, fitted on every graded claim action in both packs:');
+for (const [k, v] of [...NULL].sort((a, b) => b[1] - a[1])) console.log(`  ${k.padEnd(20)} best ${(100 * v).toFixed(0)}% of the time`);
+
+const ARMS: Record<string, Arm<Ctx>> = {};
+for (const [name, { note, f }] of Object.entries(FILTERS)) ARMS[name] = { note, f: (q, c) => f(q as PackQ, c.acts, c.seen) };
+scorePacks<Ctx>({
+  quizDir, only, arms: ARMS, prepare: (q) => prepare(q as PackQ), width: 28,
+  heading: (f, used, total) => `${f}: ${used} claim positions with something to decide, of ${total} questions`,
+  weight: (q, c, a) => { const act = c.acts.find((x) => x.a === a); return act ? (NULL.get(claimKey(q as PackQ, c, act)) ?? 0.1) : 0.1; },
+});

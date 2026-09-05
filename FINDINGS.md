@@ -1776,6 +1776,47 @@ a different table and would need its own ranges rather than inheriting the sixte
 It is a third of that, so the baked table stands and the pooled cells are tracked beside it at
 `knowledge/sources/fitted/` for whoever rebuilds next.
 
+### The matched baseline on the calling tips, and a dead wait is not worth a call (2026-09-06)
+
+`discardtest.ts` and `audit.ts` score every throwing rule against a baseline that knows what each
+throw is. `calltest.ts` did the same job by hand, with control arms, and the two could not sit in
+one table. It now runs on `packlib.ts` with a claim-shaped null - four things a beginner can read
+off the table, fitted on every graded claim action in both packs:
+
+```
+  a call that makes the hand ready     best 88% of the time
+  a call that costs it nothing              60%
+  a pass                                    28%
+  a call that costs it a step                6%
+```
+
+Three of the five verdicts move in wording and none in direction. `call_to_upgrade` sharpens: the
+widening call is 1.6 standard errors above its class, and the call that keeps the hand ready
+without widening is 9.2 below - width is the whole condition. `call_to_skip_draw` goes from 2.4
+above the flat coin to 3.8 below the matched one, with its own split saying late alone is 4.3 low
+and early-and-safe 3.2 high. `take_ready_under_pressure` keeps its shape, 2.1 above under pressure
+against 5.7 above with nobody committed. And `never_break_your_pair` was nearly promoted: passing is
+3.4 above the baseline when the call would kill the only pair - until the control shows it is 2.4
+above when the call would not, so passing is under-predicted in one-pair hands generally and the
+pair-specific part is about one standard error. The control rows saved a wrong verdict for the
+second time this week, which is the argument for always printing them.
+
+**`rebuild_waits` is contradicted, built to order.** A seat is given four finished runs and a single
+tile whose other three copies are on the table, the seat before it throws a tile that extends one
+run, and the claim is graded with the packs' grader. Calling and throwing the dead tile leaves a
+live single wait; passing keeps a hand that cannot win as it stands. Four hundred positions a
+population, one per recorded hand:
+
+```
+                    resolved   took the call   by luck     z
+  coach table           400         42%          50%    -3.5
+  recorded hands        400         42%          50%    -3.3
+```
+
+The play-outs pass. The likely reason is that the wait can be rebuilt by drawing as well as by
+calling - every turn, for nothing - so the call spends a concealed tile to buy what the next draw
+already offered. The card is right that the wait is dead and wrong about what to do.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged

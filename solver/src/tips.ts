@@ -597,8 +597,8 @@ const CARDS: Tip[] = [
     notWhen: 'A part-hand tai you already hold beats a whole-hand tai you are still hoping for. The cards below about not chasing unconfirmed patterns are the other half of this.',
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The tai values are this table’s own and are not in doubt. The preference between the two kinds of tai has not been measured here, and it is testable: the coach picks a target every turn, so an arm that prefers whole-hand targets could be played for money.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-06 against the graded discard positions in both packs, and it is one of the clearer results on the page. Take the hands where the coach’s own ranking puts a whole-hand pattern on top and the hand also holds a pair of a dragon or its seat wind, and compare only throws that cost the hand no distance. The measured best threw from the value pair 64% of the time, on 74 resolved positions, against 13% by luck and 20% against a baseline that knows a pair is a block — 9.5 standard errors, and 66% at a coach table against 61% on the recorded hands. So the pattern really does come first. The matched control the card implies, the same choice with the cheap hand on top, fires four times across both packs and decides nothing: a value pair is usually what ARMS the cheap hand, so the two rarely coincide. `discardtest.ts` is the tool.',
   },
   {
     id: 'flush_decided_early',
@@ -626,8 +626,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Untested, and it is the most expensive tip on this page to test properly, because it is a claim about the turn after next rather than about this one.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-06 and not supported. The card’s “somewhere to go” is countable: among throws that keep the hand at its best distance and tie on how many tiles bring it closer, prefer the one leaving the most draws that widen the hand without bringing it closer, which is `upgrades` from the shape cards. On 295 resolved positions with no melds the measured best took that throw 44% of the time against 49% by luck and 50% against a baseline that knows what each throw is — 2.1 standard errors the wrong way, 3.0 at a coach table and level on the recorded hands. Where the count already calls two throws equal, thinking one draw ahead does not pick the better one here.',
   },
   {
     id: 'weak_start_pivot',
@@ -640,8 +640,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Untested here. The coach has no notion of giving up at the deal at all — it picks the best target it can see and plays it — so this is a real gap rather than a settled question.',
+    verdict: 'advice',
+    verdictNote: 'Re-badged on 2026-09-06 as advice rather than a claim. “No block worth keeping” and “at once” do not name a condition a filter could apply, and every way of writing one down tests our reading of the card rather than the card. The two halves it points at are measured elsewhere: committing to a colour hand early is confirmed at ten tiles of one suit plus honours and wrong at seven or eight, and turning the coach’s caution up loses steadily. Between those two the card is a way of thinking, and it stays.',
   },
   {
     id: 'threshold_rises',
@@ -996,7 +996,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05 against the graded claim positions in both quiz packs, and it is not detectable. Take the hands the card is about — exactly one pair and no joker — and the positions offering one call against one pass, then split them by whether the call would kill that pair. Passing was the measured best 47% of the time when the call killed the pair, on 94 positions, and 39% when the call left a pair standing, on 130. That gap is 1.2 standard errors, so the pair-killing call is still the better action more often than not and “never” is too strong here. The first cut looked far worse for the call, best 51% of the time against 78%, but that compared it with calls made from hands holding two pairs, which are different hands; matching the hands removed nearly all of it. Both populations agree. The tool is `calltest.ts`.',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions in both quiz packs, and it is not detectable. Take the hands the card is about — exactly one pair and no joker — and the positions offering one call against one pass, then split them by whether the call would kill that pair. Passing was the measured best 47% of the time when the call killed the pair, on 94 positions, and 39% when the call left a pair standing, on 130. That gap is 1.2 standard errors, so the pair-killing call is still the better action more often than not and “never” is too strong here. The first cut looked far worse for the call, best 51% of the time against 78%, but that compared it with calls made from hands holding two pairs, which are different hands; matching the hands removed nearly all of it. Both populations agree. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to the hand’s distance — a call that makes it ready is best 88% of the time, one that costs nothing 60%, a pass 28% — and the verdict holds, though for a reason worth having. Passing scores 3.4 standard errors above that baseline when the call would kill the only pair, and 2.4 above it when the call would not, so passing is under-predicted in one-pair hands generally and the part that is about the pair is about one standard error. Still not detectable.',
   },
   {
     id: 'pon_over_chii',
@@ -1024,7 +1024,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05 against the graded claim positions, and the card’s condition turns out to be the whole of it. Starting from hands that are already ready: when a call would leave the hand ready on MORE live tiles, the measured best was that call 78% of the time, 40 of 51. When the call would leave it ready on the same number or fewer, the best was to pass, and the call was right only 27% of the time, 27 of 100. The gap is six standard errors and both populations agree. The 78% needs the right baseline to read: calling beats passing 72% of the time across every claim position in these packs, so being ready and calling is not in itself better than average. What separates the two arms is the width, which is the same thing the discard version of this tip says. The tool is `calltest.ts`.',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions, and the card’s condition turns out to be the whole of it. Starting from hands that are already ready: when a call would leave the hand ready on MORE live tiles, the measured best was that call 78% of the time, 40 of 51. When the call would leave it ready on the same number or fewer, the best was to pass, and the call was right only 27% of the time, 27 of 100. The gap is six standard errors and both populations agree. The 78% needs the right baseline to read: calling beats passing 72% of the time across every claim position in these packs, so being ready and calling is not in itself better than average. What separates the two arms is the width, which is the same thing the discard version of this tip says. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the contrast sharpens: the widening call sits 1.6 standard errors above what its class predicts, and the call that keeps the hand ready WITHOUT widening sits 9.2 below. Being ready and calling is strongly wrong unless the wait grows.',
   },
   {
     id: 'call_to_skip_draw',
@@ -1038,7 +1038,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-05, and it names the wrong positions. Take a call that does not leave the hand further from ready, which is the card’s “keeps your shape”. Across every claim position in both packs such a call is the measured best 72% of the time. Late in the hand with somebody holding two melds, which is the card’s own condition, it falls to 60%, on 204 positions, against 75% in the early and mid positions where nobody is committed. Splitting the condition in two, being late alone gives 60% and somebody being committed alone gives 68%, so the lateness is doing all of it and the danger adds nothing. Calling still edges passing there, so this is not advice that loses money: it is advice that points at the positions where calling is LEAST reliable as though they were where it pays. The play-outs price deal-in, so a genuinely defensive call would have shown up here. The tool is `calltest.ts`.',
+    verdictNote: 'Measured on 2026-09-05, and it names the wrong positions. Take a call that does not leave the hand further from ready, which is the card’s “keeps your shape”. Across every claim position in both packs such a call is the measured best 72% of the time. Late in the hand with somebody holding two melds, which is the card’s own condition, it falls to 60%, on 204 positions, against 75% in the early and mid positions where nobody is committed. Splitting the condition in two, being late alone gives 60% and somebody being committed alone gives 68%, so the lateness is doing all of it and the danger adds nothing. Calling still edges passing there, so this is not advice that loses money: it is advice that points at the positions where calling is LEAST reliable as though they were where it pays. The play-outs price deal-in, so a genuinely defensive call would have shown up here. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the card’s own condition comes out 3.8 standard errors LOW — being late alone is 4.3 low, somebody committed alone 2.1 low, and early with nobody committed 3.2 HIGH. The same shape as before, sharper.',
   },
   {
     id: 'turn_theft',
@@ -1109,7 +1109,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05, and the action is right while the reason is not. A call that turns a hand that was not ready into a ready one is the measured best 89% of the time when an opponent has three melds, 40 of 45 positions — but 94% when nobody holds as many as two, 168 of 179, and 85% at two melds. So take the ready hand, which is among the strongest things measured on this page, and do not take it BECAUSE somebody is committed. If anything a committed opponent is a mild reason to think twice, which is the opposite of the card. Both populations agree, and the baseline matters: calling beats passing 72% of the time in these positions overall. The tool is `calltest.ts`.',
+    verdictNote: 'Measured on 2026-09-05, and the action is right while the reason is not. A call that turns a hand that was not ready into a ready one is the measured best 89% of the time when an opponent has three melds, 40 of 45 positions — but 94% when nobody holds as many as two, 168 of 179, and 85% at two melds. So take the ready hand, which is among the strongest things measured on this page, and do not take it BECAUSE somebody is committed. If anything a committed opponent is a mild reason to think twice, which is the opposite of the card. Both populations agree, and the baseline matters: calling beats passing 72% of the time in these positions overall. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows a call making the hand ready is best 88% of the time anyway: 2.1 standard errors above that under pressure, 5.7 above it with nobody committed. The pressure condition still subtracts.',
   },
   {
     id: 'rebuild_waits',
@@ -1122,8 +1122,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured, and not implemented either — the coach evaluates the call in front of it and never searches a sequence of calls that would rebuild a hand.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-06 on positions built to order, because a ready hand on a dead wait at the moment a rebuilding tile is thrown is about as rare as positions get. `buildrare.ts` gives the seat after the discarder four finished runs and a single tile whose other three copies are already on the table, throws a tile that extends one of its runs, and grades the claim with the packs’ own 128 play-outs. Claiming and throwing the dead tile leaves a live wait; passing keeps a hand that cannot win as it stands. Four hundred positions a population, one per recorded hand. The play-outs PASSED 58% of the time on both — 42% for the call against 50% by luck, 3.5 and 3.3 standard errors the wrong way, and further below a baseline that knows the call costs the hand no distance. The likely reason is that a dead wait can be rebuilt by drawing as well as by calling, every turn, without spending a concealed tile on it, so the call buys nothing the next draw did not already offer. Learn to see that the wait is dead; do not reach for the call.',
   },
   {
     id: 'middle_tile_hands_undefended',
@@ -1446,8 +1446,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured. The counting it asks for is exactly what the tile counts on this page do, so it is advice about actually doing the arithmetic rather than a claim needing a measurement.',
+    verdict: 'advice',
+    verdictNote: 'Re-badged on 2026-09-06 as advice rather than a claim. Counting the tiles that would confirm a pattern before steering toward it is the method the whole Shapes tab uses, and there is no position in which it could be false — what it warns against is not counting. The nearest testable neighbour is `flush_decided_early`, which puts a number on when a colour hand is confirmed enough to commit to, and is measured.',
   },
   {
     id: 'binary_commitment',
@@ -1699,8 +1699,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and the coach has no notion of it: it scores a call by what the tile does for the hand and never by whose draw it takes away.',
+    verdict: 'table-rule',
+    verdictNote: 'A fact about the turn order rather than a claim about play. A pong or kong skips the seats between the discarder and the claimer, so who reaches the last draws is arithmetic once the calls are known — the engine counts draws per seat in every hand it plays. Whether to make a call FOR that reason is priced by the same play-outs that price every call, and nothing on this page tests a call for its effect on the draw order alone, so this stays a rule of the table.',
   },
   {
     id: 'evaluators',

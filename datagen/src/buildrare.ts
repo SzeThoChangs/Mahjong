@@ -226,10 +226,62 @@ function* linkedBlocks(hr: ReturnType<typeof loadHands>[number]): Generator<{ g:
   }
 }
 
+
+/**
+ * rebuild_waits: a seat that is ready on a wait that is already dead - four finished sets and a
+ * single tile of which every other copy is on the table - is offered a tile that extends one of
+ * its runs. Claiming it and throwing the dead tile leaves a live single wait; passing keeps a hand
+ * that can never win. The card says learn to see the call. Built to order because a ready hand on
+ * a dead wait at the moment a rebuilding tile is thrown is about as rare as positions get.
+ *
+ * Only a kind with exactly three copies already visible can be the dead tile, because what is
+ * visible cannot be changed by a swap; the fourth has to be in the wall for `reshape` to fetch it.
+ */
+function* rebuildWaits(hr: ReturnType<typeof loadHands>[number]): Generator<{ g: GameState; d: number; says: string[]; against: string[] }> {
+  for (const { g, d } of decisions(hr)) {
+    const p = g.pending()!;
+    if (p.kind !== 'discard') continue;
+    const D = p.seat, S = (D + 1) % 4;
+    const snap = g.snapshot();
+    const S0 = snap.players[S]!;
+    if (S0.melds.length !== 0 || S0.hand.length !== 13) continue;
+    // what the table already shows of each kind
+    const shown = new Uint8Array(34);
+    for (const e of snap.discardLog) if (e.claimedBy === null) { const kk = kindOf(e.tile); if (kk < 34) shown[kk]!++; }
+    for (const q of snap.players) for (const m of q.melds) for (const t of m.tiles) if (t < 34) shown[t]!++;
+    const dead = ([] as TileKind[]).concat(...Array.from({ length: 34 }, (_, k) => (shown[k] === 3 ? [k as TileKind] : [])));
+    if (!dead.length) continue;
+    for (const x of snap.players[D]!.hand) {
+      const X = kindOf(x);
+      if (!isSuited(X) || rankOf(X) < 4) continue;                       // the run it extends is X-3, X-2, X-1
+      const sx = Math.floor(X / 9), a = X - 3;
+      const others = [0, 1, 2].filter((u) => u !== sx);
+      // four sets: the run X extends, plus three runs in the other two suits; the dead single tile K
+      for (const K of dead) {
+        const want: TileKind[] = [a, a + 1, a + 2, others[0]! * 9 + 1, others[0]! * 9 + 2, others[0]! * 9 + 3, others[0]! * 9 + 5, others[0]! * 9 + 6, others[0]! * 9 + 7, others[1]! * 9 + 1, others[1]! * 9 + 2, others[1]! * 9 + 3, K] as TileKind[];
+        const edited = reshape(snap, S, want, new Set());
+        if (!edited) continue;
+        const h = GameState.fromSnapshot(edited, cfg, { rules });
+        h.apply({ a: 'discard', tile: x, kind: X });
+        let guard = 0;
+        while (!h.pending() && !h.finished && guard++ < 5) h.advance();
+        const q = h.pending();
+        if (!q || q.kind !== 'claim' || q.seat !== S) continue;
+        const legal = q.legal.map((l) => (l.a === 'chow' ? `chow:${l.kinds.join(',')}` : l.a === 'pong' ? `pong:${l.kind}` : l.a));
+        const says = legal.filter((l) => l.startsWith('chow:')), against = legal.filter((l) => l === 'pass');
+        if (!says.length || !against.length) continue;
+        yield { g: h, d, says, against };
+        break;
+      }
+      break;
+    }
+  }
+}
+
 const gates = { eligible: 0, wallShort: 0, noFire: 0 };
 const TEMPLATES = tip === 'linked_blocks' ? harvestTemplates() : [];
 if (tip === 'linked_blocks') console.log(`${TEMPLATES.length} templates harvested from the packs (real firing hands x three suit rotations)`);
-const build = tip === 'pon_over_chii' ? ponOverChii : tip === 'linked_blocks' ? linkedBlocks : null;
+const build = tip === 'pon_over_chii' ? ponOverChii : tip === 'linked_blocks' ? linkedBlocks : tip === 'rebuild_waits' ? rebuildWaits : null;
 if (!build) { console.error(`no builder for ${tip}`); process.exit(1); }
 
 const t0 = Date.now();
@@ -239,7 +291,7 @@ outer: for (const hr of loadHands(dir).slice(0, maxHands)) {
   let fromThisHand = 0;
   for (const pos of build(hr)) {
     if (fromThisHand++ >= perHand) break;              // positions built from one hand share its wall and table, so they are not independent samples
-    const kind = tip === 'pon_over_chii' ? 'claim' : 'discard';
+    const kind = tip === 'linked_blocks' ? 'discard' : 'claim';
     const rec = recOf(hr, pos.g, pos.d, kind, 'pass');
     const ev = evaluateDecision(pos.g, rec, EVAL, rules);
     tally(pos.says, pos.against, ev.best);

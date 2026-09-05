@@ -28,7 +28,7 @@ import {
   type PackQ, type Split, type TileKind, type Arm, type NullModel,
 } from './packlib.js';
 import { loadPacks } from './packlib.js';
-import { blocks } from 'sg-mahjong-solver';
+import { blocks, evaluateTargets, upgrades } from 'sg-mahjong-solver';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
 const quizDir = arg('quiz', '../web/public/quiz')!;
@@ -52,6 +52,10 @@ interface Ctx {
   suit: number[];            // tiles held per suit
   honours: number;
   melds: number;
+  /** the plan the coach would play from here, by its own ranking - a whole-hand pattern or not */
+  topPlan: string;
+  /** kinds held exactly twice that are a dragon or this seat's own wind: a one-tai block in the making */
+  valuePairs: Set<TileKind>;
 }
 
 const HONOUR = (k: number) => k >= 27 && k < 34;
@@ -92,7 +96,16 @@ function prepare(q: PackQ): Ctx | null {
    * is why only the width mattered.
    */
   const wait0 = minSh === 0 ? Math.max(...keeps.map((t) => t.wait)) : 0;
-  return { throws, keeps, sh0: minSh, wait0, seen, suit, honours, melds };
+  // `wallRemaining` only prices an UNARMED cheap hand, which never ranks first, so the top plan is
+  // unaffected by the estimate; the pack does not store the true count.
+  const evals = evaluateTargets({ concealed: q.h, melds: q.m.map((x) => ({ type: x[0] === 0 ? 'chow' : x[0] === 1 ? 'pong' : 'kong', tiles: x.slice(2), concealed: x[1] === 1 })) },
+    { seat: (q.seat - q.dl + 4) % 4, prevailingWind: q.w, bonus: q.b, playerTurns: q.t, wallRemaining: 40, minimumFan: 2, selfDrawMinimumFan: 1 });
+  const topPlan = evals[0]?.id ?? 'none';
+  const count = new Map<number, number>();
+  for (const k of q.h) count.set(k, (count.get(k) ?? 0) + 1);
+  const seatWind = 27 + ((q.seat - q.dl + 4) % 4);
+  const valuePairs = new Set<TileKind>([...count].filter(([k, n]) => n === 2 && (k === 31 || k === 32 || k === 33 || k === seatWind)).map(([k]) => k as TileKind));
+  return { throws, keeps, sh0: minSh, wait0, seen, suit, honours, melds, topPlan, valuePairs };
 }
 
 /** every throw that ties for the largest value of `f`, and every throw that does not */
@@ -268,6 +281,53 @@ const ARMS: Record<string, Arm<Ctx>> = {
       for (let s = 0; s < 3; s++) bestN = Math.max(bestN, c.suit[s]! + c.honours);
       if (bestN < 10) return null;
       const says = namesOf(c.throws.filter((t) => t.loose)), against = namesOf(c.throws.filter((t) => !t.loose));
+      return says.length && against.length ? { says, against } : null;
+    },
+  },
+
+
+  /**
+   * `full_hand_over_partial`: the hand is being played for a whole-hand pattern and also holds a
+   * pair of a dragon or its seat wind, which is a one-tai block that depends on one pong arriving.
+   * The card says the pattern comes first, so it points at throwing from that pair. Only throws
+   * that cost the hand no distance are compared, so the play-outs are not being asked whether to
+   * wreck the hand to keep a pair - that question the distance control already answers.
+   */
+  full_hand_over_partial: {
+    note: 'top plan is a whole-hand pattern and the hand holds one dragon or seat-wind pair - throw from the pair',
+    f: (_q, c) => {
+      if (!['half_color', 'ping_wu', 'all_chow', 'all_pong'].includes(c.topPlan) || c.valuePairs.size !== 1) return null;
+      const says = namesOf(c.keeps.filter((t) => c.valuePairs.has(t.k)));
+      const against = namesOf(c.keeps.filter((t) => !c.valuePairs.has(t.k)));
+      return says.length && against.length ? { says, against } : null;
+    },
+  },
+  ctl_value_pair_no_pattern: {
+    note: 'MATCHED CONTROL: the same choice when the top plan is the cheap hand, where the card says the pair is the point',
+    f: (_q, c) => {
+      if (c.topPlan !== 'chicken' || c.valuePairs.size !== 1) return null;
+      const says = namesOf(c.keeps.filter((t) => c.valuePairs.has(t.k)));
+      const against = namesOf(c.keeps.filter((t) => !c.valuePairs.has(t.k)));
+      return says.length && against.length ? { says, against } : null;
+    },
+  },
+
+  /**
+   * `project_bad_draws`: among throws that keep the hand at its best distance AND tie on how many
+   * tiles bring it closer, prefer the one that leaves the most draws that WIDEN it without bringing
+   * it closer - `upgrades` from `tips.ts`, which is the card's "somewhere to go" made countable.
+   * Restricted to hands with no melds because `upgrades` reads a concealed hand.
+   */
+  project_bad_draws: {
+    note: 'throws tied on distance and acceptance, no melds - take the one leaving the most upgrade draws',
+    f: (_q, c) => {
+      if (c.melds !== 0) return null;
+      const top = Math.max(...c.keeps.map((t) => t.raw));
+      const tied = c.keeps.filter((t) => t.raw === top);
+      if (tied.length < 2) return null;
+      const up = new Map(tied.map((t) => [t.a, upgrades(t.rest)] as const));
+      const best = Math.max(...up.values());
+      const says = tied.filter((t) => up.get(t.a) === best).map((t) => t.a), against = tied.filter((t) => up.get(t.a) !== best).map((t) => t.a);
       return says.length && against.length ? { says, against } : null;
     },
   },
