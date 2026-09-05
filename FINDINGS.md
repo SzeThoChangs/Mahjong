@@ -1593,6 +1593,86 @@ run.
 minutes each, plus 40 seconds a fit. The cheap version of this experiment was available the whole
 time the expensive explanation was standing.
 
+### The committed-slope table wins money, by half what the shipped one did (2026-09-05)
+
+The commitment measurement above said the two conditionings disagree about how much each plan's
+spread is worth, and that a table built from committed slopes was the experiment it pointed at.
+That table now exists and has been played.
+
+**Five runs, one per plan.** 20,000 hands each, one seat locked to the plan and three coaches
+around it, about seven minutes a run: `plan-hc`, `plan-ap`, `plan-pw`, `plan-ch`, `plan-ac`.
+`datagen/src/mergecells.ts` pools the five cells files, since a run can only produce `committed`
+cells for the one plan its locked seat was playing. The multipliers the two conditionings ask for
+are not the same table:
+
+```
+                SHIPPED (pursued)            COMMITTED
+                t0     t20    t40         t0     t20    t40
+  half_color   0.88   0.70   0.57        0.68   0.70   0.58
+  ping_wu      1.23   0.98   0.90        1.46   1.08   0.88
+  all_pong     0.91   0.94   0.99        1.18   1.15   1.07
+  all_chow     1.05     -      -         1.78     -      -
+  chicken      1.70   1.65   1.51        1.61   1.07   1.20
+```
+
+Committing moves weight off the cheap hand late and off half-colour early, and onto all-pong and
+all-chow. The prior going in was the opposite of what happened: chicken's committed slopes are high
+in isolation, and this project knows for certain that playing for the cheap hand loses 1.928 chips a
+game, so the fear was a table that pushed the coach cheap. Measured against the shipped multipliers,
+which are already high on chicken, the committed set actually pulls the cheap hand DOWN.
+
+**The gain was picked on decisiveness before any money was played**, the same way 1.35 was. The
+shipped tables put the coach's top-two plan gap at 10.92 chips; the committed set reaches 10.90 at a
+gain of 1.30, against 8.90 at gain 1 and 11.24 at 1.35. At that gain it changes the coach's plan on
+9.4% of discards and its throw on 7.9%, so it is a real change rather than a constant.
+
+**Eight ranges, named in the message that launched the first run, none of them ever played before.**
+The opponent is the CURRENT shipped coach, so this asks whether the committed table beats what we
+ship, not whether it beats the study.
+
+```
+  2,000 paired deals a seat, all four seats, 8,000 paired deals a range
+
+  first four     shuffle-1200001  +0.088    1210001  +0.235    1220001  -0.025    1230001  +0.133
+  confirmation   shuffle-1240001  +0.166    1250001  +0.058    1260001  +0.093    1270001  +0.072
+
+  first four,   32,000 paired deals   +0.108
+  confirmation, 32,000 paired deals   +0.097
+  all eight,    64,000 paired deals   +0.102 +/- 0.043     t = +2.4, positive on 7 of 8
+```
+
+The confirmation came in level with the first four rather than shrinking, which is the property
+`legalWait` failed and the row scaling passed. It is half the size of the shipped change and at
+half its t.
+
+**What the win is made of.** 1,200 deals a seat on shuffle-1280001, the tested seat only:
+
+```
+                             committed    coach
+  won the hand                  26.44%   24.77%
+    ...chips per win             17.79    18.89
+    ...at the table minimum     47.60%   44.15%
+    ...four fan or more         31.60%   34.82%
+  reached ready                 49.38%   46.54%
+    ...average turn               32.2     32.9
+  dealt in                      15.40%   15.38%
+  won with a half-colour hand   18.68%   24.89%
+  won with the cheap hand       18.99%   22.37%
+```
+
+It wins more often and smaller, gets ready more often and two thirds of a turn sooner, and the
+deal-in rate does not move, which is the control that says this is a clean change to the value half.
+The direction is worth staring at, because it is the SAME direction the fitted tables took when they
+lost a chip a game: fewer half-colour hands, more wins at the table minimum. The difference is what
+it buys. The fitted arm gave up half-colour and won no more often, so it simply won less; this one
+gives up rather less half-colour and converts it into a win rate 1.7 points higher. A trade that
+narrow could plausibly go the other way on a table that plays differently, and nothing here has been
+measured against anything but the coach.
+
+**Not baked.** The evidence is real and it is weaker than the bar the last change cleared - t = 2.4
+against 4.9, 7 of 8 ranges against 8 of 8. `data/gen/tables-committed-g1.30.json` is the file, and
+baking it is one `baketables.ts --fitted` away.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged
