@@ -82,11 +82,14 @@ danger model still applies; the chow read is the first one to SHARPEN the on-the
 rather than restate it, so if that rule is ever revisited this is the read to try. What remains is
 not cheap: read the badges on the Tips page.
 
-**2. Rebuild the quiz packs against the current tagger, or decide not to.** This is the old item 3
-with a second reason attached. The coach's OPINION beside each question is computed live and has
-moved since the packs were built; and the packs were filled tagged-first by a tagger that knew four
-shapes, where the current one knows nine. Both packs replay in about half an hour each. A rebuild
-is also the only way the spotting drill gets more shape questions than the 407 of 954 it has.
+**2. Decide whether to raise `OVERDRAW`, which is the real coverage lever.** The rebuild is done
+and FINDINGS says what it bought: the money pack doubled to 796 tagged questions because it had
+never been filled tagged-first, and the coach pack did not move at all, because every tagged
+candidate was already being kept. So the tagger was never the constraint - the candidate draw is.
+`OVERDRAW` in `quizpack.ts` is 2.5 and tagged questions scale with it almost exactly, so 5 gives
+roughly 1,600 on the coach pack for about 50 minutes a pack instead of 25. The cost is not the time.
+It would make a third of the Real Quiz be about a named shape against a sixth now, which is a
+decision about what the quiz is for, and it is Changs's to make.
 
 **3. The block split now exists, so the other block tips are within reach.** `linked_blocks`,
 `sandwich`, `stepping_stones`, `perfect_one_away` and `sticky_one_away` are all claims about named

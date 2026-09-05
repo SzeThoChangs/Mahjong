@@ -1056,28 +1056,27 @@ gaps, and it is `six_blocks_ok`: keep the six, throw the spare, let the wall cho
 `five_blocks`: cut one. The card's own example hand, with a lone honour added, is the test case for
 the exception; the same hand with one gap piece made open is the test case for the rule.
 
-Scored against the play-outs, on both packs:
+Scored against the play-outs, on both packs, after both were rebuilt the same day:
 
 ```
                             coach pack (run-coach2)       money pack (run-money4)
                           about  resolved  follows  luck   about  resolved  follows  luck
-  five_blocks               131     101      56%    57%      76      57       40%    51%
-  six_blocks_ok              23       8      63%    49%      20      14       64%    54%
+  five_blocks               131     101      56%    57%     131     101      46%    52%
+  six_blocks_ok              23       8      63%    49%      30      20       70%    55%
 ```
 
-`five_blocks` with the exception carved out of it is the same null it was before: the play-outs cut
-the sixth block about as often as a coin would, at both tables. `six_blocks_ok` has 22 resolved
-positions between the two packs and keeps the six 64% of the time against 52% by luck, which is a
-lean in the book's direction and not a finding. It is rare because it needs a six-block hand, a
-spare to throw, and the two weakest pieces both gaps, and one discard in two hundred is that.
+`five_blocks` with the exception carved out of it is the same null it was before: 103 of 202
+resolved positions cut the sixth block, 51% against 54% by luck, and both tables say it separately.
+`six_blocks_ok` keeps the six on 19 of its 28 resolved positions, 68% against 53%, which is z = +1.6
+- a lean in the book's direction on both populations and not a finding. It is rare because it needs
+a six-block hand, a spare to throw, and the two weakest pieces both gaps, and one discard in two
+hundred is that.
 
-**Coverage did not move, and the reason is worth knowing.** The coach pack went from 841 tagged
-discard positions to 840. The 27 positions that left `five_blocks` are the 23 that arrived in
+**Coverage did not move on the coach pack, and the reason is worth knowing.** It went from 841
+tagged discard positions to 840. The 27 positions that left `five_blocks` are the 23 that arrived in
 `six_blocks_ok` plus four where the only cutting throw broke an open piece rather than a gap, which
 neither card is about. A better split names the shapes more truthfully; it does not make more
-positions be about a shape. The share of quiz positions that carry any shape tag is decided upstream,
-when `quizpack.ts` fills each stratum tagged-first, so the lever for coverage is a rebuild of the
-pack against the current tagger, not another detector.
+positions be about a shape.
 
 Two smaller things came out of doing this. `datagen/src/retag.ts` re-runs the tagger over a pack in
 place, in seconds rather than the half hour a rebuild costs, and it found that the money pack had no
@@ -1160,6 +1159,66 @@ continuously and a better deal-in probability swaps one nearly-equal throw for a
 this one too. It goes on the Tips card as a read to learn. If the standing rule is ever revisited,
 this is the read to try first, because unlike the five it does not restate a discount the coach
 already has.
+
+### Rebuilding the packs doubled the money pack's teachable questions and did nothing for the coach pack (2026-09-05)
+
+NEXT gave two reasons to rebuild the quiz packs. One of them was wrong. The coach's OPINION beside
+each question is computed live by the app from the hand, so it was never stale in the pack file and
+a rebuild could not refresh it. The only real reason was tag coverage.
+
+**On the coach pack the rebuild changed nothing: 840 tagged questions, the same 840, tip for tip.**
+The prediction beforehand was 1,000 to 1,050, and it was wrong for a reason that is now measured.
+The trim keeps tagged questions first, and every tagged candidate was already fitting: 840 tagged
+among the 10,619 candidates that `OVERDRAW` draws, all of them kept. A tagger that names more shapes
+does not find more taggable positions. The estimate came from the base rate among DISCARD positions,
+9.8%, when candidates include claim and self decisions that can never carry a shape tag; across all
+candidates it is 7.9%, and 7.9% of 10,619 is the 840 already there.
+
+**On the money pack it doubled, 399 to 796.** That pack was built on 2026-09-01, before the tagger
+existed, so it had never been filled tagged-first at all - the 399 were what a random draw happens
+to contain. The rebuild is worth having for the sample sizes alone: `bad_wait_ranking` goes from 4
+resolved positions to 21, `triplet_adjacency` from 32 to 71, and the pooled table below is the first
+time most of these tips have been scored on more than a handful of positions from one population.
+
+`tiptest.ts` now prints that pooled table, because every write-up since the tagger existed has had
+to add two packs together by hand:
+
+```
+  tip                    about  resolved   follows it   by luck     z
+  escape_single_waits      609       594          89%       47%   +20.7
+  pair_rule                554       400          30%       66%   -16.0
+  five_blocks              262       202          51%       54%    -1.1
+  threes_and_sevens        161        88          50%       50%    +0.1
+  triplet_adjacency        155       121          27%       42%    -3.5
+  narrow_can_beat_wide      54        53          91%       50%    +5.9
+  six_blocks_ok             53        28          68%       53%    +1.6
+  bad_wait_ranking          27        25          56%       50%    +0.6
+  edge_waits_stronger       27         6          33%       53%    -1.0
+```
+
+Nothing here reverses. `escape_single_waits` and `narrow_can_beat_wide` hold at more than twice the
+sample. `pair_rule` fails harder. `triplet_adjacency` now has 121 resolved positions and fails at
+z = -3.5, where on the old money pack alone it looked mildly positive at +0.9 - the coach population
+is what turned it, which is the fourth read to split by who is at the table. `threes_and_sevens` is
+exactly a coin. The two wait tips still resolve too few positions to say anything, and
+`edge_waits_stronger` has six.
+
+**The lever for coverage is `OVERDRAW`, not the tagger.** It is how many candidates each stratum
+draws for every question it keeps, currently 2.5, and the tagged rate among candidates is flat at
+about 8%, so tagged questions scale with it almost exactly. Doubling it to 5 should give roughly
+1,600 to 1,700 on the coach pack, capped in the strata that have already exhausted their decisive
+pools - early discards are at 100% of theirs. The cost is pass 2, which replays every candidate
+hand, so about 50 minutes a pack instead of 25. It is not free in kind either: it would make about a
+third of the Real Quiz be about a named shape, against a sixth now and 8% drawn straight, and 2.5 is
+a deliberate balance rather than an accident. That is a decision about what the quiz IS, so it is
+left open rather than taken here.
+
+One bug fixed on the way. `quizpack.ts` rebuilds `index.json` by scanning the output directory for
+JSON, and `spot.json` moved into that directory on 2026-09-04, so the first rebuild after that date
+would have put a phantom "spot" pack in the Real Quiz picker with an undefined question count. It
+now skips anything without questions. This is the second thing that broke the same way in two days -
+`tiptest.ts` was crashing on the same file - and the shared cause is that the spotting pack lives
+beside the quiz packs while not being one.
 
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 

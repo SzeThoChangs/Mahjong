@@ -42,9 +42,20 @@ interface Score { seen: number; resolved: number; follows: number; expected: num
 const files = readdirSync(quizDir)
   .filter((f) => f.endsWith('.json') && f !== 'index.json' && (!only || f === `${only}.json`));
 
+/**
+ * The same counts pooled over every pack read, which is the number the write-ups want.
+ *
+ * A tip is rare enough that one pack rarely resolves it twice over - `bad_wait_ranking` gets four
+ * positions in one pack and twenty-three in the other - so the per-pack rows are for spotting a
+ * disagreement between populations and this is for saying how strong the claim is overall.
+ */
+const pooled = new Map<string, Score>();
+let packsRead = 0;
+
 for (const f of files) {
   const pack = JSON.parse(readFileSync(join(quizDir, f), 'utf8')) as { questions?: PackQ[] };
   if (!pack.questions) continue;   // the spotting pack lives in the same directory and is not a quiz
+  packsRead++;
   const st = new Map<string, Score>();
   let discards = 0, tagged = 0;
   for (const q of pack.questions) {
@@ -64,12 +75,15 @@ for (const f of files) {
       const s = st.get(c.tip) ?? { seen: 0, resolved: 0, follows: 0, expected: 0, variance: 0 };
       s.seen++;
       const hit = says.includes(best), miss = against.includes(best);
+      const g = pooled.get(c.tip) ?? { seen: 0, resolved: 0, follows: 0, expected: 0, variance: 0 };
+      g.seen++;
       if (hit || miss) {
         // the coin this position would flip if the throw were picked at random from the two sides
         const p = says.length / (says.length + against.length);
         s.resolved++; s.follows += hit ? 1 : 0; s.expected += p; s.variance += p * (1 - p);
+        g.resolved++; g.follows += hit ? 1 : 0; g.expected += p; g.variance += p * (1 - p);
       }
-      st.set(c.tip, s);
+      st.set(c.tip, s); pooled.set(c.tip, g);
     }
   }
   console.log(`\n${f}: ${tagged} of ${discards} discard positions are about a tip`);
@@ -78,5 +92,15 @@ for (const f of files) {
     const rate = s.follows / s.resolved, luck = s.expected / s.resolved;
     const z = s.variance > 0 ? (s.follows - s.expected) / Math.sqrt(s.variance) : 0;
     console.log(`  ${t.padEnd(22)} ${String(s.seen).padStart(5)}  ${String(s.resolved).padStart(8)}   ${`${(100 * rate).toFixed(0)}%`.padStart(10)}  ${`${(100 * luck).toFixed(0)}%`.padStart(8)}  ${z >= 0 ? '+' : ''}${z.toFixed(1)}`);
+  }
+}
+
+if (packsRead > 1) {
+  console.log(`\npooled over ${packsRead} packs - the number to quote`);
+  console.log('  tip                    about  resolved   follows it   by luck    z     follows/resolved');
+  for (const [t, s] of [...pooled].sort((a, b) => b[1].seen - a[1].seen)) {
+    const rate = s.follows / s.resolved, luck = s.expected / s.resolved;
+    const z = s.variance > 0 ? (s.follows - s.expected) / Math.sqrt(s.variance) : 0;
+    console.log(`  ${t.padEnd(22)} ${String(s.seen).padStart(5)}  ${String(s.resolved).padStart(8)}   ${`${(100 * rate).toFixed(0)}%`.padStart(10)}  ${`${(100 * luck).toFixed(0)}%`.padStart(8)}  ${z >= 0 ? '+' : ''}${z.toFixed(1)}   ${s.follows}/${s.resolved}`);
   }
 }

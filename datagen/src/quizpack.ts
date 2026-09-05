@@ -202,10 +202,13 @@ console.log(`\n${tagged} of ${kept.length} questions have a shape tip to teach o
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', questions: kept }));
+// The index lists the QUIZ packs, and this directory holds more than those: `spot.json` moved in on
+// 2026-09-04 and has positions rather than questions, so a scan that trusts the extension puts a
+// phantom pack in the Real Quiz picker. Anything without questions is not a quiz pack.
 const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => {
-  const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money: boolean; unit: string; questions: unknown[] };
-  return { id: f.replace('.json', ''), money: p.money, unit: p.unit, questions: p.questions.length };
-});
+  const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money?: boolean; unit?: string; questions?: unknown[] };
+  return p.questions ? { id: f.replace('.json', ''), money: p.money, unit: p.unit, questions: p.questions.length } : null;
+}).filter((x) => x !== null);
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
 console.log(`\n${kept.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
 // Phase is a selection key now, so this is the check that it worked rather than a warning that it
