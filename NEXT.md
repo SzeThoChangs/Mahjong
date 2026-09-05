@@ -1,113 +1,79 @@
-# Where we left off — 2026-09-06, small hours
+# Where we left off — 2026-09-06
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
-## The playbook went from 29 untested rules to 7 in one day, and four published verdicts were wrong
+## The playbook is finished: every one of 103 cards has a verdict
 
-The old NEXT said the 29 untested rules were "not cheap". Two thirds of them were. A quiz pack
-grades every decision it holds, claims and self-actions included, so a rule of the form "in
-positions like this, do that" is a filter over graded positions and no new compute. Three tools do
-it: `datagen/src/calltest.ts` for the claiming tips, `datagen/src/discardtest.ts` for the throwing
-tips, and `datagen/src/tells.ts` for the reads, which replays 20,000 recorded and 10,000 coach
-hands with a recorder attached and compares what is public about each seat with what it holds.
-`datagen/src/packlib.ts` is the scoring they share.
+Two days ago 29 rules were badged untested. None are now. Of 103 cards, 59 are measured, 18
+contradicted, 4 confirmed by counting, 6 are rules of the table and 16 are advice that states no
+testable claim. The tools that did it, in the order they were built: `datagen/src/calltest.ts` for
+the claiming tips, `datagen/src/discardtest.ts` for the throwing tips, `datagen/src/tells.ts` for
+the reads, `datagen/src/buildrare.ts` for the three shapes real play never produces, and
+`datagen/src/packlib.ts` for the scoring they all share, including the matched baseline.
 
-**The baseline every verdict stood on was too easy, and `datagen/src/audit.ts` re-scored them.**
-`tiptest.ts` compared a tip against the coin its own split implies, which equalises how MANY tiles
-sit on each side and not what those tiles are - and a spare tile is the measured best 69% of the
-time against 24% by luck. `fitNull` in `packlib.ts` weights each action by what it is (costs
-distance or not, wanted by a block or not, honour, terminal or simple), and every rule now reports
-two z columns, flat and matched. `pair_rule` went from a published failure at -21.4 to a null at
-+0.8. `perfect_one_away` went from +8.0 to -0.1: its advice is right, but every throw it warns
-against costs a step and a throw that costs a step is best 2% of the time, so you get it right by
-throwing your spare. `escape_single_waits` survives at +25.8 and is the best-evidenced tip by a
-distance. The matched baseline is a strong null on purpose - it will not credit a rule for saying
-"do not wreck your hand" - and the two columns are there so that distinction stays visible.
+**The matched baseline is the thing to keep.** Every verdict is scored twice: against the coin its
+own split implies, and against a baseline that knows what each action is - for a throw, whether it
+costs distance, whether a block wants it, honour or terminal or simple; for a claim, whether it
+makes the hand ready, costs nothing, costs a step, or is a pass. The second column is the one to
+quote. It overturned four published verdicts on 2026-09-05 and nearly promoted one wrongly on
+2026-09-06 until the control row was read. Print the control rows.
 
-**One mechanism came up three times and is worth knowing on its own.** `withhold_safe_tiles`,
-`terminal_triplet_release` and `last_chance_timing` all argue a tile is safe because nobody can hold
-a pair of it. Measured from the play-outs directly, that removes almost none of the danger: a suited
-tile deals in mostly by completing a run, and a run wait does not care how many copies you hold.
+**Two mechanisms are worth more than any single card.** A suited tile deals in mostly by completing
+a run, so every card whose safety argument is "nobody can hold a pair of it" fails, and there were
+three. And what a seat threw early is what it never had - `wall_reading` confirmed it,
+`locate_the_fourth` is the same fact read backwards.
 
-**Two tips real play never produces were built to order.** `datagen/src/buildrare.ts` replays a
-recorded hand to a decision, swaps tiles between one seat and the hidden wall until the shape is
-there, and grades with the packs' own grader. `pon_over_chii` has no default at this table;
-`linked_blocks` leans the card's way on one population and not the other. Two method faults are
-written up in FINDINGS and both are the kind to remember: overwriting a wall slot rather than
-swapping, and 300 positions built from 9 hands.
+## The value side: what won against coaches loses against everyone else
 
-## The value side: the standing explanation was wrong, and the replacement wins a little money
-
-FINDINGS said the re-fit of `tables.ts` lost because `valuefit.ts` measures the value of a position
-under a coach that abandons plans, and that fitting the value of COMMITTING needed hands where
-somebody committed. Those hands exist now. `Context.onlyTarget` locks the coach to one plan,
-`PlanBot` wraps it, five `plan_*` bot types put it in the generator, and `valuefit.ts` has a third
-conditioning, `committed`, keyed on the plan a seat was ASSIGNED before the deal.
-
-**The late half-colour row is identical under both estimators**, 0.178 committed against 0.179
-pursued. The compression the whole explanation rested on is a fact about the hand. What IS an
-artefact is the turn trend, it lives at the early end, and its mechanism is selection rather than
-abandonment. `valuerows.ts --study` regresses against the pristine snapshot, which is necessary now
-that a row scaling has shipped: against the shipped tables `pursued` returns 0.235 everywhere by
-construction.
-
-**The committed-slope table beats the shipped coach.** Gain 1.30, picked on decisiveness before any
-money was played. Sixteen ranges named before the first ran, none played before:
+The committed-slope table baked on 2026-09-06 at +0.101 +/- 0.031 over 128,000 paired deals, t =
+3.3, against three coaches. `datagen/src/fieldtest.ts` then put the datagen personalities in the
+other three chairs - the population the recorded runs are played by - on eight ranges named before
+the first ran:
 
 ```
-  first eight    shuffle-1200001..1270001   64,000 paired deals   +0.102 +/- 0.043   7 of 8
-  batch A        shuffle-1290001..1320001   32,000 paired deals   +0.077 +/- 0.062   2 of 4
-  batch B        shuffle-1330001..1360001   32,000 paired deals   +0.121 +/- 0.061   4 of 4
-  all sixteen                              128,000 paired deals   +0.101 +/- 0.031   t = +3.3, 13 of 16
+  committed minus the previous table, against the field
+  64,000 paired deals   -0.210 +/- 0.043   t = -4.9, negative on 8 of 8
 ```
 
-The rule fixed before batch A ran: bake if the second eight are positive on their own and all
-sixteen pool to t >= 3. The second eight came in at +0.099 against the first eight's +0.102, both
-halves passed, and it is BAKED: `baketables.ts` reads `tables-committed-g1.30.json` by default and
-`_fitrate` against that file reports zero plan changes. Third change ever shipped to the coach.
+It loses by twice what it won, on the same trade: wins more often and smaller, deal-in rate
+untouched. A coach table punishes a slow hand, so speed is worth the size given up; a field that
+never collects a suit does not, so the bigger hand cashes.
 
-It wins more often and smaller, reaches ready 49.6% against 46.9% and most of a turn sooner, and
-the deal-in rate moves by a third of a point, inside the noise of 6,000 games. That is the same
-direction the fitted tables took when they lost a chip a game; the difference is that this one
-converts the lost half-colour hands into a higher win rate. Nothing has been measured against
-anything but the coach.
+The same test one change back says the row scaling that shipped before it HOLDS against the field:
++0.125 +/- 0.056 over 32,000 paired deals, t = 2.2, about the size it had against coaches. So the
+programme was not fitted to one opponent from the start. One step was.
 
-## Housekeeping done, and one item retired rather than done
+**The coach stands as baked, and the recommendation is to revert.** The rule fixed before the field
+test was that it is a robustness check, not a bake decision, so nothing was un-baked. But the
+picture is now clear: the row-scaled table wins against both fields, the committed one wins against
+coaches by 0.10 and loses to the field by 0.21, and no human has been measured against either.
+Reverting is one command, `baketables.ts --fitted
+../knowledge/sources/fitted/tables-rowscale-g1.35.json`, and a `_fitrate` check that the shipped
+coach then matches that file.
 
-The fitted tables live at `knowledge/sources/fitted/` now, beside the pristine study snapshot, and
-`baketables.ts` reads them from there: the shipped coach could not previously be rebuilt from a
-clean clone, because its source file was gitignored. Baking from the tracked file reproduces
-`src/tables.ts` byte for byte.
+The ping-wu row is answered: its committed slope falls with turn on a second seed too, and pooling
+the two runs moves 0.66% of throws, under the 2% bar. Pooled cells and the rebuilt table are at
+`knowledge/sources/fitted/` for the next rebuild.
 
-The old NEXT's item 4 - drop the 14MB `run-money4` quiz pack and film room - is retired, not done.
-Both come from `run-money4`, the pack was rebuilt on 2026-09-05, and it is the second population in
-every measurement above. There is nothing stale to delete.
+## Housekeeping
 
-The web build passes, every package typechecks, and 178 tests pass - the same three things CI runs.
+The fitted tables, their cells, the plain study table and the committed candidate are all tracked
+under `knowledge/sources/fitted/`, and the shipped coach rebuilds from a clean clone byte for byte.
+There is no git remote: `main` is fast-forwarded to this branch at the end of each session, nothing
+is pushed, and the local typecheck, tests and build are the only checks. The web build passes.
 
 ## Where to start next, in order
 
-**1. The seven rules still untested, and what each needs.** Two are filters over the packs that
-nobody has written: `full_hand_over_partial` needs a tai routine to say which throws keep a
-whole-hand pattern, and `project_bad_draws` is `upgrades()` from `tips.ts` used as a throw
-criterion. `locate_the_fourth` is a read for `tells.ts`. `rebuild_waits` is a claim on a dead wait,
-which the packs will hold almost none of, so it wants a `buildrare.ts` builder. `last_tile_shift` is
-arithmetic about who draws last and is probably a table-rule badge rather than a measurement.
-`weak_start_pivot` and `no_phantom_hands` do not state a testable condition, and the honest badge
-for those may be `advice`.
+**1. Decide the bake - the recommendation is to revert.** See above. If you want a third field
+first, the one closest to a person is probably the coach with its randomness turned up, and
+`fieldtest.ts` takes any bot the generator can make.
 
-**2. Both populations, always.** `concealed_kong_signal` reversed sign between the recorded hands
-and the coach table. That is the second read to do so. Any read measured on one population is a
-read about a game the other is not playing.
+**2. Fit for both fields at once.** The value tables are keyed by plan, breakdown and turn. Nothing
+stops a fit from being weighted across two opponent populations, and a table that is level on both
+fields is a better thing to ship than one that wins on one and loses on the other. The committed
+runs and `valuefit.ts --committed` are the machinery; what is missing is a second set of committed
+runs against the personality field.
 
-**3. The ping-wu row is answered.** A second 20,000-hand run on a fresh seed reproduced the fall
-(0.391 / 0.303 / 0.235 against 0.450 / 0.332 / 0.272), and `pursued` on the same hands has the same
-shape: ping-wu's slope really does fall with turn, alone among the plans. Rebuilding the table with
-both runs pooled lowers that row about 7% and moves 0.66% of the coach's throws, under the 2% bar
-set before looking, so the baked table stands. The pooled cells and the rebuilt table are at
-`knowledge/sources/fitted/` (`plan-all2-cells.json`, `tables-committed2-g1.30.json`) for the next
-rebuild, which should start from those rather than the first run's.
-
-**4. `main` was fast-forwarded to this branch at the end of the session.** There is no git remote
-configured, so nothing was pushed and no CI ran anywhere: the local typecheck, tests and build ARE
-the checks. A deploy, when somebody does one, is made from `main`.
+**3. The Tips page now says something on every card.** The next thing that page needs is not
+another verdict but the mistake record from the learning framework - the five-part system's fifth
+component - which the app still lacks. That is a product question, not a measurement.

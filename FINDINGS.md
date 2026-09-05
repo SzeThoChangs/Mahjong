@@ -1817,6 +1817,93 @@ The play-outs pass. The likely reason is that the wait can be rebuilt by drawing
 calling - every turn, for nothing - so the call spends a concealed tile to buy what the next draw
 already offered. The card is right that the wait is dead and wrong about what to do.
 
+### The last untested read is backwards, and the playbook is done (2026-09-06)
+
+`locate_the_fourth` says that between two equally safe tiles, if the threatening player threw one
+copy early and nothing has come out since, assume they hold another. `tells.ts` asks every committed
+seat, for every standard kind, late in the hand, whether it holds a copy:
+
+```
+                                    coach table   recorded hands
+  never seen anywhere                  25.22%         24.13%
+  seen from other seats only           11.74%         11.79%
+  they threw it early, none since       5.25%          8.01%
+  they threw it early, more since       1.96%          3.15%
+  they threw it late                    5.21%          7.02%
+```
+
+The kind the card says to assume they hold is the one they are least likely to hold, by three to
+four times, on both populations. The grain of truth is the bottom pair of rows - an early discard
+with no copy out since is held more often than one with copies out since - and it is arithmetic
+about how many copies remain, dwarfed by the fact that they threw it. That is the same shape as
+`wall_reading`, which was confirmed: what a seat threw early is what it never had.
+
+With that, every rule in the playbook has a verdict. Of 103 cards, 59 are measured, 18 contradicted,
+4 confirmed by counting, 6 are rules of the table and 16 are advice that states no testable claim.
+Nothing is left badged untested.
+
+### The committed table loses against a table that is not three coaches (2026-09-06)
+
+Every money figure in this file was measured with the coach in the other three chairs. The
+committed-slope table won +0.101 chips a game that way over 128,000 paired deals and baked. It won
+by winning more often and smaller - fewer half-colour hands, more wins at the table minimum - which
+is the direction the fitted tables took when they LOST a chip a game, and nothing had asked whether
+a gain made of converting slow big hands into fast cheap ones survives opponents who play
+differently. `datagen/src/fieldtest.ts` asks. Same design as `headtohead.ts` - the tested seat
+rotates through four chairs, walls paired, arms differ only in the table - but the other three
+chairs hold the datagen personalities, drawn per deal from the generator's own pool and seeded by
+the deal, so both arms face the same three players making the same decisions. Reported as committed
+minus the previous table. Eight ranges named before the first ran, none played before:
+
+```
+  2,000 paired deals a seat, all four seats, 8,000 paired deals a range
+
+  batch 1   1370001  -0.206   1380001  -0.438   1390001  -0.141   1400001  -0.006      -0.198 +/- 0.060
+  batch 2   1410001  -0.163   1420001  -0.369   1430001  -0.089   1440001  -0.267      -0.222 +/- 0.061
+
+  all eight, 64,000 paired deals                                 -0.210 +/- 0.043   t = -4.9, negative on 8 of 8
+```
+
+**It loses by twice what it won, at a stronger t than the bake had.** The breakdown, pooled over
+batch 2, is the same trade in the same direction:
+
+```
+                               committed   previous
+  won the hand                    41.14%     39.21%
+    ...chips per win               18.18      19.71
+    ...at the table minimum       45.30%     40.80%
+  reached ready                   59.75%     57.39%
+  dealt in                         8.65%      8.63%
+```
+
+Against coaches, getting ready sooner is worth more than the size given up, because a coach table
+punishes a slow hand. Against a field that never collects a suit and wins a colour hand 1.3% of
+the time, nobody punishes the slow hand, so speed buys less and the bigger hand cashes. The
+deal-in rate is identical in both settings, so this is entirely a value-side trade whose sign
+depends on who is at the table.
+
+**What it means for the bake.** The shipped coach is the better table against coaches and the worse
+one against everyone else this project can simulate. Neither field is a human. The rule fixed before
+this ran was that it is a robustness check and not a bake decision, so the coach stands as baked
+and the decision is written up here rather than taken. The natural follow-up is the same question
+one change back - whether the row scaling that won +0.200 against coaches also holds against the
+field, or whether the whole value-side programme has been fitted to one opponent - and it is
+ran on four more ranges named in advance, 1450001..1480001, the previous table against the plain
+study table with the same field in the other chairs:
+
+```
+  rowscale minus the study's own numbers, against the field
+  1450001  +0.197   1460001  -0.060   1470001  +0.208   1480001  +0.154
+  32,000 paired deals   +0.125 +/- 0.056   t = +2.2, positive on 3 of 4
+```
+
+**The row scaling holds against the field, at about the size it had against coaches.** So the
+value-side programme was not fitted to one opponent from the start; one step of it was. The
+committed bake is the field-specific change, and reverting to the row-scaled table gives a coach
+that wins against both fields rather than one that wins against coaches and loses to everyone else.
+That is the recommendation. It is not done here, because the rule said so, and because the field
+is still not a person.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged

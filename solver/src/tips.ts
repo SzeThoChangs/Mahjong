@@ -839,8 +839,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and it is the harder half of the card above: our reads know how many copies are visible, not who is likely to hold the rest.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-06 over 20,000 recorded hands and 10,000 coach hands, and it points the wrong way on both. For every committed seat — two melds or more — and every standard kind, late in the hand: does the seat hold a copy? A kind that seat threw in the first dozen turns with no copy seen anywhere since is held 5.3% of the time at a coach table and 8.0% on the recorded hands. A kind never seen at all is held 25.2% and 24.1%. So the tile the card says to assume they hold is the one they are least likely to hold, by a factor of three to four. The one grain in it: an early discard with nothing seen since is held a little more often than one with more copies out since (5.3% against 2.0%, 8.0% against 3.2%), which is arithmetic about how many copies are left, and it is dwarfed by the fact that they threw it. Between two equally safe tiles, throw the one they discarded. `tells.ts` is the tool.',
   },
   {
     id: 'withhold_safe_tiles',

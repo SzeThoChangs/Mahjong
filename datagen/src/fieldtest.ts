@@ -43,14 +43,22 @@ function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
     return makeBot(BOT_TYPES[pick]!, makeRng(fnv1a(`seed:${shuffle}:${s}`)), DEFAULT_RANDOMNESS);
   });
 }
-function arm(seat: number, tables: unknown): number[] {
+/** what the tested seat's hands looked like, so a loss can be read as a trade rather than a number */
+interface Shape { games: number; wins: number; winChips: number; minWins: number; dealins: number; dealinChips: number; ready: number }
+const shapes: Record<'A' | 'B', Shape> = { A: { games: 0, wins: 0, winChips: 0, minWins: 0, dealins: 0, dealinChips: 0, ready: 0 }, B: { games: 0, wins: 0, winChips: 0, minWins: 0, dealins: 0, dealinChips: 0, ready: 0 } };
+function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
   const out: number[] = [];
+  const sh = shapes[which];
   for (let g = 0; g < n; g++) {
     const shuffle = from + g;
     const wall = shuffleWall(shuffle, cfg.unplayable_tiles, rules.jokers.count);
     const bots = field(shuffle, seat, () => new FittedCoachBot(tables));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
+    sh.games++;
+    if (r.winner === seat) { sh.wins++; sh.winChips += r.chipsDelta[seat]!; if ((r.score?.fan ?? 0) <= 2) sh.minWins++; }
+    else if (r.winner !== null && r.discarder === seat) { sh.dealins++; sh.dealinChips += r.chipsDelta[seat]!; }
+    if (r.readyTurn[seat]! >= 0) sh.ready++;
   }
   return out;
 }
@@ -61,10 +69,17 @@ console.log(`${n} paired deals per seat, A = ${pathA.split('/').pop()} minus B =
 console.log('seat   A chips/game   B chips/game   difference (paired)');
 const diffs: number[] = [];
 for (let seat = 0; seat < 4; seat++) {
-  const a = arm(seat, tablesA), b = arm(seat, tablesB);
+  const a = arm(seat, tablesA, 'A'), b = arm(seat, tablesB, 'B');
   const d = a.map((x, i) => x - b[i]!);
   diffs.push(...d);
   console.log(`  ${seat + 1}   ${mean(a).toFixed(2).padStart(12)}   ${mean(b).toFixed(2).padStart(12)}   ${mean(d).toFixed(2).padStart(8)} ± ${(sd(d) / Math.sqrt(d.length)).toFixed(2)}`);
 }
 const m = mean(diffs), se = sd(diffs) / Math.sqrt(diffs.length);
 console.log(`\nover all ${diffs.length} paired deals: ${m >= 0 ? '+' : ''}${m.toFixed(3)} ± ${se.toFixed(3)} chips/game for A against the field`);
+const pc = (x: number, y: number) => `${(100 * x / Math.max(1, y)).toFixed(2)}%`;
+console.log(`\nwhat the tested seat's hands looked like        A          B`);
+for (const [label, f] of [
+  ['won the hand', (s: Shape) => pc(s.wins, s.games)], ['  ...chips per win', (s: Shape) => (s.winChips / Math.max(1, s.wins)).toFixed(2)],
+  ['  ...at the table minimum', (s: Shape) => pc(s.minWins, s.wins)], ['reached ready', (s: Shape) => pc(s.ready, s.games)],
+  ['dealt in', (s: Shape) => pc(s.dealins, s.games)], ['  ...chips per deal-in', (s: Shape) => (s.dealinChips / Math.max(1, s.dealins)).toFixed(2)],
+] as [string, (s: Shape) => string][]) console.log(`  ${label.padEnd(36)}${f(shapes.A).padStart(10)}${f(shapes.B).padStart(11)}`);
