@@ -43,7 +43,8 @@ const files = readdirSync(quizDir)
   .filter((f) => f.endsWith('.json') && f !== 'index.json' && (!only || f === `${only}.json`));
 
 for (const f of files) {
-  const pack = JSON.parse(readFileSync(join(quizDir, f), 'utf8')) as { questions: PackQ[] };
+  const pack = JSON.parse(readFileSync(join(quizDir, f), 'utf8')) as { questions?: PackQ[] };
+  if (!pack.questions) continue;   // the spotting pack lives in the same directory and is not a quiz
   const st = new Map<string, Score>();
   let discards = 0, tagged = 0;
   for (const q of pack.questions) {

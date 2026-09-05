@@ -17,10 +17,11 @@
  * is a stronger test of the book than any of the counting in `shapes.ts`. Keeping the two apart is
  * the whole point: this file spots the shape, the play-outs judge it.
  *
- * Six tips are spotted here and the rest are not. These six are the ones a machine can see without
- * ambiguity. `five_blocks` and `six_blocks_ok` need a block decomposition to be agreed on before
- * they mean anything, and `narrow_can_beat_wide` needs the hand scored for tai; those are jobs for
- * later rather than things to guess at.
+ * Nine tips are spotted here and the rest are not. Six of them can be read off the tiles without
+ * anything being agreed first. `five_blocks` and `six_blocks_ok` need a hand split into blocks, and
+ * the split is `blocks` below: the most generous reading, with the tie between equally generous
+ * readings settled in a fixed order, so the same tiles always come out as the same blocks.
+ * `narrow_can_beat_wide` needs the hand scored for tai, which a `TableView` supplies.
  *
  * The wait tips - `bad_wait_ranking` and `edge_waits_stronger` - are the interesting pair, because
  * they can now be answered two ways that know nothing about each other. `release.ts` counts what the
@@ -98,42 +99,79 @@ function spares(c: number[]): TileKind[] {
 }
 
 /**
- * The most blocks a hand can be read as - sets, pairs and two-tile pieces that could become runs.
+ * What a block is, once the hand has been split.
+ *
+ * `set` is a finished triplet or run. `pair` is two of a kind. The other three are two tiles that
+ * could become a run, named by the wait they make: `open` is two adjacent tiles that can be finished
+ * from either side, `edge` is 1-2 or 8-9 which only one tile finishes, and `gap` is two tiles with a
+ * hole between them, which the book calls a middle wait. Anything left over is a spare, not a block.
+ */
+export type BlockKind = 'set' | 'pair' | 'open' | 'edge' | 'gap';
+export interface Block { kind: BlockKind; tiles: TileKind[] }
+
+/**
+ * The hand split into blocks - sets, pairs and two-tile pieces that could become runs.
  *
  * The book's first rule is that a winning hand is five blocks and a sixth is tiles you will throw
- * later. To spot a position where that decision is live, something has to agree on what a block is.
- * This takes the most generous reading: at each rank, try it as a triplet, as a run, as a pair, as
- * two adjacent tiles, as two tiles with a gap, or as a spare, and keep whichever branch yields the
- * most. Honours can only be triplets or pairs.
+ * later. To spot a position where that decision is live, something has to agree on what a block is,
+ * and this is the agreement. It takes the most generous reading: at each rank, try it as a triplet,
+ * as a run, as a pair, as two adjacent tiles, as two tiles with a gap, or as a spare, and keep
+ * whichever branch yields the most blocks. Honours can only be triplets or pairs.
  *
  * Generous on purpose. A tip about cutting the sixth block should only fire where six can honestly
- * be seen, and a mean counter would call a six-block hand five and never fire at all.
+ * be seen, and a mean counter would call a six-block hand five and never fire at all. It means
+ * 2-3-4-5 is read as two open pieces rather than one long run, which is the reading the tip wants:
+ * the question it asks is how many pieces you are carrying, not how many you will end up with.
+ *
+ * When two readings give the same number of blocks, the tie goes to the one with more finished
+ * sets, then more pairs, then more open pieces, then more gap pieces. So 1-2-3 is a set rather than
+ * an edge piece with a spare 3, and 2-4-5 is 45 with a spare 2 rather than 24 with a spare 5. The
+ * order matters because `six_blocks_ok` asks which two blocks are the WEAKEST, and a reading that
+ * hid an open piece inside a gap one would answer that wrongly.
  */
-export function blockCount(tiles: TileKind[]): number {
+export function blocks(tiles: TileKind[]): Block[] {
   const c = countsOf(tiles);
-  let blocks = 0;
-  for (let k = 27; k < 34; k++) blocks += c[k]! >= 3 ? 1 : c[k]! >= 2 ? 1 : 0;
-  for (const base of [0, 9, 18]) blocks += suitBlocks(c.slice(base, base + 9), 0, new Map());
-  return blocks;
+  const out: Block[] = [];
+  for (let k = 27 as TileKind; k < 34; k++) {
+    if (c[k]! >= 3) out.push({ kind: 'set', tiles: [k, k, k] });
+    else if (c[k]! === 2) out.push({ kind: 'pair', tiles: [k, k] });
+  }
+  for (const base of [0, 9, 18]) out.push(...suitBlocks(c.slice(base, base + 9), 0, new Map()).blocks.map((b) => ({ kind: b.kind, tiles: b.tiles.map((r) => (base + r) as TileKind) })));
+  return out;
 }
-function suitBlocks(n: number[], i: number, memo: Map<string, number>): number {
+/** how many blocks the hand splits into under `blocks` */
+export function blockCount(tiles: TileKind[]): number {
+  return blocks(tiles).length;
+}
+interface Split { score: number; blocks: Block[] }
+/** count first, then sets, pairs, open, gap - each place is small enough never to carry into the next */
+const splitScore = (bs: Block[]) => {
+  let sets = 0, pairs = 0, open = 0, gap = 0;
+  for (const b of bs) { if (b.kind === 'set') sets++; else if (b.kind === 'pair') pairs++; else if (b.kind === 'open') open++; else if (b.kind === 'gap') gap++; }
+  return bs.length * 1e5 + sets * 1e4 + pairs * 1e3 + open * 1e2 + gap * 10;
+};
+/** `n` is the counts of one suit by rank offset 0-8; the blocks come back with those offsets as tiles */
+function suitBlocks(n: number[], i: number, memo: Map<string, Split>): Split {
   while (i < 9 && n[i] === 0) i++;
-  if (i >= 9) return 0;
+  if (i >= 9) return { score: 0, blocks: [] };
   const key = `${i}:${n.join('')}`;
   const hit = memo.get(key); if (hit !== undefined) return hit;
-  let best = 0;
-  const take = (drops: [number, number][]) => {
+  let best: Split = { score: -1, blocks: [] };
+  const consider = (piece: Block | null, drops: [number, number][]) => {
     for (const [at, howMany] of drops) n[at]! -= howMany;
-    const got = suitBlocks(n, i, memo);
+    const rest = suitBlocks(n, i, memo);
     for (const [at, howMany] of drops) n[at]! += howMany;
-    return got;
+    const bs = piece ? [piece, ...rest.blocks] : rest.blocks;
+    const score = splitScore(bs);
+    if (score > best.score) best = { score, blocks: bs };
   };
-  if (n[i]! >= 3) best = Math.max(best, 1 + take([[i, 3]]));
-  if (i + 2 < 9 && n[i]! >= 1 && n[i + 1]! >= 1 && n[i + 2]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 1, 1], [i + 2, 1]]));
-  if (n[i]! >= 2) best = Math.max(best, 1 + take([[i, 2]]));
-  if (i + 1 < 9 && n[i + 1]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 1, 1]]));
-  if (i + 2 < 9 && n[i + 2]! >= 1) best = Math.max(best, 1 + take([[i, 1], [i + 2, 1]]));
-  best = Math.max(best, take([[i, 1]]));           // a spare, worth no block at all
+  const r = i + 1;   // rank 1-9, for naming the edge pieces
+  if (n[i]! >= 3) consider({ kind: 'set', tiles: [i, i, i] }, [[i, 3]]);
+  if (i + 2 < 9 && n[i]! >= 1 && n[i + 1]! >= 1 && n[i + 2]! >= 1) consider({ kind: 'set', tiles: [i, i + 1, i + 2] }, [[i, 1], [i + 1, 1], [i + 2, 1]]);
+  if (n[i]! >= 2) consider({ kind: 'pair', tiles: [i, i] }, [[i, 2]]);
+  if (i + 1 < 9 && n[i + 1]! >= 1) consider({ kind: r === 1 || r === 8 ? 'edge' : 'open', tiles: [i, i + 1] }, [[i, 1], [i + 1, 1]]);
+  if (i + 2 < 9 && n[i + 2]! >= 1) consider({ kind: 'gap', tiles: [i, i + 2] }, [[i, 1], [i + 2, 1]]);
+  consider(null, [[i, 1]]);           // a spare, worth no block at all
   memo.set(key, best);
   return best;
 }
@@ -253,15 +291,41 @@ export function shapeCalls(concealed: TileKind[], melds: number, view?: TableVie
     }
   }
 
-  // five_blocks: six blocks on the board, and a throw that would cut one
-  if (blockCount(concealed) >= 6) {
+  /**
+   * five_blocks and six_blocks_ok: six blocks on the board, and a throw that would cut one.
+   *
+   * They are one rule and its exception, so they are spotted together and never on the same hand.
+   * The rule says cut to five. The exception says keep six while the two weakest blocks are both gap
+   * waits, because you would be choosing between them before the wall has said which one fills. So
+   * the hand is split, the pieces that are not yet sets or pairs are ranked - an open piece above a
+   * gap piece above an edge piece, by what finishes it - and the two weakest decide which card this
+   * is. Either way the choice on the table is the same: a throw that keeps all six blocks at no cost
+   * in distance, against a throw that cuts one.
+   */
+  const split = blocks(concealed);
+  if (split.length >= 6) {
     const cuts: TileKind[] = [], keeps: TileKind[] = [];
     for (const k of distinct) {
       const rest = concealed.filter((_, i) => i !== concealed.indexOf(k));
       if (shanten(rest, melds) !== shanten(concealed, melds)) continue;   // only throws that cost nothing
       (blockCount(rest) <= 5 ? cuts : keeps).push(k);
     }
-    if (cuts.length && keeps.length) {
+    const strength: Record<BlockKind, number> = { set: 3, pair: 3, open: 2, gap: 1, edge: 0 };
+    const pieces = split.filter((b) => b.kind !== 'set' && b.kind !== 'pair').sort((a, b) => strength[a.kind] - strength[b.kind]);
+    const weakest = pieces.slice(0, 2);
+    const exception = weakest.length === 2 && weakest.every((b) => b.kind === 'gap');
+    if (exception) {
+      // the tempting throw is one that breaks either of the two gap pieces
+      const weakTiles = new Set(weakest.flatMap((b) => b.tiles));
+      const breaks = cuts.filter((k) => weakTiles.has(k));
+      if (keeps.length && breaks.length) {
+        const [a, b] = weakest as [Block, Block];
+        calls.push({
+          tip: 'six_blocks_ok', says: keeps, against: breaks,
+          because: `Six blocks, and the two weakest - ${a.tiles.map(name).join('')} and ${b.tiles.map(name).join('')} - are both gap waits. The book keeps both and throws ${name(keeps[0]!)} instead, and lets the wall say which one fills.`,
+        });
+      }
+    } else if (cuts.length && keeps.length) {
       calls.push({
         tip: 'five_blocks', says: cuts, against: keeps,
         because: `There are six blocks here and a hand needs five. Throwing ${name(cuts[0]!)} cuts one and costs nothing; throwing ${name(keeps[0]!)} keeps all six.`,

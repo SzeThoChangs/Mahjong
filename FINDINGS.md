@@ -1029,6 +1029,62 @@ own numbers was the plan and it loses about a chip a game. What survived is one 
 row, thirteen numbers in all, keeping every one of the study's own values and changing only how
 much each plan's spread counts against another's. The rest of the fit measured the wrong quantity.
 
+### The block rule's exception is spotted now, and the split that makes it possible is written down (2026-09-05)
+
+NEXT said three tips could not be tagged: `five_blocks` and `six_blocks_ok` for want of an agreed
+block decomposition, and `narrow_can_beat_wide` for want of a tai score. That was stale by a day.
+Two of the three had detectors from 2026-09-03, and the tables in the pair-rule write-up above
+already carry their numbers. The one genuinely missing was `six_blocks_ok`, and it was missing for a
+real reason: the tagger could count blocks but could not say which ones they were, and the tip is
+about the two WEAKEST.
+
+**The split is `blocks` in `solver/src/shapetag.ts`, and it is the agreement.** A hand is read as
+the most blocks it can be - triplets, runs, pairs, and two-tile pieces that could become runs - and
+the pieces are named by the wait they make: `open` for two adjacent tiles, `edge` for 1-2 and 8-9,
+`gap` for two tiles with a hole between them. The generous reading is deliberate and unchanged from
+the count that was already there, so 2-3-4-5 is two open pieces and not one run. What is new is that
+a tie between equally generous readings is settled in a fixed order, sets first, then pairs, then
+open pieces, then gaps, so that 2-4-5 is an open piece with a spare 2 and never a gap piece with a
+spare 5. Without that order the same tiles could come out as different blocks on different days,
+and the tip would fire on a reading rather than on a hand. A test draws 300 random hands and checks
+the split always has exactly as many blocks as the old count found.
+
+**The rule and its exception are one detector, and they never fire on the same hand.** With six
+blocks on the board and a throw that keeps all six at no cost in distance, the pieces that are not
+yet sets or pairs are ranked - open above gap above edge - and the two weakest decide the card. Both
+gaps, and it is `six_blocks_ok`: keep the six, throw the spare, let the wall choose. Otherwise it is
+`five_blocks`: cut one. The card's own example hand, with a lone honour added, is the test case for
+the exception; the same hand with one gap piece made open is the test case for the rule.
+
+Scored against the play-outs, on both packs:
+
+```
+                            coach pack (run-coach2)       money pack (run-money4)
+                          about  resolved  follows  luck   about  resolved  follows  luck
+  five_blocks               131     101      56%    57%      76      57       40%    51%
+  six_blocks_ok              23       8      63%    49%      20      14       64%    54%
+```
+
+`five_blocks` with the exception carved out of it is the same null it was before: the play-outs cut
+the sixth block about as often as a coin would, at both tables. `six_blocks_ok` has 22 resolved
+positions between the two packs and keeps the six 64% of the time against 52% by luck, which is a
+lean in the book's direction and not a finding. It is rare because it needs a six-block hand, a
+spare to throw, and the two weakest pieces both gaps, and one discard in two hundred is that.
+
+**Coverage did not move, and the reason is worth knowing.** The coach pack went from 841 tagged
+discard positions to 840. The 27 positions that left `five_blocks` are the 23 that arrived in
+`six_blocks_ok` plus four where the only cutting throw broke an open piece rather than a gap, which
+neither card is about. A better split names the shapes more truthfully; it does not make more
+positions be about a shape. The share of quiz positions that carry any shape tag is decided upstream,
+when `quizpack.ts` fills each stratum tagged-first, so the lever for coverage is a rebuild of the
+pack against the current tagger, not another detector.
+
+Two smaller things came out of doing this. `datagen/src/retag.ts` re-runs the tagger over a pack in
+place, in seconds rather than the half hour a rebuild costs, and it found that the money pack had no
+tags at all - it was built on 2026-09-01, before the tagger existed - so the money-pack rows above
+exist because of it. And `tiptest.ts` had been crashing on `spot.json` since the spotting pack moved
+into the same directory on 2026-09-04; it now skips anything that is not a quiz.
+
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 
 Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach

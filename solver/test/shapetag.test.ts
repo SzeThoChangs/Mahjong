@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parseKinds } from 'sg-mahjong-engine';
-import { shapeCalls, liveCalls, blockCount } from '../src/shapetag.js';
+import { shapeCalls, liveCalls, blockCount, blocks } from '../src/shapetag.js';
 
 const call = (hand: string, tip: string) => shapeCalls(parseKinds(hand), 0).find((c) => c.tip === tip);
 const tips = (hand: string) => shapeCalls(parseKinds(hand), 0).map((c) => c.tip);
@@ -88,12 +88,59 @@ describe('the two detectors that need more than the tiles', () => {
     expect(blockCount(parseKinds('2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s E S'))).toBe(5);
   });
 
+  it('splits a hand into named blocks, settling ties in a fixed order', () => {
+    const kinds = (hand: string) => blocks(parseKinds(hand)).map((b) => `${b.kind}:${b.tiles.join(',')}`).sort();
+    // a set beats an edge piece with a spare; an open piece beats a gap piece with a spare
+    expect(kinds('1w 2w 3w')).toEqual(['set:0,1,2']);
+    expect(kinds('2w 4w 5w')).toEqual(['open:3,4']);
+    // the generous count still wins first: 2-3-4-5 is two open pieces, not one run and a spare
+    expect(kinds('2w 3w 4w 5w')).toEqual(['open:1,2', 'open:3,4']);
+    // 1-2 and 8-9 are edge pieces, a hole between two tiles is a gap, honours only pair or triple
+    expect(kinds('1t 2t 8t 9t 4s 6s E E S S S')).toEqual(['edge:16,17', 'edge:9,10', 'gap:21,23', 'pair:27,27', 'set:28,28,28']);
+  });
+
+  it('counts the same blocks it names, on any hand', () => {
+    let seed = 7;
+    const rand = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296; };
+    for (let i = 0; i < 300; i++) {
+      const hand: number[] = [];
+      while (hand.length < 14) { const k = Math.floor(rand() * 34); if (hand.filter((x) => x === k).length < 4) hand.push(k); }
+      expect(blocks(hand).length).toBe(blockCount(hand));
+    }
+  });
+
   it('spots a hand carrying a sixth block it can drop for free', () => {
-    // six blocks and a lone honour: throwing the honour keeps all six, throwing from a block cuts one
-    const c = shapeCalls(parseKinds('2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s 6s 8s E'), 0).find((x) => x.tip === 'five_blocks')!;
+    // six blocks and a lone honour: throwing the honour keeps all six, throwing from a block cuts one.
+    // Three open pieces and one gap piece, so the weakest two are not both gaps and the rule applies.
+    const hand = '2w 3w 4w 9w 9w 3t 4t 6t 7t 3s 4s 6s 8s E';
+    const c = shapeCalls(parseKinds(hand), 0).find((x) => x.tip === 'five_blocks')!;
     expect(c).toBeDefined();
     expect(c.against).toEqual(parseKinds('E'));
     expect(c.says).toContain(parseKinds('3t')[0]);
+    expect(tips(hand)).not.toContain('six_blocks_ok');
+  });
+
+  it('keeps the sixth block when the two weakest pieces are both gap waits', () => {
+    // the card's own example hand with a lone honour added: two open pieces, two gap pieces
+    const hand = '2w 3w 4w 9w 9w 3t 4t 6t 8t 3s 4s 6s 8s E';
+    const c = shapeCalls(parseKinds(hand), 0).find((x) => x.tip === 'six_blocks_ok')!;
+    expect(c).toBeDefined();
+    expect(c.says).toEqual(parseKinds('E'));
+    // the throws it warns against all come from the two weakest gap pieces, never from the open one
+    expect(c.against.length).toBeGreaterThan(0);
+    for (const k of c.against) expect(parseKinds('6t 8t 6s 8s')).toContain(k);
+    expect(c.against).not.toContain(parseKinds('3t')[0]);
+    expect(c.because).toMatch(/both gap waits/);
+    // and the rule it is an exception to stays silent on the same hand
+    expect(tips(hand)).not.toContain('five_blocks');
+  });
+
+  it('does not keep six when one of the two weakest is an edge piece', () => {
+    // an open piece, an edge piece and two gap pieces: the weakest two are the edge and a gap
+    const hand = '2w 3w 4w 9w 9w 3t 4t 8t 9t 6s 8s 1s 3s E';
+    expect(blockCount(parseKinds(hand))).toBe(6);
+    expect(tips(hand)).not.toContain('six_blocks_ok');
+    expect(tips(hand)).toContain('five_blocks');
   });
 
   // a real position from the coach pack, where one way of staying ready wins nothing declarable

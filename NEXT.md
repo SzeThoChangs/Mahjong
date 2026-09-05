@@ -1,4 +1,4 @@
-# Where we left off — 2026-09-04
+# Where we left off — 2026-09-05
 
 Read this first. `PLAN.md` is the project. `FINDINGS.md` is everything we measured and why.
 
@@ -51,28 +51,44 @@ seconds, the whole thing goes face down, and then one of four questions is asked
 the hand was, which suit it held most of, which opponent had the most sets face up, and which shape
 the position was about. Scores are kept per question type, because that is the diagnosis.
 
-`datagen/src/spotpack.ts` builds its 428KB pack. Two corrections are baked into that generator and
+`datagen/src/spotpack.ts` builds its 426KB pack. Two corrections are baked into that generator and
 should survive any rebuild: the answer to the distance question is levelled by quota, because the
 quiz pack runs late and half its positions are already ready, and a tagged position asks the shape
 question half the time, because only two positions in five carry a tag.
 
+## The tagger names nine tips now, and the block split is agreed
+
+The old NEXT said `five_blocks`, `six_blocks_ok` and `narrow_can_beat_wide` could not be tagged.
+Two of them already could, since 2026-09-03. The third, `six_blocks_ok`, is done on 2026-09-05:
+`blocks` in `solver/src/shapetag.ts` splits a hand into named pieces with a fixed tie order, and the
+block rule and its exception are one detector that fires as one card or the other, never both.
+Play-outs say `six_blocks_ok` leans the book's way on 22 resolved positions and that is not a
+finding. FINDINGS has the numbers.
+
+Two tools to know about. `datagen/src/retag.ts` re-tags a pack in place in seconds, and it is how
+the money pack got its tags at all. And the honest count is that tagging covers 840 of 4,147
+discard positions in the coach pack, that a better split does not raise it, and that the only thing
+that will is rebuilding the pack against the current tagger, because `quizpack.ts` fills each
+stratum tagged-first.
+
 ## Where to start next, in order
 
-**1. The 31 untested playbook rules.** One came off the list today. Of what remains, the cheapest
-are the sub-claims the 2026-09-03 write-up explicitly left open: the book's exception to
-`pair_discards_rule_out` for a 2 or an 8 pair, and the narrower `two_discard_piles` claim about a
-tile that would obviously complete a visible shape passing uncalled, which needs a claim-eligibility
-model. Read the badges on the Tips page for the rest.
+**1. The 31 untested playbook rules.** Of what remains, the cheapest are the sub-claims the
+2026-09-03 write-up explicitly left open: the book's exception to `pair_discards_rule_out` for a 2 or
+an 8 pair, and the narrower `two_discard_piles` claim about a tile that would obviously complete a
+visible shape passing uncalled, which needs a claim-eligibility model. Read the badges on the Tips
+page for the rest.
 
-**2. The two tips the tagger cannot see.** `five_blocks` and `six_blocks_ok` need an agreed block
-decomposition and `narrow_can_beat_wide` needs the hand scored for tai. Both would raise the share
-of the quiz pack that can name a shape, currently 719 of 4,999, and both would give the spotting
-drill more shape questions, currently 207 of 954 positions.
+**2. Rebuild the quiz packs against the current tagger, or decide not to.** This is the old item 3
+with a second reason attached. The coach's OPINION beside each question is computed live and has
+moved since the packs were built; and the packs were filled tagged-first by a tagger that knew four
+shapes, where the current one knows nine. Both packs replay in about half an hour each. A rebuild
+is also the only way the spotting drill gets more shape questions than the 407 of 954 it has.
 
-**3. Rebuild the quiz pack's coach opinions, or decide not to.** The packs hold play-out results and
-are unaffected by the shipped change, but the coach's OPINION shown beside each question is computed
-live and has moved. Nothing is stale, but the film room and quiz were built when the coach believed
-something slightly different.
+**3. The block split now exists, so the other block tips are within reach.** `linked_blocks`,
+`sandwich`, `stepping_stones`, `perfect_one_away` and `sticky_one_away` are all claims about named
+pieces, and every one of them is currently confirmed by counting on a hand we made up and never
+scored against a play-out. Each needs its own detector, and `blocks` is the part they had in common.
 
 **4. Still open, and a preference rather than a finding.** The old `run-money4` quiz pack and film
 room are 14MB of tracked files. `run-money4` stays on disk either way, so they can be rebuilt in
