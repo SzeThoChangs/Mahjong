@@ -251,8 +251,8 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'not-countable' },
     shapeFrom: 'book',
-    verdict: 'confirmed',
-    verdictNote: 'This is the book\u2019s own example and its own claim, and it checks out exactly: 4筒, 5筒, 7筒 and 8筒 each leave one set and one pair, and nothing else does. Four kinds, from one block of five tiles.',
+    verdict: 'measured',
+    verdictNote: 'This is the book\u2019s own example and its own claim, and the counting checks out exactly: 4\u7b52, 5\u7b52, 7\u7b52 and 8\u7b52 each leave one set and one pair, and nothing else does. Four kinds, from one block of five tiles. As advice it then fails. On 15 real positions holding the shape with a spare elsewhere, 11 resolved the choice, and the measured best threw the middle tile \u2014 the one the card tells you to keep \u2014 10 times out of 11, against 45% by luck. Both populations say it and the sample is small, so treat it as a warning rather than a verdict. The likely reason is in the card\u2019s own numbers and we did not see it: five tiles here produce one set and one pair, which two ordinary blocks do with four. The extra tile buys the four kinds, and at this table that does not look worth it.',
   },
   {
     id: 'stepping_stones',
@@ -269,8 +269,8 @@ const CARDS: Tip[] = [
       { label: 'Bridge cut, a lone tile kept instead', blocks: [T('3w 4w'), T('6w 7w'), T('9s'), T('2t 3t'), T('6t 7t'), T('3s 4s'), T('7s 8s')], focus: [0, 1, 2] },
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
-    verdict: 'confirmed',
-    verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw.',
+    verdict: 'measured',
+    verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw. Then confirmed again by the play-outs, and this is the only tip on the page with a perfect record. The tagger found 21 positions across both packs where a pairless hand held a bridging tile and something loose besides, and the measured best kept the bridge on all 21 of them, against 36% by luck. Twenty-one is not many \u2014 a hand with no pair at all is uncommon \u2014 but nothing else here has gone 21 for 21.',
   },
   {
     id: 'escape_single_waits',
@@ -326,8 +326,8 @@ const CARDS: Tip[] = [
       { label: 'Both traded for gap waits', blocks: [T('2w 3w 4w'), T('6w 7w 8w'), T('R R'), T('3t 5t'), T('6s 8s'), T('W')], focus: [3, 4] },
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
-    verdict: 'confirmed',
-    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one.',
+    verdict: 'measured',
+    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one. The play-outs agree, which makes this one of the four best-evidenced tips on the page. On 74 real positions holding the whole shape with a tile left over, 39 resolved the choice, and the measured best threw the leftover rather than breaking a wait 33 times \u2014 85% against 28% by luck, z = +8.0, and the same answer on both populations. The 28% is the point: the tempting throw outnumbers the right one three to one, so this is not a decision you get right by accident.',
   },
   {
     id: 'sticky_one_away',
@@ -344,8 +344,8 @@ const CARDS: Tip[] = [
       { label: 'Spare kept as a second pair', blocks: [T('2w 3w 4w'), T('9w 9w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s 5s')], focus: [1] },
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
-    verdict: 'confirmed',
-    verdictNote: 'Confirmed by counting, both ready: the neighbour waits on 8 tiles, the second pair on 4. Twice the wait for the shape that looks less finished.',
+    verdict: 'measured',
+    verdictNote: 'Confirmed by counting, both ready: the neighbour waits on 8 tiles, the second pair on 4. Twice the wait for the shape that looks less finished. The play-outs say the same on a small sample. Across both packs the tagger found 20 hands carrying six blocks where the surplus was a second pair against a two-sided piece, 15 resolved it, and the measured best broke the pair 13 times \u2014 87% against 49% by luck. It is worth knowing that this only applies to a piece that finishes from either side. A 7-9 or an 8-9 waits on one tile, the same as the pair, and the reason for preferring it is gone.',
   },
   {
     id: 'linked_blocks',
@@ -365,7 +365,7 @@ const CARDS: Tip[] = [
     claim: { kind: 'upgrades-more', better: 0, than: 1 },
     wantUpgrades: true,
     verdict: 'confirmed',
-    verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses.',
+    verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses. A detector for it exists as of 2026-09-05 and it has settled nothing, which is itself worth knowing. It fires only where the count really does come out level between a block against a finished run and a lone one, because that is the card’s own premise, and across both packs that happened 16 times and resolved 2. Anything the count CAN separate is a question about width, and the other cards answer it. So this stays a claim proved by counting and untested in play.',
   },
   {
     id: 'four_tile_ranking',

@@ -89,10 +89,11 @@ move - same strata, same phase mix - and checking that caught the build log repo
 mix under the word "pack". `--overdraw 2.5` reproduces the old draw. FINDINGS has the pooled table,
 which is the one to quote from now on.
 
-**3. The block split now exists, so the other block tips are within reach.** `linked_blocks`,
-`sandwich`, `stepping_stones`, `perfect_one_away` and `sticky_one_away` are all claims about named
-pieces, and every one of them is currently confirmed by counting on a hand we made up and never
-scored against a play-out. Each needs its own detector, and `blocks` is the part they had in common.
+**3. Done on 2026-09-05.** All five block tips have detectors and four of them have play-out
+verdicts: `perfect_one_away` at z = +8.0, `stepping_stones` 21 for 21, `sticky_one_away` 13 of 15,
+and `sandwich` failing 1 of 11. `linked_blocks` resolves 2 positions and stays untested in play,
+deliberately - it only fires where the count comes out level, which is its own premise. FINDINGS has
+the table. What is left in the playbook after this is the 29 rules in item 1, none of them cheap.
 
 **4. Still open, and a preference rather than a finding.** The old `run-money4` quiz pack and film
 room are 14MB of tracked files. `run-money4` stays on disk either way, so they can be rebuilt in

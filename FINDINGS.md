@@ -1287,6 +1287,71 @@ restating that the pack has never been a random sample of the game and is now fo
 one on this axis. Every question in it is still a real decision that was played out 128 times, and
 nothing is selected on what the answer turned out to be.
 
+### The five block tips are testable now, and three of them are right, one is wrong and one settles nothing (2026-09-05)
+
+`linked_blocks`, `sandwich`, `stepping_stones`, `perfect_one_away` and `sticky_one_away` were all
+marked confirmed on the strength of counting a hand we made up. None had ever been put in front of a
+play-out. They all needed the same thing first, a hand split into named blocks, and that arrived
+earlier the same day, so they are done together.
+
+**One of them needed a second way of reading a hand.** The generous split counts 4-5-6-7 as two
+pieces to choose between, which is right for asking how many blocks you are carrying and useless for
+asking which of your runs is finished - under that reading no hand ever holds a completed run,
+because pulling one apart always counts higher. So `setBlocks` reads the same tiles the other way,
+sets first and blocks second. Two honest answers to two different questions, and a detector has to
+say which one it is asking. `perfect_one_away` and `linked_blocks` use the set-first reading; the
+other three use the generous one.
+
+Scored on both packs, pooled:
+
+```
+  tip                    about  resolved   follows it   by luck     z
+  perfect_one_away          74        39          85%       28%    +8.0
+  stepping_stones           21        21         100%       36%    +6.5
+  sticky_one_away           20        15          87%       49%    +3.0
+  linked_blocks             16         2          50%       71%    -0.7
+  sandwich                  15        11           9%       55%    -3.1
+```
+
+**`perfect_one_away` is the strongest new result.** Two sets, a pair and two two-sided waits, with a
+tile left over: throw the leftover rather than tidying away a wait. The measured best does that 33
+times in 39, against 28% by luck, on both populations separately. The baseline is the interesting
+half - the tempting throw outnumbers the right one three to one, so this is not a decision anybody
+gets right by accident.
+
+**`stepping_stones` has the only perfect record on the page.** In a hand with no pair, a tile sitting
+between two part-runs is doing two jobs and looks spare. Twenty-one positions, twenty-one times the
+measured best kept it, against 36% by luck. Twenty-one is not many, and it is rare for a reason worth
+knowing: a hand with no pair anywhere is uncommon by the middle of a hand.
+
+**`sticky_one_away` holds, with a condition the card did not state.** Six blocks and the surplus is a
+second pair against a two-tile piece: break the pair. Thirteen of fifteen, 87% against 49%. The
+condition is that the piece must finish from either side. A 7-9 or an 8-9 waits on one tile, exactly
+like the pair, and the card's reason for preferring it is gone - the detector was written the loose
+way first and fired 144 times against 7, most of them positions where the advice named nothing.
+
+**`sandwich` fails, and the reason may be in the card's own numbers.** The book's shape is a pair, a
+gap, a single, a gap, a pair, and its claim is that four kinds of tile turn it into a set and a pair.
+That is exactly true. As advice it loses: the measured best threw the middle tile, the one the card
+says to keep, ten times out of eleven. Both populations agree and eleven is a small sample, so it is
+a warning rather than a verdict. What we did not notice when the card was written is that five tiles
+are producing one set and one pair, which two ordinary blocks do with four. The extra tile buys the
+four kinds. At this table that does not look worth it. That is a hypothesis and nothing here tests
+it.
+
+**`linked_blocks` settles nothing, and it was built so that it could not settle it dishonestly.** The
+card's premise is that the count cannot separate the two blocks, so the detector fires only where the
+acceptance really does come out equal between a block sitting against a finished run and a lone one.
+Across both packs that happened 16 times and resolved 2. Anything the count can separate is a
+question about width and `escape_single_waits` answers it. The claim stays proved by counting and
+untested in play, which is the honest place for it.
+
+The tagger now names fourteen tips. The coach pack goes from 1,410 tagged questions to 1,448 and the
+money pack from 1,220 to 1,240, and the spotting drill can ask a shape question on 541 of 965
+positions against 536. Those are small because the five new tips are all rare. `_shapehunt.ts` is
+the tool that finds real positions for a detector, and every test for these five is a hand somebody
+actually played rather than one invented to pass.
+
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 
 Five danger ideas in a row came back at zero, and the fear behind this experiment was that the coach

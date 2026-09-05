@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { parseKinds } from 'sg-mahjong-engine';
-import { shapeCalls, liveCalls, blockCount, blocks } from '../src/shapetag.js';
+import { shapeCalls, liveCalls, blockCount, blocks, setBlocks } from '../src/shapetag.js';
 
 const call = (hand: string, tip: string) => shapeCalls(parseKinds(hand), 0).find((c) => c.tip === tip);
 const tips = (hand: string) => shapeCalls(parseKinds(hand), 0).map((c) => c.tip);
@@ -160,5 +160,84 @@ describe('the two detectors that need more than the tiles', () => {
   it('stays quiet on a melded hand it cannot score', () => {
     // the meld count says one set is on the table but the view does not carry it
     expect(shapeCalls(deadWait.slice(0, 11), 1, view).map((x) => x.tip)).not.toContain('narrow_can_beat_wide');
+  });
+});
+
+describe('the five block tips, which all read the same split', () => {
+  // Every hand below is a real position out of the coach pack, found with
+  // `solver/src/tools/_shapehunt.ts`. A detector tested only against the card's own example proves
+  // that it reads that example and nothing more.
+
+  it('reads a hand two ways, as most blocks and as most finished sets', () => {
+    const gen = (h: string) => blocks(parseKinds(h)).map((b) => `${b.kind}:${b.tiles.length}`).sort().join(' ');
+    const set = (h: string) => setBlocks(parseKinds(h)).map((b) => `${b.kind}:${b.tiles.length}`).sort().join(' ');
+    // 4-5-6-7萬 is two pieces to choose between, or a finished run with a 7 stuck to it. Both true.
+    expect(gen('4w 5w 6w 7w')).toBe('open:2 open:2');
+    expect(set('4w 5w 6w 7w')).toBe('set:3');
+    // where there is nothing to choose, the two readings agree
+    expect(gen('2w 3w 4w 9s 9s')).toBe(set('2w 3w 4w 9s 9s'));
+  });
+
+  it('spots the bridge tile in a hand with no pair', () => {
+    const c = call('2s 5s 9t 3w 1w 2w 3s 4s 1s 9s 7t 8t 4w 6s', 'stepping_stones')!;
+    expect(c).toBeDefined();
+    expect(c.says).toEqual(parseKinds('9s'));            // the tile that joins nothing
+    expect(c.against).toContain(parseKinds('3s')[0]);    // the tile that joins both sides
+    expect(c.because).toMatch(/No pair anywhere/);
+  });
+
+  it('stays quiet about bridges once the hand has a pair', () => {
+    // the same tiles with the 9筒 made into a pair: the tip is explicitly about a pairless hand
+    expect(tips('2s 5s 9t 9t 2w 3s 4s 1s 9s 7t 8t 4w 6s 1w')).not.toContain('stepping_stones');
+  });
+
+  it('spots the sandwich and calls its middle tile the trap', () => {
+    const c = call('Wh S 4s S 6t Wh 1s 2t 1s 2t 2s 7w 6t 4t', 'sandwich')!;
+    expect(c).toBeDefined();
+    expect(c.against).toEqual(parseKinds('4t'));
+    expect(c.says).toEqual(parseKinds('7w'));
+  });
+
+  it('does not call a sandwich when a tile sits in one of the gaps', () => {
+    // 2筒2筒 3筒 4筒 6筒6筒 is a run with a spare, and the 4筒 is no longer the odd tile out
+    expect(tips('Wh S 4s S 6t Wh 3t 2t 1s 2t 2s 7w 6t 4t')).not.toContain('sandwich');
+  });
+
+  it('spots a spare pair losing to a spare with a neighbour', () => {
+    const c = call('S 6w 5s 8w 2s S 7s 2w 3s 8s 3w 9s 4s 7s', 'sticky_one_away')!;
+    expect(c).toBeDefined();
+    expect(c.says).toEqual(parseKinds('7s'));            // the second pair goes
+    expect(c.against).toEqual(parseKinds('2w 3w'));      // the two-sided piece stays
+  });
+
+  it('says nothing about a spare that waits on one tile like the pair does', () => {
+    // 2萬 4萬 instead of 2萬 3萬: a gap piece finishes from one side, so the card's reason is gone
+    expect(tips('S 6w 5s 8w 2s S 7s 2w 3s 8s 4w 9s 4s 7s')).not.toContain('sticky_one_away');
+  });
+
+  it('spots the widest one-away shape and calls the leftover tile its price', () => {
+    const c = call('1s 6w 2s 9w 3s 5s 4w 9w 8s 2w 6s R 3w 5w', 'perfect_one_away')!;
+    expect(c).toBeDefined();
+    expect(c.says).toEqual(parseKinds('R'));
+    expect(c.against).toEqual(parseKinds('5w 6w 5s 6s'));
+  });
+
+  it('does not call it when the two waits share a tile', () => {
+    // 5萬6萬 and 8萬9萬 are one gap apart, so the 7萬 does both jobs and the shape is worth less
+    expect(tips('1s 6w 2s 9w 3s 8w 4w 9w 8s 2w 9s R 3w 5w')).not.toContain('perfect_one_away');
+  });
+
+  it('spots two throws the count cannot separate, one of them against a run', () => {
+    const c = call('6s 6t 1s 3t 2s 3w 4s 9w 8t 8w 5s 4t 7s 9t', 'linked_blocks')!;
+    expect(c).toBeDefined();
+    expect(c.against).toEqual(parseKinds('2s'));   // against a finished run, so it can still widen
+    expect(c.says).toEqual(parseKinds('8t'));      // the same acceptance, with nothing beside it
+    expect(c.because).toMatch(/both leave you accepting 37 tiles/);
+  });
+
+  it('says nothing when no two throws come out level', () => {
+    // the card's own shape: 4-5-6萬 with a 7萬9萬 attached, and 2條4條 alone. The count separates
+    // these, so this is a question about width and the other cards answer it.
+    expect(tips('4w 5w 6w 7w 9w 2t 3t 4t 6t 7t 8t 2s 4s 5s')).not.toContain('linked_blocks');
   });
 });

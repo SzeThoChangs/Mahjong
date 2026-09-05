@@ -17,11 +17,13 @@
  * is a stronger test of the book than any of the counting in `shapes.ts`. Keeping the two apart is
  * the whole point: this file spots the shape, the play-outs judge it.
  *
- * Nine tips are spotted here and the rest are not. Six of them can be read off the tiles without
+ * Fourteen tips are spotted here and the rest are not. Six of them can be read off the tiles without
  * anything being agreed first. `five_blocks` and `six_blocks_ok` need a hand split into blocks, and
  * the split is `blocks` below: the most generous reading, with the tie between equally generous
  * readings settled in a fixed order, so the same tiles always come out as the same blocks.
- * `narrow_can_beat_wide` needs the hand scored for tai, which a `TableView` supplies.
+ * `narrow_can_beat_wide` needs the hand scored for tai, which a `TableView` supplies. The five block
+ * tips added on 2026-09-05 - `linked_blocks`, `sandwich`, `stepping_stones`, `perfect_one_away` and
+ * `sticky_one_away` - all rest on that same split, which is why they arrive together.
  *
  * The wait tips - `bad_wait_ranking` and `edge_waits_stronger` - are the interesting pair, because
  * they can now be answered two ways that know nothing about each other. `release.ts` counts what the
@@ -130,28 +132,69 @@ export interface Block { kind: BlockKind; tiles: TileKind[] }
  * hid an open piece inside a gap one would answer that wrongly.
  */
 export function blocks(tiles: TileKind[]): Block[] {
+  return split(tiles, MOST_BLOCKS);
+}
+/** how many blocks the hand splits into under `blocks` */
+export function blockCount(tiles: TileKind[]): number {
+  return blocks(tiles).length;
+}
+/**
+ * The same hand read the other way round: as many FINISHED sets as possible, and only then as many
+ * blocks.
+ *
+ * Two readings are needed because the tips ask two different questions. `five_blocks` asks how many
+ * pieces you are carrying, and for that the generous count is right: 4-5-6-7 is two pieces to be
+ * chosen between, not a run with a spare stuck to it. `linked_blocks` asks which of your blocks is
+ * sitting against a COMPLETED run, and under the generous reading no hand ever has one, because
+ * every run gets pulled apart into two better-counting pieces. Same tiles, two honest answers, and a
+ * detector has to say which question it is asking.
+ */
+export function setBlocks(tiles: TileKind[]): Block[] {
+  return split(tiles, MOST_SETS);
+}
+function split(tiles: TileKind[], score: Scorer): Block[] {
   const c = countsOf(tiles);
   const out: Block[] = [];
   for (let k = 27 as TileKind; k < 34; k++) {
     if (c[k]! >= 3) out.push({ kind: 'set', tiles: [k, k, k] });
     else if (c[k]! === 2) out.push({ kind: 'pair', tiles: [k, k] });
   }
-  for (const base of [0, 9, 18]) out.push(...suitBlocks(c.slice(base, base + 9), 0, new Map()).blocks.map((b) => ({ kind: b.kind, tiles: b.tiles.map((r) => (base + r) as TileKind) })));
+  for (const base of [0, 9, 18]) out.push(...suitBlocks(c.slice(base, base + 9), 0, new Map(), score).blocks.map((b) => ({ kind: b.kind, tiles: b.tiles.map((r) => (base + r) as TileKind) })));
   return out;
 }
-/** how many blocks the hand splits into under `blocks` */
-export function blockCount(tiles: TileKind[]): number {
-  return blocks(tiles).length;
+/** the blocks that are two tiles hoping to become a run: what the book calls a partial block */
+const twoTile = (bs: Block[]) => bs.filter((b) => b.kind === 'open' || b.kind === 'edge' || b.kind === 'gap');
+/** the ranks a block spans, low and high, or null when it is not a suited block */
+const span = (b: Block): [number, number] | null =>
+  isSuited(b.tiles[0]!) ? [rankOf(b.tiles[0]!), rankOf(b.tiles[b.tiles.length - 1]!)] : null;
+const sameSuit = (a: Block, b: Block) => isSuited(a.tiles[0]!) && isSuited(b.tiles[0]!) && suitBase(a.tiles[0]!) === suitBase(b.tiles[0]!);
+/**
+ * Does this piece sit right against a finished set of its own suit?
+ *
+ * `linked_blocks` is about a block that can grow into the run beside it - 4-5-6 with a 7 attached
+ * can become 4-5-6-7-8 - so touching means the ranks are next to each other with no gap. A block two
+ * ranks away cannot reach.
+ */
+function touchesSet(piece: Block, sets: Block[]): boolean {
+  const p = span(piece); if (!p) return false;
+  return sets.some((set) => {
+    const t = span(set); if (!t || !sameSuit(piece, set)) return false;
+    return p[0] - t[1] === 1 || t[0] - p[1] === 1;
+  });
 }
 interface Split { score: number; blocks: Block[] }
-/** count first, then sets, pairs, open, gap - each place is small enough never to carry into the next */
-const splitScore = (bs: Block[]) => {
+type Scorer = (bs: Block[]) => number;
+const tally = (bs: Block[]) => {
   let sets = 0, pairs = 0, open = 0, gap = 0;
   for (const b of bs) { if (b.kind === 'set') sets++; else if (b.kind === 'pair') pairs++; else if (b.kind === 'open') open++; else if (b.kind === 'gap') gap++; }
-  return bs.length * 1e5 + sets * 1e4 + pairs * 1e3 + open * 1e2 + gap * 10;
+  return { sets, pairs, open, gap };
 };
+/** count first, then sets, pairs, open, gap - each place is small enough never to carry into the next */
+const MOST_BLOCKS: Scorer = (bs) => { const { sets, pairs, open, gap } = tally(bs); return bs.length * 1e5 + sets * 1e4 + pairs * 1e3 + open * 1e2 + gap * 10; };
+/** finished sets first, and the same order below them */
+const MOST_SETS: Scorer = (bs) => { const { sets, pairs, open, gap } = tally(bs); return sets * 1e5 + bs.length * 1e4 + pairs * 1e3 + open * 1e2 + gap * 10; };
 /** `n` is the counts of one suit by rank offset 0-8; the blocks come back with those offsets as tiles */
-function suitBlocks(n: number[], i: number, memo: Map<string, Split>): Split {
+function suitBlocks(n: number[], i: number, memo: Map<string, Split>, score: Scorer): Split {
   while (i < 9 && n[i] === 0) i++;
   if (i >= 9) return { score: 0, blocks: [] };
   const key = `${i}:${n.join('')}`;
@@ -159,11 +202,11 @@ function suitBlocks(n: number[], i: number, memo: Map<string, Split>): Split {
   let best: Split = { score: -1, blocks: [] };
   const consider = (piece: Block | null, drops: [number, number][]) => {
     for (const [at, howMany] of drops) n[at]! -= howMany;
-    const rest = suitBlocks(n, i, memo);
+    const rest = suitBlocks(n, i, memo, score);
     for (const [at, howMany] of drops) n[at]! += howMany;
     const bs = piece ? [piece, ...rest.blocks] : rest.blocks;
-    const score = splitScore(bs);
-    if (score > best.score) best = { score, blocks: bs };
+    const sc = score(bs);
+    if (sc > best.score) best = { score: sc, blocks: bs };
   };
   const r = i + 1;   // rank 1-9, for naming the edge pieces
   if (n[i]! >= 3) consider({ kind: 'set', tiles: [i, i, i] }, [[i, 3]]);
@@ -330,6 +373,133 @@ export function shapeCalls(concealed: TileKind[], melds: number, view?: TableVie
         tip: 'five_blocks', says: cuts, against: keeps,
         because: `There are six blocks here and a hand needs five. Throwing ${name(cuts[0]!)} cuts one and costs nothing; throwing ${name(keeps[0]!)} keeps all six.`,
       });
+    }
+  }
+
+  /**
+   * The five block tips, which all read the same split and all resolve the same kind of choice:
+   * which of two things in the hand is really the spare.
+   *
+   * `free` is every throw that costs the hand nothing in distance, which is the ground all five
+   * stand on. A tip about which block to give up has nothing to say about a throw that puts the hand
+   * further from ready.
+   */
+  const thrown = distinct.map((k) => {
+    const rest = concealed.filter((_, i) => i !== concealed.indexOf(k));
+    return { k, rest, sh: shanten(rest, melds) };
+  });
+  const cheapest = Math.min(...thrown.map((x) => x.sh));
+  const free = thrown.filter((x) => x.sh === cheapest);
+  // Which runs are finished, and which pieces sit against one, is the other reading of the hand -
+  // see `setBlocks`. The generous split never leaves a run whole, so asking it about attachment
+  // would answer no every time.
+  const made = setBlocks(concealed);
+  const pieces = twoTile(made);
+  const sets = made.filter((b) => b.kind === 'set');
+
+  // stepping_stones: a hand with no pair, and one tile joining two part-runs that looks spare
+  if (!distinct.some((k) => c[k]! >= 2)) {
+    const bridges = distinct.filter((k) => isSuited(k) && c[k] === 1 && rankOf(k) >= 3 && rankOf(k) <= 7
+      && c[k - 2]! > 0 && c[k - 1]! > 0 && c[k + 1]! > 0 && c[k + 2]! > 0);
+    const elsewhere = loose.filter((k) => !bridges.includes(k));
+    if (bridges.length && elsewhere.length) {
+      const b = bridges[0]!;
+      calls.push({
+        tip: 'stepping_stones', says: elsewhere, against: bridges,
+        because: `No pair anywhere in this hand, and the ${name(b)} sits between ${name((b - 2) as TileKind)}${name((b - 1) as TileKind)} and ${name((b + 1) as TileKind)}${name((b + 2) as TileKind)}. It joins either side and it can pair up, which is two jobs; ${name(elsewhere[0]!)} does neither.`,
+      });
+    }
+  }
+
+  // sandwich: a pair, a gap, a single, a gap, a pair - one block that finishes four different ways
+  for (const k of distinct) {
+    if (!isSuited(k) || rankOf(k) > 5) continue;
+    if (c[k]! < 2 || c[k + 2]! < 1 || c[k + 4]! < 2) continue;
+    if (c[k + 1]! > 0 || c[k + 3]! > 0) continue;   // a tile in either gap makes it a run and a spare, not this
+    const middle = (k + 2) as TileKind;
+    const spare = loose.filter((x) => x !== middle);
+    if (!spare.length) continue;
+    calls.push({
+      tip: 'sandwich', says: spare, against: [middle],
+      because: `${name(k)}${name(k)} ${name(middle)} ${name((k + 4) as TileKind)}${name((k + 4) as TileKind)} is one block that finishes four ways, and the ${name(middle)} in the middle of it is the tile that looks spare. It is not; throw ${name(spare[0]!)}.`,
+    });
+    break;
+  }
+
+  /**
+   * sticky_one_away: a second pair and a two-tile piece competing for the same block slot.
+   *
+   * This is a refinement of `five_blocks` rather than a rival to it, so it asks for the same
+   * position - six blocks where one has to go - and then says WHICH one. Both of them co-firing on a
+   * hand is correct: one card says cut, the other says cut this one. It also needs the hand to be
+   * mostly built, because in a scattered hand nearly every tile belongs to some piece and "throw the
+   * pair rather than a piece" stops naming anything.
+   */
+  {
+    // Two-sided pieces only. The card's reason is that the spare "finishes as a run, from either
+    // side", which is true of 7-8 and not of 7-9 or 8-9 - those wait on one tile like the pair does.
+    const spareTiles = new Set(pieces.filter((b) => b.kind === 'open').flatMap((b) => b.tiles));
+    const fromPair = free.filter((x) => c[x.k] === 2 && !spareTiles.has(x.k)).map((x) => x.k);
+    const fromPiece = free.filter((x) => spareTiles.has(x.k) && c[x.k] !== 2).map((x) => x.k);
+    if (made.length + melds === 6 && sets.length + melds >= 2
+      && distinct.filter((k) => c[k] === 2).length >= 2 && fromPair.length && fromPiece.length) {
+      calls.push({
+        tip: 'sticky_one_away', says: fromPair, against: fromPiece,
+        because: `You are holding a spare pair of ${name(fromPair[0]!)} and a spare ${name(fromPiece[0]!)} with a neighbour. The pair can only finish as a triplet, off the two copies left; the neighbour finishes as a run, from either side.`,
+      });
+    }
+  }
+
+  /**
+   * perfect_one_away: two sets, a pair and two two-sided waits, with a spare that looks like a fault.
+   *
+   * The whole shape has to be there, so this needs the split to be exactly the five blocks a hand
+   * wants and a spare tile besides. The book's own condition is checked too: two waits one gap apart
+   * in the same suit share a tile, so they are worth twelve rather than sixteen and the shape is not
+   * the one the card is about.
+   */
+  {
+    const opens = made.filter((b) => b.kind === 'open');
+    const sharing = opens.some((a) => opens.some((b) => {
+      if (a === b || !sameSuit(a, b)) return false;
+      const [, ah] = span(a)!, [bl] = span(b)!;
+      return bl - ah === 2;
+    }));
+    // NOT filtered to the throws that cost nothing, unlike the other four. This tip is about a throw
+    // that does cost something and is taken anyway, because the hand looks untidy with a tile spare.
+    const waits = opens.flatMap((b) => b.tiles);
+    if (made.length + melds === 5 && sets.length + melds >= 2 && made.some((b) => b.kind === 'pair') && opens.length >= 2 && !sharing && loose.length && waits.length) {
+      calls.push({
+        tip: 'perfect_one_away', says: loose, against: waits,
+        because: `Two sets, a pair and two two-sided waits is the widest a hand one away from ready can be, and this is it. The ${name(loose[0]!)} left over is what the shape costs, not a fault in it - throw that rather than breaking ${name(waits[0]!)}.`,
+      });
+    }
+  }
+
+  /**
+   * linked_blocks: two throws that cost the same and leave the same acceptance, one of them against
+   * a finished run.
+   *
+   * The card's claim is precisely that the count cannot separate these, so the detector will not
+   * fire unless the count really does come out level. Anything the count CAN separate is
+   * `escape_single_waits` instead.
+   */
+  {
+    const attached = new Set<TileKind>(), alone = new Set<TileKind>();
+    for (const b of pieces) for (const t of b.tiles) (touchesSet(b, sets) ? attached : alone).add(t);
+    if (attached.size && alone.size) {
+      const width = new Map<TileKind, number>();
+      for (const x of free) if (attached.has(x.k) || alone.has(x.k)) width.set(x.k, ukeire(x.rest, melds).count);
+      for (const [ka, wa] of width) {
+        if (!attached.has(ka)) continue;
+        const level = [...width].filter(([kb, wb]) => alone.has(kb) && wb === wa).map(([kb]) => kb);
+        if (!level.length) continue;
+        calls.push({
+          tip: 'linked_blocks', says: level, against: [ka],
+          because: `Throwing ${name(ka)} and throwing ${name(level[0]!)} both leave you accepting ${wa} tiles, so the count says they are the same choice. They are not. The ${name(ka)} is against a finished run and can still widen; ${name(level[0]!)} has nothing beside it.`,
+        });
+        break;
+      }
     }
   }
 
