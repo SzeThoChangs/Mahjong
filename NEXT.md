@@ -100,10 +100,13 @@ for those may be `advice`.
 and the coach table. That is the second read to do so. Any read measured on one population is a
 read about a game the other is not playing.
 
-**3. The ping-wu row is the one to check first.** Its committed slopes fall with turn (0.450,
-0.332, 0.272) where every other plan's are flat, on the smallest sample of the five - 2,072 hands
-at turn 40. A second 20,000-hand `plan_ping_wu` run costs seven minutes and would say whether that
-is the plan or the sample.
+**3. The ping-wu row is answered.** A second 20,000-hand run on a fresh seed reproduced the fall
+(0.391 / 0.303 / 0.235 against 0.450 / 0.332 / 0.272), and `pursued` on the same hands has the same
+shape: ping-wu's slope really does fall with turn, alone among the plans. Rebuilding the table with
+both runs pooled lowers that row about 7% and moves 0.66% of the coach's throws, under the 2% bar
+set before looking, so the baked table stands. The pooled cells and the rebuilt table are at
+`knowledge/sources/fitted/` (`plan-all2-cells.json`, `tables-committed2-g1.30.json`) for the next
+rebuild, which should start from those rather than the first run's.
 
 **4. `main` was fast-forwarded to this branch at the end of the session.** There is no git remote
 configured, so nothing was pushed and no CI ran anywhere: the local typecheck, tests and build ARE

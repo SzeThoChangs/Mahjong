@@ -1747,6 +1747,35 @@ throws the count already calls equal.
 **What this unlocks.** Any future tip that is rare in play can now be measured for the price of a
 builder function - about fifteen lines each here - rather than being left on the page as untested.
 
+### The ping-wu row falls with turn because that is what ping-wu does, and it was not worth a re-bake (2026-09-06)
+
+The committed table that baked had one row that looked wrong on its face: every plan's committed
+slope was flat across turns except ping-wu's, which fell 0.450, 0.332, 0.272 - on the smallest
+sample of the five, 2,072 hands at turn 40. That is either the plan or the sample, and a second
+20,000-hand `plan_ping_wu` run on a fresh seed costs seven minutes.
+
+```
+                          turn 0   turn 20   turn 40      hands at 40
+  first run,  seed 93      0.450     0.332     0.272           2,072
+  second run, seed 96      0.391     0.303     0.235           1,904
+  both pooled              0.420     0.317     0.255           3,976
+  pursued, same hands      0.405     0.299     0.267          10,990
+```
+
+**It is the plan.** The second run reproduces the fall on an independent seed, and `pursued` on the
+same hands has the same shape - which is what `plancheck` predicted, since a seat locked to ping-wu
+barely plays differently from the coach and the two estimators have nothing to disagree about. So
+the one row that broke the "flat under commitment" pattern breaks it honestly.
+
+**What it would change, and the rule for whether to change it.** Rebuilding the whole committed
+table with the pooled ping-wu cells at the same gain lowers that row by about 7% at every turn
+(multipliers 1.36 / 1.02 / 0.82 against the baked 1.46 / 1.08 / 0.88). Run through `_fitrate`
+against the baked coach, that changes the plan on 0.57% of discards and the throw on 0.66%. The rule,
+fixed before the number was seen: re-bake only above about 2% of throws, because a re-baked table is
+a different table and would need its own ranges rather than inheriting the sixteen already played.
+It is a third of that, so the baked table stands and the pooled cells are tracked beside it at
+`knowledge/sources/fitted/` for whoever rebuilds next.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged
