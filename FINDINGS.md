@@ -1679,6 +1679,58 @@ measured against anything but the coach.
 against 4.9, 7 of 8 ranges against 8 of 8. `data/gen/tables-committed-g1.30.json` is the file, and
 baking it is one `baketables.ts --fitted` away.
 
+### Two tips built to order, because real play never produces them (2026-09-05)
+
+`pon_over_chii` and `linked_blocks` could not be scored from the packs: both together offer a pong
+and a chow on the same tile 9 times and fire the linked-blocks detector 16 times, and no amount of
+sampling real play fixes a shape that real play does not produce. `datagen/src/buildrare.ts` makes
+the position instead. It replays a recorded hand to a decision and swaps tiles between one seat's
+concealed hand and the hidden part of the wall until that seat holds what the tip needs - nothing
+public changes, no tile instance is duplicated because a swap trades places in the wall's full
+permutation - and then grades the decision with exactly the packs' grader: sampled, shanten policy,
+128 play-outs, seed 41, adaptive, coupled. The grader determinizes everything but the acting seat
+anyway, so the one hand is all that has to be right.
+
+Two things about the method were caught before they cost anything. The first version overwrote a
+wall slot instead of swapping, which the grader's determinize step refused with a count mismatch.
+And the first run built 300 positions from 9 hands, which is nine walls measured many times over
+rather than 300 samples, so positions are now capped at two per recorded hand and spread over
+hundreds of hands. Templates for `linked_blocks` are harvested from the packs - the real hands the
+detector fires on, rotated through the suits, which keeps every count identical - after three
+hand-written ones failed to fire it at all.
+
+**`pon_over_chii`: there is no default.** 600 built positions a population, 150 hands each, only
+suited tiles offered so the card's dragon-and-seat-wind exception never applies:
+
+```
+                         resolved   took the pong   by luck     z
+  coach table                147          41%          43%    -0.4
+  recorded hands             157          38%          43%    -1.4
+```
+
+The play-outs prefer the pong no more often than a coin would, on either population, and lean
+toward the chow if anywhere. The card's argument is about what is left in hand to defend with; at
+this table that does not show up as a preference.
+
+**`linked_blocks`: leans one way on one population, and is still not a finding.** 600 built a
+population, and the detector resolves about one in six because where the count is level a third
+tile is usually best:
+
+```
+                         resolved   kept the block on the run   by luck     z
+  coach table                 94              50%                 51%    -0.1
+  recorded hands             121              60%                 50%    +2.1
+  pooled                     215              55%                 50%    +1.4
+```
+
+So the card's claim survives counting, leans its way on the recorded hands and not at a coach
+table, and 215 resolved positions do not settle it. Doubling the build would cost fifteen minutes
+a population; it is not obvious the answer is worth it, since the tip only ever decides between two
+throws the count already calls equal.
+
+**What this unlocks.** Any future tip that is rare in play can now be measured for the price of a
+builder function - about fifteen lines each here - rather than being left on the page as untested.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged

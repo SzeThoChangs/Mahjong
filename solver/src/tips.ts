@@ -365,7 +365,7 @@ const CARDS: Tip[] = [
     claim: { kind: 'upgrades-more', better: 0, than: 1 },
     wantUpgrades: true,
     verdict: 'confirmed',
-    verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses. A detector for it exists as of 2026-09-05 and it has settled nothing, which is itself worth knowing. It fires only where the count really does come out level between a block against a finished run and a lone one, because that is the card’s own premise, and across both packs that happened 16 times and resolved 2. Anything the count CAN separate is a question about width, and the other cards answer it. So this stays a claim proved by counting and untested in play.',
+    verdictNote: 'Identical on acceptance — 4 tiles from 1 kind each — and not identical at all. The attached block has 12 tiles that widen it without bringing it closer; the lone block has 5. The book called these "hidden upgrades" and they are hidden precisely from the count everybody uses. A detector for it exists as of 2026-09-05 and it has settled nothing, which is itself worth knowing. It fires only where the count really does come out level between a block against a finished run and a lone one, because that is the card’s own premise, and across both packs that happened 16 times and resolved 2. Anything the count CAN separate is a question about width, and the other cards answer it. So this stays a claim proved by counting and untested in play. Then built to order on 2026-09-05: `buildrare.ts` takes every hand in the packs the detector fires on, rotates the suits, drops each into a real recorded position by swapping with the hidden wall, and grades it with the packs’ own play-outs. Six hundred positions per population. The detector still only resolves about one in six, because where the count is level a third tile is usually best, so that is 94 resolved at a coach table and 121 on the recorded hands. The block against the run was kept 50% of the time against 51% by luck on the first and 60% against 50% on the second, which is 1.4 standard errors pooled. It leans the card’s way on one population and not the other, and it is still not a finding.',
   },
   {
     id: 'four_tile_ranking',
@@ -1009,8 +1009,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Tried on 2026-09-05 and it cannot be settled this way. Both quiz packs together offer a pong and a chow on the same tile 9 times, and 3 of those resolve, which decides nothing. The reason is the game rather than the packs: holding a pair of a tile AND the two tiles it runs with, at the moment somebody throws it, is simply rare. Settling this needs positions built to order and played out, not positions sampled from real hands.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05 on positions built to order, because real play offers a pong and a chow on the same tile only 9 times across both packs. `buildrare.ts` takes a real recorded position, gives the seat after the discarder two copies of a suited tile and both its neighbours by swapping with the hidden wall, throws that tile, and grades the claim with the packs’ own 128 play-outs. Six hundred positions per population, spread over 150 hands each so they are not one wall measured many times. The play-outs took the pong 41% of the time against 43% by luck at a coach table and 38% against 43% on the recorded hands — no preference either way, and if anything the chow. Since only suited tiles are offered, the card’s own exception for a dragon or seat-wind pair never applies, so this is its main rule tested clean. There is no default.',
   },
   {
     id: 'call_to_upgrade',
