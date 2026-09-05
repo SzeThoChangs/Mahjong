@@ -37,6 +37,7 @@ import { createGunzip } from 'node:zlib';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { evaluateTargets } from 'sg-mahjong-solver';
+import { PLAN_OF } from './bots.js';
 import type { Meld } from 'sg-mahjong-engine';
 
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
@@ -70,11 +71,13 @@ async function readShard(w: number, totals: { lines: number; used: number; skipp
   // The outcome of every decision in a hand is that hand's result, so the hands file is the lookup.
   // 18,750 hands a shard, so this fits in memory comfortably and the join stays inside one shard.
   const delta = new Map<string, number[]>();
+  const seatBots = new Map<string, string[]>();
   {
     const rl = createInterface({ input: createReadStream(handsPath).pipe(createGunzip()), crlfDelay: Infinity });
     for await (const line of rl) {
-      const h = JSON.parse(line) as { g: number; h: number; delta: number[] };
+      const h = JSON.parse(line) as { g: number; h: number; delta: number[]; bots: string[] };
       delta.set(`${h.g}:${h.h}`, h.delta);
+      if (h.bots) seatBots.set(`${h.g}:${h.h}`, h.bots);
     }
   }
 
@@ -120,6 +123,18 @@ async function readShard(w: number, totals: { lines: number; used: number; skipp
     const top = evals[0]!;
     if (top.armed && !top.note) add('pursued', top.id, String(top.value), row, chips, top.chips, hand);
     for (const e of evals) if (e.armed && !e.note) add('all', e.id, String(e.value), row, chips, e.chips, hand);
+
+    // `committed` is the third quantity and the only one the table actually asks for: what a plan
+    // is worth if you play FOR it. It exists only in runs generated with `plan_*` seats, where the
+    // plan was fixed before the deal and cannot be abandoned. `pursued` cannot answer this - it
+    // keeps whichever plan happens to be on top at that moment, so a plan that the coach drops the
+    // instant it stops leading is scored on the few hands where it kept leading, which is what
+    // compressed the late half-colour cells to a fifth of their spread.
+    const assigned = PLAN_OF[seatBots.get(hand)?.[r.p] ?? ''];
+    if (assigned) {
+      const e = evals.find((x) => x.id === assigned);
+      if (e && e.armed && !e.note) add('committed', e.id, String(e.value), row, chips, e.chips, hand);
+    }
   }
 }
 

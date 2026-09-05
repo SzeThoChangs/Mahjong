@@ -1,7 +1,7 @@
 /** A bot that plays by the solver's advice. Exists to verify the advice in the simulator. */
 import { kindOf, discardFeatures, unseenCounts, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld } from 'sg-mahjong-engine';
 import { rankDiscards } from './rank.js';
-import { type Context } from './targets.js';
+import { type Context, type TargetId } from './targets.js';
 import { type ReadsTables } from './reads.js';
 import { policyRank, policyTable } from './policy.js';
 import { copyFeatures, copyScore, suitTable } from './copy.js';
@@ -202,6 +202,23 @@ export class NoCheapCoachBot extends CoachBot {
  */
 export class OnlyCheapCoachBot extends CoachBot {
   protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), onlyCheap: true }; }
+}
+
+/**
+ * The coach playing for ONE plan, chosen before the deal and never revised.
+ *
+ * It exists to generate the hands a value fit needs. `tables.ts` answers "playing for this plan
+ * with this breakdown, expect this many chips", and no hand the coach has ever played answers that
+ * question, because the coach switches plans whenever the ranking changes. A seat that cannot
+ * switch does answer it, and assigning the plan before the hand rather than letting the hand
+ * suggest it is what makes the answer unbiased: the plan is not chosen because the hand suited it.
+ *
+ * It is not expected to play well. A seat told to build All-Pong from a hand full of runs will lose
+ * chips, and that loss is the measurement, not a bug.
+ */
+export class PlanBot extends CoachBot {
+  constructor(private readonly plan: TargetId) { super(); }
+  protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), onlyTarget: this.plan }; }
 }
 
 /**

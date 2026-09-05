@@ -92,6 +92,21 @@ export interface Context {
    *  there is.
    */
   noCheap?: boolean;
+  /** Play for exactly one plan and never switch away from it.
+   *
+   *  Not a way of playing: a way of MEASURING. `tables.ts` says what a plan is worth if you play
+   *  for it, and the first attempt to re-fit it on our own hands estimated something else - the
+   *  value of a position under a coach that abandons a plan the moment the ranking changes. Those
+   *  two quantities come apart in proportion to how often the coach switches, which is why the
+   *  fitted tables compressed exactly the plans that rarely convert, and why they lost 0.832 to
+   *  1.093 chips a game. Fitting the value of COMMITTING needs hands where somebody committed, and
+   *  a seat carrying this flag is one.
+   *
+   *  Same fallback rule as the two flags above: the filter never empties the list, and it wants the
+   *  plan ARMED rather than merely listed, because an unarmed plan prices at -9 and a seat left
+   *  holding nothing else stops building and quietly plays like a folder.
+   */
+  onlyTarget?: TargetId;
   /** Keep ONLY the cheap hand among the plans: the mirror of `noCheap`.
    *
    *  `noCheap` asks what the coach loses by never planning for the quick legal win. On its own a
@@ -228,6 +243,7 @@ export function evaluateTargets(h: HandInput, ctx: Context): TargetEval[] {
   // of this arm was losing. Falling back to the full list keeps the arm to the question it was
   // built for: take the cheap route whenever it is really available, and otherwise play normally.
   else if (ctx.onlyCheap && out.some((t) => t.id === 'chicken' && t.armed)) plans = out.filter((t) => t.id === 'chicken');
+  else if (ctx.onlyTarget && out.some((t) => t.id === ctx.onlyTarget && t.armed)) plans = out.filter((t) => t.id === ctx.onlyTarget);
   return plans.sort((a, b) => b.chips - a.chips);
 }
 

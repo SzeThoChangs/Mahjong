@@ -1453,6 +1453,69 @@ purpose: it will not credit a rule for saying "do not wreck your hand", which is
 for a person even when it is not a finding about this table. That is the distinction the two z
 columns are there to keep visible.
 
+### Eight reads measured by replay, and one of them reverses between populations (2026-09-05)
+
+Eight cards on the Tips page claim that some public signal tells you about a hidden hand. None could
+be settled by counting tiles and none needed a play-out either - they need hands where somebody
+knows the answer, which is what a replay is. `datagen/src/tells.ts` walks 20,000 recorded hands and
+10,000 coach hands with a recorder attached, and at every throw it compares what is public about
+each seat with what that seat is really holding. Both populations, always, because this project has
+already had a read reverse between them.
+
+**`discard_provenance` is real and backwards.** The card says a tile thrown from the hand is more
+informative than the one just drawn. Split every seat by where its last throw came from and ask how
+often it is one tile away: a seat that threw what it had just drawn is ready 25.5% of the time
+around turn 30 against 16.4% for a seat that threw from its hand, and 28.7% against 23.0% at a coach
+table. Same direction at every turn on both populations. The mechanism is obvious once measured - a
+finished hand has nothing left to rearrange, so it throws whatever it draws - and the card names the
+wrong throw as the informative one.
+
+**`wall_reading` is the best of the batch.** A tile one rank away from something a seat threw in the
+first dozen turns is held by that seat 14.2% of the time late in the hand, against 21.6% for a tile
+of the same suit three or more ranks away; on the recorded hands, 22.2% against 32.6%. Two ranks
+away sits in between on both populations, at 18.1% and 25.5%. The same-suit control is what makes it
+a finding rather than a suit tell - it is the neighbours specifically, not the suit. There IS a suit
+effect on top at a coach table, 21.6% against 34.3% for another suit, and none at all on the
+recorded hands, which is the two populations behaving exactly as their bots do.
+
+**`concealed_kong_signal` reverses between populations, which is the useful result.** On the
+recorded hands a seat that declared a concealed kong is ready more often than one that has not:
+13.2% against 10.2% around turn 20. At a coach table it is the other way at every turn: 7.8%
+against 9.5% at turn 20, and 29.1% against 33.3% at turn 40. Both arguments are sound - four tiles
+spared for one set means a developed hand, and it also spends the flexibility a hand needs - and
+which one wins is a fact about who is at the table. It goes on the card as a signal not worth
+carrying rather than as a threat.
+
+**Three more are contradicted outright.** A seat that shed a dragon or seat-wind pair is ready 16.0%
+of the time against 17.2% for one that did not, level or slightly the wrong way at every turn on
+both populations, so `discarded_value_pair` is nothing. `fear_the_chaser` is firmly backwards: the
+first seat to reach ready wins 65.1% of coach hands, the second 43.4%, anyone later 32.8%, and on
+the recorded hands 54.6%, 39.3%, 33.1%. Its mechanism does show up - a later committer collects 19.8
+chips when it wins against the first mover's 18.1, so chasers really do hold better hands - and it
+is nowhere near enough. And `middle_tile_hands_undefended` is a flat null: seats holding nothing but
+middle tiles at turn 24 deal in 12.7% of the time against 15.4% for seats holding four or more
+non-middles, which is the wrong way round, and every bucket on the recorded hands sits at 10.5%.
+
+**`last_chance_timing` is right about the tile and wrong about the clock.** When three copies are
+accounted for, the last one deals in about half as often as an ordinary tile at every single turn:
+0.40% against 0.74% around turn 20 at a coach table, 1.82% against 3.72% at turn 40. Its absolute
+danger climbs as the hand runs on, which is what the card noticed, but everything else's climbs
+faster, so relative to what it competes with the last copy gets SAFER late. This is the third
+finding this week whose mechanism is that suited tiles deal in mostly by completing a run: three
+copies accounted for kills the pair wait and the pong, and the run wait does not care.
+
+**`value_from_melds` is right at the top and wrong at the bottom.** Counting a dragon or seat-wind
+triplet and each visible flower or animal as one tai, a seat showing three or more wins 28.4% of
+coach hands and collects 24.4 chips when it does, against 22.1% and 15.3 for a seat showing one.
+More visible tai really does mean a bigger bill, on both populations. What fails is the advice to
+feed the cheap-looking hand: the seat showing NOTHING is the second most expensive on the board,
+18.8 chips at a coach table and 16.1 on the recorded hands, because a hand with nothing exposed is a
+concealed hand. Read the melds upward, and never read an empty table as safe.
+
+**What these are not.** They are counts over sampled positions, not play-outs, so none of them says
+what a read is WORTH. Five danger-side changes have been played for money and none paid, so these go
+on the page as reads to learn.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged

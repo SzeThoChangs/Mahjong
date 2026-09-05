@@ -825,8 +825,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here. Our danger table knows the turn and knows whether a copy has been seen, but it has never been asked the specific question of where the missing copies are, so this is a real gap rather than a settled rule.',
+    verdict: 'contradicted',
+    verdictNote: "Measured on 2026-09-05, and the timing half is backwards. Take every tile a seat could throw and ask whether it would have dealt in. When three copies are already accounted for, it deals in about half as often as an ordinary tile at EVERY turn — 0.40% against 0.74% around turn 20 at a table of coaches, 1.82% against 3.72% at turn 40, and the same ratio on the recorded hands. The absolute danger of the last copy does climb as the hand runs on, but so does everything else's, and measured against the tiles it competes with the last copy gets RELATIVELY safer late, not more dangerous. The card is right that it is safe and wrong about when.",
   },
   {
     id: 'locate_the_fourth',
@@ -1136,8 +1136,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The danger numbers are ours and are not in doubt. Costing them at call time is the part nobody has measured: the coach prices the danger of a throw when it makes it, never the future cost of holding a hand with no safe tiles in it.',
+    verdict: 'contradicted',
+    verdictNote: "Measured on 2026-09-05 and it is a flat null on both populations. Take every seat at turn 24, count how many of its concealed tiles are not middle tiles, and ask whether that seat goes on to deal in. At a coach table the seats holding nothing but middles deal in 12.7% of the time against 15.4% for the seats holding four or more non-middles — the wrong way round for the card — and on the recorded hands every bucket sits at about 10.5%. The card's premise is sound, since a middle tile is the most dangerous class to throw, but the conclusion does not follow: a hand that cannot fold is also a hand that is usually still attacking, and the two cancel.",
   },
   {
     id: 'widen_when_folding',
@@ -1235,8 +1235,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The tai arithmetic is this table’s own and is not in doubt, and it is worth knowing at the table. Pricing it into the coach is worth nothing: an arm that scaled the cost of a deal-in by what the table can see each opponent is worth returned -0.001 +/- 0.013 chips a game over 120,000 paired deals on a range nothing had been fitted on, in six batches scattered either side of zero. It changes the throw on one discard in 64, so that is a verdict and not an empty measurement. Five ideas about danger have now been priced into the coach and every one came back at zero.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05, and it is right about the expensive hands and wrong about the cheap ones. Counting a dragon or seat-wind triplet and each visible flower or animal as one tai, a seat showing three or more wins 28.4% of the hands at a coach table and collects 24.4 chips when it does, against 22.1% and 15.3 for a seat showing one. Both populations agree that more visible tai means a bigger bill. The half that fails is the advice to feed the cheap-looking hand: a seat showing NOTHING is the second most expensive on the board, 18.8 chips at a coach table and 16.1 on the recorded hands, because a hand with nothing exposed is a concealed hand. So read the melds upward and never read an empty table as safe.',
   },
   {
     id: 'two_discard_piles',
@@ -1263,8 +1263,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here. Our recorded hands do store whether a discard came from the hand or from the draw, so this one is waiting on somebody to ask the question rather than on new data.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05 over 20,000 recorded hands and 10,000 coach hands, and the tell is real but points the other way. Watch which seats are actually one tile from ready, split by where their last throw came from. A seat that threw the tile it had just drawn is ready 25.5% of the time around turn 30 against 16.4% for a seat that threw from its hand; at a table of coaches it is 28.7% against 23.0%. Same direction at every turn on both populations, on hundreds of thousands of throws. The reason is plain once measured: a finished hand has nothing to rearrange, so it throws whatever it draws, while a hand still throwing from its own tiles is still being built. So the informative throw is the one this card calls uninformative. `tells.ts` is the tool.',
   },
   {
     id: 'pair_discards_rule_out',
@@ -1291,8 +1291,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and it is a good candidate: value pairs are easy to spot in the recorded hands, and the claim is exactly the kind the reads pipeline answers.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05 and there is no threat here on either population. A seat that has thrown away a pair of dragons or its own seat wind is ready 16.0% of the time around turn 30 against 17.2% for a seat that has not, and at a table of coaches 18.2% against 22.3%. The gap is level or slightly the wrong way at every turn we measured, on 176,000 tagged moments in the recorded hands alone. Shedding the pair usually means the tai was never coming, not that the rest of the hand grew strong enough to spare it.',
   },
   {
     id: 'second_copy_call',
@@ -1319,8 +1319,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Untested as a threat signal here. The payout half of it is a rule of this table and is on the calling card about kongs.',
+    verdict: 'measured',
+    verdictNote: "Measured on 2026-09-05, and the answer depends on who is playing, which makes it a signal not worth carrying. On the recorded hands a seat that has declared a concealed kong is ready slightly more often than one that has not — 13.2% against 10.2% around turn 20, 23.4% against 20.5% at turn 40. At a table of coaches it goes the other way at every turn: 7.8% against 9.5%, and 29.1% against 33.3%. Two populations, opposite signs, both on thousands of kongs. The card's argument is that sparing four tiles for one set means the rest of the hand is far along, and the counter-argument is that it also spends the flexibility a hand needs. Which of those wins is a fact about the table, so treat a concealed kong as a hand that has been paid, not as a hand that is close.",
   },
   {
     id: 'fear_the_chaser',
@@ -1333,8 +1333,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and it needs a population that pushes and folds like a person to mean anything — the bots in our recorded runs do not chase, so this is one to be careful about measuring on the data we have.',
+    verdict: 'contradicted',
+    verdictNote: "Measured on 2026-09-05 by ordering each hand's seats by when they first became one tile from ready. The first to commit wins 65.1% of the hands at a table of coaches, the second 43.4% and anyone later 32.8%; on the recorded hands 54.6%, 39.3% and 33.1%. Fear the first, by a distance. The card's mechanism is faintly visible and nowhere near enough to save it: when a later committer does win it collects 19.8 chips against the first mover's 18.1, so chasers do hold slightly better hands. Multiply that by how rarely they get there and the first mover is worth about half as much again as the chaser.",
   },
   {
     id: 'wall_reading',
@@ -1347,8 +1347,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured, and easy to confuse with a read that was: the card about tiles with all four copies visible is a different rule, and it turned out true at three to five times and worth nothing in chips.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05 and confirmed on both populations, which makes it one of the better reads on this page. Take the tiles a seat threw in the first dozen turns and ask, late in the hand, whether that seat holds each other tile. A tile one rank from an early discard is held 14.2% of the time at a table of coaches against 21.6% for a tile of the same suit three or more ranks away; on the recorded hands 22.2% against 32.6%. Two ranks away sits in between on both, at 18.1% and 25.5%, which is the gradient the card describes. The same-suit comparison is what makes it a real finding rather than a suit tell: it is not that the seat has written off the suit, it is the neighbours specifically. Worth knowing that at a coach table there IS a suit effect on top — same-suit 21.6% against 34.3% for another suit — because that table collects suits and the recorded bots never do.',
   },
   // ---- fighting or folding: the decision that costs the most when it goes wrong ----
   {

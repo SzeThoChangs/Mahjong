@@ -8,10 +8,16 @@ import {
   kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld,
 } from 'sg-mahjong-engine';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
-import { CoachBot } from 'sg-mahjong-solver';
+import { CoachBot, PlanBot, type TargetId } from 'sg-mahjong-solver';
 import { isHonour, isJoker, rankOf } from 'sg-mahjong-engine';
 
-export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive' | 'coach';
+export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive' | 'coach'
+  | 'plan_half_color' | 'plan_ping_wu' | 'plan_all_pong' | 'plan_chicken' | 'plan_all_chow';
+/** The plan a `plan_*` seat was told to play before the deal, for the fit to condition on. */
+export const PLAN_OF: Record<string, TargetId> = {
+  plan_half_color: 'half_color', plan_ping_wu: 'ping_wu', plan_all_pong: 'all_pong',
+  plan_chicken: 'chicken', plan_all_chow: 'all_chow',
+};
 /**
  * The pool the generator draws personalities from at random.
  *
@@ -19,7 +25,12 @@ export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' |
  * them incomparable with the ones already recorded; it is selected explicitly with `--bots coach`
  * instead, to generate a run played by the bot that actually ships.
  */
+type PlanBotType = 'plan_half_color' | 'plan_ping_wu' | 'plan_all_pong' | 'plan_chicken' | 'plan_all_chow';
+export type HeuristicType = Exclude<BotType, 'random' | 'defensive' | 'coach' | PlanBotType>;
 export const BOT_TYPES: BotType[] = ['efficiency', 'aggressive', 'pong', 'chow', 'random', 'defensive'];
+// The `plan_*` seats are out of the pool for the same reason `coach` is, and one more: they are a
+// measuring instrument rather than a personality. A seat that cannot abandon a hopeless plan loses
+// about two chips a hand, and a run that quietly contained them would not be a run of anything.
 
 export interface RandomnessConfig { ranked: number[]; random: number }   // e.g. ranked [0.70, 0.15, 0.10], random 0.05
 export const DEFAULT_RANDOMNESS: RandomnessConfig = { ranked: [0.70, 0.15, 0.10], random: 0.05 };
@@ -43,7 +54,7 @@ const unseenOf = (v: PlayerView, extra: TileKind[] = []) => unseenCounts({
 
 /** Personality weights over discard features. Higher = better tile to KEEP... we score the DISCARD, so sign flips below. */
 interface Weights { sh: number; rem: number; eff: number; pairs: number; trip: number; seq: number; pseq: number; isoTile: number; honourIso: number; valueTile: number }
-const W: Record<Exclude<BotType, 'random' | 'defensive' | 'coach'>, Weights> = {
+const W: Record<Exclude<BotType, 'random' | 'defensive' | 'coach' | PlanBotType>, Weights> = {
   efficiency: { sh: -100, rem: 2.0, eff: 1.0, pairs: 1, trip: 2, seq: 2, pseq: 0.5, isoTile: 6, honourIso: 3, valueTile: -1 },
   aggressive: { sh: -120, rem: 2.5, eff: 1.0, pairs: 0.5, trip: 1, seq: 1, pseq: 0.5, isoTile: 6, honourIso: 4, valueTile: -1 },
   pong:       { sh: -80,  rem: 1.0, eff: 0.5, pairs: 6, trip: 8, seq: -1, pseq: -2, isoTile: 5, honourIso: -2, valueTile: -4 },
@@ -61,7 +72,7 @@ function discardScore(f: DiscardFeatures, w: Weights, ctxValue: (k: TileKind) =>
 }
 
 export class HeuristicBot implements Bot {
-  constructor(readonly type: Exclude<BotType, 'random' | 'defensive' | 'coach'>, private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS) {}
+  constructor(readonly type: HeuristicType, private rng: () => number, private randomness: RandomnessConfig = DEFAULT_RANDOMNESS) {}
 
   private valueTile(v: PlayerView) {
     const role = (v.seat - v.dealer + 4) % 4;              // the host is East; winds rotate with the deal
@@ -197,7 +208,8 @@ export class DefensiveBot implements Bot {
 export function makeBot(type: BotType, rng: () => number, randomness: RandomnessConfig = DEFAULT_RANDOMNESS): Bot {
   // deterministic, so a recorded coach hand replays exactly - which `decisionsOfHand` depends on
   if (type === 'coach') return new CoachBot();
+  if (PLAN_OF[type]) return new PlanBot(PLAN_OF[type]!);
   if (type === 'random') return new RandomBot(rng);
   if (type === 'defensive') return new DefensiveBot(rng, randomness);
-  return new HeuristicBot(type, rng, randomness);
+  return new HeuristicBot(type as HeuristicType, rng, randomness);
 }
