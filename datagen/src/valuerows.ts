@@ -38,6 +38,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { TABLES } from 'sg-mahjong-solver';
 
+/**
+ * `--study` regresses against the PRISTINE study snapshot instead of the shipped tables.
+ *
+ * It has to exist now that a row scaling has actually been shipped. `tables.ts` already carries one
+ * multiplier per row, fitted from the `pursued` conditioning, so re-running that same conditioning
+ * against the shipped tables returns the same slope in every row by construction - which is exactly
+ * what it does, 0.235 across the board, and it means nothing. Any comparison between two
+ * conditionings has to be made against the same unscaled reference, and this is it.
+ */
+
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
 const cellsFile = arg('cells', '../data/gen/valuefit-cells.json');
 const mode = arg('mode', 'pursued');
@@ -78,7 +88,11 @@ const MAP: { plan: string; table: string; variant: string | null; rows: number[]
 type Row = Record<string, number>;
 interface CellData { sum: number; n: number; hands: number; pred: number }
 const raw = JSON.parse(readFileSync(cellsFile, 'utf8')) as { cells: Record<string, CellData> };
-const out = JSON.parse(JSON.stringify(TABLES)) as Record<string, unknown>;
+const studySnapshot = process.argv.includes('--study');
+const BASE = studySnapshot
+  ? (JSON.parse(readFileSync(arg('studyfile', '../knowledge/sources/tables.study.json'), 'utf8')) as { TABLES: typeof TABLES }).TABLES
+  : TABLES;
+const out = JSON.parse(JSON.stringify(BASE)) as Record<string, unknown>;
 
 interface Fit { table: string; row: number; keys: string[]; slope: number; r2: number; cells: number; hands: number; sdStudy: number; sdOurs: number; holder: Record<string, Row>; }
 const fits: Fit[] = [];
