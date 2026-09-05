@@ -1056,18 +1056,18 @@ gaps, and it is `six_blocks_ok`: keep the six, throw the spare, let the wall cho
 `five_blocks`: cut one. The card's own example hand, with a lone honour added, is the test case for
 the exception; the same hand with one gap piece made open is the test case for the rule.
 
-Scored against the play-outs, on both packs, after both were rebuilt the same day:
+Scored against the play-outs, on both packs, after both were rebuilt twice the same day:
 
 ```
                             coach pack (run-coach2)       money pack (run-money4)
                           about  resolved  follows  luck   about  resolved  follows  luck
-  five_blocks               131     101      56%    57%     131     101      46%    52%
-  six_blocks_ok              23       8      63%    49%      30      20       70%    55%
+  five_blocks               170     133      54%    56%     175     135      46%    53%
+  six_blocks_ok              30      12      58%    51%      43      30       67%    57%
 ```
 
-`five_blocks` with the exception carved out of it is the same null it was before: 103 of 202
-resolved positions cut the sixth block, 51% against 54% by luck, and both tables say it separately.
-`six_blocks_ok` keeps the six on 19 of its 28 resolved positions, 68% against 53%, which is z = +1.6
+`five_blocks` with the exception carved out of it is the same null it was before: 134 of 268
+resolved positions cut the sixth block, 50% against 54% by luck, and both tables say it separately.
+`six_blocks_ok` keeps the six on 27 of its 42 resolved positions, 64% against 56%, which is z = +1.2
 - a lean in the book's direction on both populations and not a finding. It is rare because it needs
 a six-block hand, a spare to throw, and the two weakest pieces both gaps, and one discard in two
 hundred is that.
@@ -1219,6 +1219,73 @@ would have put a phantom "spot" pack in the Real Quiz picker with an undefined q
 now skips anything without questions. This is the second thing that broke the same way in two days -
 `tiptest.ts` was crashing on the same file - and the shared cause is that the spotting pack lives
 beside the quiz packs while not being one.
+
+### OVERDRAW raised to 5, which is what actually bought coverage, and the pack composition did not move (2026-09-05)
+
+The rebuild earlier the same day settled that the tagger was never the constraint on how many quiz
+questions can teach a shape tip. The candidate draw is, so `OVERDRAW` went from 2.5 to 5 and both
+packs were built again. It is a flag now rather than a constant, so `--overdraw 2.5` reproduces the
+old draw.
+
+**Tagged questions, per pack, at each setting:**
+
+```
+                     coach (run-coach2)        money (run-money4)
+  overdraw 2.5            840                        796
+  overdraw 5.0          1,410                      1,220
+```
+
+Candidates went from 10,619 to 18,802 on the coach run - not the full doubling, because two strata
+had already exhausted their decisive pools at 2.5 and cannot draw more - and tagged questions rose
+almost in step with the candidates, which is what the flat 8% tagged rate predicts. The spotting
+drill, which is built from the coach pack, goes from 407 positions that can ask a shape question to
+536 of 965.
+
+**The gain is broad rather than concentrated in the common tags.** The worry was that a more
+aggressive tagged-first trim would fill the pack with the two tips that fire most, since
+`escape_single_waits` and `pair_rule` are three quarters of everything tagged. They stayed at three
+quarters. The tips that gained proportionally most are the rare ones the project could never say
+anything about: pooled over both packs, `narrow_can_beat_wide` goes from 53 resolved positions to
+119, `triplet_adjacency` from 121 to 205, `bad_wait_ranking` from 25 to 39.
+
+```
+  tip                    about  resolved   follows it   by luck     z
+  escape_single_waits     1096      1061          90%       47%   +28.7
+  pair_rule                814       592          28%       68%   -21.4
+  five_blocks              345       268          50%       54%    -1.5
+  triplet_adjacency        254       205          24%       43%    -5.8
+  threes_and_sevens        251       142          57%       50%    +1.7
+  narrow_can_beat_wide     121       119          91%       50%    +8.9
+  six_blocks_ok             73        42          64%       56%    +1.2
+  edge_waits_stronger       42        11          45%       53%    -0.5
+  bad_wait_ranking          41        39          59%       50%    +1.1
+```
+
+Nothing reverses at the larger sample and nothing new clears. `triplet_adjacency` hardens into a
+real failure at z = -5.8, and it splits by population exactly as the reads did - 12% following at a
+table of coaches against 34% on the recorded run - which is now the fifth claim to do that.
+`six_blocks_ok` did not grow more convincing as its sample grew, which is the honest thing to say
+about it. `edge_waits_stronger` still resolves eleven positions and is not going to be settled this
+way.
+
+**The composition did not move at all, and checking that caught a reporting bug.** The build log's
+`phase mix: pack [...]` line appeared to swing from 30% early to 21%, which is precisely the skew
+that stratum keys were added on 2026-08-31 to prevent. It is not real. That line was computed over
+`questions`, every candidate materialised in pass 2, rather than over the pack, and since OVERDRAW
+arrived on 2026-09-03 the candidates have been two to four times the pack - so it has been reporting
+the candidate mix under the word "pack" and drifting whenever the draw changed. Measured on the pack
+files themselves, both settings give byte-for-byte the same strata: early 41%, mid 43%, late 16% on
+the coach pack, matching the run exactly, and identical counts in all nine strata. Only WHICH
+question fills each slot changed. The line now reads `kept` and says what it claims to say. The
+2026-08-31 entry that quotes this number is unaffected, because it predates OVERDRAW, when the
+candidates and the pack were the same thing.
+
+**What it costs.** About 45 minutes a pack against 25, and the Real Quiz is now 28% questions that
+are about a named shape, against 17% at 2.5 and roughly 8% drawn straight. That over-representation
+is the deliberate part - a tip can only be taught on a position it is about - but it is worth
+restating that the pack has never been a random sample of the game and is now four times less like
+one on this axis. Every question in it is still a real decision that was played out 128 times, and
+nothing is selected on what the answer turned out to be.
 
 ### The value side is live, and it is the first thing here that has ever moved (2026-09-03)
 

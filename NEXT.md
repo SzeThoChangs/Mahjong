@@ -82,14 +82,12 @@ danger model still applies; the chow read is the first one to SHARPEN the on-the
 rather than restate it, so if that rule is ever revisited this is the read to try. What remains is
 not cheap: read the badges on the Tips page.
 
-**2. Decide whether to raise `OVERDRAW`, which is the real coverage lever.** The rebuild is done
-and FINDINGS says what it bought: the money pack doubled to 796 tagged questions because it had
-never been filled tagged-first, and the coach pack did not move at all, because every tagged
-candidate was already being kept. So the tagger was never the constraint - the candidate draw is.
-`OVERDRAW` in `quizpack.ts` is 2.5 and tagged questions scale with it almost exactly, so 5 gives
-roughly 1,600 on the coach pack for about 50 minutes a pack instead of 25. The cost is not the time.
-It would make a third of the Real Quiz be about a named shape against a sixth now, which is a
-decision about what the quiz is for, and it is Changs's to make.
+**2. Done on 2026-09-05, so this slot is free.** `OVERDRAW` is 5 and both packs are rebuilt:
+1,410 tagged questions on the coach pack against 840, 1,220 on the money pack against 796, and the
+spotting drill can ask a shape question on 536 of 965 positions against 407. The composition did not
+move - same strata, same phase mix - and checking that caught the build log reporting the candidate
+mix under the word "pack". `--overdraw 2.5` reproduces the old draw. FINDINGS has the pooled table,
+which is the one to quote from now on.
 
 **3. The block split now exists, so the other block tips are within reach.** `linked_blocks`,
 `sandwich`, `stepping_stones`, `perfect_one_away` and `sticky_one_away` are all claims about named

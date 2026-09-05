@@ -89,12 +89,21 @@ const strata = [...seen.entries()].sort((a, b) => b[1] - a[1]);
  * and nothing is selected on its ANSWER, only on whether a named shape is what the question is
  * about.
  *
- * About one discard position in twelve is about a tip, so the share of the pack that can teach one
- * is roughly this number times that - a quarter of it here, against 8% if the pack were drawn
- * straight. The cost is pass 2, which replays every candidate hand, so it is the build that gets
- * slower and not the pack.
+ * About 8% of CANDIDATES are about a tip - fewer than the one discard in twelve, because claim and
+ * self decisions can never carry a shape tag - and every tagged candidate is kept, so the tagged
+ * share of the pack is almost exactly this number times that 8%. Measured on 2026-09-05: at 2.5 the
+ * coach pack has 840 tagged questions, and adding five detectors to the tagger changed that by one,
+ * because the constraint was never how many shapes could be named. It is how many candidates are
+ * drawn. Raised to 5 on 2026-09-05 for that reason.
+ *
+ * The cost is pass 2, which replays every candidate hand, so it is the build that gets slower and
+ * not the pack. The other cost is not time: a third of the pack ends up being about a named shape
+ * against 8% drawn straight, so the Real Quiz over-represents teachable positions by about four
+ * times. That is deliberate - a tip can only be taught on a position it is about - but it is the
+ * reason this is a flag rather than a constant, so the old draw stays reproducible with
+ * `--overdraw 2.5`.
  */
-const OVERDRAW = 2.5;
+const OVERDRAW = Number(arg('overdraw', '5'));
 const want = new Map<string, number>();
 for (const [stratum, n] of strata) {
   const target = Math.round((n / totalSeen) * maxQ);
@@ -215,10 +224,15 @@ console.log(`\n${kept.length} questions -> ${outDir}/${name}.json (${money ? 'do
 // did not. The two rows should agree to within rounding; a gap means a stratum was backfilled or
 // ran dry, and the lines above say which.
 {
+  // Over `kept`, not `questions`. `questions` is every candidate materialised in pass 2, and since
+  // OVERDRAW arrived on 2026-09-03 that is two to four times the pack - so this line reported the
+  // CANDIDATE mix under the word "pack" and drifted whenever the draw changed, which looked exactly
+  // like the skew the stratum keys were added to prevent. The pack's own mix cannot drift: every
+  // stratum ends at a count taken from the run's proportions.
   const mix = new Map<string, number>(), all = new Map<string, number>();
-  for (const q of questions) { const p = phaseOfTurn(q.t); mix.set(p, (mix.get(p) ?? 0) + 1); }
+  for (const q of kept) { const p = phaseOfTurn(q.t); mix.set(p, (mix.get(p) ?? 0) + 1); }
   for (const list of [...decisive.values(), ...close.values()]) for (const r of list) { const p = phaseOfTurn(r.turn); all.set(p, (all.get(p) ?? 0) + 1); }
   const show = (m: Map<string, number>, n: number) => PHASES.map((p) => `${p} ${(100 * (m.get(p) ?? 0) / Math.max(1, n)).toFixed(0)}%`).join('  ');
   const seenTotal = [...all.values()].reduce((a, b) => a + b, 0);
-  console.log(`  phase mix: pack [${show(mix, questions.length)}] vs run [${show(all, seenTotal)}]`);
+  console.log(`  phase mix: pack [${show(mix, kept.length)}] vs run [${show(all, seenTotal)}]`);
 }
