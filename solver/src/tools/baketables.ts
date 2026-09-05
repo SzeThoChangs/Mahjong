@@ -33,7 +33,7 @@ const args = process.argv.slice(2);
 const plain = args.includes('--plain');
 const at = (n: string, d: string) => { const i = args.indexOf(`--${n}`); return i >= 0 ? (args[i + 1] ?? d) : d; };
 const studyPath = at('study', '../knowledge/sources/tables.study.json');
-const fittedPath = at('fitted', '../knowledge/sources/fitted/tables-committed-g1.30.json');
+const fittedPath = at('fitted', '../knowledge/sources/fitted/tables-rowscale-g1.35.json');
 const outPath = at('out', 'src/tables.ts');
 
 const study = (JSON.parse(readFileSync(resolve(studyPath), 'utf8')) as { TABLES: Record<string, unknown> }).TABLES;

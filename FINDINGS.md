@@ -1901,8 +1901,11 @@ study table with the same field in the other chairs:
 value-side programme was not fitted to one opponent from the start; one step of it was. The
 committed bake is the field-specific change, and reverting to the row-scaled table gives a coach
 that wins against both fields rather than one that wins against coaches and loses to everyone else.
-That is the recommendation. It is not done here, because the rule said so, and because the field
-is still not a person.
+That was the recommendation, and on 2026-09-06 it was taken: `baketables.ts` reads
+`tables-rowscale-g1.35.json` by default again, `src/tables.ts` is regenerated from it, and
+`_fitrate` against that file reports zero plan changes and zero throw changes. The committed table
+and its cells stay tracked beside it; a table fitted to be level across both fields is the thing
+to try next, and the committed runs are half of what that needs.
 
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 

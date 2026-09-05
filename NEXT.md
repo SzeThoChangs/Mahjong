@@ -43,13 +43,10 @@ The same test one change back says the row scaling that shipped before it HOLDS 
 +0.125 +/- 0.056 over 32,000 paired deals, t = 2.2, about the size it had against coaches. So the
 programme was not fitted to one opponent from the start. One step was.
 
-**The coach stands as baked, and the recommendation is to revert.** The rule fixed before the field
-test was that it is a robustness check, not a bake decision, so nothing was un-baked. But the
-picture is now clear: the row-scaled table wins against both fields, the committed one wins against
-coaches by 0.10 and loses to the field by 0.21, and no human has been measured against either.
-Reverting is one command, `baketables.ts --fitted
-../knowledge/sources/fitted/tables-rowscale-g1.35.json`, and a `_fitrate` check that the shipped
-coach then matches that file.
+**The bake is reverted.** The row-scaled table wins against both fields; the committed one won
+against coaches by 0.10 and lost to the field by 0.21; no human has been measured against either.
+So the shipped coach is the row-scaled table again, checked with `_fitrate` at zero plan changes
+against that file, and the committed table stays tracked beside it as the candidate it was.
 
 The ping-wu row is answered: its committed slope falls with turn on a second seed too, and pooling
 the two runs moves 0.66% of throws, under the 2% bar. Pooled cells and the rebuilt table are at
@@ -64,9 +61,10 @@ is pushed, and the local typecheck, tests and build are the only checks. The web
 
 ## Where to start next, in order
 
-**1. Decide the bake - the recommendation is to revert.** See above. If you want a third field
-first, the one closest to a person is probably the coach with its randomness turned up, and
-`fieldtest.ts` takes any bot the generator can make.
+**1. A third field, if the two-field picture is to be trusted for a person.** The one closest to a
+player is probably the coach with its randomness turned up, and `fieldtest.ts` takes any bot the
+generator can make. Any future value change should be played against both fields before it bakes;
+that is now the bar.
 
 **2. Fit for both fields at once.** The value tables are keyed by plan, breakdown and turn. Nothing
 stops a fit from being weighted across two opponent populations, and a table that is level on both
