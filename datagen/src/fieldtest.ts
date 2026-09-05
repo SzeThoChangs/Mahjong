@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, shuffleName, makeRng, type Bot } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
 import { FittedCoachBot } from 'sg-mahjong-solver';
-import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
+import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS, NoisyCoachBot } from './bots.js';
 import { fnv1a } from './records.js';
 
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
@@ -33,12 +33,15 @@ const pathA = arg('a', '../knowledge/sources/fitted/tables-committed-g1.30.json'
 const pathB = arg('b', '../knowledge/sources/fitted/tables-rowscale-g1.35.json');
 const tablesA: unknown = JSON.parse(readFileSync(pathA, 'utf8'));
 const tablesB: unknown = JSON.parse(readFileSync(pathB, 'utf8'));
+/** who sits in the other three chairs: `pool` is the recorded population, `noisy` the coach with its randomness turned up */
+const fieldKind = arg('field', 'pool');
 const cfg = loadTableConfig(), rules = loadTableRules();
 
 /** the three other chairs: one personality each, chosen and seeded by the deal so both arms get the same table */
 function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
   return [0, 1, 2, 3].map((s) => {
     if (s === tested) return make();
+    if (fieldKind === 'noisy') return new NoisyCoachBot(makeRng(fnv1a(`seed:${shuffle}:${s}`)), DEFAULT_RANDOMNESS);
     const pick = fnv1a(`field:${shuffle}:${s}`) % BOT_TYPES.length;
     return makeBot(BOT_TYPES[pick]!, makeRng(fnv1a(`seed:${shuffle}:${s}`)), DEFAULT_RANDOMNESS);
   });
@@ -65,7 +68,7 @@ function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
-console.log(`${n} paired deals per seat, A = ${pathA.split('/').pop()} minus B = ${pathB.split('/').pop()}, three datagen personalities in the other chairs (${shuffleName(from)}..${shuffleName(from + n - 1)})\n`);
+console.log(`${n} paired deals per seat, A = ${pathA.split('/').pop()} minus B = ${pathB.split('/').pop()}, ${fieldKind === 'noisy' ? 'three noisy coaches' : 'three datagen personalities'} in the other chairs (${shuffleName(from)}..${shuffleName(from + n - 1)})\n`);
 console.log('seat   A chips/game   B chips/game   difference (paired)');
 const diffs: number[] = [];
 for (let seat = 0; seat < 4; seat++) {

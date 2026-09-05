@@ -8,7 +8,7 @@ import {
   kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld,
 } from 'sg-mahjong-engine';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
-import { CoachBot, PlanBot, type TargetId } from 'sg-mahjong-solver';
+import { CoachBot, PlanBot, rankDiscards, ctxOf, type TargetId } from 'sg-mahjong-solver';
 import { isHonour, isJoker, rankOf } from 'sg-mahjong-engine';
 
 export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive' | 'coach'
@@ -202,6 +202,25 @@ export class DefensiveBot implements Bot {
       if (shanten(hand, melds.length) >= 2) return null;
     }
     return this.inner.chooseClaim(v, o);
+  }
+}
+
+/**
+ * The coach with its randomness turned up: the third field.
+ *
+ * Neither field this project can simulate is a person. Three coaches never make a careless throw,
+ * and the personality pool never plays for a colour hand. A coach that usually throws its best
+ * tile and sometimes its second or third is the nearest thing available to a competent player who
+ * is not a machine, and it costs nothing to build - the ranking is already a best-first list, so
+ * it is `pickRanked` over that with the same randomness the personalities use.
+ */
+export class NoisyCoachBot extends CoachBot {
+  constructor(private readonly rng: () => number, private readonly randomness: RandomnessConfig = DEFAULT_RANDOMNESS) { super(); }
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v));
+    const ranked = [...r.options].sort((a, b) => b.chips - a.chips).map((o) => o.tile);
+    const k = pickRanked(ranked, this.rng, this.randomness);
+    return v.hand.find((t) => kindOf(t) === k) ?? super.chooseDiscard(v);
   }
 }
 
