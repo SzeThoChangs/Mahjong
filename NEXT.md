@@ -72,6 +72,12 @@ fields is a better thing to ship than one that wins on one and loses on the othe
 runs and `valuefit.ts --committed` are the machinery; what is missing is a second set of committed
 runs against the personality field.
 
-**3. The Tips page now says something on every card.** The next thing that page needs is not
-another verdict but the mistake record from the learning framework - the five-part system's fifth
-component - which the app still lacks. That is a product question, not a measurement.
+**3. The mistake record has no cause.** The app HAS the fifth component - the Review tab and
+`web/src/lib/mistakes.ts`, with the method's own intervals of a day, three days, a week, two weeks
+and a month, asking rather than reminding, and sending a miss back to the start. What it lacks is
+the eighth idea: each mistake sorted by why it happened, so practice can be pointed at whichever
+cause keeps coming up. A `Mistake` carries the tile you threw, the coach's, the cost and the
+coach's one-line reason, and nothing about the cause. The tips data could supply half of it
+unasked - a throw that breaks a shape tip is "did not see the pattern", one that breaks a danger
+read is "misjudged the safety" - and the rest is one question at the moment of the mistake. That is
+a product change, and it is the one the framework says matters most.
