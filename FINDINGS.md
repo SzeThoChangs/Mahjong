@@ -1352,6 +1352,107 @@ positions against 536. Those are small because the five new tips are all rare. `
 the tool that finds real positions for a detector, and every test for these five is a hand somebody
 actually played rather than one invented to pass.
 
+### Eight more rules measured against the packs, and the baseline that was wrong all along (2026-09-05)
+
+The calling tips went the same day, and this is the same trick pointed at the throws: a filter per
+rule over the graded discard positions, 8,226 of them across both packs. `datagen/src/discardtest.ts`
+is the tool, `datagen/src/packlib.ts` holds the scoring both it and `calltest.ts` use, and it runs
+in three seconds. Two things had to be built first, and both of them changed answers.
+
+**The first was a bug that a known result caught.** The obvious control - how often is the widest
+throw the best one - came back at 6% against 20% by luck, in a project whose best-evidenced tip is
+that the play-outs take the wider wait 89% of the time. That contradiction is the only reason it was
+found. Acceptance may only be compared between hands the same distance from ready, and a hand one
+step FURTHER out accepts far more tiles, so "the throw with the largest acceptance" was picking
+whichever throw wrecked the hand most. Restricted to throws that cost the hand nothing, the widest
+throw is best 54% of the time against 37%. A second version of the same mistake: distance and width
+belong to the hand you are LEFT with, and reading the wait off the fourteen tiles in front of you
+disagrees with the best wait a throw can leave in 2,064 of 4,815 ready positions. Distance survives
+that reading, differing 87 times in 8,226; width does not.
+
+**The second was the baseline, and it was wrong for every verdict on the page.** `tiptest.ts` scores
+a tip against the coin its own split implies, and its header names exactly the danger that leaves
+open - a tip pointing at loose tiles looks right because loose tiles are what a hand throws anyway -
+but the correction it applies equalises how MANY tiles sit on each side, not what those tiles are.
+Nothing had ever measured the size of that. Now it has:
+
+```
+a throw that costs the hand no distance    best 85% of the time   (34% by luck)
+a spare tile no block wants                     69%               (24%)
+the throw with the lowest deal-in               51%               (20%)
+the widest throw among those costing nothing    54%               (37%)
+```
+
+So `fitNull` in `packlib.ts` fits P(this throw is the best one) from things a beginner can read off
+the table - does it cost distance, does any block want it, is it an honour, a terminal or a simple -
+and every rule is now scored twice, against the flat coin and against that. The fitted table is the
+useful object on its own: a spare simple tile that costs nothing is best 38% of the time, a block
+simple tile that costs a step 2%.
+
+**Four verdicts already on the page were wrong, and `audit.ts` re-ran all fourteen.**
+
+```
+tip                    resolved   follows   flat z   matched z
+escape_single_waits        1061      90%     +28.7      +25.8
+pair_rule                   592      28%     -21.4       +0.8
+five_blocks                 268      50%      -1.5       +1.7
+triplet_adjacency           204      24%      -5.8       -1.5
+narrow_can_beat_wide        119      91%      +8.9       +6.7
+perfect_one_away             39      85%      +8.0       -0.1
+stepping_stones              21     100%      +6.5       +2.7
+sandwich                     11       9%      -3.1       -3.5
+```
+
+`pair_rule` was published as a failure and is a null: the tile it warns against throwing is the
+loose one, and once the baseline knows that, it comes out 0.8 standard errors high. `perfect_one_away`
+was published at z = +8.0 as one of the four best-evidenced tips, and every throw it warns against
+breaks a wait and costs a step, which is the measured best 2% of the time whatever the position - so
+the expected rate is 85% and the measured rate is 85%. Its advice is still right; the claim on the
+card that you would not get it right by accident is not. `triplet_adjacency` softens from a strong
+failure to an ordinary null, and `stepping_stones` from 21 for 21 at z = +6.5 to +2.7. What survives
+untouched is `escape_single_waits`, which stays the best-evidenced thing on the page by a distance,
+along with `narrow_can_beat_wide` and `sticky_one_away`.
+
+**Of the eight new rules, one is confirmed, five are contradicted and two are restatements.**
+
+`flush_decided_early` is the one that survives everything. Early, holding ten or more of one suit
+plus honours, the measured best is a throw outside that suit 71% of the time against 23% by luck and
+29% matched, which is 14.9 standard errors on 221 positions. Two controls hold it up: throwing a
+spare inside those same hands scores only 50%, and the same choice with seven or eight of a suit
+comes out 4.4 standard errors LOW, so the bar the card names is doing real work.
+
+`break_mediocre_ready` fails on its own condition. Ready on four live tiles or fewer, giving the
+hand up is best 8% of the time; ready on eight or more, where the card says keep, 12%. The card's
+condition carries no information at all, and both figures sit near the 15% at which costing yourself
+distance is right in general.
+
+`withhold_safe_tiles` and `terminal_triplet_release` fail for one shared reason worth stating on its
+own. Both argue that a tile is safe because nobody can hold a pair of it - the last copy of a
+passed tile, or a terminal you hold all three of. Measured directly from the play-outs, the last
+safe copy deals in 9.04% of the time against 9.95% for an average throw, and the terminal triplet
+10.68% against 10.71%, where the safest throw actually available is 4.83% and 5.52%. Ruling out a
+pair wait and a pong removes almost none of the danger, because a suited tile deals in mostly by
+completing a run. That is the same mechanism the second discard pile read turned on, arrived at from
+the opposite direction.
+
+`squeeze_the_caller` looked real and is not. Throwing what the committed seat after us cannot chow is
+best 38% of the time against 30% - but the identical split aimed at a committed seat that is NOT
+next to us, where the chow argument cannot apply, scores 37% against 26% on a larger sample. What
+works is throwing honours at a committed player. The card's own idea contributes nothing.
+
+`one_turn_is_not_the_fight` is contradicted at 4.9 standard errors matched: where the safest throw
+costs half the hand's width, the play-outs take the safety. `not_the_third_fighter` is contradicted
+by its own gradient - taking safety over width is best 40% of the time with nobody committed, 36%
+with one, and 33% with two, so it is least right exactly where the card reaches for it, which agrees
+with the earlier finding that turning the coach's caution up loses steadily. `keep_floaters` leans
+the card's way at 1.6 standard errors on 60 positions and is not settled.
+
+**What this costs.** The filters for these eight are ours, written out in the tool beside each rule,
+so they have failed or passed as we stated them. And the matched baseline is a strong null on
+purpose: it will not credit a rule for saying "do not wreck your hand", which is still good advice
+for a person even when it is not a finding about this table. That is the distinction the two z
+columns are there to keep visible.
+
 ### The calling tips can be measured after all, and the baseline is the whole story (2026-09-05)
 
 Five tips on the page are about whether to CLAIM rather than what to throw, and all five were badged

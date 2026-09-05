@@ -234,7 +234,7 @@ const CARDS: Tip[] = [
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     notWhen: 'This is the one tip on the page the play-outs argue with, so treat it as a fact about width rather than as advice about what to throw.',
     verdict: 'measured',
-    verdictNote: 'Counting agrees with the book \u2014 both hands are one away, and the third pair costs about a third of the accepting tiles. Playing it out does not. On 87 graded positions holding three pairs, the measured best throw was the loose tile, keeping all three, 69% of the time against 34% expected from the number of tiles each side offers. That held whether the alternative was a spare number tile or an honour, and whether the hand was near ready or far from it. One reason may be the table: All Pungs is 2 tai here and the minimum is 2, so a third pair is a route to a hand you are allowed to declare, which no count of accepting tiles can see.',
+    verdictNote: 'Counting agrees with the book \u2014 both hands are one away, and the third pair costs about a third of the accepting tiles. Playing it out does not. On 87 graded positions holding three pairs, the measured best throw was the loose tile, keeping all three, 69% of the time against 34% expected from the number of tiles each side offers. That held whether the alternative was a spare number tile or an honour, and whether the hand was near ready or far from it. One reason may be the table: All Pungs is 2 tai here and the minimum is 2, so a third pair is a route to a hand you are allowed to declare, which no count of accepting tiles can see. Re-checked on 2026-09-05, and the failure was ours rather than the book’s. The 69% above is measured against a coin that equalises how many tiles sit on each side of the split, not what those tiles are, and the tile this card warns against throwing is the loose one — which is the measured best 69% of the time across every graded position in the packs, whatever any card says. Scored against a baseline that knows that, the tip comes out 0.8 standard errors HIGH on 592 resolved positions. So keeping a third pair is neither better nor worse than the throw a hand makes anyway, which is a different verdict from the one written above it. `audit.ts` is the tool.',
   },
   {
     id: 'sandwich',
@@ -270,7 +270,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'measured',
-    verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw. Then confirmed again by the play-outs, and this is the only tip on the page with a perfect record. The tagger found 21 positions across both packs where a pairless hand held a bridging tile and something loose besides, and the measured best kept the bridge on all 21 of them, against 36% by luck. Twenty-one is not many \u2014 a hand with no pair at all is uncommon \u2014 but nothing else here has gone 21 for 21.',
+    verdictNote: 'Confirmed by counting, both hands three away: keeping the bridge accepts 79 tiles from 23 kinds against 66 from 19. A fifth more, for a tile most people throw. Then confirmed again by the play-outs, and this is the only tip on the page with a perfect record. The tagger found 21 positions across both packs where a pairless hand held a bridging tile and something loose besides, and the measured best kept the bridge on all 21 of them, against 36% by luck. Twenty-one is not many \u2014 a hand with no pair at all is uncommon \u2014 but nothing else here has gone 21 for 21. Re-checked on 2026-09-05, and it is weaker than 21 for 21 sounds. The bridging tile the card says to keep is wanted by a block and the tile it says to throw is a spare, so a hand throws the right one here without being told. Weighted by what each throw is, the expected rate is 77% against the measured 100%, which is 2.7 standard errors rather than 6.5. Still positive and still on the card’s side, just no longer perfect-looking.',
   },
   {
     id: 'escape_single_waits',
@@ -288,7 +288,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 1, than: 0 },
     verdict: 'measured',
-    verdictNote: 'Confirmed by counting, and then confirmed again by the play-outs, which makes it the best-evidenced tip on this page. Both hands here are ready and the one that gave up its finished shape waits on 8 tiles against 3. Across 432 real positions where a hand could be made ready two ways, the measured best throw took the wider wait 89% of the time against 47% expected \u2014 and it came out at 89% on both populations we have, one that collects suits and one that never does.',
+    verdictNote: 'Confirmed by counting, and then confirmed again by the play-outs, which makes it the best-evidenced tip on this page. Both hands here are ready and the one that gave up its finished shape waits on 8 tiles against 3. Across 432 real positions where a hand could be made ready two ways, the measured best throw took the wider wait 89% of the time against 47% expected \u2014 and it came out at 89% on both populations we have, one that collects suits and one that never does. Re-checked on 2026-09-05 against a baseline that knows what each throw is — whether it costs the hand distance, whether a block wants it, and what class of tile it is — and it survives almost untouched at 25.8 standard errors on 1,061 resolved positions. Nothing else on this page is evidenced anywhere near as well.',
   },
   {
     id: 'reset_via_runs',
@@ -327,7 +327,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'measured',
-    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one. The play-outs agree, which makes this one of the four best-evidenced tips on the page. On 74 real positions holding the whole shape with a tile left over, 39 resolved the choice, and the measured best threw the leftover rather than breaking a wait 33 times \u2014 85% against 28% by luck, z = +8.0, and the same answer on both populations. The 28% is the point: the tempting throw outnumbers the right one three to one, so this is not a decision you get right by accident.',
+    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one. The play-outs agree, which makes this one of the four best-evidenced tips on the page. On 74 real positions holding the whole shape with a tile left over, 39 resolved the choice, and the measured best threw the leftover rather than breaking a wait 33 times \u2014 85% against 28% by luck, z = +8.0, and the same answer on both populations. The 28% is the point: the tempting throw outnumbers the right one three to one, so this is not a decision you get right by accident. Re-checked on 2026-09-05, and the z = +8.0 does not survive. That baseline equalises how many tiles sit on each side, and here the two sides are not comparable: the throw the card points at is a leftover, while every throw it warns against breaks a wait and costs the hand a step, and a throw that costs distance is the measured best 2% of the time whatever the position. Weighted by what each throw is, the expected rate is 85% and the measured rate is 85% — 0.1 standard errors. The advice is still right. What is wrong is the boast above that you would not get this right by accident: throwing your spare gets it right.',
   },
   {
     id: 'sticky_one_away',
@@ -464,7 +464,7 @@ const CARDS: Tip[] = [
     shapeFrom: 'ours',
     notWhen: 'It stops meaning what it says when the tile beside the triplet is in the suit you are collecting, which is most of the time.',
     verdict: 'measured',
-    verdictNote: 'The counting is not in doubt: 22 tiles when you hold the three 4\u842c, 35 when the triplet is somewhere else, for the same 3\u842c. As advice it fails, and since the packs were rebuilt on 2026-09-05 it fails on both populations rather than one. The tip is about 254 graded positions and resolves 205 of them, and the measured best took the tile it points at 49 times \u2014 24% against 43% by luck, which is z = -5.8. At a table of coaches it is 12% against 43%. On hands played by the weaker bots it used to lean the book\u2019s way on 32 positions, and now that there are 111 it goes the other way too, 34% against 44%. The reason is probably which tile the tip points at. The tile beside your triplet is in the biggest suit of your hand 63% of the time and the other spare only 25%, so the tip mostly tells you to throw the suit you are collecting, and that costs most at the table which collects one.',
+    verdictNote: 'The counting is not in doubt: 22 tiles when you hold the three 4\u842c, 35 when the triplet is somewhere else, for the same 3\u842c. As advice it fails, and since the packs were rebuilt on 2026-09-05 it fails on both populations rather than one. The tip is about 254 graded positions and resolves 205 of them, and the measured best took the tile it points at 49 times \u2014 24% against 43% by luck, which is z = -5.8. At a table of coaches it is 12% against 43%. On hands played by the weaker bots it used to lean the book\u2019s way on 32 positions, and now that there are 111 it goes the other way too, 34% against 44%. The reason is probably which tile the tip points at. The tile beside your triplet is in the biggest suit of your hand 63% of the time and the other spare only 25%, so the tip mostly tells you to throw the suit you are collecting, and that costs most at the table which collects one. Re-checked on 2026-09-05, and most of the failure was the baseline rather than the tip. The tile this card points at sits beside a triplet and is wanted by a block, while the tiles it competes with are largely spares, and a spare is the measured best 69% of the time whatever any card says. Weighted by what each throw is, the tip comes out 1.5 standard errors low on 204 resolved positions rather than 5.8. It still does not work, and the reason above about throwing the suit you are collecting still stands, but it is an ordinary null rather than a strong failure.',
   },
   {
     id: 'count_your_outs',
@@ -554,8 +554,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Untested here, and it is not the same claim as the escape card even though it sounds like it. Giving up ready costs turns, and nothing in this project has measured what those turns are worth.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05 against 952 graded positions across both packs, and the card’s condition does no work at all. Ready on four live tiles or fewer, which is as feeble as a wait gets, the measured best gives the ready hand up 8% of the time. Ready on eight live tiles or more, where the card says keep, it is 12%. The same answer either way, and both sit near the 15% at which costing yourself distance is right in general. Against a baseline that knows only what each throw is — whether it costs distance, whether any block wants it, and whether it is an honour, a terminal or a simple — giving up ready comes out 11.5 standard errors low. So do not stop to count what breaking would open up. At this table you keep the ready hand, feeble or not. `discardtest.ts` is the tool.',
   },
   {
     id: 'keep_floaters',
@@ -568,8 +568,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The mechanism is real and countable — that is the 2 against 26 on the six-blocks card — but the trade it asks you to make has never been played out here. Nobody has measured what a hand that can improve is worth against a hand that is simply wider today.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05, and it leans the card’s way on a sample too small to settle it. The test fires where the throw that is widest on paper is not the widest once the copies already on the table are subtracted, which happened 93 times across both packs and resolved 60 of them. The measured best took the live-widest throw 63% of the time against 51% by luck, and 53% against a baseline that knows what each throw is, which is 1.6 standard errors. Both populations lean the same way. The useful thing to take from it is how rare the situation is: the two counts usually agree, so this decides fewer hands than the card implies.',
   },
   {
     id: 'isolate_triplet',
@@ -612,8 +612,8 @@ const CARDS: Tip[] = [
     notWhen: 'It is the one plan with no way out. Once two suits are on the floor you cannot fall back to a cheap hand, which is why the card about keeping a fallback does not apply to it.',
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Untested here as a rule about TIMING. What is measured is that the plan itself is normal at this table: a table of coaches wins a colour hand 31.7% of the time, and the study this rule comes from puts Half-Color at 32% of the opening book once the minimum is 2 tai. Two different methods, the same third of hands.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05, and it is the one rule in this batch that survives everything thrown at it. Early in the hand, holding ten or more tiles of one suit plus honours, the measured best is a throw OUTSIDE that suit 71% of the time against 23% by luck, on 221 resolved positions, and 29% against a baseline that knows what each throw is — 14.9 standard errors. Two controls hold it up. Inside those same hands, simply throwing a spare scores 50%, so the colour rule is sharper than the throw a hand makes anyway. And the same early choice with only seven or eight tiles of a suit comes out 4.4 standard errors LOW, so the bar the card names is doing real work: below it, committing is wrong. Both populations agree.',
   },
   {
     id: 'project_bad_draws',
@@ -853,8 +853,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and awkward to measure, because the cost falls on other players’ hands rather than on yours. Nothing in the coach does it.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05, and both halves of it fail. Take the positions where the hand holds the last copy of a kind already thrown and passed. The measured best is that very tile 34% of the time, against 19% by luck and 27% against a baseline that knows what each throw is — so the play-outs throw it MORE often than its description predicts, not less. The premise fails too, and that is the more useful half. Over 759 such positions the card’s tile dealt in 9.04% of the time, against 4.83% for the safest throw actually available and 9.95% for the average throw. A tile whose other three copies are visible cannot be caught by a pair wait or a pong, and at this table that is a small part of the danger, because a suited tile deals in mostly by completing a run. That is the same mechanism the second discard pile read turned on. `discardtest.ts` is the tool.',
   },
   {
     id: 'terminal_triplet_release',
@@ -867,8 +867,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The safety argument is arithmetic and not in doubt. What has never been measured here is the price — giving up a whole triplet is a real cost to the hand, and nobody has played out whether the three safe turns are worth it.',
+    verdict: 'measured',
+    verdictNote: 'Measured on 2026-09-05, and it is neither right nor wrong — it is a restatement. On 88 late positions with somebody committed where the hand held all three copies of a terminal, the measured best threw from that triplet 8% of the time against 17% by luck, but against a baseline that knows the throw breaks a set and costs the hand distance it is 0.5 standard errors, which is nothing. The play-outs treat it exactly like any other tile of that description. What does fail is the reason printed on the card. In those same positions the triplet tile dealt in 10.68% of the time, against 10.71% for the average throw and 5.52% for the safest one available. Holding all three copies rules out a pair wait and a pong, and that is a small share of the danger here: the tile still completes a run from one side.',
   },
   {
     id: 'squeeze_the_caller',
@@ -881,8 +881,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'The direction is a fact about the game and the engine plays it that way. Whether steering discards to squeeze one player is worth chips has never been measured here.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05, and the mechanism is the part that fails. When the seat AFTER us is committed, throwing what it cannot chow — an honour, or a kind it has already discarded — is the measured best 38% of the time against 30% by luck, which looks like a small win. Then run the identical split aimed at a committed seat that is NOT the one after us, where the chow argument cannot apply at all, and it scores 37% against 26% on a larger sample. Against a baseline that knows an honour is an honour, the card’s own version comes out 2.0 standard errors low and that control 0.4 high. So what works is throwing honours and already-thrown tiles at a committed player, which the danger cards already say. The one thing this card adds, that only the player after you can chow, adds nothing.',
   },
   {
     id: 'wind_discard_order',
@@ -1418,8 +1418,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured as a push-or-fold rule. The nearest thing we have measured points the same way: when a hand can stay ready two ways, the play-outs take the wider wait 89% of the time against 47% by luck.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05 on 269 resolved positions where the safest throw available costs half the hand’s acceptance or more — the trade the card is about. It says take the width. The measured best took the safety. Keeping the width was right 38% of the time against 52% by luck and 52% against a baseline that knows what each throw is, so it is 4.9 standard errors low and the matching does not rescue it. Both populations agree. The card’s arithmetic is not wrong, since a halved wait really is halved for the rest of the hand, but at this table the one turn is worth more than the arithmetic allows.',
   },
   {
     id: 'not_the_third_fighter',
@@ -1432,8 +1432,8 @@ const CARDS: Tip[] = [
     ],
     variants: [],
     claim: { kind: 'not-countable' },
-    verdict: 'needs-play',
-    verdictNote: 'Not measured here, and hard to measure on the hands we hold: our recorded bots do not push and fold as people do, so counting how many are "pushing" needs a population that has the behaviour.',
+    verdict: 'contradicted',
+    verdictNote: 'Measured on 2026-09-05, and the answer runs opposite to the card. Take the choice between the safest throw and the widest one, and count how often the safe one is best. With nobody committed it is right 40% of the time. With one opponent committed, 36%. With two or more, which is the card’s own case, 33%. All three beat a baseline that knows what each throw is, so taking safety over width is generally good — but it is LEAST good exactly where the card says to reach for it. That agrees with something already measured here from the other direction: turning the coach’s caution up loses steadily, out to four and a half standard errors.',
   },
   {
     id: 'no_phantom_hands',
