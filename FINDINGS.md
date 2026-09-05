@@ -1842,6 +1842,48 @@ With that, every rule in the playbook has a verdict. Of 103 cards, 59 are measur
 4 confirmed by counting, 6 are rules of the table and 16 are advice that states no testable claim.
 Nothing is left badged untested.
 
+### The two knobs on the two-field table: the gain was never the problem, the weight might be (2026-09-06)
+
+The table pooled by hands across both fields won against coaches and lost against the field, and
+two knobs were named as untried: weight the field's cells above half, and pick the gain by the
+field's decisiveness rather than the coach table's. Both now exist - `mergecells.ts --weight` and
+`datagen/src/fieldrate.ts`, the latter in datagen because the personalities live there.
+
+**The gain is field-independent, so the second knob does nothing.** The shipped row-scaled table's
+top-two plan gap on positions the personality pool produces is 12.56 chips, against 10.92 on
+coach-table positions. Matching a candidate to 12.56 on the field gives a gain of 1.30 with the
+field weighted twice and 1.31 with it weighted three times - the same 1.30 that matching to the
+coach table gave. Whatever the field does to the trade, it does not do it through how decisive the
+coach is between its plans. That closes one of the two explanations offered for the field loss.
+
+**The weight, then.** Two candidates, the field's cells counted twice (two thirds of the pool by
+hands) and three times (three quarters), at gains 1.30 and 1.31, played first against the field on
+ranges named in advance, 1650001..1680001, because the field is the arm that failed:
+
+```
+  field x2, gain 1.30   1650001 -0.146   1660001 -0.182   1670001 -0.011   1680001 -0.087
+                        32,000 paired deals   -0.106 +/- 0.052   t = -2.0, positive on 0 of 4
+  field x3, gain 1.31   1650001 -0.184   1660001 -0.185   1670001 +0.019   1680001 -0.065
+                        32,000 paired deals   -0.104 +/- 0.051   t = -2.0, positive on 1 of 4
+  (pooled by hands, from the entry below)                -0.098 +/- 0.055
+```
+
+**The weight does nothing either.** Three pools - the field at half, two thirds and three
+quarters - lose against the field by the same 0.10 chips a game, within a hundredth of each other.
+So neither knob reaches a level table, and the reason is visible in the multipliers: the two
+fields' committed rows differ by at most a fifth, so a family of one constant per row cannot
+separate them however the pool is weighted. The field loss lives in something these tables cannot
+express - the speed-for-size trade is set by the plan ranking as a whole and by what sits outside
+the tables, not by how one plan's spread counts against another's. Neither candidate went on to
+coaches or noisy coaches, by the rule, and nothing bakes. The shipped coach stays the row-scaled
+table, which holds on all three fields.
+
+**What is left to try, honestly.** Two things, neither a knob. Fit the field alone as the limit
+case, to learn whether ANY table in this family wins there. And look outside the tables at the
+one term the field breakdown keeps pointing to: every losing candidate gets ready sooner and wins
+smaller, which is the danger weight's territory as much as the value tables', and the danger
+weight has only ever been swept against coaches.
+
 ### A value table fitted across both fields (2026-09-06)
 
 The committed table won against coaches and lost against the personality field, and the row

@@ -57,9 +57,14 @@ Measured before it shipped: 45% of seeds are traps, a third of those teach "misc
 not the hand and are not offered. The Train tab has the selector, every hand shows what it
 teaches, and Review's diagnosis hands off with one button. Checked in the browser end to end.
 
-**2. Turn the two knobs on the two-field fit.** Field weight above half, and gain matched to the
-field. Each is a seven-minute rebuild plus two four-range money runs. Bake only if positive on
-both fields, and on the noisy field too now that it exists.
+**2. Done on 2026-09-06, and both knobs are dead.** The gain the field wants is the gain the coach
+table wants - 1.30 either way - so decisiveness was never where the loss lived. And weighting the
+field's cells two or three times in the pool loses against the field by the same 0.10 as the
+50/50 pool, within a hundredth. A family of one multiplier per row cannot separate two fields
+whose committed rows differ by a fifth at most. Nothing baked; the shipped coach stays the
+row-scaled table, which holds on all three fields. What is left is not a knob: fit the field
+alone as the limit case, and sweep the danger weight against the field, because every losing
+candidate gets ready sooner and wins smaller and that is the danger weight's territory too.
 
 **3. The Spot drill has no cause either.** The same question, asked after a wrong answer there,
 would sort spotting failures from deciding failures, which is the distinction the framework says
