@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fanInHand, type TileKind } from 'sg-mahjong-engine';
-import type { DiscardOption, Verdict } from 'sg-mahjong-solver';
+import { suggestCause, CAUSES, type DiscardOption, type Verdict, type Cause } from 'sg-mahjong-solver';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { tileLabel } from '@/lib/tiles';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { makeScenario, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
-import { recordMistake } from '@/lib/mistakes';
+import { recordMistake, setCause } from '@/lib/mistakes';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['東', '南', '西', '北'];
@@ -59,6 +59,8 @@ export default function Trainer() {
   const [phase, setPhase] = useState<Phase>('any');
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [pick, setPick] = useState<TileKind | null>(null);
+  const [suggestion, setSuggestion] = useState<ReturnType<typeof suggestCause> | null>(null);
+  const [causeChosen, setCauseChosen] = useState<Cause | null>(null);
   const [score, setScore] = useState<Score>({ best: 0, fine: 0, mistake: 0, blunder: 0, streak: 0 });
   const [showAll, setShowAll] = useState(false);
 
@@ -100,13 +102,24 @@ export default function Trainer() {
     // A mistake you never meet again is a mistake you keep making. The position is rebuilt from the
     // seed, so the record is a few bytes rather than a hand.
     if (v === 'mistake' || v === 'blunder') {
+      // Half the sorting can be read off the position - which tip the throw broke, whether it cost
+      // a step, whether it was the wrong plan or the more dangerous tile. The other half is the
+      // question below, because only you know whether you saw it and threw the other tile anyway.
+      const sug = suggestCause(scenario.hand, scenario.melds, {
+        bonus: scenario.bonus, seat: (scenario.seat - scenario.dealer + 4) % 4, prevailingWind: scenario.prevailingWind,
+        melds: scenario.melds, minimumFan: CONFIG.minimum_fan, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+      }, scenario.ranking.options, k, coachPick);
+      setSuggestion(sug);
+      setCauseChosen(null);
       recordMistake({
         seed, phase, picked: k, coachPick, verdict: v, cost: opt.delta,
         why: scenario.ranking.best.reasons[0] ?? '',
+        suggested: sug.suggested, ...(sug.tip ? { tip: sug.tip } : {}),
       });
     }
   };
-  const next = () => { setPick(null); setShowAll(false); setSeed((s) => s + 1); };
+  const chooseCause = (c: Cause) => { setCauseChosen(c); setCause(`${phase}:${seed}`, c); };
+  const next = () => { setPick(null); setShowAll(false); setSuggestion(null); setCauseChosen(null); setSeed((s) => s + 1); };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -220,6 +233,28 @@ export default function Trainer() {
                 <ReasonBox title={`Why ${tileLabel(gradedPick)}`} opt={gradedAnswerOpt} />
                 {pickedVerdict !== 'best' && <ReasonBox title={`About your ${tileLabel(picked.tile)}`} opt={picked} />}
               </div>
+              {(pickedVerdict === 'mistake' || pickedVerdict === 'blunder') && suggestion && (
+                <>
+                  <Separator />
+                  {/* the eighth idea: a mistake is only useful once you know why it happened */}
+                  <div className="space-y-2">
+                    <div className="font-medium">Why did that happen?</div>
+                    {suggestion.because && <p className="text-muted-foreground">{suggestion.because}</p>}
+                    <div className="flex flex-wrap gap-1.5">
+                      {CAUSES.map((c) => (
+                        <Button key={c.id} size="sm" title={c.blurb}
+                          variant={causeChosen === c.id ? 'default' : suggestion.suggested === c.id && causeChosen === null ? 'secondary' : 'outline'}
+                          onClick={() => chooseCause(c.id)}>
+                          {c.label}{suggestion.suggested === c.id && causeChosen === null ? ' ?' : ''}
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {causeChosen ? 'Recorded. The Review tab keeps a tally, and that tally is what to practise.' : 'One tap. The one marked ? is what the position suggests; you may know better.'}
+                    </p>
+                  </div>
+                </>
+              )}
               <Separator />
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={next}>Next hand</Button>

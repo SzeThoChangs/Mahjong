@@ -8,3 +8,4 @@ export * from './claim.js';
 export * from './tips.js';
 export * from './shapetag.js';
 export * from './copy.js';
+export * from './cause.js';

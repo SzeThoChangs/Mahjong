@@ -72,12 +72,11 @@ fields is a better thing to ship than one that wins on one and loses on the othe
 runs and `valuefit.ts --committed` are the machinery; what is missing is a second set of committed
 runs against the personality field.
 
-**3. The mistake record has no cause.** The app HAS the fifth component - the Review tab and
-`web/src/lib/mistakes.ts`, with the method's own intervals of a day, three days, a week, two weeks
-and a month, asking rather than reminding, and sending a miss back to the start. What it lacks is
-the eighth idea: each mistake sorted by why it happened, so practice can be pointed at whichever
-cause keeps coming up. A `Mistake` carries the tile you threw, the coach's, the cost and the
-coach's one-line reason, and nothing about the cause. The tips data could supply half of it
-unasked - a throw that breaks a shape tip is "did not see the pattern", one that breaks a danger
-read is "misjudged the safety" - and the rest is one question at the moment of the mistake. That is
-a product change, and it is the one the framework says matters most.
+**3. Done on 2026-09-06: the mistake record has a cause.** `solver/src/cause.ts` reads what it can
+off the position - the shape tip the throw broke, a throw that cost a step, the wrong plan, the
+more dangerous tile - and the Train tab asks one question at the moment of the mistake with that
+suggestion marked. `mistakes.ts` stores both the suggestion and the answer, Review shows the tally
+under every state of the tab and names the cause that keeps coming up, and a reviewed hand can be
+re-sorted. Older records count as unsorted until they come back. What is not done: nothing yet
+points the Train tab AT the leading cause - a "practise this" that draws hands where that cause
+bites is the next step on that screen.

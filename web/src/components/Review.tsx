@@ -24,7 +24,8 @@ import { HandContext } from '@/components/HandContext';
 import { fanInHand } from 'sg-mahjong-engine';
 import { makeScenario, CONFIG } from '@/lib/scenario';
 import { tileLabel } from '@/lib/tiles';
-import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
+import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
+import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
@@ -40,6 +41,7 @@ export default function Review() {
   const due = useMemo(() => dueMistakes(now), [now, tick]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const open = useMemo(() => openMistakes(), [tick]);
+  const tally = useMemo(() => causeTally(), [tick]);
   const current: Mistake | undefined = due[0];
 
   // rebuilt from the seed, so it is the identical hand you got wrong
@@ -63,9 +65,32 @@ export default function Review() {
     setPick(null); setTick((t) => t + 1);
   };
 
+  // The diagnosis is the point of the record, and it must show whether or not anything is due -
+  // most days nothing is, and that is exactly when it is worth reading.
+  const diagnosis = tally.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Your mistakes, by why they happened</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            <div className="flex flex-wrap gap-1.5">
+              {tally.map((t) => (
+                <Badge key={t.cause} variant={t === tally[0] && t.cause !== 'unsorted' ? 'default' : 'outline'}>
+                  {t.cause === 'unsorted' ? 'not sorted yet' : causeLabel(t.cause)} · {t.n}
+                </Badge>
+              ))}
+            </div>
+            <p className="mt-2 text-muted-foreground">
+              {tally[0]!.cause === 'unsorted'
+                ? 'Most of these were recorded before the question existed. Sort one when it comes back.'
+                : `The one that keeps coming up is "${causeLabel(tally[0]!.cause as Cause)}". More puzzles do not fix a problem that is really about that.`}
+            </p>
+          </CardContent>
+        </Card>
+  ) : null;
+
   if (!open.length) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        {diagnosis}
         <Card>
           <CardHeader><CardTitle className="text-base">Nothing to review yet</CardTitle></CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -81,7 +106,8 @@ export default function Review() {
   if (!current || !scenario) {
     const next = [...open].sort((a, b) => a.due - b.due)[0]!;
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        {diagnosis}
         <Card>
           <CardHeader><CardTitle className="text-base">All caught up</CardTitle></CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -107,6 +133,8 @@ export default function Review() {
           <Badge variant="outline">{open.length} on the schedule</Badge>
         </div>
       </div>
+
+      {diagnosis}
 
       <Card>
         <CardHeader className="gap-1">
@@ -166,6 +194,17 @@ export default function Review() {
                     ? `Moving on: back ${current.step + 1 >= INTERVALS_DAYS.length ? 'no more — this one is finished' : `in ${INTERVALS_DAYS[current.step + 1]} days`}.`
                     : 'Back to the start of the schedule, due again tomorrow.'}
                 </p>
+                <div className="pt-1">
+                  <p className="text-muted-foreground">
+                    {current.cause ? <>You put this down to <b className="text-foreground">{causeLabel(current.cause)}</b>{right ? '.' : ' — still?'}</> : 'You never said why this one happened. Now is a good moment:'}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {CAUSES.map((c) => (
+                      <Button key={c.id} size="sm" title={c.blurb} variant={current.cause === c.id ? 'default' : 'outline'}
+                        onClick={() => { setCause(current.id, c.id); setTick((t) => t + 1); }}>{c.label}</Button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-2 pt-1">
                   <Button onClick={finish}>Next</Button>
                   <Button variant="ghost" onClick={() => { forget(current.id); setPick(null); setTick((t) => t + 1); }}>

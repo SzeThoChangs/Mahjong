@@ -20,6 +20,7 @@
  * the same thing. You redo the thinking or the review is worth nothing.
  */
 import type { TileKind } from 'sg-mahjong-engine';
+import type { Cause } from 'sg-mahjong-solver';
 
 export type Phase = 'early' | 'mid' | 'late' | 'any';
 
@@ -36,6 +37,15 @@ export interface Mistake {
   cost: number;
   /** the coach's one-line reason for its own tile, kept so the review can explain without recomputing */
   why: string;
+  /**
+   * WHY it happened, which is the method's eighth idea and the only thing that says what to
+   * practise. `suggested` is what the coach's ranking and the shape tips could read off the
+   * position; `cause` is what you said when asked. Older records have neither and count as unsorted.
+   */
+  cause?: Cause;
+  suggested?: Cause | null;
+  /** the tip the throw broke, when that was the evidence */
+  tip?: string;
   firstSeen: number;
   /** how far through the schedule: 0 = due tomorrow, 5 = finished */
   step: number;
@@ -91,6 +101,26 @@ export function reviewed(id: string, right: boolean, now = Date.now()): void {
   if (right) { m.right++; m.step++; } else { m.step = 0; }
   m.due = now + (INTERVALS_DAYS[Math.min(m.step, INTERVALS_DAYS.length - 1)]! * DAY);
   write(all);
+}
+
+/** What you said the mistake was, at the moment of making it - or later, from the review. */
+export function setCause(id: string, cause: Cause): void {
+  const all = read();
+  const m = all.find((x) => x.id === id);
+  if (!m) return;
+  m.cause = cause;
+  write(all);
+}
+
+/**
+ * The diagnosis: how many of your mistakes fall under each cause. Counted over everything ever
+ * recorded rather than what is still due, because the question is which cause keeps coming up,
+ * and a mistake that has been worked through still happened for a reason.
+ */
+export function causeTally(): { cause: Cause | 'unsorted'; n: number }[] {
+  const t = new Map<Cause | 'unsorted', number>();
+  for (const m of read()) { const c = m.cause ?? 'unsorted'; t.set(c, (t.get(c) ?? 0) + 1); }
+  return [...t].map(([cause, n]) => ({ cause, n })).sort((a, b) => b.n - a.n);
 }
 
 export function forget(id: string): void {
