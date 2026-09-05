@@ -27,6 +27,7 @@ import { tileLabel } from '@/lib/tiles';
 import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
+import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
@@ -84,6 +85,9 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
                 ? 'Most of these were recorded before the question existed. Sort one when it comes back.'
                 : `The one that keeps coming up is "${causeLabel(tally[0]!.cause as Cause)}". More puzzles do not fix a problem that is really about that.`}
             </p>
+            {(() => { const sp = leadingSpotCause(); return sp ? (
+              <p className="mt-2 text-muted-foreground">On the Spot drill, the miss that keeps coming up is <b className="text-foreground">{spotCauseLabel(sp.cause)}</b>, {sp.n} of {sp.total} sorted. {sp.cause === 'out-of-time' ? 'Give yourself a longer look until that stops, then shorten it.' : sp.cause === 'misread' ? 'You are seeing the tiles and reading them wrongly - that is a deciding problem, not a looking one.' : sp.cause === 'guessed' ? 'You are answering before you have seen: slow the look, not the answer.' : 'The table is not registering: look for one thing at a time, then two.'}</p>
+            ) : null; })()}
             {tally[0]!.cause !== 'unsorted' && PRACTISABLE.includes(tally[0]!.cause as Cause) && onPractise && (
               <Button size="sm" className="mt-2" onClick={() => { writePractise(tally[0]!.cause as Cause); onPractise(tally[0]!.cause as Cause); }}>
                 Practise "{causeLabel(tally[0]!.cause as Cause)}" on the Train tab

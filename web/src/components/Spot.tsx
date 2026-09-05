@@ -8,7 +8,7 @@ import { HandContext } from '@/components/HandContext';
 import { PublicTable } from '@/components/PublicTable';
 import { TILE_BACK } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
-import { loadSpotStats, recordSpot, resetSpotStats, type SpotKind } from '@/lib/spotstats';
+import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, type SpotKind, type SpotCause } from '@/lib/spotstats';
 
 /**
  * The spotting drill: look at a position for a few seconds, then say what was in it.
@@ -90,6 +90,7 @@ export default function Spot() {
   const [stage, setStage] = useState<'looking' | 'asking' | 'done'>('looking');
   const [left, setLeft] = useState(look);
   const [picked, setPicked] = useState<number | null>(null);
+  const [missCause, setMissCause] = useState<SpotCause | null>(null);
   const [tick, setTick] = useState(0);
   const timer = useRef<number | null>(null);
 
@@ -145,6 +146,7 @@ export default function Spot() {
     setTick((t) => t + 1);
   }
   function next() {
+    setMissCause(null);
     setPicked(null);
     setStage('looking');
     setPos((p) => p + 1);
@@ -255,6 +257,19 @@ export default function Spot() {
                   <Badge variant={right ? 'default' : 'destructive'}>{right ? 'Right' : 'Missed it'}</Badge>
                   <span className="text-muted-foreground">{explain(s, kind)}</span>
                 </div>
+                {!right && (
+                  <div className="space-y-1.5">
+                    {/* seeing failures sort differently from deciding failures, and only you know which this was */}
+                    <div className="font-medium">Why did you miss it?</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SPOT_CAUSES.map((c) => (
+                        <Button key={c.id} size="sm" title={c.blurb} variant={missCause === c.id ? 'default' : 'outline'}
+                          onClick={() => { setMissCause(c.id); recordSpotCause(kind, c.id); }}>{c.label}</Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{missCause ? 'Recorded against this question type.' : 'One tap. It goes on the tally below.'}</p>
+                  </div>
+                )}
                 <Button onClick={next}>Next position</Button>
               </div>
             )}
@@ -275,6 +290,20 @@ export default function Spot() {
                 </span>
               );
             })}
+            {/* misses by why they happened, per question kind - the diagnosis the framework asks for */}
+            {(() => {
+              const t = loadSpotCauses();
+              const rows = (Object.entries(t) as [SpotKind, Partial<Record<SpotCause, number>>][]).filter(([, v]) => Object.keys(v ?? {}).length);
+              if (!rows.length) return null;
+              return (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <div className="font-medium text-foreground">Misses, by why</div>
+                  {rows.map(([k, v]) => (
+                    <div key={k}>{k}: {(Object.entries(v ?? {}) as [SpotCause, number][]).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${spotCauseLabel(c)} ${n}`).join(' · ')}</div>
+                  ))}
+                </div>
+              );
+            })()}
             <Button size="sm" variant="ghost" className="ml-auto" onClick={() => { resetSpotStats(); setTick((t) => t + 1); }}>Reset</Button>
           </div>
         </CardContent>

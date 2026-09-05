@@ -66,6 +66,28 @@ row-scaled table, which holds on all three fields. What is left is not a knob: f
 alone as the limit case, and sweep the danger weight against the field, because every losing
 candidate gets ready sooner and wins smaller and that is the danger weight's territory too.
 
-**3. The Spot drill has no cause either.** The same question, asked after a wrong answer there,
-would sort spotting failures from deciding failures, which is the distinction the framework says
-matters most.
+**3. Done on 2026-09-06: the Spot drill asks why.** A miss on the drill offers four causes, narrower
+than the throwing record's eight because the drill trains seeing - did not take it in, ran out of
+time, misread what was seen, guessed - recorded against the question kind in `spotstats.ts`. The
+drill shows the tally per kind, and Review's diagnosis names the spotting miss that keeps coming up
+and says which kind of problem it is: out of time or not taken in is a looking problem, misread is
+a deciding one. Checked in the browser end to end.
+
+## Where to start next, in order
+
+**1. Fit the field alone, as the limit case.** Both knobs on the two-field table are dead, and the
+open question is whether ANY table in the one-multiplier-per-row family can win against the
+personality field. The field's committed cells exist (`planf-all-cells.json`); fit them alone at a
+field-matched gain and play against the field. If that loses too, the family is the wrong shape
+for that opponent and the value tables are not where the field loss lives.
+
+**2. Sweep the danger weight against the field.** Every losing candidate gets ready sooner and
+wins smaller, which is the danger weight's territory as much as the value tables'. It has only ever
+been swept against coaches (`dangersweep.ts`); the same sweep with the field in the other chairs
+is a `--field` flag away, and would say whether the field's answer is "defend less" rather than
+"value differently".
+
+**3. The mistake record now has causes on both drills; nothing yet joins them.** The Train tab
+practises the leading throwing cause. The Spot drill has a look-time control and no link from the
+"ran out of time" tally to it. That link - lengthen the look automatically while that cause leads,
+then shorten it - is the drill's version of "practise this", and it is small.
