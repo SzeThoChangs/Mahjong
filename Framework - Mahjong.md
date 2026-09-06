@@ -93,6 +93,18 @@ game.
 The practical rule that follows: never say "that worked". Say "that was the measured best" or "that
 was not", and when it was not, find out why.
 
+One thing about the app follows from the same rule and you should know it before you trust a score.
+The two practice tabs are graded by different judges. The Real quiz grades against those play-outs.
+The Train tab grades against the coach, which explains its reasoning in words — the reason it is
+worth practising against — but which picks the measured best only 52.8% of the time on positions
+where the play-outs genuinely separate an answer, and 36.1% early in the hand. On its worst
+combination, an early hand headed for the cheap win, it is right 7.6% of the time, which is worse
+than guessing.
+
+So treat the Train tab as a place to practise REASONS and the Real quiz as the place that says
+whether you are right. Where the two disagree, the play-outs win. And do not take a Train verdict on
+an early hand very seriously, because that is exactly where its judge is weakest.
+
 ## The five components, and where they live
 
 The training system in `CLAUDE.md` has five parts and the app has all five. That is the one way this
@@ -117,8 +129,10 @@ Mixed practice is the Real quiz. These are positions from real recorded games, g
 with no label saying what the position is about and no promise that anything special is happening.
 This is the component most training material skips and the one that carries over into play.
 
-The mistake record is the Review tab. Every mistake is kept and comes back after a day, then three
-days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
+The mistake record is the Review tab. It is fed from the Train tab only, which means every mistake
+in it was judged by the coach rather than by the play-outs — worth remembering when a card comes
+back and you cannot see what was wrong with your tile, because sometimes nothing was. Every mistake
+is kept and comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
 attached, not your old answer and not the coach's, because recognising an answer feels almost
 exactly like knowing it. Getting one wrong sends it back to the start.
 
@@ -213,9 +227,11 @@ Not by how it feels. That is the ninth idea, and it is the one that catches ever
 that feel smooth store the least. If a session felt fluent you probably practised something you had
 already learnt.
 
-The honest signals are these. The gap between your Train tab score and your Real quiz score should
-narrow, because that gap is the difference between solving a labelled problem and playing. The
-leading cause in your mistake record should change over time, because a cause that stays at the top
+The honest signals are these. Your Real quiz score should rise, and that one is worth more than the
+rest put together, because the Real quiz is real positions judged by play-outs rather than by
+opinion. Do not read the gap between your Train score and your Real quiz score as a measure of
+transfer: the two tabs are graded by different judges that agree about half the time, so most of
+that gap is theirs and not yours. The leading cause in your mistake record should change over time, because a cause that stays at the top
 for a month means the practice is not aimed at it. Reviews should come back right more often at the
 longer intervals rather than at the short ones. And on the Spot drill, the same accuracy at a
 shorter look is real progress in a way that the same accuracy at the same look is not.
@@ -240,6 +256,12 @@ guess, chosen so that the two components that transfer get more than half the ti
 
 The claim that spotting is a separate skill from solving is borrowed from the chess framework and
 has not been tested here, though the Spot tab keeps the per-question scores that would test it.
+
+The biggest known weakness of the app is the one above: the tab you will spend most of the hour on
+is graded by the coach, and the coach is right about half the time on decisive positions. It is
+still far better than the simulator bots and miles better than random, and it is the only thing here
+that can tell you WHY. But the honest ordering is that the Real quiz judges and the Train tab
+teaches, and the mistake record currently only hears from the teacher.
 
 And one caution about the coach that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is
