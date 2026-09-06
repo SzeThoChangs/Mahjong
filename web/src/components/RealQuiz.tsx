@@ -11,7 +11,7 @@ import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
-import { CONFIG, PRACTISABLE } from '@/lib/scenario';
+import { CONFIG, JOKERS, PRACTISABLE } from '@/lib/scenario';
 import { recordMistake, causeTally } from '@/lib/mistakes';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
@@ -22,7 +22,9 @@ const WIND = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
 const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground';
 
-interface PackIx { id: string; money: boolean; unit: string; questions: number }
+/** `table` is absent on packs built before 2026-09-06, when nothing recorded which table a pack came from. */
+interface PackTable { wildcards: number; minimumTai: number }
+interface PackIx { id: string; money: boolean; unit: string; questions: number; table?: PackTable }
 // `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
 // the play-outs can tell them apart. Packs built before 2026-08-26 have no `se` field.
 interface Action { a: string; ev: number; se?: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
@@ -313,6 +315,24 @@ export default function RealQuiz() {
     <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
+        {/*
+          A pack is a record of one table. The coach's opinion beside each question is computed live
+          from this app's own table config, so a pack from a different table gets its reasoning from
+          the wrong game - the play-out verdict stays right, the explanation beside it does not.
+          Worth saying out loud rather than leaving the reader to notice.
+        */}
+        {(() => {
+          const t = packs.find((p) => p.id === pack)?.table;
+          if (!t) return null;
+          const mine = { wildcards: JOKERS, minimumTai: CONFIG.minimum_fan };
+          const same = t.wildcards === mine.wildcards && t.minimumTai === mine.minimumTai;
+          return (
+            <span className={cn('ml-2 text-xs', same ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
+              {t.wildcards} wildcards · {t.minimumTai} tai minimum
+              {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the measured answers hold but the coach's reasoning beside them is computed for your table, not this pack's</>}
+            </span>
+          );
+        })()}
         <span className="ml-auto" />
         {(['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
         {/* the honest grader, aimed at whatever keeps going wrong - the Train tab's idea on real positions */}
