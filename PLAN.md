@@ -131,6 +131,47 @@ is the fix if that ever matters.
 
 Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
 
+## On the phone, and on the other table
+
+Three things were asked for on 2026-09-06, and the order below is by what each costs against what it
+settles rather than by how large it sounds.
+
+**First, and cheapest: does the no-wildcard table play differently?** Every run in this project was
+generated at `jokers.count: 4` - both quiz packs, the value tables, the danger reads, every tips
+verdict. Changs plays games without wildcards too, which means the trainer may be calibrated to half
+the game he plays. The engine already parameterises this properly: the count validates from zero,
+the wall takes it, scoring guards on it, so it is a config change and a fresh run rather than new
+code. Do NOT rebuild the packs first. Generate one coach run at zero wildcards beside one at four,
+about fifteen minutes, and compare the headline rates - win rate, draw rate, the turn a seat reaches
+*Ting Pai*, deal-in by turn. If those are close, nothing needs rebuilding and the finding is that
+the tables travel. If they are far apart, then the packs and the value tables want a second edition
+and that is a day of compute, not fifteen minutes. Measure before paying.
+
+**Second: production.** `vercel.json` is already configured - vite framework, `pnpm -C web build`,
+`web/dist` - so the deploy itself is close to done. The blocker is that this repository has no git
+remote at all, so there is nothing for a host to build from. Create the remote, push, connect it,
+and the app is on a URL. That alone is what lets him train on a phone: mobile browsers run the app
+today, no PWA required, which is why this comes before the PWA rather than with it.
+
+Two things to settle before a public URL. The pattern library is reworded from a tactics book and
+sits in `knowledge/`, and while the cards are heavily rewritten and annotated with our own
+measurements, publishing them openly is a different act from using them privately - his book, his
+call, and a password-protected deployment is available if he would rather. And the packs are 20MB;
+a phone on mobile data pays that on first load.
+
+**Third: the PWA.** A manifest, icons, and a service worker via `vite-plugin-pwa`, which buys an
+installable icon, full-screen, and offline. Offline is the one that needs thought: the quiz packs
+are 20MB and caching them is most of the value, since the Train tab generates its own hands and
+would work offline almost for free while the Real quiz would not.
+
+**The thing to decide before any of this: one device or two.** Everything the app remembers lives in
+that browser's storage. Training on both a phone and a desktop produces two mistake records, two
+schedules and two cause tallies, and the record is the spine of the method - splitting it costs more
+than the convenience is worth. The honest options are to pick one device and treat the other as
+read-only, or to use the save-and-restore in Table setup as a manual bridge, or to build real sync,
+which needs a server and an account and would end the "no server, nothing leaves your browser"
+property the app currently has. Pick one before the record has a month in it, not after.
+
 ## Where this is going: a game
 
 The app poses positions. Eventually it should deal a hand and let you play it
