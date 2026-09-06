@@ -130,6 +130,14 @@ export default function Tips() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-4">
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Tips</h2>
+        {/* every verdict here was measured at one table; a learner cannot tell that from the cards */}
+        <p className="max-w-3xl text-xs text-muted-foreground">
+          Every verdict on this page was measured at one table: <b>four wildcards</b> and a <b>2 tai minimum</b>.
+          Both rules change the game measurably — taking the wildcards out makes hands run 54 turns instead of 40
+          and drawn hands 19% instead of 0.6%, and a late throw is about twice as likely to complete somebody.
+          The shape cards should travel, since they are arithmetic about tiles. The cards about timing, danger and
+          what a hand is worth may not.
+        </p>
         <p className="max-w-3xl text-sm text-muted-foreground">
           Every tip we hold, one card each, in the order a hand happens. Each card says the tip in plain English,
           says why it is supposed to work, and carries a badge saying what actually backs it.

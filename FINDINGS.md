@@ -1886,6 +1886,60 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The wildcard rule changes the game more than any opponent does (2026-09-06)
+
+Changs plays two tables - four wildcards and none - and every hand this project ever generated used
+four. `datagen/src/wildcompare.ts` plays the same 3,000 deals both ways, four coaches either side,
+the walls differing only by the four tiles that are wild in one arm and ordinary in the other.
+`wildcheck.ts` proved the zero path is a legal game first: chips net to zero, no illegal actions,
+hands finish.
+
+```
+                                   4 wildcards   0 wildcards
+  somebody won                          99.4%         81.0%
+  nobody won                             0.6%         19.0%
+  mean turns in a hand                    39.8          54.0
+  seats that ever reached Ting Pai       46.5%         48.3%
+    ...and the turn they got there        32.6          37.8
+  tai per win                             2.97          2.90
+  chips per win                          18.53         17.78
+
+  chance a throw completes somebody
+    simple, late                          3.72%         6.87%
+    terminal, late                        2.31%         4.39%
+    honour, late                          0.50%         1.57%
+```
+
+**This is a larger effect than anything the opponent population produced.** Swapping three coaches
+for three personalities was worth 0.21 chips a game through the value tables and nothing at all
+through the reads. Taking the wildcards out multiplies the draw rate by thirty and makes a late
+throw about twice as likely to deal in. The danger numbers are the ones that matter for the app,
+because the coach prices every discard against them: at a no-wildcard table it would be reading a
+table that understates late danger by half.
+
+**The mechanism is visible in the middle two rows.** Almost the same share of seats reach Ting Pai -
+46.5% against 48.3% - but hands run 36% longer, so at any given late turn more seats are sitting
+there waiting. Nobody is closer to winning; everybody has longer to be dangerous. That also explains
+the drawn hands: four tiles that stand for anything finish hands that would otherwise die on the
+wall.
+
+**A published card was wrong and is corrected.** `game_length` said our coaches draw under 1%
+against the study's 14% "because all four reliably reach 2 tai. A draw rate is a fact about the
+players, not about the rules." The same four coaches on the same deals draw 19.0% without wildcards,
+so most of that gap is the rule, not the standard of play. The card now says so.
+
+**What it does not settle.** Whether the study's own simulations used wildcards. Its draw rate of
+14% sits close to our no-wildcard 19% and nowhere near our 0.6%, which is suggestive - but its turn
+count, about eleven a player, is closer to our four-wildcard 10 than our no-wildcard 13.5. Two
+numbers pointing opposite ways is not an answer, and the study's source note mentions the minimum
+fan and the fan limit without mentioning wildcards at all. Left open rather than guessed.
+
+**Where this leaves the page.** The Tips page and the framework now say which table every verdict
+was measured at, which they did not before. The shape cards should travel, being arithmetic about
+tiles. The cards about timing, danger and what a hand is worth are measured at the wrong table for
+half his games, and `TABLE-VARIANTS.md` carries the plan - including the second axis, the 1 tai
+minimum, which crosses this one and is equally unmeasured.
+
 ### The danger reads do not matter on either field, which closes the coach's danger side (2026-09-06)
 
 The coach's two halves were fitted on different opponents and nobody had written that down. The

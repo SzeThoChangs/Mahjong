@@ -71,10 +71,13 @@ and not about two different sets of deals.
    wildcard count. Paired, so the only difference is the thing under test.
 3. **Write the comparison.** One tool, reporting the headline rates side by side: win rate, draw
    rate, the turn a seat first reaches *Ting Pai*, hand length, and deal-in by turn and tile class.
-4. **Read it and decide.** Close together means the numbers travel and the finding is written up as
-   a null. Far apart means a second edition, and the tasks below become real.
-5. **Say so on the page.** Whichever way it goes, the framework and the Tips page should state which
-   table the numbers are from. A learner cannot tell from the cards today.
+4. **Read it and decide.** DONE 2026-09-06, and they are far apart: draws 0.6% against 19.0%, hands
+   40 turns against 54, and a late throw about twice as likely to deal in. So the second edition is
+   warranted and the tasks below are real. The full table is in FINDINGS.
+5. **Say so on the page.** DONE 2026-09-06. The Tips page carries a line naming the table every
+   verdict was measured at and what changes without wildcards; the framework's table section says the
+   same and points here; and the `game_length` card, which had blamed the draw-rate gap on the
+   players rather than the rules, is corrected.
 
 6. **Then the same for the minimum.** Re-run the comparison at `minimum_fan: 1` against 2, both at
    four wildcards, and then at the fourth corner. The tool takes the rules object, so this is an

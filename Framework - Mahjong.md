@@ -24,7 +24,15 @@ itself. Both now say what they mean.
 
 ## The table this is for
 
-Singapore mahjong, minimum 2 tai, capped at 5, self-draw allowed at 1. Four wildcards. The shooter
+Singapore mahjong, minimum 2 tai, capped at 5, self-draw allowed at 1. Four wildcards.
+
+Both of those last two are rules Changs also plays without, and it matters more than it sounds.
+Everything measured in this project — every card, every table, every number below — was measured at
+four wildcards and a 2 tai minimum. Taking the wildcards out, on the same deals with the same
+players, makes hands run 54 turns instead of 40, drawn hands 19% instead of 0.6%, and a late throw
+about twice as likely to complete somebody. So at a no-wildcard table the shape advice should still
+hold, being arithmetic about tiles, while the advice about timing, danger and what a hand is worth
+is measured at the wrong table. `TABLE-VARIANTS.md` is the plan for fixing that. The shooter
 pays the whole bill on a discard win. Flowers and animals pay immediately, and here they pay double.
 The full house rules are in `data/table.config.json`, and everything below assumes them —
 several of the measured answers change if the minimum changes.

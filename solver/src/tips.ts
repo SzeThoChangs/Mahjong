@@ -1658,7 +1658,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured in the data-analytic study of this table. Our own runs disagree on one number and it is worth knowing why: four coaches playing each other draw under 1% of hands against the study’s 14%, because all four reliably reach 2 tai. A draw rate is a fact about the players, not about the rules.',
+    verdictNote: 'Measured in the data-analytic study of this table. Our own runs disagreed on one number and the reason we gave for it was wrong. Four coaches playing each other draw under 1% of hands against the study’s 14%, and this card used to say that a draw rate is a fact about the players rather than the rules. It is not. Run the same four coaches on the same deals with the wildcards taken out and they draw 19.0% instead of 0.6%, and hands run 54 turns instead of 40 — so most of that gap is the wildcard rule, not the standard of play. Four tiles that stand for anything finish hands that would otherwise die. Everything on this page was measured with four of them in the wall.',
   },
   {
     id: 'mf2_longer_games',
