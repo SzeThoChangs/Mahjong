@@ -1868,11 +1868,13 @@ ranges named in advance, 1650001..1680001, because the field is the arm that fai
   (pooled by hands, from the entry below)                -0.098 +/- 0.055
 ```
 
-**The weight does nothing either.** Three pools - the field at half, two thirds and three
-quarters - lose against the field by the same 0.10 chips a game, within a hundredth of each other.
-So neither knob reaches a level table, and the reason is visible in the multipliers: the two
-fields' committed rows differ by at most a fifth, so a family of one constant per row cannot
-separate them however the pool is weighted. The field loss lives in something these tables cannot
+**The weight does nothing either, at these weights.** Three pools - the field at half, two thirds
+and three quarters - lose against the field by the same 0.10 chips a game, within a hundredth of
+each other. So neither knob reaches a level table from here. (Written on the day as "a family of one
+constant per row cannot separate two fields however the pool is weighted". That was too strong, and
+the limit case below disproves it: at a hundred per cent field weight the family does reach level.
+The three pools were simply not extreme enough to show it, and three flat readings invited a
+conclusion about the family when the honest one was about the weights tried.) The field loss lives in something these tables cannot
 express - the speed-for-size trade is set by the plan ranking as a whole and by what sits outside
 the tables, not by how one plan's spread counts against another's. Neither candidate went on to
 coaches or noisy coaches, by the rule, and nothing bakes. The shipped coach stays the row-scaled
@@ -1883,6 +1885,54 @@ case, to learn whether ANY table in this family wins there. And look outside the
 one term the field breakdown keeps pointing to: every losing candidate gets ready sooner and wins
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
+
+### The limit case: fitting the field alone reaches level, and no further (2026-09-06)
+
+Three pools weighted toward the personality field all lost by about 0.10, which left one question
+worth asking before abandoning the value tables: can ANY table in this family - one multiplier per
+row over the study's own numbers - beat the shipped coach against that field? The limit case answers
+it. Fit the field's committed cells alone, at a gain matched on the field's own decisiveness (1.33
+puts the top-two plan gap at 12.28 against the shipped table's 12.56), and play it against the
+field on four ranges named before the run.
+
+```
+  1690001 +0.088   1700001 +0.075   1710001 -0.020   1720001 -0.031
+  32,000 paired deals   +0.028 +/- 0.050   t = +0.6, positive on 2 of 4
+```
+
+**Level. Not a win, and no longer a loss.** Set beside every other fit played against the same
+field, the gradient is the result:
+
+```
+  fitted on coaches only        -0.210 +/- 0.043
+  fitted on both, 50/50         -0.098 +/- 0.055
+  fitted on the field, x2       -0.106 +/- 0.052
+  fitted on the field, x3       -0.104 +/- 0.051
+  fitted on the field alone     +0.028 +/- 0.050
+```
+
+The more the fit knows about the opponent it will face, the better it does against that opponent,
+monotonically, which is the sanity check this whole line of work needed and had not had. Two things
+follow, and they point opposite ways.
+
+**The field loss WAS about the weights.** Fixing them removed all of it, from -0.210 to level. So
+the committed table did not fail against the field for some reason outside these tables; it failed
+because it carried a coach table's weights into a game that is not a coach table.
+
+**And the weights have nothing left to give.** A table fitted entirely on the field, sitting 43% away
+from the shipped one in its actual numbers, plays that field to a draw. The breakdown says why more
+plainly than the chips do: every line is level, 39.6% wins against 38.9%, 19.34 chips a win against
+19.47, ready 58.7% against 58.3%, deal-ins 8.9% against 9.0%. Two tables that differ by nearly half
+their values produce the same game against this opponent. Against a field that never collects a
+suit and never punishes a slow hand, how one plan's spread counts against another barely reaches
+the table.
+
+**So the row scaling that ships is at this family's ceiling for both fields**, and that is the honest
+end of the value-table programme as it stands. It wins against coaches, it is level against the
+field at the family's best, and nothing in a one-multiplier-per-row shape improves on it. Anything
+further has to change the shape - per-breakdown corrections rather than per-row, or a term the
+tables do not have - or leave the value side alone and look at the danger weight, which has still
+only ever been swept against coaches.
 
 ### A value table fitted across both fields (2026-09-06)
 

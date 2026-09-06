@@ -87,11 +87,19 @@ a deciding one. Checked in the browser end to end.
 
 ## Where to start next, in order
 
-**1. Fit the field alone, as the limit case.** Both knobs on the two-field table are dead, and the
-open question is whether ANY table in the one-multiplier-per-row family can win against the
-personality field. The field's committed cells exist (`planf-all-cells.json`); fit them alone at a
-field-matched gain and play against the field. If that loses too, the family is the wrong shape
-for that opponent and the value tables are not where the field loss lives.
+**1. Done on 2026-09-06, and it closes the value-table programme.** A table fitted on the field's
+committed cells alone, at a field-matched gain, plays the field level: +0.028 +/- 0.050 over 32,000
+paired deals. The gradient across every fit is monotone - coaches only -0.210, both 50/50 -0.098,
+field x2 -0.106, field x3 -0.104, field alone +0.028 - so the field loss really was the weights, and
+fixing them removes all of it and produces no gain. Two tables 43% apart in their numbers play that
+field to a draw on every line of the breakdown. The shipped row-scaled table is at this family's
+ceiling for both fields. Anything further has to change the SHAPE - per-breakdown corrections
+rather than per-row, or a term these tables do not have.
+
+One correction went into FINDINGS with it: the earlier entry said a one-multiplier-per-row family
+"cannot separate two fields however the pool is weighted". Three flat readings at half, two thirds
+and three quarters invited that, and the limit case disproves it. The family can separate them; the
+weights tried were not extreme enough to show it.
 
 **2. Sweep the danger weight against the field.** Every losing candidate gets ready sooner and
 wins smaller, which is the danger weight's territory as much as the value tables'. It has only ever
