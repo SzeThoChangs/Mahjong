@@ -35,6 +35,18 @@ const tablesA: unknown = JSON.parse(readFileSync(pathA, 'utf8'));
 const tablesB: unknown = JSON.parse(readFileSync(pathB, 'utf8'));
 /** who sits in the other three chairs: `pool` is the recorded population, `noisy` the coach with its randomness turned up */
 const fieldKind = arg('field', 'pool');
+/**
+ * `--dwa N --dwb N` sweeps the DANGER WEIGHT instead of the value tables, against the same field.
+ *
+ * The weight governs how heavily the coach prices deal-in risk against hand value, and the shipped
+ * 40 was swept against money only with three coaches in the other chairs, where more defence lost
+ * monotonically. Against a field that never punishes a slow hand the optimum has no reason to sit
+ * in the same place, and it is the one number that most shapes what the app ADVISES about safety.
+ * When these are set both arms use the shipped tables and differ only in the weight.
+ */
+const dwA = process.argv.includes('--dwa') ? Number(process.argv[process.argv.indexOf('--dwa') + 1]) : undefined;
+const dwB = process.argv.includes('--dwb') ? Number(process.argv[process.argv.indexOf('--dwb') + 1]) : undefined;
+const sweepingDanger = dwA !== undefined || dwB !== undefined;
 const cfg = loadTableConfig(), rules = loadTableRules();
 
 /** the three other chairs: one personality each, chosen and seeded by the deal so both arms get the same table */
@@ -55,7 +67,7 @@ function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
   for (let g = 0; g < n; g++) {
     const shuffle = from + g;
     const wall = shuffleWall(shuffle, cfg.unplayable_tiles, rules.jokers.count);
-    const bots = field(shuffle, seat, () => new FittedCoachBot(tables));
+    const bots = field(shuffle, seat, () => (sweepingDanger ? new FittedCoachBot(undefined, which === 'A' ? dwA : dwB) : new FittedCoachBot(tables)));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
     sh.games++;
@@ -68,7 +80,10 @@ function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
-console.log(`${n} paired deals per seat, A = ${pathA.split('/').pop()} minus B = ${pathB.split('/').pop()}, ${fieldKind === 'noisy' ? 'three noisy coaches' : 'three datagen personalities'} in the other chairs (${shuffleName(from)}..${shuffleName(from + n - 1)})\n`);
+const armName = sweepingDanger
+  ? `danger weight ${dwA ?? 'shipped'} minus ${dwB ?? 'shipped'}`
+  : `${pathA.split('/').pop()} minus ${pathB.split('/').pop()}`;
+console.log(`${n} paired deals per seat, A = ${armName}, ${fieldKind === 'noisy' ? 'three noisy coaches' : 'three datagen personalities'} in the other chairs (${shuffleName(from)}..${shuffleName(from + n - 1)})\n`);
 console.log('seat   A chips/game   B chips/game   difference (paired)');
 const diffs: number[] = [];
 for (let seat = 0; seat < 4; seat++) {
