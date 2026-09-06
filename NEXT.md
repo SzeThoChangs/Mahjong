@@ -51,10 +51,14 @@ danger-side changes have been played for money and none paid. A null is worth ha
 because it would say the coach's danger side is field-independent end to end and the framework's
 caveat could narrow again.
 
-**2. Point the Real quiz the way the Train tab is pointed.** The packs carry the shape tips each
-question is about (`tp`), and the record knows which cause keeps coming up. Serving quiz questions
-filtered to a tip or a cause would put the honest grader behind practice aimed at your weakness,
-instead of behind a shuffled deck. Product work, small, and it uses machinery that already exists.
+**2. Done on 2026-09-06.** The Real quiz can be aimed at a cause. A pack question records what the
+seat actually threw beside what the play-outs measured, so where they differ the position holds a
+real mistake and `suggestCause` reads why it failed - that is the label, and it needs nothing new in
+the pack. Measured before it shipped: labelling costs about 2ms a question, the rarest label fires
+one in 86, and a 400-question walk finds one about 99% of the time with a message when it does not.
+The first version walked cold and took 1.9 seconds a question in the browser, which no drill can
+wear; the cache is now warmed in 25-question slices after the pack loads and a filter switch costs
+3 to 52ms.
 
 **3. Consider stopping the measurement.** A real option, worth stating plainly. The playbook is
 complete, the value tables are at their ceiling, the danger weight is confirmed on two populations,

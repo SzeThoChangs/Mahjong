@@ -2,7 +2,7 @@
  * Real quiz: positions from actual recorded games, graded by the evaluator's
  * measured EV of every legal action. Not heuristics - play-out counts.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,11 @@ import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
-import { CONFIG } from '@/lib/scenario';
-import { recordMistake } from '@/lib/mistakes';
+import { CONFIG, PRACTISABLE } from '@/lib/scenario';
+import { recordMistake, causeTally } from '@/lib/mistakes';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, TIPS, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 
 const WIND = ['東', '南', '西', '北'];
@@ -83,7 +83,78 @@ export default function RealQuiz() {
   }, [pack]);
 
   const filtered = useMemo(() => order.filter((i) => mode === 'all' || (mode === 'discard' ? qs[i]!.k === 'discard' : qs[i]!.k !== 'discard')), [order, qs, mode]);
-  const q = qs[filtered[pos % Math.max(1, filtered.length)] ?? 0];
+
+  /**
+   * Serve questions about the cause that keeps going wrong, the way the Train tab does.
+   *
+   * A pack question already records what the seat ACTUALLY threw (`sel`) beside what the play-outs
+   * measured as best, so where those differ the position holds a real mistake made by a real
+   * player, and `suggestCause` reads why it failed. That is the label. It is computed lazily and
+   * cached: doing all five thousand up front is seconds of work for a filter that may never be
+   * used, and walking forward until a match is what the Train tab does too.
+   */
+  const [causeFilter, setCauseFilter] = useState<Cause | null>(null);
+  const causeCache = useRef(new Map<string, Cause | null>());
+  const causeOfQ = (qq: Q | undefined): Cause | null => {
+    if (!qq) return null;
+    const hit = causeCache.current.get(qq.id);
+    if (hit !== undefined) return hit;
+    let out: Cause | null = null;
+    if (qq.k === 'discard' && qq.sel !== qq.best && qq.sel?.startsWith('d:') && qq.best.startsWith('d:')) {
+      try {
+        const melds: Meld[] = qq.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+        const visible: number[] = [];
+        for (const d of qq.disc ?? []) visible.push(d[1]!);
+        (qq.pm ?? []).forEach((ms, s2) => { if (s2 !== qq.seat) for (const m of ms) visible.push(...m.slice(2)); });
+        const seat = qq.dl !== undefined ? (qq.seat - qq.dl + 4) % 4 : qq.seat;
+        const ctx: Context = { seat, prevailingWind: qq.w, bonus: qq.b, playerTurns: qq.t, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
+          opponentMelds: (qq.pm ?? []).map((ms, s2) => (s2 === qq.seat ? -1 : ms.length)).filter((n) => n >= 0) };
+        const r = rankDiscards(qq.h, melds, ctx);
+        out = suggestCause(qq.h, melds, { bonus: qq.b, seat, prevailingWind: qq.w, melds, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan },
+          r.options, Number(qq.sel.slice(2)), Number(qq.best.slice(2))).suggested;
+      } catch { out = null; }
+    }
+    causeCache.current.set(qq.id, out);
+    return out;
+  };
+  /**
+   * Label the pack in the background, a few at a time, so the filter never walks cold.
+   *
+   * Labelling costs about 2ms a question in node and nearer 5ms in a browser, so a 400-question
+   * walk from a standing start is a two-second pause between questions - measured, and unusable for
+   * a drill. Doing the whole pack up front is the same work in one lump. Doing it in small slices
+   * after the pack loads costs nothing anybody can feel and leaves every later walk hitting cache.
+   */
+  useEffect(() => {
+    if (!qs.length) return;
+    let stopped = false, i = 0;
+    const step = () => {
+      if (stopped) return;
+      const until = Math.min(i + 25, qs.length);
+      for (; i < until; i++) causeOfQ(qs[i]);
+      if (i < qs.length) window.setTimeout(step, 30);
+    };
+    const id = window.setTimeout(step, 300);   // let the first question render first
+    return () => { stopped = true; window.clearTimeout(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qs]);
+
+  /** how many questions to walk before giving up and serving the next one regardless */
+  const WALK = 400;
+  const chosen = useMemo(() => {
+    const len = Math.max(1, filtered.length);
+    if (!causeFilter) return { idx: filtered[pos % len] ?? 0, matched: true };
+    for (let step = 0; step < Math.min(WALK, len); step++) {
+      const idx = filtered[(pos + step) % len] ?? 0;
+      if (causeOfQ(qs[idx]) === causeFilter) return { idx, matched: true };
+    }
+    return { idx: filtered[pos % len] ?? 0, matched: false };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, pos, causeFilter, qs]);
+  const q = qs[chosen.idx];
+  const teaches = useMemo(() => causeOfQ(q), [q]);  // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tally = useMemo(() => (causeTally() as { cause: Cause | 'unsorted'; n: number }[]).filter((t): t is { cause: Cause; n: number } => t.cause !== 'unsorted' && PRACTISABLE.includes(t.cause)), [pack]);
   // The coach (book heuristics) explains the position; the measured EVs above remain the authority.
   const coach = useMemo(() => {
     if (!q) return null;
@@ -231,6 +302,9 @@ export default function RealQuiz() {
   };
 
   const discardKinds = new Set(q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))));
+  const causeNote = causeFilter && !chosen.matched
+    ? `no "${causeLabel(causeFilter)}" question in the next ${WALK} — showing the next one instead`
+    : teaches ? `the throw actually made here was: ${causeLabel(teaches)}` : null;
   const sorted = [...q.h].sort((a, b) => a - b);
   const drIdx = q.dr !== null ? sorted.indexOf(q.dr) : -1;
   const handTiles = drIdx >= 0 ? [...sorted.slice(0, drIdx), ...sorted.slice(drIdx + 1)] : sorted;
@@ -241,6 +315,17 @@ export default function RealQuiz() {
         {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
         <span className="ml-auto" />
         {(['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
+        {/* the honest grader, aimed at whatever keeps going wrong - the Train tab's idea on real positions */}
+        {tally.length > 0 && (
+          <span className="flex flex-wrap items-center gap-1">
+            <span className="ml-2 text-xs text-muted-foreground">about:</span>
+            <Button size="sm" variant={causeFilter === null ? 'secondary' : 'ghost'} onClick={() => { setCauseFilter(null); setPicked(null); }}>anything</Button>
+            {tally.slice(0, 3).map((t) => (
+              <Button key={t.cause} size="sm" variant={causeFilter === t.cause ? 'secondary' : 'ghost'} title={`${t.n} of your recorded mistakes`}
+                onClick={() => { setCauseFilter(t.cause); setPicked(null); }}>{causeLabel(t.cause)}</Button>
+            ))}
+          </span>
+        )}
       </div>
 
       <Card>
@@ -274,7 +359,9 @@ export default function RealQuiz() {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
-        </CardTitle></CardHeader>
+        </CardTitle>
+          {causeNote && <p className="text-xs text-muted-foreground">{causeNote}</p>}
+        </CardHeader>
         <CardContent className="space-y-3 @container">
           {(q.m.length > 0 || q.b.length > 0) && (
             <div className="flex flex-nowrap items-end gap-x-4 pb-1 border-b">

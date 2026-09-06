@@ -187,7 +187,11 @@ about. When you throw a tile, say why before you tap, because the reason is the 
 and the tile is only evidence of it.
 
 The fifth stage is mixed practice, on the Real quiz. No labels, real positions, everything you know
-competing to be the thing you remember. Expect to be worse here than on the Train tab, and expect
+competing to be the thing you remember. It can also be aimed: once your record has a leading cause,
+the quiz will serve only positions where the throw actually made failed for that reason, which puts
+the honest grader behind the practice rather than behind a shuffled deck. Use that when a cause has
+been at the top for a while, and use the unfiltered deck the rest of the time — the whole point of
+mixed practice is that nothing tells you what the position is about. Expect to be worse here than on the Train tab, and expect
 that gap to be the honest measure of how much of this you can actually use.
 
 The sixth stage is reading. The read cards, plus the Film room, which replays real hands so you can
