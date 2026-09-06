@@ -129,10 +129,11 @@ Mixed practice is the Real quiz. These are positions from real recorded games, g
 with no label saying what the position is about and no promise that anything special is happening.
 This is the component most training material skips and the one that carries over into play.
 
-The mistake record is the Review tab. It is fed from the Train tab only, which means every mistake
-in it was judged by the coach rather than by the play-outs — worth remembering when a card comes
-back and you cannot see what was wrong with your tile, because sometimes nothing was. Every mistake
-is kept and comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
+The mistake record is the Review tab, and it is fed from both practice tabs. A card from the Real
+quiz was judged by the play-outs and is a sure mistake. A card from the Train tab was judged by the
+coach, which is right about half the time on positions like that, so it is worth meeting again but
+is not proof you were wrong. Each card says which judge it came from and the diagnosis counts them
+separately. Every mistake comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
 attached, not your old answer and not the coach's, because recognising an answer feels almost
 exactly like knowing it. Getting one wrong sends it back to the start.
 
@@ -261,7 +262,7 @@ The biggest known weakness of the app is the one above: the tab you will spend m
 is graded by the coach, and the coach is right about half the time on decisive positions. It is
 still far better than the simulator bots and miles better than random, and it is the only thing here
 that can tell you WHY. But the honest ordering is that the Real quiz judges and the Train tab
-teaches, and the mistake record currently only hears from the teacher.
+teaches, and the record hears from both, marked.
 
 And one caution about the coach that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is

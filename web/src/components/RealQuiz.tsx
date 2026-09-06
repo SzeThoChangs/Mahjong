@@ -12,6 +12,7 @@ import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG } from '@/lib/scenario';
+import { recordMistake } from '@/lib/mistakes';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, TIPS, type Context } from 'sg-mahjong-solver';
@@ -208,6 +209,15 @@ export default function RealQuiz() {
     const v = verdictOf(bestAction.ev - act.ev, unit, act.se ?? 0);
     const kept = v === 'best' || v === 'fine' || v === 'unclear';
     setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: kept ? s.streak + 1 : 0 }));
+    // A mistake judged by 128 play-outs is worth meeting again more than one judged by the coach,
+    // and until now the record never heard from this tab at all. Discards only: the review screen
+    // asks "which tile", and a claim question is a different question that it cannot pose.
+    if ((v === 'mistake' || v === 'blunder') && pack && q.k === 'discard' && a.startsWith('d:') && bestAction.a.startsWith('d:')) {
+      recordMistake({
+        pack, qid: q.id, picked: Number(a.slice(2)), coachPick: Number(bestAction.a.slice(2)), verdict: v,
+        cost: -(bestAction.ev - act.ev), why: coach?.reasonFor(Number(bestAction.a.slice(2)))[0] ?? '',
+      });
+    }
   };
   const next = () => { setPicked(null); setChallengeResult(null); setPos((p) => p + 1); };
   const runsChallenge = async () => {

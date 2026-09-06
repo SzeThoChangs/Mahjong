@@ -13,7 +13,7 @@
  *
  * And getting it wrong sends it back to the beginning. The point is not to empty the list.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,13 +24,21 @@ import { HandContext } from '@/components/HandContext';
 import { fanInHand } from 'sg-mahjong-engine';
 import { makeScenario, CONFIG } from '@/lib/scenario';
 import { tileLabel } from '@/lib/tiles';
-import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
+import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, bySource, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
+import { rankDiscards, suggestCause, type Context } from 'sg-mahjong-solver';
+import type { Meld } from 'sg-mahjong-engine';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
+
+/** the slice of a pack question this screen needs - the same shape the Real quiz reads */
+interface QuizQ {
+  id: string; k: string; seat: number; dl?: number; w: number; t: number; h: number[]; dr: number | null;
+  b: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; best: string;
+}
 
 export default function Review({ onPractise }: { onPractise?: (c: Cause) => void } = {}) {
   const [now] = useState(() => Date.now());
@@ -44,26 +52,98 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const open = useMemo(() => openMistakes(), [tick]);
   const tally = useMemo(() => causeTally(), [tick]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sources = useMemo(() => bySource(), [tick]);
   const current: Mistake | undefined = due[0];
 
-  // rebuilt from the seed, so it is the identical hand you got wrong
+  /**
+   * A card comes back as the identical position, and there are two ways to rebuild one.
+   *
+   * A Train card carries a seed, and `makeScenario` deals it again. A Real quiz card carries a pack
+   * and a question id, and the pack file holds it - fetched here rather than stored, for the same
+   * reason the seed is stored rather than the hand: a thousand cards should cost kilobytes.
+   */
+  const [quizQ, setQuizQ] = useState<QuizQ | null>(null);
+  const [quizErr, setQuizErr] = useState<string | null>(null);
+  useEffect(() => {
+    if (!current?.pack) { setQuizQ(null); setQuizErr(null); return; }
+    let live = true;
+    setQuizQ(null); setQuizErr(null);
+    fetch(`/quiz/${current.pack}.json`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: { questions: QuizQ[] }) => { if (!live) return; const found = d.questions.find((x) => x.id === current.qid); found ? setQuizQ(found) : setQuizErr('that question is no longer in the pack'); })
+      .catch(() => { if (live) setQuizErr('could not load the pack this came from'); });
+    return () => { live = false; };
+  }, [current]);
+
   const scenario = useMemo(
-    () => (current ? makeScenario(current.seed, current.phase, ((current.seed * 9301 + 49297) % 233280) / 233280 < 0.7) : null),
+    () => (current && !current.pack && current.seed !== undefined && current.phase
+      ? makeScenario(current.seed, current.phase, ((current.seed * 9301 + 49297) % 233280) / 233280 < 0.7)
+      : null),
     [current],
   );
 
-  const hand = useMemo(() => {
-    if (!scenario) return [];
+  /** the coach's ranking on a quiz position, for the explanation and the cause suggestion */
+  const quizCoach = useMemo(() => {
+    if (!quizQ) return null;
+    const melds: Meld[] = quizQ.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+    const visible: number[] = [];
+    for (const d of quizQ.disc ?? []) visible.push(d[1]!);
+    (quizQ.pm ?? []).forEach((ms, s2) => { if (s2 !== quizQ.seat) for (const m of ms) visible.push(...m.slice(2)); });
+    (quizQ.pb ?? []).forEach((bs, s2) => { if (s2 !== quizQ.seat) visible.push(...bs); });
+    const ctx: Context = {
+      seat: quizQ.dl !== undefined ? (quizQ.seat - quizQ.dl + 4) % 4 : quizQ.seat, prevailingWind: quizQ.w, bonus: quizQ.b,
+      playerTurns: quizQ.t, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
+      opponentMelds: (quizQ.pm ?? []).map((ms, s2) => (s2 === quizQ.seat ? -1 : ms.length)).filter((n) => n >= 0),
+    };
+    try { return { melds, ctx, ranking: rankDiscards(quizQ.h, melds, ctx) }; } catch { return null; }
+  }, [quizQ]);
+
+  /**
+   * One shape for the screen, whichever way the card was rebuilt. `judge` is the whole point of
+   * keeping them apart: a quiz card's answer is 128 play-outs, a Train card's is the coach.
+   */
+  const pos = useMemo(() => {
+    if (quizQ) {
+      const sorted = [...quizQ.h].sort((a, b) => a - b);
+      const i = quizQ.dr !== null ? sorted.indexOf(quizQ.dr) : -1;
+      return {
+        judge: 'the play-outs' as const,
+        seat: quizQ.seat, dealer: quizQ.dl ?? 0, prevailingWind: quizQ.w, playerTurns: quizQ.t, phase: '' as string,
+        hand: i >= 0 ? [...sorted.slice(0, i), ...sorted.slice(i + 1)] : sorted, drawn: quizQ.dr,
+        melds: quizCoach?.melds ?? [], bonus: quizQ.b,
+        publicMelds: (quizQ.pm ?? []).map((ms) => ms.map((m) => ({ tiles: m.slice(2), concealed: m[1] === 1 }))),
+        publicBonus: quizQ.pb ?? [],
+        discards: (quizQ.disc ?? []).map((d) => ({ seat: d[0]!, kind: d[1]!, claimed: (d[2] ?? -1) >= 0 })),
+        best: quizQ.best.startsWith('d:') ? Number(quizQ.best.slice(2)) : null,
+        reasons: (k: number) => quizCoach?.ranking.options.find((o) => o.tile === k)?.reasons ?? [],
+        options: quizCoach?.ranking.options ?? [],
+      };
+    }
+    if (!scenario) return null;
     const h = [...scenario.hand].sort((a, b) => a - b);
     if (scenario.drawn !== null) { const i = h.indexOf(scenario.drawn); if (i >= 0) h.splice(i, 1); }
-    return h;
-  }, [scenario]);
+    return {
+      judge: 'the coach' as const,
+      seat: scenario.seat, dealer: scenario.dealer, prevailingWind: scenario.prevailingWind,
+      playerTurns: scenario.playerTurns, phase: scenario.phase as string,
+      hand: h, drawn: scenario.drawn, melds: scenario.melds, bonus: scenario.bonus,
+      publicMelds: scenario.publicMelds.map((ms) => ms.map((m) => ({ tiles: m.tiles, concealed: m.concealed }))),
+      publicBonus: scenario.publicBonus, discards: scenario.discards,
+      best: scenario.ranking.best.tile,
+      reasons: (k: number) => scenario.ranking.options.find((o) => o.tile === k)?.reasons ?? [],
+      options: scenario.ranking.options,
+    };
+  }, [scenario, quizQ, quizCoach]);
+  const hand = pos?.hand ?? [];
 
   const answer = (k: number) => { if (pick === null) setPick(k); };
   const finish = () => {
-    if (!current || pick === null || !scenario) return;
-    const opt = scenario.ranking.options.find((o) => o.tile === pick);
-    reviewed(current.id, opt ? opt.verdict === 'best' || opt.verdict === 'fine' : false, Date.now());
+    if (!current || pick === null || !pos) return;
+    // A quiz card is right if it is the throw the play-outs measured; a Train card if the coach
+    // calls it best or also-fine. Different judges, and the record keeps them apart deliberately.
+    const ok = quizQ ? pick === pos.best : (() => { const o = pos.options.find((x) => x.tile === pick); return !!o && (o.verdict === 'best' || o.verdict === 'fine'); })();
+    reviewed(current.id, ok, Date.now());
     setPick(null); setTick((t) => t + 1);
   };
 
@@ -80,6 +160,12 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
                 </Badge>
               ))}
             </div>
+            {sources.quiz > 0 && (
+              <p className="mt-2 text-muted-foreground">
+                {sources.quiz} of these were judged by the play-outs and {sources.trainer} by the coach. The
+                play-out ones are the surer mistakes: the coach picks the measured best about half the time.
+              </p>
+            )}
             <p className="mt-2 text-muted-foreground">
               {tally[0]!.cause === 'unsorted'
                 ? 'Most of these were recorded before the question existed. Sort one when it comes back.'
@@ -113,7 +199,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     );
   }
 
-  if (!current || !scenario) {
+  if (!current || (!pos && !quizErr)) {
     const next = [...open].sort((a, b) => a.due - b.due)[0]!;
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
@@ -130,9 +216,23 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     );
   }
 
-  const picked = pick === null ? undefined : scenario.ranking.options.find((o) => o.tile === pick);
-  const right = picked ? picked.verdict === 'best' || picked.verdict === 'fine' : false;
-  const coach = scenario.ranking.best;
+  if (!pos) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        {diagnosis}
+        <Card>
+          <CardHeader><CardTitle className="text-base">This one cannot be rebuilt</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>{quizErr ?? 'the position could not be rebuilt'}. A quiz card points into a pack file, and a rebuilt pack does not keep the old question ids.</p>
+            <Button size="sm" variant="outline" onClick={() => { forget(current.id); setTick((t) => t + 1); }}>Drop it from the schedule</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  const picked = pick === null ? undefined : pos.options.find((o) => o.tile === pick);
+  const right = pick === null ? false : quizQ ? pick === pos.best : (!!picked && (picked.verdict === 'best' || picked.verdict === 'fine'));
+  const coachTile = pos.best;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-4">
@@ -149,6 +249,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
       <Card>
         <CardHeader className="gap-1">
           <CardTitle className="text-base">You got this hand wrong {howLongAgo(current.firstSeen, now)}</CardTitle>
+          <p className="text-xs text-muted-foreground">Judged by {pos.judge}{quizQ ? ', which is the honest grader here' : ', which is right about half the time on positions like this'}.</p>
           <p className="text-sm text-muted-foreground">
             Work it out again from the tiles. What you threw last time is deliberately not shown — recognising
             an answer is not the same as knowing it.
@@ -156,23 +257,23 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
         </CardHeader>
         <CardContent className="space-y-4">
           <PublicTable
-            you={scenario.seat}
+            you={pos.seat}
             centre={<div className="text-center leading-tight">
-              <div className="text-lg font-semibold">{WIND_NAME[scenario.prevailingWind]}圈</div>
-              <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡 · {scenario.phase} game</div>
+              <div className="text-lg font-semibold">{WIND_NAME[pos.prevailingWind]}圈</div>
+              <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(pos.playerTurns / 4))}巡 · {pos.phase} game</div>
             </div>}
             seats={[0, 1, 2, 3].map((s) => ({
-              wind: WIND_NAME[(s - scenario.dealer + 4) % 4]!,
-              you: s === scenario.seat,
-              dealer: s === scenario.dealer,
-              bonus: scenario.publicBonus[s] ?? [],
-              melds: (scenario.publicMelds[s] ?? []).map((m) => ({ tiles: m.tiles, concealed: m.concealed })),
-              discards: scenario.discards.filter((d) => d.seat === s).map((d) => ({ kind: d.kind, claimed: d.claimed })),
+              wind: WIND_NAME[(s - pos.dealer + 4) % 4]!,
+              you: s === pos.seat,
+              dealer: s === pos.dealer,
+              bonus: pos.publicBonus[s] ?? [],
+              melds: pos.publicMelds[s] ?? [],
+              discards: pos.discards.filter((d) => d.seat === s).map((d) => ({ kind: d.kind, claimed: d.claimed })),
             }))} />
           <HandContext
-            seat={scenario.seat} dealer={scenario.dealer} prevailingWind={scenario.prevailingWind}
-            playerTurns={scenario.playerTurns} phase={scenario.phase}
-            fan={fanInHand({ melds: scenario.melds, bonus: scenario.bonus, seat: (scenario.seat - scenario.dealer + 4) % 4, prevailingWind: scenario.prevailingWind })}
+            seat={pos.seat} dealer={pos.dealer} prevailingWind={pos.prevailingWind}
+            playerTurns={pos.playerTurns} phase={(pos.phase || 'mid') as 'early' | 'mid' | 'late'}
+            fan={fanInHand({ melds: pos.melds, bonus: pos.bonus, seat: (pos.seat - pos.dealer + 4) % 4, prevailingWind: pos.prevailingWind })}
             minimumFan={CONFIG.minimum_fan} />
           <div>
             <p className="mb-2 text-sm font-medium">Which tile do you discard?</p>
@@ -181,10 +282,10 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
                 <Tile key={i} kind={k} size="md" onClick={pick === null ? () => answer(k) : undefined}
                   highlight={pick === k} dim={pick !== null && pick !== k} />
               ))}
-              {scenario.drawn !== null && (
+              {pos.drawn !== null && (
                 <div className="ml-3 flex flex-col items-center">
-                  <Tile kind={scenario.drawn} size="md" onClick={pick === null ? () => answer(scenario.drawn!) : undefined}
-                    highlight={pick === scenario.drawn} dim={pick !== null && pick !== scenario.drawn} />
+                  <Tile kind={pos.drawn} size="md" onClick={pick === null ? () => answer(pos.drawn!) : undefined}
+                    highlight={pick === pos.drawn} dim={pick !== null && pick !== pos.drawn} />
                   <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">drew</span>
                 </div>
               )}
@@ -196,9 +297,9 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
               <Separator />
               <div className="space-y-2 text-sm">
                 <p className={cn('font-medium', right ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
-                  {right ? `Right this time — ${tileLabel(pick)}.` : `Still wrong — you threw ${tileLabel(pick)}, the coach throws ${tileLabel(coach.tile)}.`}
+                  {right ? `Right this time — ${tileLabel(pick)}.` : `Still wrong — you threw ${tileLabel(pick)}, ${quizQ ? 'the play-outs throw' : 'the coach throws'} ${tileLabel(coachTile)}.`}
                 </p>
-                {coach.reasons[0] && <p className="text-muted-foreground">Why {tileLabel(coach.tile)}: {coach.reasons[0]}.</p>}
+                {pos.reasons(coachTile)[0] && <p className="text-muted-foreground">Why {tileLabel(coachTile)}: {pos.reasons(coachTile)[0]}.</p>}
                 <p className="text-muted-foreground">
                   {right
                     ? `Moving on: back ${current.step + 1 >= INTERVALS_DAYS.length ? 'no more — this one is finished' : `in ${INTERVALS_DAYS[current.step + 1]} days`}.`

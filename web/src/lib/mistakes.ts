@@ -24,11 +24,27 @@ import type { Cause } from 'sg-mahjong-solver';
 
 export type Phase = 'early' | 'mid' | 'late' | 'any';
 
+/**
+ * A mistake is one of two things, and the difference is who judged it.
+ *
+ * A Train mistake carries `seed` and `phase`, and `makeScenario` rebuilds the identical hand from
+ * them. It was judged by the coach, which explains itself in words and picks the play-outs' best
+ * 52.8% of the time on decisive positions - so a card from here is worth meeting again, and is not
+ * proof you were wrong.
+ *
+ * A Real quiz mistake carries `pack` and `qid`, and the pack file holds the position. It was judged
+ * by 128 play-outs an option, which is the honest grader, and the record was built without any of
+ * these until 2026-09-06 - every card in it came from the weaker judge while the better one threw
+ * its verdicts away after each question.
+ */
 export interface Mistake {
-  /** seed + phase rebuild the exact position */
   id: string;
-  seed: number;
-  phase: Phase;
+  /** a generated Train position */
+  seed?: number;
+  phase?: Phase;
+  /** a Real quiz position: which pack, and the question's id inside it */
+  pack?: string;
+  qid?: string;
   /** what you threw the first time, and what the coach threw */
   picked: TileKind;
   coachPick: TileKind;
@@ -79,7 +95,7 @@ export const openMistakes = (): Mistake[] => read().filter((m) => m.step < INTER
 
 export function recordMistake(m: Omit<Mistake, 'id' | 'firstSeen' | 'step' | 'due' | 'seen' | 'right'>, now = Date.now()): void {
   const all = read();
-  const id = `${m.phase}:${m.seed}`;
+  const id = m.pack ? `${m.pack}:${m.qid}` : `${m.phase}:${m.seed}`;
   // meeting the same position again does not create a second entry - it is the same mistake
   if (all.some((x) => x.id === id)) return;
   all.push({ ...m, id, firstSeen: now, step: 0, due: now + INTERVALS_DAYS[0]! * DAY, seen: 0, right: 0 });
@@ -141,6 +157,12 @@ export function whenDue(due: number, now = Date.now()): string {
   if (days <= 0) return 'today';
   if (days === 1) return 'tomorrow';
   return `in ${days} days`;
+}
+
+/** How many of the open mistakes came from each judge, for the Review tab to say so. */
+export function bySource(): { trainer: number; quiz: number } {
+  const all = read();
+  return { trainer: all.filter((m) => !m.pack).length, quiz: all.filter((m) => !!m.pack).length };
 }
 
 /** The cause the Train tab is practising, if any - set from Review, kept across reloads. */

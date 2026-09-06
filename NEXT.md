@@ -58,6 +58,19 @@ confirmed, 6 table rules, 16 advice, 18 contradicted - and every one was checked
 when it was written, so re-check them if verdicts change. And it deliberately has no
 `Pattern Library.md` or `Mistakes.md` beside it, unlike `Chess/`, because here both are software.
 
+## The record hears from the honest grader now (2026-09-06)
+
+Until today only the Train tab fed the mistake record, so every card in it was judged by the coach -
+which picks the play-outs' best 52.8% of the time on decisive positions and 36.1% early. The Real
+quiz, graded by 128 play-outs an option, threw its verdicts away after each question.
+
+A record now carries either a seed and a phase (a Train card, rebuilt by `makeScenario`) or a pack
+and a question id (a quiz card, rebuilt by fetching the pack). Review renders both, grades a quiz
+card against the pack's measured best rather than the coach's opinion, says which judge each card
+came from, and counts the two separately in the diagnosis. A quiz card whose pack has since been
+rebuilt cannot be found by id, and that path is handled with an explanation and a button to drop it.
+Discards only: a claim question is a different question and the review screen cannot pose it.
+
 ## Where to start next, in order
 
 **1. Done on 2026-09-06: the Train tab points at the leading cause.** `causeOf` in `scenario.ts`
