@@ -13,6 +13,7 @@ import { HandContext } from '@/components/HandContext';
 import { makeScenario, makeScenarioFor, causeOf, PRACTISABLE, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
 import { recordMistake, setCause, causeTally, readPractise, writePractise } from '@/lib/mistakes';
 import { cn } from '@/lib/utils';
+import { J } from '@/lib/jargon';
 
 const WIND_NAME = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
@@ -133,7 +134,7 @@ export default function Trainer() {
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Which tile?</h1>
-            <p className="text-sm text-muted-foreground">Singapore mahjong discard trainer · Min {CONFIG.minimum_fan} / Max {CONFIG.fan_limit} · self-draw wins at {CONFIG.self_draw_minimum_fan}</p>
+            <p className="text-sm text-muted-foreground">Singapore mahjong discard trainer · Min {CONFIG.minimum_fan} / Max {CONFIG.fan_limit} <J>Tai</J> · <J>Zi Mo</J> wins at {CONFIG.self_draw_minimum_fan}</p>
           </div>
           <Tabs value={phase} onValueChange={(v) => { setPhase(v as Phase); setPick(null); setShowAll(false); }}>
             <TabsList>
@@ -186,13 +187,13 @@ export default function Trainer() {
               <div className="flex flex-nowrap items-end gap-x-4 pb-2 mb-2 border-b">
                 {scenario.bonus.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    <span className={LABEL}>Your flowers</span>
+                    <span className={LABEL}>Your <J>Bonus Tiles</J></span>
                     <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
                   </div>
                 )}
                 {scenario.melds.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    <span className={LABEL}>Your open sets</span>
+                    <span className={LABEL}>Your <J>Melds</J></span>
                     <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
                       {scenario.melds.map((m, i) => (
                         <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m.concealed} />)}</span>

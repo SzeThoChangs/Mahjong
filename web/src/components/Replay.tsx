@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { rankDiscards, claimReasons, claimCandidateOf, type Context } from 'sg-mahjong-solver';
 import { CONFIG } from '@/lib/scenario';
 import type { Meld } from 'sg-mahjong-engine';
+import { jargon } from '@/lib/jargon';
 
 const WIND = ['東', '南', '西', '北'];
 
@@ -77,7 +78,7 @@ export default function Replay() {
             {list.map((h) => (
               <button key={h.file} onClick={() => open(h.file)} className="flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent">
                 <span className="font-medium w-24">{h.winner === null ? 'Draw' : `${WIND[h.winner]} wins`}</span>
-                <span className="text-muted-foreground w-28 truncate">{h.combo}{h.fan !== null ? ` · ${h.fan} tai` : ''}</span>
+                <span className="text-muted-foreground w-28 truncate">{jargon(`${h.combo}${h.fan !== null ? ` · ${h.fan} *Tai*` : ''}`)}</span>
                 <span className="text-muted-foreground">第{Math.max(1, Math.ceil(h.turns / 4))}巡</span>
                 <span className="ml-auto text-xs text-muted-foreground">{h.evals} evaluated</span>
               </button>
@@ -179,7 +180,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Button size="sm" variant="outline" onClick={onBack}>← All hands</Button>
-        <span><b>{hand.winner === null ? 'Draw' : `${WIND[hand.winner]} wins ${hand.combo} (${hand.fan} tai)${hand.selfDraw ? ' by self-draw' : hand.discarder !== null ? ` off ${WIND[hand.discarder]}` : ''}`}</b></span>
+        <span><b>{jargon(hand.winner === null ? 'Draw' : `${WIND[hand.winner]} wins ${hand.combo} (${hand.fan} *Tai*)${hand.selfDraw ? ' by *Zi Mo*' : hand.discarder !== null ? ` off ${WIND[hand.discarder]}` : ''}`)}</b></span>
         <span className="text-muted-foreground">{WIND[hand.wind]}圈 · dealer {WIND[hand.dealer]}</span>
         <span className="ml-auto text-muted-foreground">{unit === '$' ? 'money' : 'chips'}: {hand.delta.map((d, s) => `${WIND[s]} ${fmt(d)}`).join('  ')}</span>
       </div>
@@ -224,7 +225,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
       {/* decision detail */}
       <Card>
         <CardHeader className="py-3"><CardTitle className="text-sm">
-          {WIND[cur.p]} ({hand.bots[cur.p]}) — {cur.k === 'discard' ? 'which tile to discard?' : cur.k === 'claim' ? 'claim or pass?' : 'kong or win?'}
+          {WIND[cur.p]} ({hand.bots[cur.p]}) — {cur.k === 'discard' ? 'which tile to discard?' : cur.k === 'claim' ? 'claim or pass?' : jargon('*Kong* or win?')}
           <span className="ml-2 font-normal text-muted-foreground">chose: {actionText(cur.sel)}</span>
         </CardTitle></CardHeader>
         <CardContent className="space-y-2">

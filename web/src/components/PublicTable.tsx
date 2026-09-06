@@ -259,7 +259,7 @@ export function PublicTable({ seats, you, centre }: {
         </div>
 
         {anyConcealed && (
-          <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">A dashed set is a <b className="text-foreground">concealed kong</b> — declared, but face down at a real table.</p>
+          <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">A dashed set is a <b className="text-foreground">concealed <J>Kong</J></b> — declared, but face down at a real table.</p>
         )}
       </CardContent>
     </Card>

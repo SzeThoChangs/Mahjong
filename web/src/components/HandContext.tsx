@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tile } from '@/components/Tile';
 import { cn } from '@/lib/utils';
+import { jargon, J } from '@/lib/jargon';
 
 const WIND = ['東', '南', '西', '北'];
 
@@ -22,7 +23,7 @@ interface HandContextProps {
   /** 'early' | 'mid' | 'late', shown in brackets after the 巡 when given */
   phase?: string;
   fan: number;
-  /** what a fan is called at this table: Singapore players say tai */
+  /** what the scoring unit is called on this screen; marked jargon, so it goes through `jargon` */
   fanLabel?: string;
   /** when given and the hand is short, says how much more it needs to win on a discard */
   minimumFan?: number;
@@ -33,7 +34,7 @@ interface HandContextProps {
 
 export function HandContext({
   seat, dealer, prevailingWind, playerTurns, phase,
-  fan, fanLabel = 'Fan in hand', minimumFan, className, children,
+  fan, fanLabel = '*Tai* in hand', minimumFan, className, children,
 }: HandContextProps) {
   const round = Math.max(1, Math.ceil(playerTurns / 4));
   // your wind is your seat measured from the dealer, not your seat number
@@ -50,17 +51,17 @@ export function HandContext({
           <span className="text-muted-foreground">Host: seat <b className="text-foreground">{dealer + 1}</b>{dealer === seat ? ' (you)' : ''}</span>
         </>
       )}
-      <span className="text-muted-foreground">Round <b className="text-foreground">{WIND[prevailingWind]}</b></span>
+      <span className="text-muted-foreground"><J>Prevailing Wind</J> <b className="text-foreground">{WIND[prevailingWind]}</b></span>
       {/* without a known dealer we cannot say which wind is yours, so there is no pair to show */}
       {dealer !== undefined && (
-        <span className="flex items-center gap-1 text-muted-foreground">tai winds
+        <span className="flex items-center gap-1 text-muted-foreground"><span><J>Tai</J> winds</span>
           <Tile kind={27 + prevailingWind} size="sm" />
           <Tile kind={27 + role} size="sm" className={cn(doubleWind && '-ml-4')} />
           {doubleWind && <Badge variant="outline">double!</Badge>}
         </span>
       )}
       <span><b>第{round}巡</b>{phase && <span className="text-muted-foreground"> ({phase} game)</span>}</span>
-      <span className="text-muted-foreground">{fanLabel} <b className="text-foreground">{fan}</b>
+      <span className="text-muted-foreground">{jargon(fanLabel)} <b className="text-foreground">{fan}</b>
         {minimumFan !== undefined && fan < minimumFan && <> — need {minimumFan} to win on a discard</>}
       </span>
       {children}

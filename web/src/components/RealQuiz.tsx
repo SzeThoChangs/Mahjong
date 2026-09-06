@@ -17,7 +17,7 @@ import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
-import { jargon } from '@/lib/jargon';
+import { jargon, J } from '@/lib/jargon';
 
 const WIND = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
@@ -329,8 +329,8 @@ export default function RealQuiz() {
           const same = t.wildcards === mine.wildcards && t.minimumTai === mine.minimumTai;
           return (
             <span className={cn('ml-2 text-xs', same ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
-              {t.wildcards} wildcards · {t.minimumTai} tai minimum
-              {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the measured answers hold but the coach's reasoning beside them is computed for your table, not this pack's</>}
+              {t.wildcards} <J>Jokers</J> · {t.minimumTai} <J>Tai</J> minimum
+              {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the <J>Measured Best</J> answers hold but the <J>Coach</J>'s reasoning beside them is computed for your table, not this pack's</>}
             </span>
           );
         })()}
@@ -352,7 +352,7 @@ export default function RealQuiz() {
       <Card>
         <CardContent className="pt-4">
           <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
-            fan={q.fih} fanLabel="Tai in hand" className="gap-x-5 gap-y-2">
+            fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2">
             <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
           </HandContext>
         </CardContent>
@@ -388,13 +388,13 @@ export default function RealQuiz() {
             <div className="flex flex-nowrap items-end gap-x-4 pb-1 border-b">
               {q.b.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <span className={LABEL}>Your flowers</span>
+                  <span className={LABEL}>Your <J>Bonus Tiles</J></span>
                   <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
                 </div>
               )}
               {q.m.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <span className={LABEL}>Your open sets</span>
+                  <span className={LABEL}>Your <J>Melds</J></span>
                   <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
                     {q.m.map((m, i) => (
                       <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m[1] === 1} />)}</span>
@@ -452,13 +452,13 @@ export default function RealQuiz() {
                     so this is the place the coach's disagreements with the measurement show up. */}
                 {coachPick !== null && (
                   <div className="pb-1 mb-1 border-b">
-                    <span className="text-muted-foreground">The coach would</span> <b>{actionText(coachPick).toLowerCase()}</b>.
+                    <span className="text-muted-foreground">The <J>Coach</J> would</span> <b>{actionText(coachPick).toLowerCase()}</b>.
                     {coachPick === bestAction.a
                       ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
                       : <span className="text-amber-700 dark:text-amber-300"> The measurement disagrees — trust the bars here.</span>}
                   </div>
                 )}
-                <div><span className="text-muted-foreground">Coach reads this as</span> <b>{coach.plan}</b>.
+                <div><span className="text-muted-foreground"><J>Coach</J> reads this as</span> <b>{coach.plan}</b>.
                   {coach.best !== null && bestAction.a.startsWith('d:') && (
                     coach.best === Number(bestAction.a.slice(2))
                       ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
@@ -495,9 +495,9 @@ export default function RealQuiz() {
                       <div><span className="text-muted-foreground">A shape you have a card for:</span> <b>{jargon(tip?.title ?? c.tip)}</b></div>
                       <div className="text-muted-foreground">{c.because}</div>
                       <div>
-                        {follows ? <span className="text-emerald-700 dark:text-emerald-300">The measured best does what the tip says.</span>
-                          : goesAgainst ? <span className="text-amber-700 dark:text-amber-300">The measured best goes the other way here. One position settles nothing, but it is worth asking what this hand has that the tip does not know about.</span>
-                          : <span className="text-muted-foreground">The measured best is a third tile, so the tip did not decide this one.</span>}
+                        {follows ? <span className="text-emerald-700 dark:text-emerald-300">The <J>Measured Best</J> does what the tip says.</span>
+                          : goesAgainst ? <span className="text-amber-700 dark:text-amber-300">The <J>Measured Best</J> goes the other way here. One position settles nothing, but it is worth asking what this hand has that the tip does not know about.</span>
+                          : <span className="text-muted-foreground">The <J>Measured Best</J> is a third tile, so the tip did not decide this one.</span>}
                       </div>
                     </div>
                   );

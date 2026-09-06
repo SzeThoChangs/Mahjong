@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { downloadBackup, restoreBackup } from '@/lib/backup';
-import { jargon } from '@/lib/jargon';
+import { jargon, J } from '@/lib/jargon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -97,7 +97,7 @@ export default function TableSetup() {
           <div className="overflow-x-auto">
             <table className="text-sm w-full min-w-[34rem]">
               <thead className="text-muted-foreground">
-                <tr><th className="text-left font-normal py-1">Tai</th><th className="text-left font-normal">Base ($ each)</th><th className="text-left font-normal">自摸 ZM — each pays</th><th className="text-left font-normal">On a discard win</th><th className="text-left font-normal">Winner collects (ZM)</th></tr>
+                <tr><th className="text-left font-normal py-1"><J>Tai</J></th><th className="text-left font-normal">Base ($ each)</th><th className="text-left font-normal">自摸 ZM — each pays</th><th className="text-left font-normal">On a discard win</th><th className="text-left font-normal">Winner collects (ZM)</th></tr>
               </thead>
               <tbody>
                 {taiKeys.map((t) => (
@@ -115,31 +115,31 @@ export default function TableSetup() {
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm items-center">
             <label>自摸 bonus each <Num v={cfg.zm} on={(v) => setCfg({ ...cfg, zm: v })} /></label>
-            <label>Min tai to win <Num v={cfg.minTai} on={(v) => setCfg({ ...cfg, minTai: v })} /></label>
-            <label>Max tai (cap) <Num v={cfg.maxTai} on={(v) => setCfg({ ...cfg, maxTai: v })} /></label>
-            <label>自摸 min tai <Num v={cfg.selfDrawMinTai} on={(v) => setCfg({ ...cfg, selfDrawMinTai: v })} /></label>
+            <label>Min <J>Tai</J> to win <Num v={cfg.minTai} on={(v) => setCfg({ ...cfg, minTai: v })} /></label>
+            <label>Max <J>Tai</J> (cap) <Num v={cfg.maxTai} on={(v) => setCfg({ ...cfg, maxTai: v })} /></label>
+            <label><J>Zi Mo</J> min <J>Tai</J> <Num v={cfg.selfDrawMinTai} on={(v) => setCfg({ ...cfg, selfDrawMinTai: v })} /></label>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm items-center">
-            <span className="text-muted-foreground">Kongs — each opponent pays:</span>
+            <span className="text-muted-foreground"><J>Kongs</J> — each opponent pays:</span>
             <label>暗槓 concealed <Num v={cfg.kongConcealed} on={(v) => setCfg({ ...cfg, kongConcealed: v })} /></label>
             <label>明槓 exposed <Num v={cfg.kongExposed} on={(v) => setCfg({ ...cfg, kongExposed: v })} /></label>
-            <label>Fed kong — feeder alone pays <Num v={cfg.kongFed} on={(v) => setCfg({ ...cfg, kongFed: v })} /></label>
+            <label>Fed <J>Kong</J> — feeder alone pays <Num v={cfg.kongFed} on={(v) => setCfg({ ...cfg, kongFed: v })} /></label>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm items-center">
             <span className="text-muted-foreground">Bites (hidden / open):</span>
-            <label>花 Flowers <Num v={cfg.flowerBiteHidden} on={(v) => setCfg({ ...cfg, flowerBiteHidden: v })} /> <Num v={cfg.flowerBiteOpen} on={(v) => setCfg({ ...cfg, flowerBiteOpen: v })} /></label>
-            <label>Animals <Num v={cfg.animalBiteHidden} on={(v) => setCfg({ ...cfg, animalBiteHidden: v })} /> <Num v={cfg.animalBiteOpen} on={(v) => setCfg({ ...cfg, animalBiteOpen: v })} /></label>
+            <label>花 <J>Flowers</J> <Num v={cfg.flowerBiteHidden} on={(v) => setCfg({ ...cfg, flowerBiteHidden: v })} /> <Num v={cfg.flowerBiteOpen} on={(v) => setCfg({ ...cfg, flowerBiteOpen: v })} /></label>
+            <label><J>Animals</J> <Num v={cfg.animalBiteHidden} on={(v) => setCfg({ ...cfg, animalBiteHidden: v })} /> <Num v={cfg.animalBiteOpen} on={(v) => setCfg({ ...cfg, animalBiteOpen: v })} /></label>
             <label className="flex items-center gap-1.5">
               <input type="checkbox" checked={cfg.jokers > 0} onChange={(e) => setCfg({ ...cfg, jokers: e.target.checked ? 4 : 0 })} />
-              Wildcards (飛) in play
+              <span><J>Jokers</J> (飛) in play</span>
             </label>
             {cfg.jokers > 0 && <label>how many <Num v={cfg.jokers} on={(v) => setCfg({ ...cfg, jokers: v })} /></label>}
           </div>
           <p className="text-xs text-muted-foreground">The winner collects the same total either way — <b>base(tai) + 2 × base(tai−1)</b>, i.e. $7 / $11 / $20 / $40. {cfg.payMode === 'shooter'
             ? <>On <b>shooter pays</b> the discarder carries the whole thing and the other two pay nothing — your table.</>
-            : cfg.payMode === 'everyone' ? <>On <b>everyone pays</b> the discarder pays the big share and the other two losers pay the smaller one (5 tai = $20 + $10 + $10).</>
+            : cfg.payMode === 'everyone' ? <>On <b>everyone pays</b> the discarder pays the big share and the other two losers pay the smaller one (5 <J>Tai</J> = $20 + $10 + $10).</>
             : <>All three pay the same share.</>} Edit the base column and everything re-prices instantly.</p>
-          <p className="text-xs text-muted-foreground"><b>Amounts</b> (ladder, 自摸 bonus, kongs, bites) re-price the table below straight away. <b>Min tai and wildcards</b> change how hands actually play out, so the numbers below still reflect the recorded rules until the dataset is regenerated — run <code>pnpm -C datagen gen</code> then <code>tsx src/profile.ts</code>.</p>
+          <p className="text-xs text-muted-foreground"><b>Amounts</b> (ladder, 自摸 bonus, kongs, bites) re-price the table below straight away. <b>Min <J>Tai</J> and <J>Jokers</J></b> change how hands actually play out, so the numbers below still reflect the recorded rules until the dataset is regenerated — run <code>pnpm -C datagen gen</code> then <code>tsx src/profile.ts</code>.</p>
         </CardContent>
       </Card>
 
@@ -158,7 +158,7 @@ export default function TableSetup() {
               <div className="overflow-x-auto">
                 <table className="text-sm w-full min-w-[42rem]">
                   <thead className="text-muted-foreground">
-                    <tr><th className="text-left font-normal py-1">Hand type</th><th className="text-right font-normal">Wins / 1,000</th><th className="text-right font-normal">Avg tai</th><th className="text-right font-normal">Pays</th><th className="text-right font-normal pr-3">Value / 1,000 hands</th><th className="text-left font-normal">vs {other.name.split(' ')[0]}</th></tr>
+                    <tr><th className="text-left font-normal py-1">Hand type</th><th className="text-right font-normal">Wins / 1,000</th><th className="text-right font-normal">Avg <J>Tai</J></th><th className="text-right font-normal">Pays</th><th className="text-right font-normal pr-3">Value / 1,000 hands</th><th className="text-left font-normal">vs {other.name.split(' ')[0]}</th></tr>
                   </thead>
                   <tbody>
                     {rows.map((r: ComboValue) => {
@@ -166,7 +166,7 @@ export default function TableSetup() {
                       const ratio = o && o.per1000Value > 0 ? r.per1000Value / o.per1000Value : 1;
                       return (
                         <tr key={r.id} className="border-t">
-                          <td className="py-1">{COMBO_LABEL[r.id] ?? r.id}</td>
+                          <td className="py-1">{jargon(COMBO_LABEL[r.id] ?? r.id)}</td>
                           <td className="text-right tabular-nums">{r.per1000.toFixed(r.per1000 < 1 ? 2 : 0)}</td>
                           <td className="text-right tabular-nums text-muted-foreground">{r.avgTai.toFixed(1)}</td>
                           <td className="text-right tabular-nums">{money(r.avgWin)}</td>
@@ -209,14 +209,14 @@ function Takeaways({ rows, otherById, otherName, profile, cfg }: { rows: ComboVa
   const big = rows.filter((r) => r.avgTai > 2.5).reduce((a, r) => a + r.per1000Value, 0);
   return (
     <div className="space-y-1.5 text-sm">
-      <div><b>The money is in:</b> {top.map((t) => COMBO_LABEL[t.id] ?? t.id).join(', ')} — together {Math.round((top.reduce((a, t) => a + t.per1000Value, 0) / rows.reduce((a, t) => a + t.per1000Value, 0)) * 100)}% of all value won.</div>
-      <div><b>Cheap-and-often vs big-and-rare:</b> hands averaging ≤2.5 tai carry {money(Math.round(cheap))} per 1,000 hands; bigger hands carry {money(Math.round(big))}. {cheap > big * 2 ? 'This table rewards finishing fast far more than chasing.' : big > cheap ? 'This table genuinely rewards chasing bigger hands.' : 'Fast and big are roughly balanced here.'}</div>
+      <div><b>The money is in:</b> {jargon(top.map((t) => COMBO_LABEL[t.id] ?? t.id).join(', '))} — together {Math.round((top.reduce((a, t) => a + t.per1000Value, 0) / rows.reduce((a, t) => a + t.per1000Value, 0)) * 100)}% of all value won.</div>
+      <div><b>Cheap-and-often vs big-and-rare:</b> hands averaging ≤2.5 <J>Tai</J> carry {money(Math.round(cheap))} per 1,000 hands; bigger hands carry {money(Math.round(big))}. {cheap > big * 2 ? 'This table rewards finishing fast far more than chasing.' : big > cheap ? 'This table genuinely rewards chasing bigger hands.' : 'Fast and big are roughly balanced here.'}</div>
       {biggestGain && biggestLoss && biggestGain.ratio / biggestLoss.ratio > 1.05 && (
-        <div><b>Versus {otherName}:</b> {COMBO_LABEL[biggestGain.r.id] ?? biggestGain.r.id} is worth {biggestGain.ratio.toFixed(2)}× here, while {COMBO_LABEL[biggestLoss.r.id] ?? biggestLoss.r.id} is {(1 / biggestLoss.ratio).toFixed(2)}× better there. Same tiles, different plan.</div>
+        <div><b>Versus {otherName}:</b> {jargon(COMBO_LABEL[biggestGain.r.id] ?? biggestGain.r.id)} is worth {biggestGain.ratio.toFixed(2)}× here, while {jargon(COMBO_LABEL[biggestLoss.r.id] ?? biggestLoss.r.id)} is {(1 / biggestLoss.ratio).toFixed(2)}× better there. Same tiles, different plan.</div>
       )}
-      <div><b>自摸 vs winning off a discard:</b> at {cfg.maxTai} tai a self-draw collects {money(zmTotal(cfg, cfg.maxTai))} but a discard win collects {money(shootTotal(cfg, cfg.maxTai))} — {zmTotal(cfg, cfg.maxTai) > shootTotal(cfg, cfg.maxTai) * 1.15 ? <>self-draw is worth <b>{(zmTotal(cfg, cfg.maxTai) / shootTotal(cfg, cfg.maxTai)).toFixed(1)}×</b> more, so waits you can draw yourself are worth a lot more than waits you must be fed.</> : shootTotal(cfg, cfg.maxTai) > zmTotal(cfg, cfg.maxTai) * 1.15 ? <>the discard win is worth more here, so a wide wait others may feed is worth more than a self-draw-only shape.</> : <>they are close, so the wait type matters less here than at tables with a big gap.</>}</div>
+      <div><b>自摸 vs winning off a discard:</b> at {cfg.maxTai} <J>Tai</J> a <J>Zi Mo</J> collects {money(zmTotal(cfg, cfg.maxTai))} but a discard win collects {money(shootTotal(cfg, cfg.maxTai))} — {zmTotal(cfg, cfg.maxTai) > shootTotal(cfg, cfg.maxTai) * 1.15 ? <><J>Zi Mo</J> is worth <b>{(zmTotal(cfg, cfg.maxTai) / shootTotal(cfg, cfg.maxTai)).toFixed(1)}×</b> more, so <J>Waits</J> you can draw yourself are worth a lot more than <J>Waits</J> you must be fed.</> : shootTotal(cfg, cfg.maxTai) > zmTotal(cfg, cfg.maxTai) * 1.15 ? <>the discard win is worth more here, so a wide <J>Wait</J> others may feed is worth more than a <J>Zi Mo</J>-only shape.</> : <>they are close, so the <J>Wait</J> type matters less here than at tables with a big gap.</>}</div>
       <div className="text-muted-foreground text-xs">
-        Also moving on every hand: kongs and bites, about {money(profile.sidePerHand)} per hand at the recorded amounts (kongs {money(cfg.kongConcealed)}/{money(cfg.kongExposed)}/{money(cfg.kongFed)}, flower bites {money(cfg.flowerBiteHidden)}/{money(cfg.flowerBiteOpen)}, animal bites {money(cfg.animalBiteHidden)}/{money(cfg.animalBiteOpen)}) — combination-independent, so it does not change which plan to pick, but it does reward declaring kongs.
+        Also moving on every hand: kongs and bites, about {money(profile.sidePerHand)} per hand at the recorded amounts (kongs {money(cfg.kongConcealed)}/{money(cfg.kongExposed)}/{money(cfg.kongFed)}, <J>Flower</J> bites {money(cfg.flowerBiteHidden)}/{money(cfg.flowerBiteOpen)}, <J>Animal</J> bites {money(cfg.animalBiteHidden)}/{money(cfg.animalBiteOpen)}) — combination-independent, so it does not change which plan to pick, but it does reward declaring <J>Kongs</J>.
         <br />Frequencies come from simple bots, so they are a floor: a strong player converts more of the harder hands than these numbers show. The ranking by value is what matters.
       </div>
     </div>
@@ -235,11 +235,11 @@ function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; ro
       <CardHeader className="pb-2"><CardTitle className="text-base">What this table rewards</CardTitle></CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div>
-          <div className="font-medium mb-1">Sweet spot: <b>{peak.tai} tai</b> — where the most money actually is</div>
+          <div className="font-medium mb-1">Sweet spot: <b>{peak.tai} <J>Tai</J></b> — where the most money actually is</div>
           <div className="space-y-0.5">
             {bands.map((b) => (
               <div key={b.tai} className="flex items-center gap-2 text-xs">
-                <span className="w-14 text-muted-foreground">{b.tai} tai</span>
+                <span className="w-14 text-muted-foreground">{b.tai} <J>Tai</J></span>
                 <div className="h-3 rounded bg-primary/70" style={{ width: `${Math.max(2, (b.value / maxBand) * 260)}px` }} />
                 <span className="w-16 tabular-nums">{money(Math.round(b.value))}</span>
                 <span className="text-muted-foreground">{b.per1000.toFixed(b.per1000 < 1 ? 2 : 0)} wins / 1,000 × {money(b.avgWin)}</span>
@@ -248,14 +248,14 @@ function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; ro
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Hands at {peak.tai} tai carry more total value than any other level here — not because they pay most, but because they pay decently <i>and</i> happen often.
+            Hands at {peak.tai} <J>Tai</J> carry more total value than any other level here — not because they pay most, but because they pay decently <i>and</i> happen often.
           </p>
         </div>
 
         <Separator />
         <div>
-          <div className="font-medium">Chase: {chase.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', ')}</div>
-          {avoid.length > 0 && <div className="text-muted-foreground">Avoid steering toward: {avoid.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', ')} — they pay well but land under once per {Math.round(1000 / Math.max(0.001, avoid[0]!.per1000)).toLocaleString()} hands, so the tiles you spend chasing them cost more than they return.</div>}
+          <div className="font-medium">Chase: {jargon(chase.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', '))}</div>
+          {avoid.length > 0 && <div className="text-muted-foreground">Avoid steering toward: {jargon(avoid.map((r) => COMBO_LABEL[r.id] ?? r.id).join(', '))} — they pay well but land under once per {Math.round(1000 / Math.max(0.001, avoid[0]!.per1000)).toLocaleString()} hands, so the tiles you spend chasing them cost more than they return.</div>}
         </div>
 
         {econ && (
@@ -263,16 +263,16 @@ function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; ro
             <Separator />
             <div className="space-y-1">
               <div className="font-medium">Draw or call?</div>
-              <div>Flowers, animals and kongs move <b>{money(econ.perHandTable)}</b> per hand across the table — about <b>{money(econ.perSeatPerHand)}</b> a hand each, and <b>{money(econ.perDraw)}</b> for every tile you personally draw.</div>
+              <div><J>Flowers</J>, <J>Animals</J> and <J>Kongs</J> move <b>{money(econ.perHandTable)}</b> per hand across the table — about <b>{money(econ.perSeatPerHand)}</b> a hand each, and <b>{money(econ.perDraw)}</b> for every tile you personally draw.</div>
               <div>
-                A chow or pong takes a discard <i>instead of</i> drawing, so each call quietly costs you about <b>{money(econ.callCost)}</b> in forgone flowers and animals.{' '}
+                A <J>Chow</J> or <J>Pong</J> takes a discard <i>instead of</i> drawing, so each call quietly costs you about <b>{money(econ.callCost)}</b> in forgone <J>Flowers</J> and <J>Animals</J>.{' '}
                 {econ.perDraw >= 0.25
                   ? <>At these bite prices that is real money — <b>lean toward drawing</b> and only call when it genuinely speeds the hand up.</>
                   : econ.perDraw >= 0.1
                     ? <>That is small but not nothing — call when it helps the hand, do not call just to be busy.</>
                     : <>That is negligible here, so call freely whenever it improves the hand.</>}
               </div>
-              <div>A kong runs the other way: it pays <b>{money(3 * cfg.kongExposed)}</b> ({money(cfg.kongConcealed * 3)} concealed) <i>and</i> buys you a replacement draw worth another {money(econ.perDraw)} — <b>declare kongs whenever the hand allows</b>.</div>
+              <div>A <J>Kong</J> runs the other way: it pays <b>{money(3 * cfg.kongExposed)}</b> ({money(cfg.kongConcealed * 3)} concealed) <i>and</i> buys you a replacement draw worth another {money(econ.perDraw)} — <b>declare <J>Kongs</J> whenever the hand allows</b>.</div>
             </div>
           </>
         )}
@@ -282,7 +282,7 @@ function Advice({ profile, cfg, rows }: { profile: Profile; cfg: MoneyConfig; ro
             <Separator />
             <div className="space-y-1">
               <div className="font-medium">The minimum is costing you hands</div>
-              <div>Across the table, <b>{profile.blockedPerHand.toFixed(2)} complete hands per hand</b> could not be declared because they were under the {profile.minimumTai}-tai minimum{profile.avgReadyTurn !== undefined && profile.avgReadyTurn > 0 ? <>, and a seat reaches one-away at 第{Math.max(1, Math.round(profile.avgReadyTurn / 4))}巡 on average</> : null}. Build a tai <i>before</i> you build a shape: a flower, a dragon pair, your own wind — otherwise you finish the hand and cannot say 胡.</div>
+              <div>Across the table, <b>{profile.blockedPerHand.toFixed(2)} complete hands per hand</b> could not be declared because they were under the {profile.minimumTai}-<J>Tai</J> minimum{profile.avgReadyTurn !== undefined && profile.avgReadyTurn > 0 ? <>, and a seat reaches one-away at 第{Math.max(1, Math.round(profile.avgReadyTurn / 4))}巡 on average</> : null}. Build a <J>Tai</J> <i>before</i> you build a shape: a <J>Flower</J>, a <J>Dragon</J> pair, your own <J>Seat Wind</J> — otherwise you finish the hand and cannot say 胡.</div>
             </div>
           </>
         )}
@@ -310,13 +310,13 @@ function Reads() {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div>
-          <div className="font-medium mb-1">How close is a seat to winning? Count their exposed melds.</div>
+          <div className="font-medium mb-1">How close is a seat to winning? Count their exposed <J>Melds</J>.</div>
           <div className="space-y-1 text-xs">
             {(['0', '1', '2', '3'] as const).map((m) => (
-              <div key={m} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">{m} melds, mid-game (第8巡)</span>{bar(d.ready, `${m}|30`)}<span className="text-muted-foreground">{jargon('*Ting Pai*')}</span></div>
+              <div key={m} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">{m} <J>Melds</J>, mid-game (第8巡)</span>{bar(d.ready, `${m}|30`)}<span className="text-muted-foreground">{jargon('*Ting Pai*')}</span></div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Three exposed melds mid-game ≈ a 4-in-10 chance they are waiting. Treat their discards with respect from the third meld on.</p>
+          <p className="text-xs text-muted-foreground mt-1">Three exposed <J>Melds</J> mid-game ≈ a 4-in-10 chance they are <J>Ting Pai</J>. Treat their discards with respect from the third <J>Meld</J> on.</p>
         </div>
         <Separator />
         <div>
@@ -332,16 +332,16 @@ function Reads() {
         <div>
           <div className="font-medium mb-1">Which discards actually deal in (per tile thrown)</div>
           <div className="grid gap-1 text-xs sm:grid-cols-2">
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">simple, mid-game</span>{bar(d.danger, 'simple|30')}</div>
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">simple, late (第13巡+)</span>{bar(d.danger, 'simple|50')}</div>
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">terminal, mid-game</span>{bar(d.danger, 'terminal|30')}</div>
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">honour, any time</span>{bar(d.danger, 'honour|30')}</div>
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">fresh simple, 第10巡</span>{bar(d.dangerSafe, 'simple|40|fresh')}</div>
-            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">already-seen simple</span>{bar(d.dangerSafe, 'simple|40|seen')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground"><J>Simple</J>, mid-game</span>{bar(d.danger, 'simple|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground"><J>Simple</J>, late (第13巡+)</span>{bar(d.danger, 'simple|50')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground"><J>Terminal</J>, mid-game</span>{bar(d.danger, 'terminal|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground"><J>Honour</J>, any time</span>{bar(d.danger, 'honour|30')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">fresh <J>Simple</J>, 第10巡</span>{bar(d.dangerSafe, 'simple|40|fresh')}</div>
+            <div className="flex items-center gap-2"><span className="w-36 text-muted-foreground">already-seen <J>Simple</J></span>{bar(d.dangerSafe, 'simple|40|seen')}</div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Honours are near-zero risk all game, middle tiles are the danger. It is just counting: to win on 中 someone needs a pair of it already, but 5筒 can complete 3筒4筒, 4筒6筒, 6筒7筒, a pair, or a lone wait — far more ways to be caught. A tile already thrown once is roughly a third safer than a fresh one.</p>
+          <p className="text-xs text-muted-foreground mt-1"><J>Honours</J> are near-zero risk all game, <J>Middle Tiles</J> are the danger. It is just counting: to win on 中 someone needs a pair of it already, but 5筒 can complete 3筒4筒, 4筒6筒, 6筒7筒, a pair, or a lone <J>Wait</J> — far more ways to be caught. A tile already thrown once is roughly a third safer than a fresh one.</p>
         </div>
-        <p className="text-xs text-muted-foreground">Caveat: measured on the simulator's bots, who never disguise their hands. The meld and suit signals are structural and carry to humans; the exact percentages will drift against players who hide their intent.</p>
+        <p className="text-xs text-muted-foreground">Caveat: measured on the simulator's bots, who never disguise their hands. The <J>Meld</J> and suit signals are structural and carry to humans; the exact percentages will drift against players who hide their intent.</p>
       </CardContent>
     </Card>
   );

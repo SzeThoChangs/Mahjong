@@ -30,7 +30,7 @@ export const CAUSES: { id: Cause; label: string; blurb: string }[] = [
   { id: 'miscounted', label: 'Miscounted', blurb: 'I considered it and got the tiles or the distance wrong.' },
   { id: 'misjudged-safety', label: 'Misjudged the safety', blurb: 'The counting was fine; I misread how dangerous my tile was.' },
   { id: 'wrong-plan', label: 'Played for the wrong plan', blurb: 'I was building a different hand from the one worth building.' },
-  { id: 'missed-tile', label: 'Missed a tile on the table', blurb: 'Something in the discards or melds I simply did not take in.' },
+  { id: 'missed-tile', label: 'Missed a tile on the table', blurb: 'Something in the Discard Pool or the Melds I simply did not take in.' },
   { id: 'knew-anyway', label: 'Knew, and threw something else', blurb: 'I found the right tile and did not play it.' },
 ];
 export const causeLabel = (c: Cause): string => CAUSES.find((x) => x.id === c)?.label ?? c;

@@ -8,7 +8,7 @@ import { HandContext } from '@/components/HandContext';
 import { PublicTable } from '@/components/PublicTable';
 import { TILE_BACK } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
-import { jargon } from '@/lib/jargon';
+import { jargon, J } from '@/lib/jargon';
 import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, suggestedLook, type SpotKind, type SpotCause } from '@/lib/spotstats';
 
 /**
@@ -46,7 +46,7 @@ const KINDS: SpotKind[] = ['ready', 'suit', 'threat', 'shape'];
 const PROMPT: Record<SpotKind, string> = {
   ready: 'How far from *Ting Pai* was your hand?',
   suit: 'Which suit were you holding most of?',
-  threat: 'Who had the most sets face up?',
+  threat: 'Who had the most *Melds* face up?',
   shape: 'What shape was this position about?',
 };
 /** What each question is training, for the running score. Kept separate from the prompt because a
@@ -205,7 +205,7 @@ export default function Spot() {
         <>
           <Card>
             <CardContent className="pt-4">
-              <HandContext seat={s.seat} dealer={s.dl} prevailingWind={s.w} playerTurns={s.t} fan={s.fih} fanLabel="Tai in hand" className="gap-x-5 gap-y-2" />
+              <HandContext seat={s.seat} dealer={s.dl} prevailingWind={s.w} playerTurns={s.t} fan={s.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2" />
             </CardContent>
           </Card>
 
@@ -228,13 +228,13 @@ export default function Spot() {
             <CardContent className="pt-4 space-y-3">
               {s.b.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="w-24 shrink-0 text-xs text-muted-foreground">Your flowers</span>
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground">Your <J>Bonus Tiles</J></span>
                   <div className="flex gap-1">{s.b.map((k, i) => <Tile key={i} kind={k} size="xs" />)}</div>
                 </div>
               )}
               {s.m.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="w-24 shrink-0 text-xs text-muted-foreground">Your sets</span>
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground">Your <J>Melds</J></span>
                   <div className="flex flex-wrap gap-3">
                     {s.m.map((m, i) => (
                       <div key={i} className="flex gap-0.5">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="xs" concealed={m[1] === 1} />)}</div>
@@ -332,10 +332,10 @@ export default function Spot() {
 
 /** Say what the answer was and, where it helps, why it is worth seeing. */
 function explain(s: Spot, kind: SpotKind): string {
-  if (kind === 'ready') return s.sh === 0 ? 'The hand was ready.' : `The hand was ${READY[Math.min(3, s.sh)]}.`;
-  if (kind === 'suit') return `Most of the hand was in ${SUIT[s.suit]}, counting your sets.`;
+  if (kind === 'ready') return s.sh === 0 ? 'The hand was *Ting Pai*.' : `The hand was ${READY[Math.min(3, s.sh)]}.`;
+  if (kind === 'suit') return `Most of the hand was in ${SUIT[s.suit]}, counting your *Melds*.`;
   if (kind === 'threat') {
-    if (s.threat === 0) return 'Nobody had a set face up.';
+    if (s.threat === 0) return 'Nobody had a *Meld* face up.';
     return `${SEAT_NAME[s.threat]} had ${s.melds[s.threat]} face up, against ${s.melds.slice(1).filter((_, i) => i + 1 !== s.threat).join(' and ')} for the others.`;
   }
   const tip = TIPS.find((t) => t.id === s.tip);

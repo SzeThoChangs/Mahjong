@@ -10,7 +10,7 @@
  * quietly disagree with its example, and `test/tips.test.ts` fails if one ever does.
  *
  * The verdict badge is the point of the page. A tip being in the book is not evidence it is true
- * here: the book is Riichi-derived and this table has a 2-tai minimum, four wildcards and a chicken
+ * here: the book is Riichi-derived and this table has a 2-Tai minimum, four Jokers and a Pi Wu
  * hand nobody else plays. Some of these tips turn out to be wrong at this table, and the page counts
  * them off in its own opening line, which is more useful than a page of confident advice.
  */
@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { TIPS, type Tip, type TipVerdict } from 'sg-mahjong-solver';
 import { cn } from '@/lib/utils';
-import { jargon } from '@/lib/jargon';
+import { jargon, J } from '@/lib/jargon';
 
 const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }> = {
   confirmed: { label: 'Confirmed by counting', tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200', blurb: 'Worked out exactly from the tiles. No simulation, no error bars.' },
@@ -35,10 +35,10 @@ const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }
 /** The order a hand happens in, which is the order the page runs in. */
 const PHASES: { id: Tip['phase']; title: string; blurb: string }[] = [
   { id: 'deal', title: 'What you are dealt', blurb: 'The first decision is which hand you are even trying to make, and most of it is settled before you draw a tile.' },
-  { id: 'build', title: 'Building the hand', blurb: 'The vocabulary of the game. A strong player does not read fourteen separate tiles, they read five or six shapes they already know.' },
+  { id: 'build', title: 'Building the hand', blurb: 'The vocabulary of the game. A strong player does not read fourteen separate tiles, they read five or six *Blocks* they already know.' },
   { id: 'discard', title: 'Choosing what to throw', blurb: 'Every discard hands the table something. These are the rules for making it the cheapest thing you hold.' },
-  { id: 'call', title: 'Claiming a tile', blurb: 'A call buys speed and spends your hand, your defence and sometimes your own draw.' },
-  { id: 'read', title: 'Reading the table', blurb: 'What the discards, the melds and the tiles nobody claimed tell you about the other three hands.' },
+  { id: 'call', title: 'Claiming a tile', blurb: 'A *Chow*, *Pong* or *Kong* buys speed and spends your hand, your defence and sometimes your own draw.' },
+  { id: 'read', title: 'Reading the table', blurb: 'What the *Discard Pool*, the *Melds* and the tiles nobody claimed tell you about the other three hands.' },
   { id: 'push_fold', title: 'Fighting or folding', blurb: 'Whether this hand is worth playing at all, which is the decision that costs the most when it goes wrong.' },
   { id: 'meta', title: 'How to play', blurb: 'Advice about the player rather than the hand. None of it can be measured here, and it is still the part most people get wrong.' },
 ];
@@ -91,9 +91,9 @@ function TipCard({ t }: { t: Tip }) {
         {t.variants.map((x, i) => (
           <div key={i} className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{x.label}</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{jargon(x.label)}</span>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {x.shanten === 0 ? 'ready' : `${x.shanten} from ready`} ·{' '}
+                {jargon(x.shanten === 0 ? '*Ting Pai*' : `${x.shanten} from *Ting Pai*`)} ·{' '}
                 <b className={cn('text-foreground', t.variants.length > 1 && x.ukeire === best && 'text-emerald-700 dark:text-emerald-300')}>
                   {x.ukeire} tiles
                 </b>{' '}
@@ -111,7 +111,7 @@ improve it, from {x.kinds} kinds
           {t.notWhen && <p className="text-muted-foreground"><b className="text-foreground">Where it stops applying.</b> {jargon(t.notWhen)}</p>}
         </div>
         <div className="rounded-md bg-muted/60 px-3 py-2 text-sm">
-          <b>{v.label}.</b> {jargon(t.verdictNote)}
+          <b>{jargon(v.label)}.</b> {jargon(t.verdictNote)}
         </div>
       </CardContent>
     </Card>
@@ -132,9 +132,9 @@ export default function Tips() {
         <h2 className="text-xl font-semibold">Tips</h2>
         {/* every verdict here was measured at one table; a learner cannot tell that from the cards */}
         <p className="max-w-3xl text-xs text-muted-foreground">
-          Every verdict on this page was measured at one table: <b>four wildcards</b> and a <b>2 tai minimum</b>.
-          Both rules change the game measurably — taking the wildcards out makes hands run 54 turns instead of 40
-          and drawn hands 19% instead of 0.6%, and a late throw is about twice as likely to complete somebody.
+          Every verdict on this page was measured at one table: <b>four <J>Jokers</J></b> and a <b>2 <J>Tai</J> minimum</b>.
+          Both rules change the game measurably — taking the <J>Jokers</J> out makes hands run 54 <J>Turns</J> instead
+          of 40 and drawn hands 19% instead of 0.6%, and a late throw is about twice as likely to complete somebody.
           The shape cards should travel, since they are arithmetic about tiles. The cards about timing, danger and
           what a hand is worth may not.
         </p>
@@ -144,8 +144,8 @@ export default function Tips() {
         </p>
         <p className="max-w-3xl text-sm text-muted-foreground">
           The badge is the point. A tip being in a book is not evidence it is true here: most of them are adapted
-          from Riichi, and this table has a 2 tai minimum, a 5 tai cap, four wildcards, animals, bao and a cheap
-          hand nobody else plays. Of {TIPS.length} cards, {counted} are settled exactly by counting the tiles on
+          from Riichi, and this table has a 2 <J>Tai</J> minimum, a 5 <J>Tai</J> cap, four <J>Jokers</J>,{' '}
+          <J>Animals</J>, <J>Bao</J> and a <J>Pi Wu</J> nobody else plays. Of {TIPS.length} cards, {counted} are settled exactly by counting the tiles on
           the card, {measured} were measured on played hands, {wrong} came out against the book, {table} are rules
           of this table rather than anybody's advice, {advice} are about how to play rather than about tiles, and{' '}
           {open} are untested — real claims that nobody here has measured yet.
@@ -175,7 +175,7 @@ export default function Tips() {
           <div key={p.id} id={`tips-${p.id}`} className="flex flex-col gap-3 scroll-mt-4">
             <div className="flex flex-col gap-1 border-t pt-4">
               <h3 className="text-lg font-semibold">{p.title}</h3>
-              <p className="max-w-3xl text-sm text-muted-foreground">{p.blurb}</p>
+              <p className="max-w-3xl text-sm text-muted-foreground">{jargon(p.blurb)}</p>
             </div>
             <div className="grid gap-4">
               {cards.map((t) => <TipCard key={t.id} t={t} />)}

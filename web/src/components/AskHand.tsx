@@ -20,6 +20,7 @@ import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { rankDiscards, claimAdvice, type ClaimCandidate, type Context } from 'sg-mahjong-solver';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
+import { J } from '@/lib/jargon';
 import { CONFIG } from '@/lib/scenario';
 
 const WIND = ['東', '南', '西', '北'];
@@ -249,7 +250,7 @@ export default function AskHand() {
           )}
           {bonus.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Flowers and animals — tap to remove</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1"><J>Flowers</J> and <J>Animals</J> — tap to remove</div>
               <div className="flex flex-wrap gap-1">
                 {bonus.map((k, i) => <button key={i} type="button" onClick={() => setBonus((b) => b.filter((_, x) => x !== i))} className="rounded hover:opacity-60"><Tile kind={k} size="sm" /></button>)}
               </div>
@@ -280,7 +281,7 @@ export default function AskHand() {
                     {total !== HAND_TILES - 1 && <span className="text-amber-600">You need {HAND_TILES - 1} tiles to answer this — you have {total}.</span>}
                   </>}
             </div>
-            {!fromLeft && <div className="text-xs text-muted-foreground">Only the player immediately before you may chow; pong and kong are open to everyone.</div>}
+            {!fromLeft && <div className="text-xs text-muted-foreground">Only the player immediately before you may <J>Chow</J>; <J>Pong</J> and <J>Kong</J> are open to everyone.</div>}
             {claim?.none === true && <div className="text-muted-foreground">You cannot claim it — nothing in your hand matches.</div>}
             {claim?.none === false && (
               <>
@@ -384,7 +385,7 @@ export default function AskHand() {
             <Picker kinds={HONOURS} />
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Flowers, seasons and animals — they score, they never sit in your hand</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1"><J>Flowers</J>, seasons and <J>Animals</J> — they score, they never sit in your hand</div>
             <Picker kinds={BONUS} />
           </div>
         </CardContent>

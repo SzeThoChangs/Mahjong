@@ -30,6 +30,7 @@ import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
 import { rankDiscards, suggestCause, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
+import { jargon, J } from '@/lib/jargon';
 import { cn } from '@/lib/utils';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
@@ -297,7 +298,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
               <Separator />
               <div className="space-y-2 text-sm">
                 <p className={cn('font-medium', right ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
-                  {right ? `Right this time — ${tileLabel(pick)}.` : `Still wrong — you threw ${tileLabel(pick)}, ${quizQ ? 'the play-outs throw' : 'the coach throws'} ${tileLabel(coachTile)}.`}
+                  {jargon(right ? `Right this time — ${tileLabel(pick)}.` : `Still wrong — you threw ${tileLabel(pick)}, ${quizQ ? 'the play-outs throw' : 'the *Coach* throws'} ${tileLabel(coachTile)}.`)}
                 </p>
                 {pos.reasons(coachTile)[0] && <p className="text-muted-foreground">Why {tileLabel(coachTile)}: {pos.reasons(coachTile)[0]}.</p>}
                 <p className="text-muted-foreground">
