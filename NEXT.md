@@ -46,6 +46,18 @@ both fields before it bakes; that is the bar. The playbook has a verdict on all 
 matched baseline is the column to quote. `main` is fast-forwarded to this branch at the end of each
 session; there is no remote and the local checks are the checks.
 
+## The framework exists now
+
+`Framework - Mahjong.md` is in this folder, written 2026-09-06: the parts of the skill, the pattern
+library with its verdicts, how dishonest the feedback is and what to grade against instead, the
+eight mistake causes, seven stages, and an hour on Tuesday, Thursday and Saturday. It names the
+eighteen contradicted cards so the plan cannot teach them.
+
+Two things about it to keep true. It quotes counts and figures from `tips.ts` - 59 measured, 4
+confirmed, 6 table rules, 16 advice, 18 contradicted - and every one was checked against the code
+when it was written, so re-check them if verdicts change. And it deliberately has no
+`Pattern Library.md` or `Mistakes.md` beside it, unlike `Chess/`, because here both are software.
+
 ## Where to start next, in order
 
 **1. Done on 2026-09-06: the Train tab points at the leading cause.** `causeOf` in `scenario.ts`
