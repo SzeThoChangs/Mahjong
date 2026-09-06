@@ -19,3 +19,4 @@ data/gen/
 
 # python bytecode from the parquet script
 __pycache__/
+web/dist/

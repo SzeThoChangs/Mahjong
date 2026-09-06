@@ -1,0 +1,16 @@
+{
+  "name": "Which tile? — Singapore Mahjong trainer",
+  "short_name": "Which tile?",
+  "description": "Discard, claim and read practice for Singapore mahjong, graded by play-outs rather than by opinion.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#863bff",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
