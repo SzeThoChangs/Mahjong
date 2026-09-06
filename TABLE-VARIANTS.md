@@ -86,7 +86,7 @@ and not about two different sets of deals.
 
 Only if a comparison says the tables differ:
 
-6. A no-wildcard quiz pack, which is generation plus grading.
-7. Value tables refitted at zero wildcards, using the committed-plan machinery already built.
-8. The app told which table it is on - a control in Table setup beside the money, which already
+7. A no-wildcard quiz pack, which is generation plus grading.
+8. Value tables refitted at zero wildcards, using the committed-plan machinery already built.
+9. The app told which table it is on - a control in Table setup beside the money, which already
    edits `table.config.json` - and the cards labelled where a verdict differs between tables.

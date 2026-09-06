@@ -21,6 +21,13 @@ import { rulesForDir } from './tablerules.js';
 
 const n = Number(process.argv[2] ?? 2000);
 const base = rulesForDir('../data/gen/run-coach2');
+/**
+ * The four tables Changs plays: wildcards on or off, crossed with a 1 or 2 tai minimum. Everything
+ * this project measured sits in the first column of the first row.
+ */
+const ARMS: { wild: number; minTai: number }[] = [
+  { wild: 4, minTai: 2 }, { wild: 0, minTai: 2 }, { wild: 4, minTai: 1 }, { wild: 0, minTai: 1 },
+];
 const cls = (k: TileKind) => (isHonour(k) ? 'honour' : isTerminal(k) ? 'terminal' : 'simple');
 const band = (t: number) => (t < 20 ? 'early' : t < 40 ? 'mid' : 'late');
 
@@ -33,8 +40,8 @@ interface Arm {
 }
 const blank = (): Arm => ({ hands: 0, wins: 0, draws: 0, turns: 0, chipsWon: 0, tai: 0, everReady: 0, readyTurnSum: 0, readyTurns: 0, blocked: 0, combos: new Map(), danger: new Map() });
 
-function play(count: number, sample: boolean): Arm {
-  const rules = { ...base, jokers: { ...base.jokers, count } };
+function play(count: number, minTai: number, sample: boolean): Arm {
+  const rules = { ...base, jokers: { ...base.jokers, count }, minimum_tai: minTai };
   const cfg = tableConfigOf(rules);
   const a = blank();
   let step = 0;
@@ -76,24 +83,24 @@ function play(count: number, sample: boolean): Arm {
 }
 
 const t0 = Date.now();
-const four = play(4, true), zero = play(0, true);
+const arms = ARMS.map((a) => ({ ...a, r: play(a.wild, a.minTai, true) }));
 const pc = (x: number, y: number) => `${(100 * x / Math.max(1, y)).toFixed(1)}%`;
-const row = (label: string, f: string, z: string) => console.log(`  ${label.padEnd(34)}${f.padStart(10)}${z.padStart(12)}`);
-console.log(`\n${n} paired deals, four coaches, the same seeds both ways (${((Date.now() - t0) / 1000).toFixed(0)}s)\n`);
-console.log(`  ${'.'.padEnd(34)}${'4 wildcards'.padStart(10)}${'0 wildcards'.padStart(12)}`);
-row('somebody won', pc(four.wins, four.hands), pc(zero.wins, zero.hands));
-row('nobody won (drawn hand)', pc(four.draws, four.hands), pc(zero.draws, zero.hands));
-row('mean turns in a hand', (four.turns / four.hands).toFixed(1), (zero.turns / zero.hands).toFixed(1));
-row('seats that ever reached Ting Pai', pc(four.everReady, four.hands * 4), pc(zero.everReady, zero.hands * 4));
-row('  ...and the turn they got there', (four.readyTurnSum / Math.max(1, four.readyTurns)).toFixed(1), (zero.readyTurnSum / Math.max(1, zero.readyTurns)).toFixed(1));
-row('tai per win', (four.tai / Math.max(1, four.wins)).toFixed(2), (zero.tai / Math.max(1, zero.wins)).toFixed(2));
-row('chips per win', (four.chipsWon / Math.max(1, four.wins)).toFixed(2), (zero.chipsWon / Math.max(1, zero.wins)).toFixed(2));
-row('wins blocked by the minimum', String(four.blocked), String(zero.blocked));
+const head = arms.map((a) => `${a.wild}w/${a.minTai}tai`);
+const row = (label: string, vals: string[]) => console.log(`  ${label.padEnd(34)}${vals.map((v) => v.padStart(11)).join('')}`);
+console.log(`\n${n} paired deals per arm, four coaches, the same seeds in every arm (${((Date.now() - t0) / 1000).toFixed(0)}s)\n`);
+row('.', head);
+row('somebody won', arms.map((a) => pc(a.r.wins, a.r.hands)));
+row('nobody won (drawn hand)', arms.map((a) => pc(a.r.draws, a.r.hands)));
+row('mean turns in a hand', arms.map((a) => (a.r.turns / a.r.hands).toFixed(1)));
+row('seats that ever reached Ting Pai', arms.map((a) => pc(a.r.everReady, a.r.hands * 4)));
+row('  ...and the turn they got there', arms.map((a) => (a.r.readyTurnSum / Math.max(1, a.r.readyTurns)).toFixed(1)));
+row('tai per win', arms.map((a) => (a.r.tai / Math.max(1, a.r.wins)).toFixed(2)));
+row('chips per win', arms.map((a) => (a.r.chipsWon / Math.max(1, a.r.wins)).toFixed(2)));
+row('wins blocked by the minimum', arms.map((a) => String(a.r.blocked)));
 console.log('\n  what won, as a share of wins');
-const combos = [...new Set([...four.combos.keys(), ...zero.combos.keys()])].sort();
-for (const c of combos) row(`    ${c}`, pc(four.combos.get(c) ?? 0, four.wins), pc(zero.combos.get(c) ?? 0, zero.wins));
+const combos = [...new Set(arms.flatMap((a) => [...a.r.combos.keys()]))].sort();
+for (const c of combos) row(`    ${c}`, arms.map((a) => pc(a.r.combos.get(c) ?? 0, a.r.wins)));
 console.log('\n  chance a throw completes somebody');
-for (const key of [...four.danger.keys()].sort()) {
-  const f = four.danger.get(key)!, z = zero.danger.get(key) ?? { n: 0, hit: 0 };
-  row(`    ${key}`, `${(100 * f.hit / Math.max(1, f.n)).toFixed(2)}%`, `${(100 * z.hit / Math.max(1, z.n)).toFixed(2)}%`);
+for (const key of [...arms[0]!.r.danger.keys()].sort()) {
+  row(`    ${key}`, arms.map((a) => { const c = a.r.danger.get(key) ?? { n: 0, hit: 0 }; return `${(100 * c.hit / Math.max(1, c.n)).toFixed(2)}%`; }));
 }

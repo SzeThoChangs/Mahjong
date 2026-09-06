@@ -210,13 +210,23 @@ for (const q of kept) for (const t of q.tp) perTip.set(t, (perTip.get(t) ?? 0) +
 console.log(`\n${tagged} of ${kept.length} questions have a shape tip to teach on  [${[...perTip].sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} ${n}`).join(', ') || 'none'}]`);
 
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', questions: kept }));
+/**
+ * The table the pack was played at, written into the pack.
+ *
+ * Every pack until 2026-09-06 came from the same table and nothing recorded which, so a second pack
+ * from a different one would have been indistinguishable from the first. The wildcard count and the
+ * minimum are the two rules that vary between the tables Changs plays, and both change the game
+ * measurably - without wildcards hands run 54 turns against 40 and a late throw is about twice as
+ * likely to deal in. A grader reading this pack needs to know which game it is looking at.
+ */
+const table = { wildcards: rules.jokers.count, minimumTai: rules.minimum_tai };
+writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', table, questions: kept }));
 // The index lists the QUIZ packs, and this directory holds more than those: `spot.json` moved in on
 // 2026-09-04 and has positions rather than questions, so a scan that trusts the extension puts a
 // phantom pack in the Real Quiz picker. Anything without questions is not a quiz pack.
 const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => {
-  const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money?: boolean; unit?: string; questions?: unknown[] };
-  return p.questions ? { id: f.replace('.json', ''), money: p.money, unit: p.unit, questions: p.questions.length } : null;
+  const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money?: boolean; unit?: string; table?: unknown; questions?: unknown[] };
+  return p.questions ? { id: f.replace('.json', ''), money: p.money, unit: p.unit, table: p.table, questions: p.questions.length } : null;
 }).filter((x) => x !== null);
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
 console.log(`\n${kept.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
