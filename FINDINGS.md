@@ -1886,6 +1886,40 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The danger weight is right at 40 on both fields, which it had never been checked on (2026-09-06)
+
+`DANGER_WEIGHT` decides how heavily the coach prices deal-in risk against hand value. It is the one
+number that most shapes what the app ADVISES about safety, it was fitted on per-decision agreement,
+swept against money once, and every one of those checks had three coaches in the other chairs. A
+field that never punishes a slow hand has no reason to want the same number. `fieldtest.ts --dwa`
+puts the coach at two weights with the shipped tables and plays them against the personality field
+on ranges named in advance, one weight a range:
+
+```
+                against the field        against three coaches (2026-08-30)
+  weight  10    -0.102 +/- 0.074         -0.113 +/- 0.100
+  weight  20    -0.135 +/- 0.057         +0.006 +/- 0.083
+  weight  40     baseline                 baseline
+  weight  70    +0.047 +/- 0.065         -0.052 +/- 0.079
+  weight 110    -0.181 +/- 0.087         -0.185 +/- 0.109
+```
+
+**The optimum does not move.** Nothing beats 40 on the field: the best reading is 70 at +0.047 with
+an error bar of 0.065, which is a null, and it was a small loss against coaches. Both far ends lose
+on both fields, and 110 loses by almost exactly the same amount in both settings. Eight thousand
+paired deals a weight excludes anything larger than about 0.15 chips a game.
+
+That is worth more than it looks, because it is the first thing about the coach's danger side to be
+confirmed on a second population - and it went the way the value tables did not. The value weights
+were field-specific and cost 0.21 chips when carried across; the danger weight is not. The
+speed-for-size trade that separates the two fields lives in which PLAN the coach picks, not in how
+carefully it throws.
+
+**So the caveat on the app's safety advice narrows.** The weight is right on both populations we can
+simulate. What is still fitted to one table is the reads the weight multiplies - the deal-in
+probabilities in `reads.ts`, measured on recorded hands - and one of those has already reversed
+between populations.
+
 ### The limit case: fitting the field alone reaches level, and no further (2026-09-06)
 
 Three pools weighted toward the personality field all lost by about 0.10, which left one question

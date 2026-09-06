@@ -83,6 +83,15 @@ is declared. Inside a closure the compiler allows it, React runs the memo during
 went blank on a temporal-dead-zone error - typecheck and build both passed. Console errors in the
 browser are the only thing that catches that class.
 
+## The danger weight is confirmed on both fields (2026-09-06)
+
+Sweeping it against the personality field - 10, 20, 70 and 110 against the shipped 40, one range
+each, named in advance - finds no better setting. The best reading is 70 at +0.047 +/- 0.065, a
+null, and it was a small loss against coaches; both far ends lose on both fields by about the same
+amount. So the optimum does not move with the opponent, which is the opposite of what the value
+weights did, and it is the first thing on the coach's danger side confirmed on a second population.
+What remains fitted to one table is the deal-in reads the weight multiplies.
+
 ## Where to start next, in order
 
 **1. Done on 2026-09-06: the Train tab points at the leading cause.** `causeOf` in `scenario.ts`

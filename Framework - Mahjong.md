@@ -269,8 +269,10 @@ teaches, and the record hears from both, marked.
 
 And one caution about the coach that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is
-measured and solid. Its judgement on when to push is fitted to a table of good players, and no human
-has been measured against either.
+measured and solid. How heavily it weighs safety against value has now been checked against two
+different populations and comes out the same, so that much is not a fitting artefact. What is still
+fitted to one table is the danger READS underneath it — how likely each tile is to deal in — and one
+of those has already reversed between populations. No human has been measured against any of it.
 
 ## Running the app
 
