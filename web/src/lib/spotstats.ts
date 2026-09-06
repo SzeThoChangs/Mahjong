@@ -81,3 +81,34 @@ export function leadingSpotCause(): { cause: SpotCause; n: number; total: number
   const top = (Object.entries(sum) as [SpotCause, number][]).sort((a, b) => b[1] - a[1])[0];
   return top ? { cause: top[0], n: top[1], total } : null;
 }
+
+/**
+ * What the look time should be, read from the misses rather than chosen.
+ *
+ * The drill's whole point is that seeing is trainable, and the cause tally says which way to move.
+ * Running out of time means the look is too short to see the position at all, and no amount of
+ * practice at that length fixes it - lengthen it. Once that stops being the leading complaint the
+ * look can come back down, which is the actual training: the same accuracy at a shorter look is
+ * progress, the same accuracy at the same look is not.
+ *
+ * Only fires on a real sample. Two misses are not a diagnosis, and a drill that jumped its own
+ * settings after one bad answer would be unusable.
+ */
+export function suggestedLook(current: number, looks: readonly number[]): { look: number; why: string } | null {
+  const t = loadSpotCauses();
+  let timedOut = 0, other = 0;
+  for (const k of Object.values(t)) for (const [c, n] of Object.entries(k ?? {})) {
+    if (c === 'out-of-time') timedOut += n ?? 0; else other += n ?? 0;
+  }
+  const total = timedOut + other;
+  if (total < 6) return null;
+  const longer = [...looks].sort((a, b) => a - b).find((l) => l > current);
+  const shorter = [...looks].sort((a, b) => b - a).find((l) => l < current);
+  if (timedOut / total >= 0.4 && longer !== undefined) {
+    return { look: longer, why: `${timedOut} of your last ${total} sorted misses were running out of time, so the look is too short to be training anything yet.` };
+  }
+  if (timedOut === 0 && total >= 10 && shorter !== undefined) {
+    return { look: shorter, why: `None of your ${total} sorted misses were about time, so the look is longer than it needs to be — the same score at ${shorter}s would be real progress.` };
+  }
+  return null;
+}

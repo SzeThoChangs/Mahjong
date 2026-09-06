@@ -71,6 +71,18 @@ came from, and counts the two separately in the diagnosis. A quiz card whose pac
 rebuilt cannot be found by id, and that path is handled with an explanation and a button to drop it.
 Discards only: a claim question is a different question and the review screen cannot pose it.
 
+## The Spot drill moves its own look time (2026-09-06)
+
+`suggestedLook` reads the miss tally: four in ten misses about running out of time offers a longer
+look, none of them about time over at least ten misses offers a shorter one, and under six sorted
+misses it says nothing. Both ends stay quiet at the end of the range. Verified by a table of eight
+cases and then end to end in the browser.
+
+One bug worth remembering came out of it. The memo referenced `tick` from a line above where `tick`
+is declared. Inside a closure the compiler allows it, React runs the memo during render, and the tab
+went blank on a temporal-dead-zone error - typecheck and build both passed. Console errors in the
+browser are the only thing that catches that class.
+
 ## Where to start next, in order
 
 **1. Done on 2026-09-06: the Train tab points at the leading cause.** `causeOf` in `scenario.ts`

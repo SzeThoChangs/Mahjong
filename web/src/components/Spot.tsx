@@ -8,7 +8,7 @@ import { HandContext } from '@/components/HandContext';
 import { PublicTable } from '@/components/PublicTable';
 import { TILE_BACK } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
-import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, type SpotKind, type SpotCause } from '@/lib/spotstats';
+import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, suggestedLook, type SpotKind, type SpotCause } from '@/lib/spotstats';
 
 /**
  * The spotting drill: look at a position for a few seconds, then say what was in it.
@@ -93,6 +93,17 @@ export default function Spot() {
   const [missCause, setMissCause] = useState<SpotCause | null>(null);
   const [tick, setTick] = useState(0);
   const timer = useRef<number | null>(null);
+
+  /**
+   * Read after every recorded cause, so the suggestion appears the moment the tally earns it.
+   *
+   * It must sit below every `useState` above it. The first version referenced `tick` from a line
+   * before `tick` was declared: legal inside a closure as far as the compiler is concerned, and a
+   * temporal-dead-zone crash the moment React runs the memo during render. The typecheck passed and
+   * the tab went blank.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const lookHint = useMemo(() => suggestedLook(look, LOOKS), [look, missCause, tick]);
 
   useEffect(() => {
     fetch('/quiz/spot.json')
@@ -268,6 +279,12 @@ export default function Spot() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground">{missCause ? 'Recorded against this question type.' : 'One tap. It goes on the tally below.'}</p>
+                    {missCause && lookHint && (
+                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-2">
+                        <span className="text-xs text-muted-foreground">{lookHint.why}</span>
+                        <Button size="sm" variant="secondary" onClick={() => setLook(lookHint.look)}>Move the look to {lookHint.look}s</Button>
+                      </div>
+                    )}
                   </div>
                 )}
                 <Button onClick={next}>Next position</Button>

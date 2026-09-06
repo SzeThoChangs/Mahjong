@@ -177,7 +177,10 @@ shape looks familiar later, not that you can recite it.
 
 The third stage is spotting, on the Spot tab, at eight seconds. Seeing is a separate skill from
 solving, and it is trainable on its own. Stay here until the four question types are all above about
-sixty per cent, then shorten the look to five seconds, then three.
+sixty per cent, then shorten the look to five seconds, then three. The drill will tell you when to
+move: sort your misses, and once enough of them are about running out of time it offers to lengthen
+the look, and once none of them are it offers to shorten it. Take the offer rather than guessing,
+because the same score at a shorter look is progress and the same score at the same look is not.
 
 The fourth stage is working it out, on the Train tab. Start with the hand types you have just read
 about. When you throw a tile, say why before you tap, because the reason is the thing being trained
