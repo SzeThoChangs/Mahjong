@@ -75,6 +75,9 @@ const FLAT = process.argv.includes('--flat') ? Number(process.argv[process.argv.
  *  defending more. Measured on its own that flattening costs 0.163 +/- 0.058 chips a game, so the
  *  correction was paying a toll it did not need to pay. `--gain` hands it back. */
 const GAIN = process.argv.includes('--gain') ? Number(process.argv[process.argv.indexOf('--gain') + 1]) : 1;
+/** `--minr2 N` leaves any row the regression cannot explain at the study's own numbers. Default 0
+ *  keeps every row, which is what every table built before 2026-09-06 did. */
+const MIN_R2 = Number(arg('minr2', '0'));
 
 /** How each plan's chips figure is stored in TABLES, so a stored number can be read back as chips. */
 const MAP: { plan: string; table: string; variant: string | null; rows: number[]; toStore: (chips: number) => number; fromStore: (v: number) => number }[] = [
@@ -136,7 +139,14 @@ console.log(`\nthe rows want scales from ${lo.toFixed(2)} to ${hi.toFixed(2)}, a
 console.log(`a single --scale can satisfy one of them at a time, which is why the sweep could not settle this`);
 
 if (outFile) {
+  // A row whose slope our own hands cannot justify keeps the study's number. `--min` already guards
+  // against thin rows, but thin and uninformative are different failures: the worst row here has
+  // 17,000 hands and an R2 of 0.12, which is our noise rather than the game, and applying its slope
+  // would flatten a whole plan on the strength of it. Same shrinkage idea as `valuetables.ts`.
+  const held = fits.filter((f) => !(f.r2 >= MIN_R2));
+  if (held.length) console.log(`\nheld at the study's numbers, R2 below ${MIN_R2}: ${held.map((f) => `${f.table} turn ${f.row} (R2 ${f.r2.toFixed(2)})`).join(', ')}`);
   for (const f of fits) {
+    if (!(f.r2 >= MIN_R2)) continue;
     const r = f.holder[String(f.row)]!;
     const mult = (FLAT ?? f.slope / meanSlope) * GAIN;
     const m = MAP.find((x) => x.table === f.table)!;

@@ -1886,6 +1886,94 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
+
+Taking the jokers out changes what the coach should be afraid of and nothing about what it thinks a
+hand is worth. Both halves were measured against the shipped coach on paired deals at zero jokers.
+
+THE DANGER WEIGHT MOVES. The shipped weight is 40, confirmed earlier today on both opponent
+populations, but that was measured at a four-joker table. At zero jokers, over 8,000 paired deals
+each:
+
+    weight  20     -0.074 +/- 0.075   a null
+    weight  40      the baseline
+    weight  80     +0.257 +/- 0.076   t = 3.4
+    weight 120     +0.227 +/- 0.093   t = 2.4
+
+So the coach should be roughly twice as afraid when the jokers are out, which fits the mechanism
+already measured: hands run 54 turns instead of 40 and a late throw is about twice as likely to
+complete somebody. The sweep cannot split 80 from 120, and 40 to 80 is unsampled, so this locates a
+direction rather than a number. The three arms also used different shuffle ranges, so each is
+internally paired against weight 40 but they are not paired with each other: "80 beats 40" is a
+comparison this run makes, "80 beats 120" is not.
+
+The reading only became clean because of a control that turned out to be a harness check. The arms
+were run as the `fitted` bot carrying `tables-rowscale-g1.35.json`, and that file is byte-identical
+to the shipped `TABLES` - 231 numbers, largest difference zero - so the model and the coach were the
+same bot and the run returned exactly +0.000 +/- 0.000 on all four seats. That is what this file's
+header says the `self` arm must do, and it means `--dw` was the only thing separating the arms.
+Without it, every number above would have been the weight and the value tables mixed together.
+
+THE VALUE TABLES DO NOT. Task 8 of TABLE-VARIANTS: five plan-locked runs at zero jokers, 20,000
+hands each, fitted through `valuefit` and `mergecells` into 971 cells, then row-scaled at the shipped
+gain of 1.35 so the only difference from the shipped table is the row multipliers. Played on the same
+8,000 deals as the control above, it is worth -0.062 +/- 0.103. A null, like every other value-table
+refit this project has tried. The rule changes the danger side and the reads and leaves what a hand
+is worth alone.
+
+The row multipliers do differ, and it is worth recording what they say even though it buys nothing.
+Against the study's numbers, normalised so the hands-weighted average is 1:
+
+    plan (turn 0 / 20 / 40)     four jokers          no jokers
+    half_color                  0.99 / 1.03 / 0.99   1.24 / 1.31 / 1.11
+    ping_wu                     0.98 / 1.00 / 0.97   0.83 / 0.94 / 0.99
+    all_pong                    0.95 / 1.01 / 1.12   1.05 / 1.12 / 0.87
+    chicken                     0.94 / 0.92 / 1.23   0.68 / 0.77 / 0.87
+
+Half colour is worth clearly more without the jokers and the cheap hand clearly less, at every point
+in the hand. Consistent across all three turn bands, and worth nothing in money, which is the
+project's usual result: true and not worth playing differently for.
+
+### One uninformative row was worth 0.3 chips a game, and the guard against it did not exist (2026-09-06)
+
+The first no-joker table lost by -0.366 +/- 0.115, t = -3.2, which read as a clear finding that the
+rule does not want a refit. It was not. It was our own noise, and the reason is worth keeping because
+the same hole has been in the fitting procedure since the value work started.
+
+`valuerows.ts` regresses our realised chips on the study's number inside each row and multiplies the
+whole row by the slope. It has a `--min` guard on hands per cell, which stops a thin row from
+overwriting the study. Thin and uninformative are different failures and it only caught the first.
+The ping-wu row at turn 0 had 17,397 hands, sailed through the guard, and came back with an R-squared
+of 0.12 - meaning our hands barely reproduce the study's ordering inside that row at all - and a
+multiplier of 0.30. A whole plan was flattened by seventy per cent on the strength of a regression
+that explained nothing.
+
+`--minr2` now leaves any row below a given R-squared at the study's own numbers, which is the same
+shrinkage idea already used in `valuetables.ts`. Rebuilding the no-joker table with the floor at 0.5
+holds exactly one row, that one, and the loss goes from -0.366 +/- 0.115 to -0.062 +/- 0.103 on the
+same 8,000 deals. The finding above is the second number; the first was ours.
+
+The flag is inert by default: rebuilding a table with `--minr2` unset produces a byte-identical file,
+so nothing built before today changes.
+
+THE SHIPPED TABLE HAS THE SAME DEFECT AND IT DOES NOT MATTER. The same row is below the floor in the
+four-joker fit too, at R-squared 0.42 and a multiplier of 0.79, so the shipped coach carries a 21%
+flattening its own data does not justify. That was worth checking, because this file calls the
+shipped table "at its family's ceiling" and a ceiling set by a defect is not a ceiling. Rebuilt with
+the floor and played over 8,000 fresh deals at four jokers, it is worth -0.012 +/- 0.093. A tight
+null. The defect is real, it only bites where the row's R-squared collapses, and the shipped table
+stands unchanged.
+
+### The no-joker reads carry back to a four-joker table for free (2026-09-06)
+
+The symmetric control on the reads result below. Correcting the deal-in table for the no-joker rule
+is worth +0.215 +/- 0.051 at a no-joker table; carrying the no-joker table back to a four-joker table
+costs -0.125 +/- 0.103 and +0.013 +/- 0.105 on two ranges, pooling to about -0.06 +/- 0.07. A null.
+
+So the transfer is one-way. One reads table cannot serve both rules, but all the damage is on one
+side: playing the four-joker reads at a no-joker table costs real money, and the reverse costs
+nothing measurable. If a single table ever has to serve both, this says which one to keep.
+
 ### The danger reads do not survive the wildcard rule, and correcting them is the largest win yet (2026-09-06)
 
 Earlier today the reads were shown to be population-proof: swapping a coach-measured table for a

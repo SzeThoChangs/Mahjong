@@ -89,6 +89,11 @@ and not about two different sets of deals.
 Only if a comparison says the tables differ:
 
 7. A no-wildcard quiz pack, which is generation plus grading.
-8. Value tables refitted at zero wildcards, using the committed-plan machinery already built.
+8. **Value tables refitted at zero Jokers. DONE 2026-09-06, and the answer is no.** Five plan-locked
+   runs at zero Jokers through `valuefit` and `mergecells`, row-scaled at the shipped gain: worth
+   -0.062 +/- 0.103 against the shipped table on the same 8,000 deals. A null, like every value-table
+   refit before it. What the rule DOES move is the danger weight, which wants about 80 rather than
+   the shipped 40 (+0.257 +/- 0.076), and the reads, measured earlier at +0.215 +/- 0.051. FINDINGS
+   has both, and the fitting bug the first attempt turned up.
 9. The app told which table it is on - a control in Table setup beside the money, which already
    edits `table.config.json` - and the cards labelled where a verdict differs between tables.
