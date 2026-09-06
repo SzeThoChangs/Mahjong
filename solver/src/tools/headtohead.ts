@@ -84,7 +84,17 @@ if (!ARM) { console.error(`unknown arm ${armName}; expected one of ${Object.keys
 const cfg: TableConfig = loadTableConfig();
 // The wall must be the table's wall. This harness used to deal WITHOUT wildcards while the bots it
 // compares were tuned on data generated WITH them, so the verdict was measured on a different game.
-const rules = loadTableRules();
+/**
+ * `--wild N` deals the table with a different wildcard count.
+ *
+ * Every money run in this project dealt four, because that is what `data/table.config.json` says.
+ * Changs also plays without them, and the danger of a tile roughly doubles when they come out - so a
+ * change that is worth nothing at one table has not been tested at the other. The reads and the
+ * danger weight are the two things this matters most for, and both are already arms here.
+ */
+const wildArg = process.argv.indexOf('--wild');
+const baseRules = loadTableRules();
+const rules = wildArg >= 0 ? { ...baseRules, jokers: { ...baseRules.jokers, count: Number(process.argv[wildArg + 1]) } } : baseRules;
 
 /** Play the same n deals with `seatBot` in `seat` and coaches elsewhere; return that seat's chips. */
 function arm(seat: number, makeSeatBot: () => Bot): number[] {
@@ -107,7 +117,7 @@ const diffs: number[] = [];
 const deals = legacySeed === null
   ? `${shuffleName(fromShuffle)}..${shuffleName(fromShuffle + n - 1)}`
   : `legacy wall seed base ${legacySeed}`;
-console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats (${deals})\n`);
+console.log(`${n} paired deals per seat, ${ARM.label} vs the book coach, rotated through all four seats (${deals}${wildArg >= 0 ? `, ${rules.jokers.count} wildcards` : ''})\n`);
 console.log(`seat   model chips/game   coach chips/game   difference (paired)`);
 for (let seat = 0; seat < 4; seat++) {
   const model = arm(seat, ARM.make);
