@@ -1,1 +1,1 @@
-{"packs":[{"id":"coach","money":true,"unit":"$","questions":4999},{"id":"money","money":true,"unit":"$","questions":4999}]}
+{"packs":[{"id":"coach","money":true,"unit":"$","questions":4999},{"id":"money","money":true,"unit":"$","questions":4999},{"id":"nowild","money":true,"unit":"$","table":{"wildcards":0,"minimumTai":2},"questions":519}]}
