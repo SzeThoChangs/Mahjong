@@ -1886,6 +1886,53 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The danger reads do not survive the wildcard rule, and correcting them is the largest win yet (2026-09-06)
+
+Earlier today the reads were shown to be population-proof: swapping a coach-measured table for a
+field-measured one was worth nothing on either field, three times over. They are not rule-proof.
+
+**The tables, measured properly.** The first comparison planned here was going to be a fresh
+no-wildcard COACH table against the shipped PERSONALITY one, which moves two things at once and
+would have reported an opponent effect as a wildcard effect. `reads2/coach.json` is a table of four
+coaches at four wildcards and already existed, so the honest comparison was available for nothing.
+All four cells:
+
+```
+  median danger, cell by cell        coach population   field population
+  taking the wildcards out                     1.98x              1.71x
+  coach against field, at 4 wildcards          2.33x   (4-6x in the late cells)
+```
+
+Taking the wildcards out roughly doubles the danger of every tile, and it does so for both
+populations, so the effect is about the rule and not about who is at the table.
+
+**Why the population effect is larger and still worth nothing.** Both effects are near-uniform
+scalings, and `rankDiscards` compares tiles against each other, so scaling every cell leaves the
+ranking of throws alone and changes only the balance between danger and hand value. That balance is
+the danger weight. A population swap is therefore absorbed; the question is whether a rule swap is
+too.
+
+**It is not.** The no-wildcard table played against the shipped one, at a no-wildcard table, four
+coaches, ranges named before the run:
+
+```
+  1810001 +0.285   1820001 +0.298   1830001 +0.197   1840001 +0.082
+  32,000 paired deals   +0.215 +/- 0.051   t = +4.3, positive on 4 of 4
+```
+
+**That is the largest single result this project has measured** - larger than the row scaling that
+ships at +0.200, twice the committed table - and it is a danger-side change, after five danger-side
+changes that paid nothing. The difference is that those five asked the coach to price danger
+better at a table where its table was already right. This one gives it the right table at a table
+where its own is wrong twofold.
+
+**Two runs are outstanding before this is acted on**, and both were launched before the result was
+read. A danger-weight sweep at zero wildcards, 20, 80 and 120 against the shipped 40: if the reads
+correction is really a uniform doubling then weight 80 should win about as much, and the simpler fix
+would be a constant. And the symmetric control - the no-wildcard table played at a FOUR-wildcard
+table, where it should lose by about as much as it just won. A correction that wins at both tables
+is not a correction, it is a better table, and that would mean something different.
+
 ### All four of his tables, and the wildcard rule dominates the minimum (2026-09-06)
 
 Changs plays two rules that vary and they cross: wildcards on or off, minimum 1 or 2 tai. Everything
