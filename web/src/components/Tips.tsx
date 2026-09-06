@@ -108,7 +108,7 @@ improve it, from {x.kinds} kinds
         {t.variants.length > 0 && <Separator />}
         <div className="flex flex-col gap-2 text-sm">
           {t.why.map((w, i) => <p key={i}>{jargon(w)}</p>)}
-          {t.notWhen && <p className="text-muted-foreground"><b className="text-foreground">Where it stops applying.</b> {t.notWhen}</p>}
+          {t.notWhen && <p className="text-muted-foreground"><b className="text-foreground">Where it stops applying.</b> {jargon(t.notWhen)}</p>}
         </div>
         <div className="rounded-md bg-muted/60 px-3 py-2 text-sm">
           <b>{v.label}.</b> {jargon(t.verdictNote)}

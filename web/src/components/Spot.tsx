@@ -267,7 +267,7 @@ export default function Spot() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Badge variant={right ? 'default' : 'destructive'}>{right ? 'Right' : 'Missed it'}</Badge>
-                  <span className="text-muted-foreground">{explain(s, kind)}</span>
+                  <span className="text-muted-foreground">{jargon(explain(s, kind))}</span>
                 </div>
                 {!right && (
                   <div className="space-y-1.5">

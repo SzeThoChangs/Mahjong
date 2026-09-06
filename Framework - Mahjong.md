@@ -15,7 +15,7 @@ eighteen false things.
 
 Where this plan uses a term of the game it is written *like this*, and the app italicises the same
 terms on screen. The first one to know is *Ting Pai*: a hand one tile from winning, waiting. The
-code calls the same thing shanten 0 and the engine's `readyTurn` records when a seat first reached
+code calls the same thing *Shanten* 0 and the engine's `readyTurn` records when a seat first reached
 it, so if you go into the source expect the English word there.
 
 Adopting the term settled a clash the app had with itself. The Spot drill used "one tile away" to
@@ -24,16 +24,16 @@ itself. Both now say what they mean.
 
 ## The table this is for
 
-Singapore mahjong, minimum 2 tai, capped at 5, *Zi Mo* allowed at 1. Four *Jokers*.
+Singapore mahjong, minimum 2 *Tai*, capped at 5, *Zi Mo* allowed at 1. Four *Jokers*.
 
 Both of those last two are rules Changs also plays without, and it matters more than it sounds.
 Everything measured in this project — every card, every table, every number below — was measured at
-four *Jokers* and a 2 tai minimum. Taking the *Jokers* out, on the same deals with the same
-players, makes hands run 54 turns instead of 40, drawn hands 19% instead of 0.6%, and a late throw
+four *Jokers* and a 2 *Tai* minimum. Taking the *Jokers* out, on the same deals with the same
+players, makes hands run 54 *Turns* instead of 40, drawn hands 19% instead of 0.6%, and a late throw
 about twice as likely to complete somebody. So at a no-*Joker* table the shape advice should still
 hold, being arithmetic about tiles, while the advice about timing, danger and what a hand is worth
 is measured at the wrong table. `TABLE-VARIANTS.md` is the plan for fixing that. The shooter
-pays the whole bill on a discard win. Flowers and animals pay immediately, and here they pay double.
+pays the whole bill on a discard win. *Flowers* and *Animals* pay immediately, and here they pay double.
 The full house rules are in `data/table.config.json`, and everything below assumes them —
 several of the measured answers change if the minimum changes.
 
@@ -48,7 +48,7 @@ which is deciding which hand you are trying to build from thirteen tiles that co
 The third is seeing your own shape, which means reading fourteen tiles as five or six pieces rather
 than as fourteen things. The fourth is telling apart shapes that look alike, because most of the
 book's rules are about two hands that count the same and play differently. The fifth is counting:
-what a wait accepts, and how much of it is already face up. The sixth is choosing what to throw when
+what a *Wait* accepts, and how much of it is already face up. The sixth is choosing what to throw when
 nothing is safe. The seventh is reading three hidden hands from what is public. The eighth is
 deciding to push or fold. The ninth is calling, which is its own decision and not a smaller version
 of discarding. The tenth is money and swings, and the eleventh is keeping your temper when a good
@@ -77,9 +77,9 @@ reasoning fails, and reading them is worth an evening — knowing why a plausibl
 worth more than one more rule that is right.
 
 Learn these first, because they are the best evidenced and they decide the most hands. Break a
-finished shape to escape a lone-tile wait, which the play-outs take 89% of the time against 47% by
+finished shape to escape a lone-tile *Wait*, which the play-outs take 89% of the time against 47% by
 luck and which survives every correction we know how to apply. Commit to a colour hand at the deal
-when you hold ten or more of one suit plus honours, and do not commit at seven or eight. Count their
+when you hold ten or more of one suit plus *Honours*, and do not commit at seven or eight. Count their
 *Melds*, because a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time against 4.9%
 with none, and that single number is the strongest free signal on the table. And what a seat threw
 early is what it never had: a tile one rank from an early discard is held by that seat 14% of the
@@ -88,7 +88,7 @@ time against 22% for a tile of the same suit further away.
 Then learn one mechanism that four separate cards turn on, because it explains more than any of
 them. A suited tile deals in mostly by completing a run. So every argument of the form "they cannot
 hold a pair of it, therefore it is safe" is nearly worthless, and three cards that make that
-argument all fail. What does make a tile safe is the run waits being dead.
+argument all fail. What does make a tile safe is the run *Waits* being dead.
 
 ## How honest the feedback is
 
@@ -99,7 +99,7 @@ correct discard deals in and a reckless one wins the hand, over and over, and yo
 apart by watching. You win about one hand in four. Nothing you can see in a single hand tells you
 whether you played it well.
 
-So this plan never judges a decision by its result. It judges against a measured best: every
+So this plan never judges a decision by its result. It judges against a *Measured Best*: every
 position in the app's quiz packs has had each legal action played out 128 times, and the best is the
 one with the highest average. That is the only honest grading available, and it comes with three
 caveats worth keeping in mind. The play-outs are finished by a fast bot rather than by good players,
@@ -109,13 +109,13 @@ judged against a throw that may be chosen for safety. And the packs keep positio
 separates clearly from the rest, so they are decisions with answers rather than a fair sample of the
 game.
 
-The practical rule that follows: never say "that worked". Say "that was the measured best" or "that
+The practical rule that follows: never say "that worked". Say "that was the *Measured Best*" or "that
 was not", and when it was not, find out why.
 
 One thing about the app follows from the same rule and you should know it before you trust a score.
 The two practice tabs are graded by different judges. The Real quiz grades against those play-outs.
-The Train tab grades against the coach, which explains its reasoning in words — the reason it is
-worth practising against — but which picks the measured best only 52.8% of the time on positions
+The Train tab grades against the *Coach*, which explains its reasoning in words — the reason it is
+worth practising against — but which picks the *Measured Best* only 52.8% of the time on positions
 where the play-outs genuinely separate an answer, and 36.1% early in the hand. On its worst
 combination, an early hand headed for the cheap win, it is right 7.6% of the time, which is worse
 than guessing.
@@ -142,7 +142,7 @@ question, because those four are different skills and one of them is usually muc
 others.
 
 Working it out is the Train tab. A hand, no hints, and one question: which tile do you throw. It
-grades against the coach and explains the answer in plain words.
+grades against the *Coach* and explains the answer in plain words.
 
 Mixed practice is the Real quiz. These are positions from real recorded games, graded by play-out,
 with no label saying what the position is about and no promise that anything special is happening.
@@ -150,10 +150,10 @@ This is the component most training material skips and the one that carries over
 
 The mistake record is the Review tab, and it is fed from both practice tabs. A card from the Real
 quiz was judged by the play-outs and is a sure mistake. A card from the Train tab was judged by the
-coach, which is right about half the time on positions like that, so it is worth meeting again but
+*Coach*, which is right about half the time on positions like that, so it is worth meeting again but
 is not proof you were wrong. Each card says which judge it came from and the diagnosis counts them
 separately. Every mistake comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
-attached, not your old answer and not the coach's, because recognising an answer feels almost
+attached, not your old answer and not the *Coach's*, because recognising an answer feels almost
 exactly like knowing it. Getting one wrong sends it back to the start.
 
 ## The mistake types
@@ -162,17 +162,17 @@ This is the eighth idea, and it is the part most people skip. Every mistake gets
 happened, and the practice you do next is aimed at whatever keeps coming up. More puzzles will not
 fix a problem that is really about safety.
 
-Eight causes fit this game. You never learnt the idea behind the right tile. You knew the idea and
+Eight *Causes* fit this game. You never learnt the idea behind the right tile. You knew the idea and
 did not see it in this hand. You saw the situation but that throw was never on your list. You
 considered it and got the counting wrong. The counting was fine and you misread how dangerous your
 tile was. You were building a different hand from the one worth building. You missed something on
 the table. Or you found the right tile and threw something else anyway.
 
-The app does half of this sorting for you. It reads the position and suggests a cause — which shape
+The app does half of this sorting for you. It reads the position and suggests a *Cause* — which shape
 card your throw broke, whether your tile cost the hand a step, whether you were on a different plan,
 whether yours was simply the more dangerous tile — and you confirm or correct it with one tap. The
-Review tab then tells you which cause keeps coming up, and the Train tab will draw hands where
-exactly that cause bites.
+Review tab then tells you which *Cause* keeps coming up, and the Train tab will draw hands where
+exactly that *Cause* bites.
 
 The Spot drill has its own four, because it trains seeing rather than deciding: you did not take it
 in, you ran out of time, you saw it and read it wrongly, or you guessed. That distinction matters.
@@ -183,8 +183,8 @@ and no amount of spotting practice will fix it.
 
 Work through these in order. Each one assumes the last.
 
-The first stage is the table. Learn the tai table until you can price a hand without thinking, learn
-what the 2 tai minimum does — it kills the *Pi Wu* as a plan and makes the colour hand easier
+The first stage is the table. Learn the *Tai* table until you can price a hand without thinking, learn
+what the 2 *Tai* minimum does — it kills the *Pi Wu* as a plan and makes the colour hand easier
 than the rules suggest — and learn what the shooter pays. This is a week of reading, not drilling,
 and everything after it is meaningless without it. You cannot judge a discard if you do not know
 what the hand it protects is worth.
@@ -206,9 +206,9 @@ about. When you throw a tile, say why before you tap, because the reason is the 
 and the tile is only evidence of it.
 
 The fifth stage is mixed practice, on the Real quiz. No labels, real positions, everything you know
-competing to be the thing you remember. It can also be aimed: once your record has a leading cause,
+competing to be the thing you remember. It can also be aimed: once your record has a leading *Cause*,
 the quiz will serve only positions where the throw actually made failed for that reason, which puts
-the honest grader behind the practice rather than behind a shuffled deck. Use that when a cause has
+the honest grader behind the practice rather than behind a shuffled deck. Use that when a *Cause* has
 been at the top for a while, and use the unfiltered deck the rest of the time — the whole point of
 mixed practice is that nothing tells you what the position is about. Expect to be worse here than on the Train tab, and expect
 that gap to be the honest measure of how much of this you can actually use.
@@ -234,7 +234,7 @@ chess is where you learn to run this system in a game that tells you the truth.
 Spend the hour like this. Five minutes on the Review tab, clearing whatever is due. Do this first,
 while you are fresh, because it is the highest-value thing in the hour and the easiest to skip.
 Then ten minutes on the Spot drill. Then twenty-five minutes on the Train tab, and if the Review tab
-has named a leading cause, spend that time on hands where that cause bites. Then fifteen minutes on
+has named a leading *Cause*, spend that time on hands where that *Cause* bites. Then fifteen minutes on
 the Real quiz, which is the one that transfers. Then five minutes with one card from the Tips page:
 read it, close it, and explain it out loud in plain words. Where the sentence falls apart is the
 thing you do not yet understand, and that is the fourth idea working.
@@ -258,7 +258,7 @@ The honest signals are these. Your Real quiz score should rise, and that one is 
 rest put together, because the Real quiz is real positions judged by play-outs rather than by
 opinion. Do not read the gap between your Train score and your Real quiz score as a measure of
 transfer: the two tabs are graded by different judges that agree about half the time, so most of
-that gap is theirs and not yours. The leading cause in your mistake record should change over time, because a cause that stays at the top
+that gap is theirs and not yours. The leading *Cause* in your mistake record should change over time, because a *Cause* that stays at the top
 for a month means the practice is not aimed at it. Reviews should come back right more often at the
 longer intervals rather than at the short ones. And on the Spot drill, the same accuracy at a
 shorter look is real progress in a way that the same accuracy at the same look is not.
@@ -269,7 +269,7 @@ Track the spread between what you win and what you feed, never either alone.
 
 The method is not our invention and is well supported. Pulling things out of memory rather than
 reading them again, leaving gaps between sessions, mixing problem types, explaining with the book
-closed, getting the right answer after every attempt, and sorting errors by cause — these come out
+closed, getting the right answer after every attempt, and sorting errors by *Cause* — these come out
 of the research write-up in `Research - How to Learn Fast.md` and rest on experiments rather than on
 our opinion.
 
@@ -285,16 +285,16 @@ The claim that spotting is a separate skill from solving is borrowed from the ch
 has not been tested here, though the Spot tab keeps the per-question scores that would test it.
 
 The biggest known weakness of the app is the one above: the tab you will spend most of the hour on
-is graded by the coach, and the coach is right about half the time on decisive positions. It is
+is graded by the *Coach*, and the *Coach* is right about half the time on *Decisive* positions. It is
 still far better than the simulator bots and miles better than random, and it is the only thing here
 that can tell you WHY. But the honest ordering is that the Real quiz judges and the Train tab
 teaches, and the record hears from both, marked.
 
-And one caution about the coach that grades you. It was tuned against opponents like itself, and
+And one caution about the *Coach* that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is
 measured and solid, and its judgement about safety turns out not to be a fitting artefact at all:
 how heavily it weighs danger against value comes out the same against two different populations,
-and the table of deal-in probabilities underneath it can be measured on either without changing how
+and the table of *Deal-in* probabilities underneath it can be measured on either without changing how
 it plays. What does still depend on who is at the table is which PLAN is worth building — a value
 table tuned on one population costs a fifth of a chip a hand against the other — and two of the
 reads on the Tips page, which reverse outright between populations and say so on their cards. No

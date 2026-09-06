@@ -69,28 +69,47 @@ reader meeting one can see it is a term and not an ordinary word.
 The engine's scoring calls these `ban_se`, `qing_yi_se`, `ping_hu` / `chou_ping_hu`, `peng_peng_hu`
 and `chicken`. The names above are what the app says.
 
-## 5. Tile words — probably not jargon
+## 5. Tile words
 
-Ordinary enough that marking them would make half the page italic. Listed so the decision is
-deliberate.
+These were listed as "probably not jargon" on the grounds that marking ordinary words would make
+half the page italic. That was overruled on 2026-09-06: they are marked like the rest, because a
+reader meeting one needs to know it is a term, and these are exactly the ones that can be mistaken
+for ordinary English.
 
-terminal · honour · simple · middle tile · dragon · seat wind · round wind · flower · animal ·
-bonus tile · the wall · the discard pool · turn
+| Term | Means |
+|---|---|
+| *Terminal* | a 1 or a 9 |
+| *Honour* | a wind or a dragon — no number, no neighbours |
+| *Simple* | a number tile from 2 to 8 |
+| *Middle Tile* | a 3 to a 7, the tiles most runs need |
+| *Dragon* | red, green or white |
+| *Seat Wind* | the wind of your seat, worth *Tai* as a set |
+| *Prevailing Wind* | the wind of the round |
+| *Flower* | one of the four flower *Bonus Tiles* |
+| *Animal* | one of the four animals, which pay at once here |
+| *Bonus Tile* | a *Flower* or an *Animal*: drawn, set aside, replaced |
+| *Wall* | the tiles nobody has drawn yet |
+| *Discard Pool* | everything thrown, face up, in order |
+| *Turn* | one player's draw and throw; the hand's clock |
+
+Where these words are the ordinary English verb they are left alone, because the mark would be a
+lie: "the shape *waits* on 8" is not the noun, "four cards *turn* on this" is not the clock, and
+"a *simple* reason" is not a tile.
 
 ## 6. The project's own words — not mahjong, but load-bearing
 
 These are ours, not the game's. They appear in the app and the write-ups and a reader will meet them
-without warning.
+without warning, so as of 2026-09-06 they are marked too.
 
 | Term | Means |
 |---|---|
-| measured best | the action 128 play-outs scored highest — the honest grader |
-| trap | a position where the tempting throw is wrong; how the Train tab picks hands |
-| decisive | a position where one action separates from the rest by more than two standard errors |
-| the coach | the book-based solver that explains its reasoning, right about half the time |
-| the field | the datagen personalities, as opposed to a table of coaches |
-| cause | why a mistake happened, from the eight in the record |
-| shanten | distance from a complete hand — code only, never shown to a learner |
+| *Measured Best* | the action 128 play-outs scored highest — the honest grader |
+| *Trap* | a position where the tempting throw is wrong; how the Train tab picks hands |
+| *Decisive* | a position where one action separates from the rest by more than two standard errors |
+| *Coach* | the book-based solver that explains its reasoning, right about half the time |
+| *Field* | the datagen personalities, as opposed to a table of coaches |
+| *Cause* | why a mistake happened, from the eight in the record |
+| *Shanten* | distance from a complete hand; the framework says the word once and the cards once |
 
 ---
 

@@ -17,6 +17,7 @@ import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
+import { jargon } from '@/lib/jargon';
 
 const WIND = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
@@ -491,7 +492,7 @@ export default function RealQuiz() {
                   const goesAgainst = bestKind !== null && c.against.includes(bestKind);
                   return (
                     <div key={c.tip} className="space-y-0.5">
-                      <div><span className="text-muted-foreground">A shape you have a card for:</span> <b>{tip?.title ?? c.tip}</b></div>
+                      <div><span className="text-muted-foreground">A shape you have a card for:</span> <b>{jargon(tip?.title ?? c.tip)}</b></div>
                       <div className="text-muted-foreground">{c.because}</div>
                       <div>
                         {follows ? <span className="text-emerald-700 dark:text-emerald-300">The measured best does what the tip says.</span>
