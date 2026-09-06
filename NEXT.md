@@ -45,11 +45,12 @@ and `reads2/coach.json` and `reads2/money4.json` both exist, so it is a `--reads
 
 ## Where to start next, in order
 
-**1. Fill the missing cell of the reads 2x2.** It completes the story the value tables and the
-danger weight started, it is about two hours, and the honest prior is that it is another null: five
-danger-side changes have been played for money and none paid. A null is worth having anyway,
-because it would say the coach's danger side is field-independent end to end and the framework's
-caveat could narrow again.
+**1. Done on 2026-09-06, and the coach's danger side is closed.** Coach-measured reads played
+against the field: -0.035 +/- 0.039 over 32,000 paired deals, the tightest of the three cells, and
+all three are nulls. Which population the deal-in table was measured on does not change how the
+coach plays against either opponent. Combined with the weight being 40 on both fields, nothing about
+how the app judges danger is an artefact of its fitting population, and the framework's caveat has
+been narrowed to say so. The value side remains the field-specific half.
 
 **2. Done on 2026-09-06.** The Real quiz can be aimed at a cause. A pack question records what the
 seat actually threw beside what the play-outs measured, so where they differ the position holds a
@@ -60,12 +61,13 @@ The first version walked cold and took 1.9 seconds a question in the browser, wh
 wear; the cache is now warmed in 25-question slices after the pack loads and a filter switch costs
 3 to 52ms.
 
-**3. Consider stopping the measurement.** A real option, worth stating plainly. The playbook is
-complete, the value tables are at their ceiling, the danger weight is confirmed on two populations,
-and the framework is written. What the project cannot produce by measuring more is the thing it is
-for: somebody following the plan for a few weeks, and a mistake record with real mistakes in it.
-Everything after that should be driven by what the record says rather than by what is left to
-measure.
+**3. Stop measuring, and start training.** This was agreed on 2026-09-06 and it is the real answer
+rather than a fallback. Every line the measurement could close by itself is closed: all 103 cards
+have verdicts, the value tables are at their family's ceiling on both fields, the danger side is
+field-independent end to end, and the framework is written. What is left cannot be produced by more
+compute - it is somebody following the plan for a few weeks and a mistake record with real mistakes
+in it. The next person here should be led by what that record says. If it says nothing yet, the
+honest answer is that there is nothing to do but the hour on Tuesday, Thursday and Saturday.
 
 ## House-keeping note for whoever writes here next
 

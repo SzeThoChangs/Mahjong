@@ -1886,6 +1886,43 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The danger reads do not matter on either field, which closes the coach's danger side (2026-09-06)
+
+The coach's two halves were fitted on different opponents and nobody had written that down. The
+value tables came from `run-coach2`, coach against coach. The danger reads in `solver/src/reads.ts`
+came from `run-money4`, which is the personality field - the header of that file says so outright.
+Since the value weights turned out to be field-specific, costing 0.21 chips a game carried across,
+the reads were the piece left to check. `fieldtest.ts --readsa` plays one reads table against
+another with the field in the other chairs, and `reads2/coach.json` already held the coach-measured
+version.
+
+```
+  coach-measured reads minus the shipped field-measured reads
+
+  against three coaches   -0.054 +/- 0.078      (2026-09-02)
+                          -0.013 +/- 0.083      (2026-09-02, second seed)
+  against the field       -0.035 +/- 0.039      1770001..1800001, 32,000 paired deals
+```
+
+**Every cell is a null, and the new one is the tightest of the three**: 32,000 paired deals put an
+error bar of 0.039 on it, which excludes anything above about 0.08 chips a game. Which population
+the deal-in probabilities were measured on does not matter to how the coach plays, against either
+opponent. The hands bear it out - wins 39.64% against 39.19%, deal-ins 8.26% against 8.53%, every
+line inside noise.
+
+**So the coach's danger side is field-independent end to end.** The weight is 40 on both fields and
+the table it multiplies can come from either population. That is the opposite of the value side,
+where the weights were worth 0.21 chips carried across, and it means the speed-for-size trade that
+separates the two fields lives entirely in which PLAN the coach picks. It also means the caveat this
+project has been carrying about safety advice can be retired: nothing about how the app judges
+danger is an artefact of the population it was fitted on.
+
+One distinction worth keeping. The danger TABLE is population-proof; two of the reads on the Tips
+page are not - `concealed_kong_signal` reverses sign between the two populations and `half_color_tell`
+was measured twice with opposite answers. Those are claims about what a public signal means, and
+they still depend on who is at the table. What does not depend on it is the probability the coach
+attaches to a tile dealing in.
+
 ### The danger weight is right at 40 on both fields, which it had never been checked on (2026-09-06)
 
 `DANGER_WEIGHT` decides how heavily the coach prices deal-in risk against hand value. It is the one

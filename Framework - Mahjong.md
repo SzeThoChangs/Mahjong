@@ -273,10 +273,13 @@ teaches, and the record hears from both, marked.
 
 And one caution about the coach that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is
-measured and solid. How heavily it weighs safety against value has now been checked against two
-different populations and comes out the same, so that much is not a fitting artefact. What is still
-fitted to one table is the danger READS underneath it — how likely each tile is to deal in — and one
-of those has already reversed between populations. No human has been measured against any of it.
+measured and solid, and its judgement about safety turns out not to be a fitting artefact at all:
+how heavily it weighs danger against value comes out the same against two different populations,
+and the table of deal-in probabilities underneath it can be measured on either without changing how
+it plays. What does still depend on who is at the table is which PLAN is worth building — a value
+table tuned on one population costs a fifth of a chip a hand against the other — and two of the
+reads on the Tips page, which reverse outright between populations and say so on their cards. No
+human has been measured against any of it, and that is the real gap.
 
 ## Running the app
 
