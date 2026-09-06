@@ -4,8 +4,9 @@ A web app. It shows you a hand and asks: **which tile do you discard?** You tap
 one. It tells you what it would have done and why, in plain language, using the
 playbook. Optionally you enter a real hand and ask it.
 
-No game, no bots to play against. The engine is the referee and the solver is
-the coach; the page is a question-and-answer loop.
+No game, no bots to play against — today. The engine is the referee and the
+solver is the coach; the page is a question-and-answer loop. A playable game is
+where this is heading, and the section below says why it is not here yet.
 
 ## What you see
 
@@ -129,6 +130,40 @@ is the fix if that ever matters.
 | 6 | Call-or-pass, push-or-fold questions | — |
 
 Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
+
+## Where this is going: a game
+
+The app poses positions. Eventually it should deal a hand and let you play it
+out against three opponents, and that is the direction to build in.
+
+It is not the training tool, and that has to be said plainly or the drills will
+quietly lose their hour to it. Three reasons, all measured. A hand's result has
+a standard deviation of about 10.7 chips even when the walls are paired, and a
+real improvement to the coach is worth 0.1 to 0.2 chips a hand, so an evening of
+play carries an error bar roughly two orders of magnitude wider than the thing it
+would be measuring — you cannot tell from a session, or from a month of them,
+whether you played well. An hour of play is perhaps sixty to a hundred discards
+of which a handful matter, and none of them are graded, where an hour on the
+Train and Real quiz tabs is a hundred-plus positions selected for having an
+answer and every one of them judged. And the opponents would be a choice with
+consequences: three coaches punish a slow hand, the datagen personalities do not,
+and a value table tuned on one loses 0.21 chips a hand against the other. Nobody
+knows which of those a human sits nearer.
+
+What a game gives that no drill can is the whole hand. Sequencing it, deciding to
+fold in the middle of one, making calls in context rather than in isolation, and
+watching the wall run out. Those are the seventh stage of
+`Framework - Mahjong.md`, and the plan already asks for one whole-hand session a
+week. Until the game exists, the Film room covers most of it — real recorded
+hands, scrubbed decision by decision, with what every legal move was worth — and
+it has grading attached, which live play against bots would not.
+
+So: build it, but build it after the parts that carry the training, and treat it
+as the place where everything else gets used rather than as another drill. What
+it needs that does not exist yet is a game loop in the browser, a way to sit the
+coach in the other three chairs, and — the part worth thinking hardest about —
+some way to review the hand afterwards against the measured best rather than
+against whether it won.
 
 ## Open items
 
