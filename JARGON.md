@@ -25,55 +25,49 @@ while Table setup said the same phrase meaning Ting Pai itself. Both now say whi
 
 ---
 
-## 2. The project contradicts itself — these need a decision
+## 2. Decided 2026-09-06
 
-| Question | Today | Note |
-|---|---|---|
-| **tai** or **fan**? | "tai" 145 times in text, "fan" 21 | Already half-solved: `HandContext` carries a `fanLabel` prop with the comment "Singapore players say tai", so the UI can say tai while the code says fan. The config keys are `minimum_fan`, `self_draw_minimum_fan`. Suggest: **tai** everywhere a person reads, `fan` left alone in code and config. |
-| **wildcard** or **joker**? | "wildcard" 49, "joker" 30 | The house rules and your own confirmations say wildcard; the engine says joker (`isJoker`, `jokers.count`). Suggest: **wildcard** in all text, `joker` left in code. |
-| **spare**, **floater** or **loose tile**? | "spare" 26, "floater" 1, "loose tile" a few | Three words, one thing: a tile no block wants. One card is called `keep_floaters`. Suggest: **spare**, and rename the card's wording but not its id. |
-| **deal in** or **deal-in**? | 4 and 4 | Suggest: **deal in** as the verb, **deal-in** as the noun ("its deal-in rate"). |
-| **round wind** or **prevailing wind**? | code says prevailing, text says round | Suggest: **round wind** in text. |
+| Question | Decision |
+|---|---|
+| tai or fan? | **Tai**, everywhere a person reads. See the open question at the foot of this file about the code. |
+| wildcard or joker? | **Joker**, including the two tool files named for it. |
+| spare, floater or loose tile? | **Floater**, everywhere. |
+| deal in or deal-in? | **deal in** the verb, **Deal-in** the noun. |
+| round wind or prevailing wind? | **Prevailing Wind**. |
 
----
+**Every term is capitalised.** A jargon term starts with a capital wherever it appears, so that a
+reader meeting one can see it is a term and not an ordinary word.
 
-## 3. Core terms — mark as jargon?
-
-The vocabulary of the game itself. My suggestion is to mark all of these, because they are the words
-that mean something precise here and a learner meeting them should see that they are terms.
+## 3. The terms
 
 | Term | Means |
 |---|---|
-| *Ting Pai* | one tile from winning — agreed |
-| *tai* | the scoring unit; this table pays a minimum of 2 and caps at 5 |
-| *chow* | three in a run, claimed from the player on your left |
-| *pong* | three of a kind, claimable from anybody |
-| *kong* | four of a kind; draws a replacement tile |
-| *meld* | a set you have claimed and laid down, face up and locked |
-| *wait* | the tiles that would complete your hand |
-| *block* | a piece of a hand — a set, a pair, or two tiles that could become a run |
-| *spare* | a tile no block wants |
-| *deal in* | to discard the tile somebody wins on, and pay for it |
-| *self-draw* | to win on a tile you drew yourself |
-| *bao* | pay-all: feeding a hand that makes you liable for everybody's share |
-| *wildcard* | the four tiles that stand for anything and cannot be thrown |
+| *Ting Pai* | a hand one tile from winning, waiting on it |
+| *Tai* | the scoring unit; this table pays a minimum of 2 and caps at 5 |
+| *Chow* | three in a run, claimed from the player on your left |
+| *Pong* | three of a kind, claimable from anybody |
+| *Kong* | four of a kind; draws a replacement tile |
+| *Meld* | a set you have claimed and laid down, face up and locked |
+| *Wait* | the tiles that would complete your hand |
+| *Block* | a piece of a hand — a set, a pair, or two tiles that could become a run |
+| *Floater* | a tile no block wants |
+| *Deal-in* | discarding the tile somebody wins on, and paying for it |
+| *Zi Mo* | to win on a tile you drew yourself |
+| *Bao* | pay-all: feeding a hand that makes you liable for everybody's share |
+| *Joker* | the four tiles that stand for anything and cannot be thrown |
 
-## 4. Hand types — mark as jargon?
-
-These are names of things rather than concepts. They read as names already, so marking may be noise.
-My suggestion is to mark them on first use in a card and leave them plain after.
+## 4. Hand types
 
 | Term | Means |
 |---|---|
-| *half colour* | one suit plus honours — 2 tai |
-| *full colour* | one suit and nothing else — 4 tai |
-| *ping wu* | all runs, no honours — 4 tai |
-| *all pongs* | four triplets — 2 tai |
-| *chicken hand* | a hand with no pattern, worth the minimum only |
+| *Half Colour* | one suit plus honours — 2 Tai |
+| *Full Colour* | one suit and nothing else — 4 Tai |
+| *Ping Wu* | all runs, no honours — 4 Tai |
+| *Pong Pong* | four triplets — 2 Tai |
+| *Pi Wu* | a hand with no pattern, worth zero Tai — legal only through flowers, animals or a value set |
 
-Note: the engine's scoring calls these `ban_se`, `qing_yi_se`, `ping_hu` / `chou_ping_hu`,
-`peng_peng_hu`. The text uses the English. Worth deciding whether the cards should teach the Chinese
-names alongside, since that is what gets said at a table.
+The engine's scoring calls these `ban_se`, `qing_yi_se`, `ping_hu` / `chou_ping_hu`, `peng_peng_hu`
+and `chicken`. The names above are what the app says.
 
 ## 5. Tile words — probably not jargon
 
@@ -99,6 +93,16 @@ without warning.
 | shanten | distance from a complete hand — code only, never shown to a learner |
 
 ---
+
+## Still open: the code
+
+The decision "change all fan to tai" is applied to everything a person reads. It is NOT applied to
+121 occurrences of `minimum_fan`, `fan_limit`, `self_draw_minimum_fan` and `fanInHand` in the engine
+and in `data/table.config.json`, because those are a data contract rather than prose: the JSON key
+is read by the config loader, carried in every generated run's manifest, and stored in the packs.
+Renaming them is a day's careful work with a migration for old files, in exchange for nothing a
+learner ever sees. Say the word and it is done, but it is a different kind of change from the rest of
+this file.
 
 ## What happens after you edit this
 

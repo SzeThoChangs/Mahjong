@@ -24,13 +24,13 @@ itself. Both now say what they mean.
 
 ## The table this is for
 
-Singapore mahjong, minimum 2 tai, capped at 5, self-draw allowed at 1. Four wildcards.
+Singapore mahjong, minimum 2 tai, capped at 5, *Zi Mo* allowed at 1. Four *Jokers*.
 
 Both of those last two are rules Changs also plays without, and it matters more than it sounds.
 Everything measured in this project — every card, every table, every number below — was measured at
-four wildcards and a 2 tai minimum. Taking the wildcards out, on the same deals with the same
+four *Jokers* and a 2 tai minimum. Taking the *Jokers* out, on the same deals with the same
 players, makes hands run 54 turns instead of 40, drawn hands 19% instead of 0.6%, and a late throw
-about twice as likely to complete somebody. So at a no-wildcard table the shape advice should still
+about twice as likely to complete somebody. So at a no-*Joker* table the shape advice should still
 hold, being arithmetic about tiles, while the advice about timing, danger and what a hand is worth
 is measured at the wrong table. `TABLE-VARIANTS.md` is the plan for fixing that. The shooter
 pays the whole bill on a discard win. Flowers and animals pay immediately, and here they pay double.
@@ -80,7 +80,7 @@ Learn these first, because they are the best evidenced and they decide the most 
 finished shape to escape a lone-tile wait, which the play-outs take 89% of the time against 47% by
 luck and which survives every correction we know how to apply. Commit to a colour hand at the deal
 when you hold ten or more of one suit plus honours, and do not commit at seven or eight. Count their
-melds, because a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time against 4.9%
+*Melds*, because a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time against 4.9%
 with none, and that single number is the strongest free signal on the table. And what a seat threw
 early is what it never had: a tile one rank from an early discard is held by that seat 14% of the
 time against 22% for a tile of the same suit further away.
@@ -184,7 +184,7 @@ and no amount of spotting practice will fix it.
 Work through these in order. Each one assumes the last.
 
 The first stage is the table. Learn the tai table until you can price a hand without thinking, learn
-what the 2 tai minimum does — it kills the cheap hand as a plan and makes the colour hand easier
+what the 2 tai minimum does — it kills the *Pi Wu* as a plan and makes the colour hand easier
 than the rules suggest — and learn what the shooter pays. This is a week of reading, not drilling,
 and everything after it is meaningless without it. You cannot judge a discard if you do not know
 what the hand it protects is worth.

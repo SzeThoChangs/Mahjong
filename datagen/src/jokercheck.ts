@@ -1,7 +1,7 @@
 /**
- * Does a table with no wildcards deal, play and pay out correctly?
+ * Does a table with no Jokers deal, play and pay out correctly?
  *
- *   tsx src/wildcheck.ts [hands]
+ *   tsx src/jokercheck.ts [hands]
  *
  * `jokers.count` validates from zero and the wall takes it, but no run in this project has ever
  * used anything but four, so nothing has ever exercised the zero path. Before any comparison is
@@ -30,5 +30,5 @@ for (const count of [4, 0]) {
     if (res.winner !== null) wins++; else draws++;
     blocked += res.blockedWins.reduce((a, b) => a + b, 0);
   }
-  console.log(`wildcards ${count}: ${n} hands · chips net ${chips.toFixed(2)} · illegal ${illegal} · won ${wins} drawn ${draws} · mean turns ${(turns / n).toFixed(1)} · tiles accounted ${[...accounted].sort().join('/')} · blocked wins ${blocked}`);
+  console.log(`Jokers ${count}: ${n} hands · chips net ${chips.toFixed(2)} · illegal ${illegal} · won ${wins} drawn ${draws} · mean turns ${(turns / n).toFixed(1)} · tiles accounted ${[...accounted].sort().join('/')} · blocked wins ${blocked}`);
 }

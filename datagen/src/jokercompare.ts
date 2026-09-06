@@ -1,14 +1,14 @@
 /**
- * The same table with and without wildcards, on the same deals.
+ * The same table with and without Jokers, on the same deals.
  *
- *   tsx src/wildcompare.ts 3000
+ *   tsx src/jokercompare.ts 3000
  *
- * Every hand this project generated used four wildcards, so every number it produced - the quiz
+ * Every hand this project generated used four Jokers, so every number it produced - the quiz
  * packs, the value tables, the danger reads, every verdict on the Tips page - describes that table.
  * Changs plays both. This asks how different the other one is, before anything is rebuilt for it.
  *
  * PAIRED. Arm 4 and arm 0 are dealt from the same seed, so the walls differ only by the four tiles
- * that are wildcards in one and ordinary in the other, and the comparison is of the rule rather
+ * that are Jokers in one and ordinary in the other, and the comparison is of the rule rather
  * than of two sets of luck.
  *
  * It plays coaches against coaches, which is what the quiz packs were built from, and it watches
@@ -22,7 +22,7 @@ import { rulesForDir } from './tablerules.js';
 const n = Number(process.argv[2] ?? 2000);
 const base = rulesForDir('../data/gen/run-coach2');
 /**
- * The four tables Changs plays: wildcards on or off, crossed with a 1 or 2 tai minimum. Everything
+ * The four tables Changs plays: Jokers on or off, crossed with a 1 or 2 tai minimum. Everything
  * this project measured sits in the first column of the first row.
  */
 const ARMS: { wild: number; minTai: number }[] = [
