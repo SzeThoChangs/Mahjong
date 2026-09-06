@@ -1886,6 +1886,43 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### All four of his tables, and the wildcard rule dominates the minimum (2026-09-06)
+
+Changs plays two rules that vary and they cross: wildcards on or off, minimum 1 or 2 tai. Everything
+this project measured sits in one corner. `wildcompare.ts` now plays all four, 3,000 paired deals an
+arm, the same seeds in every arm.
+
+```
+                                    4w/2tai   0w/2tai   4w/1tai   0w/1tai
+  somebody won                        99.4%     81.0%     99.8%     91.9%
+  nobody won                           0.6%     19.0%      0.2%      8.1%
+  mean turns in a hand                  39.8      54.0      36.9      49.9
+  seats that ever reached Ting Pai    46.5%     48.3%     44.2%     51.6%
+  tai per win                           2.97      2.90      2.65      2.67
+  wins blocked by the minimum            846       656       215        37
+
+  chance a throw completes somebody
+    simple, late                        3.72%     6.87%     3.99%     8.24%
+    terminal, late                      2.31%     4.39%     2.36%     4.40%
+    honour, late                        0.50%     1.57%     0.94%     1.43%
+```
+
+**The wildcard rule is the axis that matters and the minimum is not close.** Read the danger rows
+across: late danger roughly doubles when the wildcards come out, at either minimum, and barely moves
+when the minimum changes at either wildcard count. Since the coach prices every discard against those
+numbers, it is under-reading late danger by about half at his no-wildcard games whatever the minimum
+is - and that is the one finding here with a direct consequence for the app.
+
+**What the minimum does instead is decide what is allowed to finish.** Wins blocked by the minimum
+fall from 846 to 215 with wildcards in, and from 656 to 37 without. That feeds straight into the
+draw rate, which is where the two rules interact: 19.0% of no-wildcard hands die on the wall at a
+2 tai minimum and only 8.1% at 1 tai, because a cheap hand is legal and ends them. Tai per win falls
+about 0.3 at the lower minimum, which is the same fact from the other side.
+
+**A useful negative.** Neither rule moves how often a seat reaches Ting Pai by much - 44% to 52%
+across all four tables. What changes is how long everybody then sits there. The tables differ in
+tempo and in what is legal, not in how reachable a hand is.
+
 ### The wildcard rule changes the game more than any opponent does (2026-09-06)
 
 Changs plays two tables - four wildcards and none - and every hand this project ever generated used

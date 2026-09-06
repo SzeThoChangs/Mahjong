@@ -79,10 +79,12 @@ and not about two different sets of deals.
    same and points here; and the `game_length` card, which had blamed the draw-rate gap on the
    players rather than the rules, is corrected.
 
-6. **Then the same for the minimum.** Re-run the comparison at `minimum_fan: 1` against 2, both at
-   four wildcards, and then at the fourth corner. The tool takes the rules object, so this is an
-   argument rather than new code. Expect the four `mf2_` cards to move; the shape cards should not,
-   since they are arithmetic about tiles rather than about what a hand is worth.
+6. **Then the same for the minimum.** DONE 2026-09-06, all four corners at 3,000 paired deals each.
+   The wildcard axis dominates: late danger roughly doubles without wildcards at either minimum, and
+   barely moves with the minimum at either wildcard count. The minimum decides what is allowed to
+   finish instead - blocked wins fall from 846 to 215 with wildcards and 656 to 37 without, which is
+   why the no-wildcard draw rate halves from 19.0% to 8.1% at the lower minimum. FINDINGS has the
+   table.
 
 Only if a comparison says the tables differ:
 
