@@ -9,8 +9,25 @@ that differs. **Where** is roughly how often it appears in text a learner sees â
 prompts, the framework â€” not counting code.
 
 Marking a term as jargon means two things: it is written `*like this*` in the source, and the app
-renders it in a distinct style through `web/src/lib/jargon.tsx`. Terms not marked are just ordinary
-words and are left alone.
+renders it in italics through `web/src/lib/jargon.tsx`. Terms not marked are just ordinary words and
+are left alone.
+
+The colour says which kind of word it is, which is the one thing a learner cannot get from the word
+itself. A *Chow* is something you do, a *Dragon* is something you hold, and *Pong Pong* is a hand you
+are trying to make: three different sorts of fact wearing the same kind of name. The Tips page
+carries the key.
+
+| Kind | What it covers | Colour | Terms |
+|---|---|---|---|
+| what you do | actions | blue | *Chow*, *Pong*, *Kong*, *Zi Mo*, *Deal-in*, *Bao* |
+| what you hold | tiles | green | *Terminal*, *Honour*, *Simple*, *Middle Tile*, *Dragon*, *Seat Wind*, *Prevailing Wind*, *Flower*, *Animal*, *Bonus Tile*, *Joker* |
+| parts of a hand | shapes | amber | *Block*, *Wait*, *Floater*, *Meld*, *Ting Pai* |
+| hands you can make | hand types | violet | *Half Colour*, *Full Colour*, *Ping Wu*, *Pong Pong*, *Pi Wu* |
+| the table and its clock | the game around the hand | pink | *Tai*, *Turn*, *Wall*, *Discard Pool* |
+| this app's own words | ours, not the game's | grey | *Measured Best*, *Coach*, *Field*, *Cause*, *Trap*, *Decisive*, *Shanten* |
+
+A term missing from that map still renders in italics, just without a colour, so adding a word to a
+card cannot break a page. It only means the word has not been sorted yet.
 
 ---
 

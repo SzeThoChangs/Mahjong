@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { TIPS, type Tip, type TipVerdict } from 'sg-mahjong-solver';
 import { cn } from '@/lib/utils';
-import { jargon, J } from '@/lib/jargon';
+import { jargon, J, KIND_LABEL, toneOf } from '@/lib/jargon';
 
 const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }> = {
   confirmed: { label: 'Confirmed by counting', tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200', blurb: 'Worked out exactly from the tiles. No simulation, no error bars.' },
@@ -149,6 +149,13 @@ export default function Tips() {
           the card, {measured} were measured on played hands, {wrong} came out against the book, {table} are rules
           of this table rather than anybody's advice, {advice} are about how to play rather than about tiles, and{' '}
           {open} are untested — real claims that nobody here has measured yet.
+        </p>
+        {/* the colours mean something, and a colour code with no key is a puzzle */}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 max-w-3xl text-xs text-muted-foreground">
+          <span>The game's own words are marked. The colour says which kind:</span>
+          {KIND_LABEL.map((k) => (
+            <span key={k.kind}><em className={`italic ${toneOf(k.kind)}`}>{k.example}</em> — {k.label}</span>
+          ))}
         </p>
         <p className="max-w-3xl text-sm text-muted-foreground">
           Only {withTiles} of them can be shown in tiles, and those are the hand-shape ones. The rest carry no
