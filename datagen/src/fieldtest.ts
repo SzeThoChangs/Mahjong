@@ -22,7 +22,8 @@
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, shuffleName, makeRng, type Bot } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { FittedCoachBot } from 'sg-mahjong-solver';
+import { FittedCoachBot, AltReadsCoachBot } from 'sg-mahjong-solver';
+import type { ReadsTables } from 'sg-mahjong-solver';
 import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS, NoisyCoachBot } from './bots.js';
 import { fnv1a } from './records.js';
 
@@ -47,6 +48,22 @@ const fieldKind = arg('field', 'pool');
 const dwA = process.argv.includes('--dwa') ? Number(process.argv[process.argv.indexOf('--dwa') + 1]) : undefined;
 const dwB = process.argv.includes('--dwb') ? Number(process.argv[process.argv.indexOf('--dwb') + 1]) : undefined;
 const sweepingDanger = dwA !== undefined || dwB !== undefined;
+
+/**
+ * `--readsa <file>` puts arm A on a different DANGER READS table, the shipped one on B.
+ *
+ * The coach's two halves are calibrated to different opponents: the value tables were fitted on
+ * coach-against-coach play, the shipped reads in `solver/src/reads.ts` on `run-money4`, which is
+ * this field. The value weights turned out to be field-specific and cost 0.21 chips carried across;
+ * the danger weight turned out not to be. The reads are the piece nobody has checked, and the only
+ * cell missing is coach-measured reads played against the field.
+ */
+const readsPath = process.argv.includes('--readsa') ? process.argv[process.argv.indexOf('--readsa') + 1]! : null;
+const altReads: ReadsTables | null = readsPath ? (() => {
+  const j = JSON.parse(readFileSync(readsPath, 'utf8')) as Record<string, Record<string, { p: number; n: number }>>;
+  const flat = (t?: Record<string, { p: number; n: number }>) => Object.fromEntries(Object.entries(t ?? {}).map(([k, c]) => [k, c.p]));
+  return { dangerSafe: flat(j.dangerSafe), danger: flat(j.danger), ready: flat(j.ready), dangerWall: flat(j.dangerWall) };
+})() : null;
 const cfg = loadTableConfig(), rules = loadTableRules();
 
 /** the three other chairs: one personality each, chosen and seeded by the deal so both arms get the same table */
@@ -67,7 +84,10 @@ function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
   for (let g = 0; g < n; g++) {
     const shuffle = from + g;
     const wall = shuffleWall(shuffle, cfg.unplayable_tiles, rules.jokers.count);
-    const bots = field(shuffle, seat, () => (sweepingDanger ? new FittedCoachBot(undefined, which === 'A' ? dwA : dwB) : new FittedCoachBot(tables)));
+    const bots = field(shuffle, seat, () => (
+      altReads ? (which === 'A' ? new AltReadsCoachBot(altReads) : new FittedCoachBot(undefined))
+      : sweepingDanger ? new FittedCoachBot(undefined, which === 'A' ? dwA : dwB)
+      : new FittedCoachBot(tables)));
     const r = playGame(bots, cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
     out.push(r.chipsDelta[seat]!);
     sh.games++;
@@ -80,8 +100,8 @@ function arm(seat: number, tables: unknown, which: 'A' | 'B'): number[] {
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 const sd = (xs: number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1)); };
 
-const armName = sweepingDanger
-  ? `danger weight ${dwA ?? 'shipped'} minus ${dwB ?? 'shipped'}`
+const armName = altReads ? `reads ${readsPath!.split('/').slice(-2).join('/')} minus the shipped reads`
+  : sweepingDanger ? `danger weight ${dwA ?? 'shipped'} minus ${dwB ?? 'shipped'}`
   : `${pathA.split('/').pop()} minus ${pathB.split('/').pop()}`;
 console.log(`${n} paired deals per seat, A = ${armName}, ${fieldKind === 'noisy' ? 'three noisy coaches' : 'three datagen personalities'} in the other chairs (${shuffleName(from)}..${shuffleName(from + n - 1)})\n`);
 console.log('seat   A chips/game   B chips/game   difference (paired)');
