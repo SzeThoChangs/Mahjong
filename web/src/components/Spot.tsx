@@ -8,6 +8,7 @@ import { HandContext } from '@/components/HandContext';
 import { PublicTable } from '@/components/PublicTable';
 import { TILE_BACK } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
+import { jargon } from '@/lib/jargon';
 import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, suggestedLook, type SpotKind, type SpotCause } from '@/lib/spotstats';
 
 /**
@@ -43,7 +44,7 @@ const SEAT_NAME: Record<number, string> = {
  *  that asks the same question twenty times teaches you to answer it once and repeat. */
 const KINDS: SpotKind[] = ['ready', 'suit', 'threat', 'shape'];
 const PROMPT: Record<SpotKind, string> = {
-  ready: 'How far from ready was your hand?',
+  ready: 'How far from *Ting Pai* was your hand?',
   suit: 'Which suit were you holding most of?',
   threat: 'Who had the most sets face up?',
   shape: 'What shape was this position about?',
@@ -56,7 +57,7 @@ const SKILL: Record<SpotKind, string> = {
   threat: 'reading the table',
   shape: 'naming the shape',
 };
-const READY = ['ready — waiting on a tile', 'one tile away', 'two tiles away', 'three or more away'];
+const READY = ['*Ting Pai* — waiting on a tile', 'one away from *Ting Pai*', 'two away', 'three or more away'];
 
 /** Seconds the position stays on screen. Long enough to look, short enough to stop you counting. */
 const LOOKS = [3, 5, 8] as const;
@@ -253,12 +254,12 @@ export default function Spot() {
       {stage !== 'looking' && (
         <Card>
           <CardContent className="pt-4 space-y-3">
-            <div className="text-sm font-medium">{PROMPT[kind]}</div>
+            <div className="text-sm font-medium">{jargon(PROMPT[kind])}</div>
             <div className="flex flex-wrap gap-2">
               {opts.labels.map((label, i) => (
                 <Button key={i} variant={picked === null ? 'outline' : i === opts.answer ? 'default' : i === picked ? 'destructive' : 'outline'}
                   disabled={picked !== null} onClick={() => choose(i)}>
-                  {label}
+                  {jargon(label)}
                 </Button>
               ))}
             </div>

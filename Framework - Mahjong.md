@@ -11,6 +11,17 @@ hands played out a hundred and twenty-eight times per option. Eighteen of them a
 changes what a plan should say, because a plan that told you to learn the playbook would teach you
 eighteen false things.
 
+## A word on the words
+
+Where this plan uses a term of the game it is written *like this*, and the app italicises the same
+terms on screen. The first one to know is *Ting Pai*: a hand one tile from winning, waiting. The
+code calls the same thing shanten 0 and the engine's `readyTurn` records when a seat first reached
+it, so if you go into the source expect the English word there.
+
+Adopting the term settled a clash the app had with itself. The Spot drill used "one tile away" to
+mean one tile away from *Ting Pai*, and the Table setup page used the same phrase to mean *Ting Pai*
+itself. Both now say what they mean.
+
 ## The table this is for
 
 Singapore mahjong, minimum 2 tai, capped at 5, self-draw allowed at 1. Four wildcards. The shooter
@@ -61,7 +72,7 @@ Learn these first, because they are the best evidenced and they decide the most 
 finished shape to escape a lone-tile wait, which the play-outs take 89% of the time against 47% by
 luck and which survives every correction we know how to apply. Commit to a colour hand at the deal
 when you hold ten or more of one suit plus honours, and do not commit at seven or eight. Count their
-melds, because a seat with three exposed sets is one tile from ready 39.5% of the time against 4.9%
+melds, because a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time against 4.9%
 with none, and that single number is the strongest free signal on the table. And what a seat threw
 early is what it never had: a tile one rank from an early discard is held by that seat 14% of the
 time against 22% for a tile of the same suit further away.
@@ -117,7 +128,7 @@ markdown versions here, because they would go stale against the code within a we
 The pattern library is the Tips page, with the verdicts above.
 
 Spotting practice is the Spot tab. A position appears for three, five or eight seconds, goes face
-down, and then one question is asked: how far from ready the hand was, which suit it held most of,
+down, and then one question is asked: how far from *Ting Pai* the hand was, which suit it held most of,
 which opponent had the most sets face up, or which shape the position was about. Scores are kept per
 question, because those four are different skills and one of them is usually much worse than the
 others.

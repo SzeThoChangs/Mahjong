@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { downloadBackup, restoreBackup } from '@/lib/backup';
+import { jargon } from '@/lib/jargon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -312,7 +313,7 @@ function Reads() {
           <div className="font-medium mb-1">How close is a seat to winning? Count their exposed melds.</div>
           <div className="space-y-1 text-xs">
             {(['0', '1', '2', '3'] as const).map((m) => (
-              <div key={m} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">{m} melds, mid-game (第8巡)</span>{bar(d.ready, `${m}|30`)}<span className="text-muted-foreground">one tile away</span></div>
+              <div key={m} className="flex items-center gap-2"><span className="w-40 text-muted-foreground">{m} melds, mid-game (第8巡)</span>{bar(d.ready, `${m}|30`)}<span className="text-muted-foreground">{jargon('*Ting Pai*')}</span></div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-1">Three exposed melds mid-game ≈ a 4-in-10 chance they are waiting. Treat their discards with respect from the third meld on.</p>

@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { TIPS, type Tip, type TipVerdict } from 'sg-mahjong-solver';
 import { cn } from '@/lib/utils';
+import { jargon } from '@/lib/jargon';
 
 const VERDICT: Record<TipVerdict, { label: string; tone: string; blurb: string }> = {
   confirmed: { label: 'Confirmed by counting', tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200', blurb: 'Worked out exactly from the tiles. No simulation, no error bars.' },
@@ -70,7 +71,7 @@ function TipCard({ t }: { t: Tip }) {
     <Card>
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">{t.title}</CardTitle>
+          <CardTitle className="text-base">{jargon(t.title)}</CardTitle>
           <div className="flex items-center gap-2">
             {/* whose tiles these are. The book gives a diagram for some tips and only words for
                 others, and a verdict on OUR reading of a tip is worth less than one on the book's
@@ -83,7 +84,7 @@ function TipCard({ t }: { t: Tip }) {
             <Badge className={cn('font-medium', v.tone)}>{v.label}</Badge>
           </div>
         </div>
-        <p className="text-sm">{t.rule}</p>
+        <p className="text-sm">{jargon(t.rule)}</p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {/* cards with no tiles skip straight to the reasoning: most of the book is not about shape */}
@@ -106,11 +107,11 @@ improve it, from {x.kinds} kinds
         ))}
         {t.variants.length > 0 && <Separator />}
         <div className="flex flex-col gap-2 text-sm">
-          {t.why.map((w, i) => <p key={i}>{w}</p>)}
+          {t.why.map((w, i) => <p key={i}>{jargon(w)}</p>)}
           {t.notWhen && <p className="text-muted-foreground"><b className="text-foreground">Where it stops applying.</b> {t.notWhen}</p>}
         </div>
         <div className="rounded-md bg-muted/60 px-3 py-2 text-sm">
-          <b>{v.label}.</b> {t.verdictNote}
+          <b>{v.label}.</b> {jargon(t.verdictNote)}
         </div>
       </CardContent>
     </Card>

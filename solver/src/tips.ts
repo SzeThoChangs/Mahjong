@@ -12,7 +12,7 @@
  *    enumerates it exactly with the engine's own shanten function. No simulation, no noise, and it
  *    runs in the browser every time the page loads, so a card cannot drift away from its numbers.
  *    Two comparisons must be at the SAME shanten or the counts mean different things - most of the
- *    first draft of this file compared a ready hand against a one-away hand and proved nothing.
+ *    first draft of this file compared a *Ting Pai* hand against a one-away hand and proved nothing.
  *  - A claim about OPPONENTS ("terminals get released more freely") cannot be counted at all. Two
  *    hands can be identical on paper and differ entirely in what the table will throw you. Those
  *    need the reads pipeline over played hands, and they are marked `needs-play`.
@@ -194,7 +194,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'closer-to-ready', better: 0, than: 1 },
     verdict: 'measured',
-    verdictNote: 'The counting is clear on this pair of hands: the five-block one is ready and the six-block one is a tile further away, and it accepts more tiles, which is exactly the trap. The play-outs are not clear at all. On 345 graded positions across both packs holding six blocks where one could be cut for nothing, and where the book’s own exception on the next card did not apply, 268 resolved the choice and the measured best cut the sixth block 134 times — 50% against 54% by luck. The two populations agree: 54% against 56% at the coach table, 46% against 53% on the recorded run. So keep the rule for how it makes you SEE a hand, and do not treat the sixth block as an error.',
+    verdictNote: 'The counting is clear on this pair of hands: the five-block one is *Ting Pai* and the six-block one is a tile further away, and it accepts more tiles, which is exactly the trap. The play-outs are not clear at all. On 345 graded positions across both packs holding six blocks where one could be cut for nothing, and where the book’s own exception on the next card did not apply, 268 resolved the choice and the measured best cut the sixth block 134 times — 50% against 54% by luck. The two populations agree: 54% against 56% at the coach table, 46% against 53% on the recorded run. So keep the rule for how it makes you SEE a hand, and do not treat the sixth block as an error.',
   },
   {
     id: 'six_blocks_ok',
@@ -203,7 +203,7 @@ const CARDS: Tip[] = [
     rule: 'The card above says cut to five. The book keeps six while the two weakest blocks are gap waits, and lets the wall decide which one to drop.',
     why: [
       'Cutting to five early means choosing between two blocks before anything has happened to tell you which is better.',
-      'Holding both costs nothing in distance here. The sixth block is made of tiles that would otherwise be spares, so the hand is the same distance from ready either way.',
+      'Holding both costs nothing in distance here. The sixth block is made of tiles that would otherwise be spares, so the hand is the same distance from *Ting Pai* either way.',
       'What it costs is room. A hand that is nothing but blocks has no tile left to improve with, and the second number on this card is where that shows up.',
     ],
     notWhen: 'It ends the moment one of the weak blocks fills or turns two-sided. Then you have your five and the sixth is just tiles.',
@@ -234,7 +234,7 @@ const CARDS: Tip[] = [
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     notWhen: 'This is the one tip on the page the play-outs argue with, so treat it as a fact about width rather than as advice about what to throw.',
     verdict: 'measured',
-    verdictNote: 'Counting agrees with the book \u2014 both hands are one away, and the third pair costs about a third of the accepting tiles. Playing it out does not. On 87 graded positions holding three pairs, the measured best throw was the loose tile, keeping all three, 69% of the time against 34% expected from the number of tiles each side offers. That held whether the alternative was a spare number tile or an honour, and whether the hand was near ready or far from it. One reason may be the table: All Pungs is 2 tai here and the minimum is 2, so a third pair is a route to a hand you are allowed to declare, which no count of accepting tiles can see. Re-checked on 2026-09-05, and the failure was ours rather than the book’s. The 69% above is measured against a coin that equalises how many tiles sit on each side of the split, not what those tiles are, and the tile this card warns against throwing is the loose one — which is the measured best 69% of the time across every graded position in the packs, whatever any card says. Scored against a baseline that knows that, the tip comes out 0.8 standard errors HIGH on 592 resolved positions. So keeping a third pair is neither better nor worse than the throw a hand makes anyway, which is a different verdict from the one written above it. `audit.ts` is the tool.',
+    verdictNote: 'Counting agrees with the book \u2014 both hands are one away, and the third pair costs about a third of the accepting tiles. Playing it out does not. On 87 graded positions holding three pairs, the measured best throw was the loose tile, keeping all three, 69% of the time against 34% expected from the number of tiles each side offers. That held whether the alternative was a spare number tile or an honour, and whether the hand was near *Ting Pai* or far from it. One reason may be the table: All Pungs is 2 tai here and the minimum is 2, so a third pair is a route to a hand you are allowed to declare, which no count of accepting tiles can see. Re-checked on 2026-09-05, and the failure was ours rather than the book’s. The 69% above is measured against a coin that equalises how many tiles sit on each side of the split, not what those tiles are, and the tile this card warns against throwing is the loose one — which is the measured best 69% of the time across every graded position in the packs, whatever any card says. Scored against a baseline that knows that, the tip comes out 0.8 standard errors HIGH on 592 resolved positions. So keeping a third pair is neither better nor worse than the throw a hand makes anyway, which is a different verdict from the one written above it. `audit.ts` is the tool.',
   },
   {
     id: 'sandwich',
@@ -276,19 +276,19 @@ const CARDS: Tip[] = [
     id: 'escape_single_waits',
     phase: 'build',
     title: 'Break a finished shape to escape a lone-tile wait',
-    rule: 'Being ready but waiting on the last copies of one tile is worse than breaking the hand up and waiting again on something open.',
+    rule: 'Being *Ting Pai* but waiting on the last copies of one tile is worse than breaking the hand up and waiting again on something open.',
     why: [
       'A finished hand is hard to break up. But what counts is how many tiles can end it, not how tidy it looks.',
       'Waiting on one tile means three copies left at most, usually fewer. Breaking it open buys a much wider wait.',
     ],
     shapeFrom: 'ours',
     variants: [
-      { label: 'Ready, waiting on one tile', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s')], focus: [4] },
-      { label: 'Broken up — still ready, now open', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t'), T('5s 5s')], focus: [3, 4] },
+      { label: '*Ting Pai*, waiting on one tile', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t 8t'), T('5s')], focus: [4] },
+      { label: 'Broken up — still *Ting Pai*, now open', blocks: [T('2w 3w 4w'), T('5w 6w 7w'), T('2t 3t 4t'), T('6t 7t'), T('5s 5s')], focus: [3, 4] },
     ],
     claim: { kind: 'accepts-more', better: 1, than: 0 },
     verdict: 'measured',
-    verdictNote: 'Confirmed by counting, and then confirmed again by the play-outs, which makes it the best-evidenced tip on this page. Both hands here are ready and the one that gave up its finished shape waits on 8 tiles against 3. Across 432 real positions where a hand could be made ready two ways, the measured best throw took the wider wait 89% of the time against 47% expected \u2014 and it came out at 89% on both populations we have, one that collects suits and one that never does. Re-checked on 2026-09-05 against a baseline that knows what each throw is — whether it costs the hand distance, whether a block wants it, and what class of tile it is — and it survives almost untouched at 25.8 standard errors on 1,061 resolved positions. Nothing else on this page is evidenced anywhere near as well.',
+    verdictNote: 'Confirmed by counting, and then confirmed again by the play-outs, which makes it the best-evidenced tip on this page. Both hands here are *Ting Pai* and the one that gave up its finished shape waits on 8 tiles against 3. Across 432 real positions where a hand could be made *Ting Pai* two ways, the measured best throw took the wider wait 89% of the time against 47% expected \u2014 and it came out at 89% on both populations we have, one that collects suits and one that never does. Re-checked on 2026-09-05 against a baseline that knows what each throw is — whether it costs the hand distance, whether a block wants it, and what class of tile it is — and it survives almost untouched at 25.8 standard errors on 1,061 resolved positions. Nothing else on this page is evidenced anywhere near as well.',
   },
   {
     id: 'reset_via_runs',
@@ -306,15 +306,15 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'confirmed',
-    verdictNote: 'Confirmed by counting, both hands ready: the continuous run waits on 11 tiles from 3 kinds against 4 from 1. Same number of tiles, nearly three times the wait.',
+    verdictNote: 'Confirmed by counting, both hands *Ting Pai*: the continuous run waits on 11 tiles from 3 kinds against 4 from 1. Same number of tiles, nearly three times the wait.',
   },
   {
     id: 'perfect_one_away',
     phase: 'build',
-    title: 'The widest hand one away from ready',
-    rule: 'Two sets, a pair, and two two-sided waits. Nothing one away from ready accepts more, so do not tidy it.',
+    title: 'The widest hand one away from *Ting Pai*',
+    rule: 'Two sets, a pair, and two two-sided waits. Nothing one away from *Ting Pai* accepts more, so do not tidy it.',
     why: [
-      'A two-sided wait is finished by two kinds of tile, eight copies. Two of those, and a pair that is already made, is sixteen tiles that put you ready.',
+      'A two-sided wait is finished by two kinds of tile, eight copies. Two of those, and a pair that is already made, is sixteen tiles that put you *Ting Pai*.',
       'Trade one of them for a gap wait and it is twelve. Trade both and it is eight, in a hand that looks just as neat.',
       'It looks untidy because one tile is left over with nothing to do. That spare is what the shape costs, not a fault in it.',
     ],
@@ -327,7 +327,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'measured',
-    verdictNote: 'All three are one tile from ready and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one. The play-outs agree, which makes this one of the four best-evidenced tips on the page. On 74 real positions holding the whole shape with a tile left over, 39 resolved the choice, and the measured best threw the leftover rather than breaking a wait 33 times \u2014 85% against 28% by luck, z = +8.0, and the same answer on both populations. The 28% is the point: the tempting throw outnumbers the right one three to one, so this is not a decision you get right by accident. Re-checked on 2026-09-05, and the z = +8.0 does not survive. That baseline equalises how many tiles sit on each side, and here the two sides are not comparable: the throw the card points at is a leftover, while every throw it warns against breaks a wait and costs the hand a step, and a throw that costs distance is the measured best 2% of the time whatever the position. Weighted by what each throw is, the expected rate is 85% and the measured rate is 85% — 0.1 standard errors. The advice is still right. What is wrong is the boast above that you would not get this right by accident: throwing your spare gets it right.',
+    verdictNote: 'All three are one tile from *Ting Pai* and they are nowhere near each other: 16 tiles from 4 kinds, then 12 from 3, then 8 from 2. The book says this shape beats anything else at the same distance, and here it beats the worst of them by two to one. The play-outs agree, which makes this one of the four best-evidenced tips on the page. On 74 real positions holding the whole shape with a tile left over, 39 resolved the choice, and the measured best threw the leftover rather than breaking a wait 33 times \u2014 85% against 28% by luck, z = +8.0, and the same answer on both populations. The 28% is the point: the tempting throw outnumbers the right one three to one, so this is not a decision you get right by accident. Re-checked on 2026-09-05, and the z = +8.0 does not survive. That baseline equalises how many tiles sit on each side, and here the two sides are not comparable: the throw the card points at is a leftover, while every throw it warns against breaks a wait and costs the hand a step, and a throw that costs distance is the measured best 2% of the time whatever the position. Weighted by what each throw is, the expected rate is 85% and the measured rate is 85% — 0.1 standard errors. The advice is still right. What is wrong is the boast above that you would not get this right by accident: throwing your spare gets it right.',
   },
   {
     id: 'sticky_one_away',
@@ -345,7 +345,7 @@ const CARDS: Tip[] = [
     ],
     claim: { kind: 'accepts-more', better: 0, than: 1 },
     verdict: 'measured',
-    verdictNote: 'Confirmed by counting, both ready: the neighbour waits on 8 tiles, the second pair on 4. Twice the wait for the shape that looks less finished. The play-outs say the same on a small sample. Across both packs the tagger found 20 hands carrying six blocks where the surplus was a second pair against a two-sided piece, 15 resolved it, and the measured best broke the pair 13 times \u2014 87% against 49% by luck. It is worth knowing that this only applies to a piece that finishes from either side. A 7-9 or an 8-9 waits on one tile, the same as the pair, and the reason for preferring it is gone.',
+    verdictNote: 'Confirmed by counting, both *Ting Pai*: the neighbour waits on 8 tiles, the second pair on 4. Twice the wait for the shape that looks less finished. The play-outs say the same on a small sample. Across both packs the tagger found 20 hands carrying six blocks where the surplus was a second pair against a two-sided piece, 15 resolved it, and the measured best broke the pair 13 times \u2014 87% against 49% by luck. It is worth knowing that this only applies to a piece that finishes from either side. A 7-9 or an 8-9 waits on one tile, the same as the pair, and the reason for preferring it is gone.',
   },
   {
     id: 'linked_blocks',
@@ -492,7 +492,7 @@ const CARDS: Tip[] = [
     title: 'Two two-sided waits, and the lower one is better',
     rule: 'Between two waits that accept the same eight tiles, the book takes the one nearer the edge. People let go of edge tiles and hold on to middle ones.',
     why: [
-      'Both hands below are ready and both wait on eight tiles. Counting has nothing more to say about them.',
+      'Both hands below are *Ting Pai* and both wait on eight tiles. Counting has nothing more to say about them.',
       'The difference is who will throw you the tile. A 1 is worth little to anyone, so it comes out. A 4 or a 7 is in the middle of three possible runs, so it stays in hands until the wall runs out.',
       'This is the same claim as the one about bad waits, made about good ones, and it is measured the same way: count the copies of each kind that come out after the half-way point.',
     ],
@@ -504,7 +504,7 @@ const CARDS: Tip[] = [
     claim: { kind: 'level', a: 0, b: 1 },
     notWhen: 'It only decides between waits of the same size. A wider wait beats a better-placed narrow one every time.',
     verdict: 'measured',
-    verdictNote: 'Level on paper \u2014 both ready, both waiting on 8 tiles from 2 kinds \u2014 and the table settles it in the book\u2019s favour, by a little. Counting the copies thrown after the half-way point, a wait on 1 and 4 is fed 53.1% of the time at a table of coaches against 48.3% for a wait on 3 and 6. The same ordering came out of all four measurements \u2014 our coach, two ShantenBot seeds and the old recorded run \u2014 and it is symmetric: a wait on 6 and 9 is as good as one on 1 and 4, because both reach an edge. The gap runs from 3% to 10% depending on who is playing, so it settles a choice between two equal waits and nothing bigger than that.',
+    verdictNote: 'Level on paper \u2014 both *Ting Pai*, both waiting on 8 tiles from 2 kinds \u2014 and the table settles it in the book\u2019s favour, by a little. Counting the copies thrown after the half-way point, a wait on 1 and 4 is fed 53.1% of the time at a table of coaches against 48.3% for a wait on 3 and 6. The same ordering came out of all four measurements \u2014 our coach, two ShantenBot seeds and the old recorded run \u2014 and it is symmetric: a wait on 6 and 9 is as good as one on 1 and 4, because both reach an edge. The gap runs from 3% to 10% depending on who is playing, so it settles a choice between two equal waits and nothing bigger than that.',
   },
   {
     id: 'narrow_can_beat_wide',
@@ -517,11 +517,11 @@ const CARDS: Tip[] = [
     ],
     shapeFrom: 'ours',
     variants: [
-      { label: 'Ready, waiting on 4w and 7w — eight tiles, all dead', blocks: [T('2w 2w 2w'), T('3w 3w'), T('5w 6w'), T('7t 7t'), T('8t 8t'), T('9t 9t')], focus: [2] },
+      { label: '*Ting Pai*, waiting on 4w and 7w — eight tiles, all dead', blocks: [T('2w 2w 2w'), T('3w 3w'), T('5w 6w'), T('7t 7t'), T('8t 8t'), T('9t 9t')], focus: [2] },
     ],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'The only tip here that has been played for money, and the only one measured twice in ways that know nothing about each other. Played for money it is small: +0.048 chips a game on twelve wall seeds we had picked, then +0.018 +/- 0.012 on 120,000 paired deals from a range chosen in advance, which is the honest number and does not clear two standard errors. Scored against the play-outs it is emphatic: on 35 graded positions where a hand could stay ready either way and one of the waits could not be declared, the measured best took the declarable one 94% of the time against 50% by luck. Both are true and they fit together — the decision is nearly always right and it comes up on about one discard in 180, so what it pays is small. It stays on in the coach anyway, because counting winning tiles the table forbids you to declare is wrong whatever it pays. Completed, this hand is 222w + 345w + 33w + 789t + 789t — a chicken hand at 0 tai that the table will not let you declare. The count below says eight tiles. The truthful number is zero.',
+    verdictNote: 'The only tip here that has been played for money, and the only one measured twice in ways that know nothing about each other. Played for money it is small: +0.048 chips a game on twelve wall seeds we had picked, then +0.018 +/- 0.012 on 120,000 paired deals from a range chosen in advance, which is the honest number and does not clear two standard errors. Scored against the play-outs it is emphatic: on 35 graded positions where a hand could stay *Ting Pai* either way and one of the waits could not be declared, the measured best took the declarable one 94% of the time against 50% by luck. Both are true and they fit together — the decision is nearly always right and it comes up on about one discard in 180, so what it pays is small. It stays on in the coach anyway, because counting winning tiles the table forbids you to declare is wrong whatever it pays. Completed, this hand is 222w + 345w + 33w + 789t + 789t — a chicken hand at 0 tai that the table will not let you declare. The count below says eight tiles. The truthful number is zero.',
   },
   {
     id: 'pong_pair_quality',
@@ -546,16 +546,16 @@ const CARDS: Tip[] = [
   {
     id: 'break_mediocre_ready',
     phase: 'build',
-    title: 'A ready hand is not automatically worth keeping',
-    rule: 'When you are ready on something feeble, count what breaking it would open up before you decide to sit on it. Do not eyeball it.',
+    title: 'A *Ting Pai* hand is not automatically worth keeping',
+    rule: 'When you are *Ting Pai* on something feeble, count what breaking it would open up before you decide to sit on it. Do not eyeball it.',
     why: [
-      'A ready hand feels finished, and that feeling is most of the reason bad ones get kept.',
-      'The card above about escaping a lone-tile wait is the version of this that stays ready either way, and it is worth 89% against 47%. This one is the harder case, where you give up ready altogether and go back to building.',
+      'A *Ting Pai* hand feels finished, and that feeling is most of the reason bad ones get kept.',
+      'The card above about escaping a lone-tile wait is the version of this that stays *Ting Pai* either way, and it is worth 89% against 47%. This one is the harder case, where you give up *Ting Pai* altogether and go back to building.',
     ],
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-05 against 952 graded positions across both packs, and the card’s condition does no work at all. Ready on four live tiles or fewer, which is as feeble as a wait gets, the measured best gives the ready hand up 8% of the time. Ready on eight live tiles or more, where the card says keep, it is 12%. The same answer either way, and both sit near the 15% at which costing yourself distance is right in general. Against a baseline that knows only what each throw is — whether it costs distance, whether any block wants it, and whether it is an honour, a terminal or a simple — giving up ready comes out 11.5 standard errors low. So do not stop to count what breaking would open up. At this table you keep the ready hand, feeble or not. `discardtest.ts` is the tool.',
+    verdictNote: 'Measured on 2026-09-05 against 952 graded positions across both packs, and the card’s condition does no work at all. *Ting Pai* on four live tiles or fewer, which is as feeble as a wait gets, the measured best gives the *Ting Pai* hand up 8% of the time. *Ting Pai* on eight live tiles or more, where the card says keep, it is 12%. The same answer either way, and both sit near the 15% at which costing yourself distance is right in general. Against a baseline that knows only what each throw is — whether it costs distance, whether any block wants it, and whether it is an honour, a terminal or a simple — giving up *Ting Pai* comes out 11.5 standard errors low. So do not stop to count what breaking would open up. At this table you keep the *Ting Pai* hand, feeble or not. `discardtest.ts` is the tool.',
   },
   {
     id: 'keep_floaters',
@@ -575,7 +575,7 @@ const CARDS: Tip[] = [
     id: 'isolate_triplet',
     phase: 'build',
     title: 'Reading a wait with a triplet in it',
-    rule: 'When a hand with a triplet in it is ready and you cannot see what it is waiting on, read it twice: once with the triplet as a set, once with one of its tiles as your pair.',
+    rule: 'When a hand with a triplet in it is *Ting Pai* and you cannot see what it is waiting on, read it twice: once with the triplet as a set, once with one of its tiles as your pair.',
     why: [
       'A triplet can be a finished set or it can be a pair with a spare copy attached, and those two readings give completely different waits.',
       'This is where multi-sided waits get miscounted by eye. The two readings together are the whole wait; either one alone is half of it.',
@@ -974,7 +974,7 @@ const CARDS: Tip[] = [
     id: 'speed_value_safety',
     phase: 'call',
     title: 'Three questions before any call',
-    rule: 'Does it get you closer to ready? Does it lock in tai worth having? Do you keep enough safe tiles to defend? Two yeses, call. None, pass. One, let the shape decide.',
+    rule: 'Does it get you closer to *Ting Pai*? Does it lock in tai worth having? Do you keep enough safe tiles to defend? Two yeses, call. None, pass. One, let the shape decide.',
     why: [
       'A call always spends something. Concealed tiles are your defence and your flexibility, and they leave the hand the moment you claim.',
       'Value is easier to satisfy here than in the game this rule came from, because a dragon or your seat wind is a tai on its own and there is no bonus for staying concealed.',
@@ -996,7 +996,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05 against the graded claim positions in both quiz packs, and it is not detectable. Take the hands the card is about — exactly one pair and no joker — and the positions offering one call against one pass, then split them by whether the call would kill that pair. Passing was the measured best 47% of the time when the call killed the pair, on 94 positions, and 39% when the call left a pair standing, on 130. That gap is 1.2 standard errors, so the pair-killing call is still the better action more often than not and “never” is too strong here. The first cut looked far worse for the call, best 51% of the time against 78%, but that compared it with calls made from hands holding two pairs, which are different hands; matching the hands removed nearly all of it. Both populations agree. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to the hand’s distance — a call that makes it ready is best 88% of the time, one that costs nothing 60%, a pass 28% — and the verdict holds, though for a reason worth having. Passing scores 3.4 standard errors above that baseline when the call would kill the only pair, and 2.4 above it when the call would not, so passing is under-predicted in one-pair hands generally and the part that is about the pair is about one standard error. Still not detectable.',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions in both quiz packs, and it is not detectable. Take the hands the card is about — exactly one pair and no joker — and the positions offering one call against one pass, then split them by whether the call would kill that pair. Passing was the measured best 47% of the time when the call killed the pair, on 94 positions, and 39% when the call left a pair standing, on 130. That gap is 1.2 standard errors, so the pair-killing call is still the better action more often than not and “never” is too strong here. The first cut looked far worse for the call, best 51% of the time against 78%, but that compared it with calls made from hands holding two pairs, which are different hands; matching the hands removed nearly all of it. Both populations agree. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to the hand’s distance — a call that makes it *Ting Pai* is best 88% of the time, one that costs nothing 60%, a pass 28% — and the verdict holds, though for a reason worth having. Passing scores 3.4 standard errors above that baseline when the call would kill the only pair, and 2.4 above it when the call would not, so passing is under-predicted in one-pair hands generally and the part that is about the pair is about one standard error. Still not detectable.',
   },
   {
     id: 'pon_over_chii',
@@ -1015,8 +1015,8 @@ const CARDS: Tip[] = [
   {
     id: 'call_to_upgrade',
     phase: 'call',
-    title: 'Being ready is not a reason to stop calling',
-    rule: 'A call that turns a bad wait into a good one is worth making even when you are already ready. These come up often and get missed because the hand feels finished.',
+    title: 'Being *Ting Pai* is not a reason to stop calling',
+    rule: 'A call that turns a bad wait into a good one is worth making even when you are already *Ting Pai*. These come up often and get missed because the hand feels finished.',
     why: [
       'What matters is how many tiles can end the hand, and a call can double that in one move.',
       'It is the same idea as breaking a finished shape to widen a wait, which is the best-evidenced tip on this page.',
@@ -1024,7 +1024,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05 against the graded claim positions, and the card’s condition turns out to be the whole of it. Starting from hands that are already ready: when a call would leave the hand ready on MORE live tiles, the measured best was that call 78% of the time, 40 of 51. When the call would leave it ready on the same number or fewer, the best was to pass, and the call was right only 27% of the time, 27 of 100. The gap is six standard errors and both populations agree. The 78% needs the right baseline to read: calling beats passing 72% of the time across every claim position in these packs, so being ready and calling is not in itself better than average. What separates the two arms is the width, which is the same thing the discard version of this tip says. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the contrast sharpens: the widening call sits 1.6 standard errors above what its class predicts, and the call that keeps the hand ready WITHOUT widening sits 9.2 below. Being ready and calling is strongly wrong unless the wait grows.',
+    verdictNote: 'Measured on 2026-09-05 against the graded claim positions, and the card’s condition turns out to be the whole of it. Starting from hands that are already *Ting Pai*: when a call would leave the hand *Ting Pai* on MORE live tiles, the measured best was that call 78% of the time, 40 of 51. When the call would leave it *Ting Pai* on the same number or fewer, the best was to pass, and the call was right only 27% of the time, 27 of 100. The gap is six standard errors and both populations agree. The 78% needs the right baseline to read: calling beats passing 72% of the time across every claim position in these packs, so being *Ting Pai* and calling is not in itself better than average. What separates the two arms is the width, which is the same thing the discard version of this tip says. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the contrast sharpens: the widening call sits 1.6 standard errors above what its class predicts, and the call that keeps the hand *Ting Pai* WITHOUT widening sits 9.2 below. Being *Ting Pai* and calling is strongly wrong unless the wait grows.',
   },
   {
     id: 'call_to_skip_draw',
@@ -1038,7 +1038,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-05, and it names the wrong positions. Take a call that does not leave the hand further from ready, which is the card’s “keeps your shape”. Across every claim position in both packs such a call is the measured best 72% of the time. Late in the hand with somebody holding two melds, which is the card’s own condition, it falls to 60%, on 204 positions, against 75% in the early and mid positions where nobody is committed. Splitting the condition in two, being late alone gives 60% and somebody being committed alone gives 68%, so the lateness is doing all of it and the danger adds nothing. Calling still edges passing there, so this is not advice that loses money: it is advice that points at the positions where calling is LEAST reliable as though they were where it pays. The play-outs price deal-in, so a genuinely defensive call would have shown up here. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the card’s own condition comes out 3.8 standard errors LOW — being late alone is 4.3 low, somebody committed alone 2.1 low, and early with nobody committed 3.2 HIGH. The same shape as before, sharper.',
+    verdictNote: 'Measured on 2026-09-05, and it names the wrong positions. Take a call that does not leave the hand further from *Ting Pai*, which is the card’s “keeps your shape”. Across every claim position in both packs such a call is the measured best 72% of the time. Late in the hand with somebody holding two melds, which is the card’s own condition, it falls to 60%, on 204 positions, against 75% in the early and mid positions where nobody is committed. Splitting the condition in two, being late alone gives 60% and somebody being committed alone gives 68%, so the lateness is doing all of it and the danger adds nothing. Calling still edges passing there, so this is not advice that loses money: it is advice that points at the positions where calling is LEAST reliable as though they were where it pays. The play-outs price deal-in, so a genuinely defensive call would have shown up here. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows what a call does to distance, and the card’s own condition comes out 3.8 standard errors LOW — being late alone is 4.3 low, somebody committed alone 2.1 low, and early with nobody committed 3.2 HIGH. The same shape as before, sharper.',
   },
   {
     id: 'turn_theft',
@@ -1066,7 +1066,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Half of it is measured on our own hands, and it is the half about the opponent: a player with three exposed sets is ready 39.5% of the time against 4.9% with none. That is the number the coach uses to price danger. Whether your own third call is worth making has not been measured.',
+    verdictNote: 'Half of it is measured on our own hands, and it is the half about the opponent: a player with three exposed sets is *Ting Pai* 39.5% of the time against 4.9% with none. That is the number the coach uses to price danger. Whether your own third call is worth making has not been measured.',
   },
   {
     id: 'all_pungs_needs_value',
@@ -1100,8 +1100,8 @@ const CARDS: Tip[] = [
   {
     id: 'take_ready_under_pressure',
     phase: 'call',
-    title: 'Against a committed opponent, take ready now',
-    rule: 'When somebody is visibly going for it, get ready immediately even if your hand is cheap. Being not-ready against a ready opponent is the losing end of the trade.',
+    title: 'Against a committed opponent, take *Ting Pai* now',
+    rule: 'When somebody is visibly going for it, get *Ting Pai* immediately even if your hand is cheap. Being not-*Ting Pai* against a *Ting Pai* opponent is the losing end of the trade.',
     why: [
       'You cannot win a race you have not entered, and a cheap hand that ends the round stops theirs.',
       'The signal here is melds and tempo, not any kind of declaration — there is nothing to announce at this table.',
@@ -1109,7 +1109,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on 2026-09-05, and the action is right while the reason is not. A call that turns a hand that was not ready into a ready one is the measured best 89% of the time when an opponent has three melds, 40 of 45 positions — but 94% when nobody holds as many as two, 168 of 179, and 85% at two melds. So take the ready hand, which is among the strongest things measured on this page, and do not take it BECAUSE somebody is committed. If anything a committed opponent is a mild reason to think twice, which is the opposite of the card. Both populations agree, and the baseline matters: calling beats passing 72% of the time in these positions overall. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows a call making the hand ready is best 88% of the time anyway: 2.1 standard errors above that under pressure, 5.7 above it with nobody committed. The pressure condition still subtracts.',
+    verdictNote: 'Measured on 2026-09-05, and the action is right while the reason is not. A call that turns a hand that was not *Ting Pai* into a *Ting Pai* one is the measured best 89% of the time when an opponent has three melds, 40 of 45 positions — but 94% when nobody holds as many as two, 168 of 179, and 85% at two melds. So take the *Ting Pai* hand, which is among the strongest things measured on this page, and do not take it BECAUSE somebody is committed. If anything a committed opponent is a mild reason to think twice, which is the opposite of the card. Both populations agree, and the baseline matters: calling beats passing 72% of the time in these positions overall. The tool is `calltest.ts`. Re-scored on 2026-09-06 against a baseline that knows a call making the hand *Ting Pai* is best 88% of the time anyway: 2.1 standard errors above that under pressure, 5.7 above it with nobody committed. The pressure condition still subtracts.',
   },
   {
     id: 'rebuild_waits',
@@ -1123,7 +1123,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-06 on positions built to order, because a ready hand on a dead wait at the moment a rebuilding tile is thrown is about as rare as positions get. `buildrare.ts` gives the seat after the discarder four finished runs and a single tile whose other three copies are already on the table, throws a tile that extends one of its runs, and grades the claim with the packs’ own 128 play-outs. Claiming and throwing the dead tile leaves a live wait; passing keeps a hand that cannot win as it stands. Four hundred positions a population, one per recorded hand. The play-outs PASSED 58% of the time on both — 42% for the call against 50% by luck, 3.5 and 3.3 standard errors the wrong way, and further below a baseline that knows the call costs the hand no distance. The likely reason is that a dead wait can be rebuilt by drawing as well as by calling, every turn, without spending a concealed tile on it, so the call buys nothing the next draw did not already offer. Learn to see that the wait is dead; do not reach for the call.',
+    verdictNote: 'Measured on 2026-09-06 on positions built to order, because a *Ting Pai* hand on a dead wait at the moment a rebuilding tile is thrown is about as rare as positions get. `buildrare.ts` gives the seat after the discarder four finished runs and a single tile whose other three copies are already on the table, throws a tile that extends one of its runs, and grades the claim with the packs’ own 128 play-outs. Claiming and throwing the dead tile leaves a live wait; passing keeps a hand that cannot win as it stands. Four hundred positions a population, one per recorded hand. The play-outs PASSED 58% of the time on both — 42% for the call against 50% by luck, 3.5 and 3.3 standard errors the wrong way, and further below a baseline that knows the call costs the hand no distance. The likely reason is that a dead wait can be rebuilt by drawing as well as by calling, every turn, without spending a concealed tile on it, so the call buys nothing the next draw did not already offer. Learn to see that the wait is dead; do not reach for the call.',
   },
   {
     id: 'middle_tile_hands_undefended',
@@ -1186,7 +1186,7 @@ const CARDS: Tip[] = [
     id: 'calling_by_exposed_sets',
     phase: 'read',
     title: 'Count their melds — it is the strongest free signal',
-    rule: 'How ready a player is climbs steeply with how many sets they have exposed. It costs nothing to watch and it is the single best guide to who to be afraid of.',
+    rule: 'How *Ting Pai* a player is climbs steeply with how many sets they have exposed. It costs nothing to watch and it is the single best guide to who to be afraid of.',
     why: [
       'A player with nothing exposed is usually nowhere. A player with three is usually one tile away.',
       'Careful players run above these rates rather than below, because they only expose when the hand is worth it.',
@@ -1194,7 +1194,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured on our own recorded hands, and it is the number the coach prices every discard against: a seat with three exposed sets is one tile from ready 39.5% of the time, against 4.9% with none. The study of this table puts the same seat at about 83% likely to be calling by turn 40, which is the same signal read at a later point in the hand.',
+    verdictNote: 'Measured on our own recorded hands, and it is the number the coach prices every discard against: a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time, against 4.9% with none. The study of this table puts the same seat at about 83% likely to be calling by turn 40, which is the same signal read at a later point in the hand.',
   },
   {
     id: 'half_color_tell',
@@ -1214,7 +1214,7 @@ const CARDS: Tip[] = [
     id: 'flush_traffic_light',
     phase: 'read',
     title: 'A colour hand has three stages, and you can see all of them',
-    rule: 'Green: their discards are ordinary tiles from every suit, so push your awkward tiles out now while it is cheap. Yellow: they start throwing honours, including ones they had kept, so they are getting close. Red: their discards are mostly one suit, so assume ready and stop feeding that suit entirely.',
+    rule: 'Green: their discards are ordinary tiles from every suit, so push your awkward tiles out now while it is cheap. Yellow: they start throwing honours, including ones they had kept, so they are getting close. Red: their discards are mostly one suit, so assume *Ting Pai* and stop feeding that suit entirely.',
     why: [
       'The stages come in order and each one is a chance to act before the hand becomes expensive.',
       'The mistake is to react at red, when there is nothing left to do except fold badly.',
@@ -1264,7 +1264,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-05 over 20,000 recorded hands and 10,000 coach hands, and the tell is real but points the other way. Watch which seats are actually one tile from ready, split by where their last throw came from. A seat that threw the tile it had just drawn is ready 25.5% of the time around turn 30 against 16.4% for a seat that threw from its hand; at a table of coaches it is 28.7% against 23.0%. Same direction at every turn on both populations, on hundreds of thousands of throws. The reason is plain once measured: a finished hand has nothing to rearrange, so it throws whatever it draws, while a hand still throwing from its own tiles is still being built. So the informative throw is the one this card calls uninformative. `tells.ts` is the tool.',
+    verdictNote: 'Measured on 2026-09-05 over 20,000 recorded hands and 10,000 coach hands, and the tell is real but points the other way. Watch which seats are actually one tile from *Ting Pai*, split by where their last throw came from. A seat that threw the tile it had just drawn is *Ting Pai* 25.5% of the time around turn 30 against 16.4% for a seat that threw from its hand; at a table of coaches it is 28.7% against 23.0%. Same direction at every turn on both populations, on hundreds of thousands of throws. The reason is plain once measured: a finished hand has nothing to rearrange, so it throws whatever it draws, while a hand still throwing from its own tiles is still being built. So the informative throw is the one this card calls uninformative. `tells.ts` is the tool.',
   },
   {
     id: 'pair_discards_rule_out',
@@ -1292,13 +1292,13 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on 2026-09-05 and there is no threat here on either population. A seat that has thrown away a pair of dragons or its own seat wind is ready 16.0% of the time around turn 30 against 17.2% for a seat that has not, and at a table of coaches 18.2% against 22.3%. The gap is level or slightly the wrong way at every turn we measured, on 176,000 tagged moments in the recorded hands alone. Shedding the pair usually means the tai was never coming, not that the rest of the hand grew strong enough to spare it.',
+    verdictNote: 'Measured on 2026-09-05 and there is no threat here on either population. A seat that has thrown away a pair of dragons or its own seat wind is *Ting Pai* 16.0% of the time around turn 30 against 17.2% for a seat that has not, and at a table of coaches 18.2% against 22.3%. The gap is level or slightly the wrong way at every turn we measured, on 176,000 tagged moments in the recorded hands alone. Shedding the pair usually means the tai was never coming, not that the rest of the hand grew strong enough to spare it.',
   },
   {
     id: 'second_copy_call',
     phase: 'read',
     title: 'Watch which copy of a dragon gets claimed',
-    rule: 'If the first dragon or wind goes past uncalled and somebody pongs the second, read that hand as cheap but assembled — probably ready or nearly so, and probably not worth much.',
+    rule: 'If the first dragon or wind goes past uncalled and somebody pongs the second, read that hand as cheap but assembled — probably *Ting Pai* or nearly so, and probably not worth much.',
     why: [
       'A player with real value would have claimed the first copy even with an awkward shape, because the tai was the point.',
       'A player who was both cheap and badly shaped would have let the second go too and kept it as a safe tile. Claiming only the second means neither.',
@@ -1306,7 +1306,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: 'Measured on both populations, and the two halves of the tip come apart. "Assembled" survives against strong players: at a table of coaches a seat that claimed a later copy was ready at the end 64% of the time against 54% for one that took the first copy, and it holds inside every turn band, so it is not just that a later copy is claimed later. Against the weaker bots there is no gap at all. "Cheap" is false in both — those hands scored the same or more when they won, 3.73 tai against 3.45 at the coach table, and won more often. So the read points the wrong way exactly where it matters, telling you to relax about the player you should be most worried about. What is not in doubt is the coarser version: any seat that has claimed a dragon or a wind is ready far more often than one that has not, 54-64% against 41%.',
+    verdictNote: 'Measured on both populations, and the two halves of the tip come apart. "Assembled" survives against strong players: at a table of coaches a seat that claimed a later copy was *Ting Pai* at the end 64% of the time against 54% for one that took the first copy, and it holds inside every turn band, so it is not just that a later copy is claimed later. Against the weaker bots there is no gap at all. "Cheap" is false in both — those hands scored the same or more when they won, 3.73 tai against 3.45 at the coach table, and won more often. So the read points the wrong way exactly where it matters, telling you to relax about the player you should be most worried about. What is not in doubt is the coarser version: any seat that has claimed a dragon or a wind is *Ting Pai* far more often than one that has not, 54-64% against 41%.',
   },
   {
     id: 'concealed_kong_signal',
@@ -1320,7 +1320,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: "Measured on 2026-09-05, and the answer depends on who is playing, which makes it a signal not worth carrying. On the recorded hands a seat that has declared a concealed kong is ready slightly more often than one that has not — 13.2% against 10.2% around turn 20, 23.4% against 20.5% at turn 40. At a table of coaches it goes the other way at every turn: 7.8% against 9.5%, and 29.1% against 33.3%. Two populations, opposite signs, both on thousands of kongs. The card's argument is that sparing four tiles for one set means the rest of the hand is far along, and the counter-argument is that it also spends the flexibility a hand needs. Which of those wins is a fact about the table, so treat a concealed kong as a hand that has been paid, not as a hand that is close.",
+    verdictNote: "Measured on 2026-09-05, and the answer depends on who is playing, which makes it a signal not worth carrying. On the recorded hands a seat that has declared a concealed kong is *Ting Pai* slightly more often than one that has not — 13.2% against 10.2% around turn 20, 23.4% against 20.5% at turn 40. At a table of coaches it goes the other way at every turn: 7.8% against 9.5%, and 29.1% against 33.3%. Two populations, opposite signs, both on thousands of kongs. The card's argument is that sparing four tiles for one set means the rest of the hand is far along, and the counter-argument is that it also spends the flexibility a hand needs. Which of those wins is a fact about the table, so treat a concealed kong as a hand that has been paid, not as a hand that is close.",
   },
   {
     id: 'fear_the_chaser',
@@ -1334,7 +1334,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'contradicted',
-    verdictNote: "Measured on 2026-09-05 by ordering each hand's seats by when they first became one tile from ready. The first to commit wins 65.1% of the hands at a table of coaches, the second 43.4% and anyone later 32.8%; on the recorded hands 54.6%, 39.3% and 33.1%. Fear the first, by a distance. The card's mechanism is faintly visible and nowhere near enough to save it: when a later committer does win it collects 19.8 chips against the first mover's 18.1, so chasers do hold slightly better hands. Multiply that by how rarely they get there and the first mover is worth about half as much again as the chaser.",
+    verdictNote: "Measured on 2026-09-05 by ordering each hand's seats by when they first became one tile from *Ting Pai*. The first to commit wins 65.1% of the hands at a table of coaches, the second 43.4% and anyone later 32.8%; on the recorded hands 54.6%, 39.3% and 33.1%. Fear the first, by a distance. The card's mechanism is faintly visible and nowhere near enough to save it: when a later committer does win it collects 19.8 chips against the first mover's 18.1, so chasers do hold slightly better hands. Multiply that by how rarely they get there and the first mover is worth about half as much again as the chaser.",
   },
   {
     id: 'wall_reading',
@@ -1377,7 +1377,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'The threat half is measured on our own hands: a seat with three exposed sets is one tile from ready 39.5% of the time, against 4.9% with none. What the exact fold line should be — three against one, or two against none — has not been measured here.',
+    verdictNote: 'The threat half is measured on our own hands: a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time, against 4.9% with none. What the exact fold line should be — three against one, or two against none — has not been measured here.',
   },
   {
     id: 'push_early_fold_late',
@@ -1385,7 +1385,7 @@ const CARDS: Tip[] = [
     title: 'The same tile is cheap early and expensive late',
     rule: 'Early, an unsafe tile is a small risk and you still have turns to win the hand, so push. Late, every safe line is used up and your own chances are thin, so fold. The turn number decides more than the tile does.',
     why: [
-      'Nobody is ready at turn 10, so almost nothing you throw can lose.',
+      'Nobody is *Ting Pai* at turn 10, so almost nothing you throw can lose.',
       'By turn 40 several hands are one tile away and you have already thrown everything comfortable.',
     ],
     variants: [],
@@ -1467,7 +1467,7 @@ const CARDS: Tip[] = [
     id: 'folding_always_loses_slowly',
     phase: 'push_fold',
     title: 'Folding everything bleeds, but not as fast as it does elsewhere',
-    rule: 'Fold every hand and you still lose steadily to other people’s self-draws. But this table has no penalty for ending a hand not ready, so the pressure to force a ready hand is much weaker here than in the game the rule came from.',
+    rule: 'Fold every hand and you still lose steadily to other people’s self-draws. But this table has no penalty for ending a hand not *Ting Pai*, so the pressure to force a *Ting Pai* hand is much weaker here than in the game the rule came from.',
     why: [
       'There is nothing to pay at the end for having a bad hand, so a genuine fold costs only the hand itself.',
       'The 2 tai minimum makes hands longer and draws more common, which cuts the other way — more hands end with nobody paying anybody.',
@@ -1475,7 +1475,7 @@ const CARDS: Tip[] = [
     variants: [],
     claim: { kind: 'not-countable' },
     verdict: 'measured',
-    verdictNote: 'Measured from both sides. The rule’s own caveat is a fact about this table, taken from the rulebook: no not-ready penalty. And defending MORE loses money here monotonically — turning the coach’s caution up costs 0.05, 0.19, 0.40 and 0.68 chips a game as it rises, out to four and a half standard errors.',
+    verdictNote: 'Measured from both sides. The rule’s own caveat is a fact about this table, taken from the rulebook: no not-*Ting Pai* penalty. And defending MORE loses money here monotonically — turning the coach’s caution up costs 0.05, 0.19, 0.40 and 0.68 chips a game as it rises, out to four and a half standard errors.',
   },
   {
     id: 'push_only_if_it_matters',
