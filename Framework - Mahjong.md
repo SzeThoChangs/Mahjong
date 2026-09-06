@@ -284,4 +284,7 @@ human has been measured against any of it, and that is the real gap.
 ## Running the app
 
 From this folder, `pnpm install` then `pnpm dev`, and it is at `http://localhost:5173`. Everything it
-remembers is in your browser and nowhere else.
+remembers is in your browser and nowhere else, so save it: the Table setup tab has a button that
+writes your whole record to a file and another that puts it back. Do that at the end of the first
+week and then whenever you remember. A mistake record is worth most in its third and fourth week,
+which is exactly when losing it would cost the most.

@@ -2,8 +2,9 @@
  * Table setup: configure the house money schedule and see, immediately,
  * which hand types pay best at that table (priced from 150,000 recorded hands).
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { downloadBackup, restoreBackup } from '@/lib/backup';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +23,18 @@ const Num = ({ v, on }: { v: number; on: (n: number) => void }) => (
 );
 
 export default function TableSetup() {
+  const [backupNote, setBackupNote] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const doExport = () => { const r = downloadBackup(); setBackupNote(`Saved ${r.mistakes} mistake${r.mistakes === 1 ? '' : 's'} and your drill scores to a file.`); };
+  const doRestore = (f: File) => {
+    void f.text().then((text) => {
+      const r = restoreBackup(text);
+      setBackupNote(r.ok
+        ? `Restored: ${r.now.mistakes} mistakes (${r.now.sorted} sorted) and ${r.now.spotAnswered} spot answers, replacing ${r.was.mistakes}. Reload the page to see them.`
+        : `Not restored — ${r.error}.`);
+    });
+  };
+
   const [cfg, setCfg] = useState<MoneyConfig>(loadConfig);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [compare, setCompare] = useState<string>(PRESETS[1]!.name);
@@ -40,6 +53,30 @@ export default function TableSetup() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
+      {/* everything the app remembers is in this browser and nowhere else, so this is the whole backup story */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Your training record</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="text-muted-foreground">
+            Your mistakes, their schedule, the causes you sorted them under and your drill scores live in this
+            browser and nowhere else — no server, no account. Clearing the browser loses them, and a mistake
+            record is worth most in its third and fourth week, so save it somewhere before that happens.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={doExport}>Save my record to a file</Button>
+            <Button size="sm" variant="outline" onClick={() => fileInput.current?.click()}>Restore from a file</Button>
+            <input ref={fileInput} type="file" accept="application/json,.json" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) doRestore(f); e.target.value = ''; }} />
+          </div>
+          {backupNote && <p className="text-foreground">{backupNote}</p>}
+          <p className="text-xs text-muted-foreground">
+            Restoring replaces what is here rather than merging it, because two copies of the same card can sit
+            at different points in the schedule and guessing which to keep would corrupt the one thing the
+            reviews depend on.
+          </p>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Your table's money</CardTitle></CardHeader>
         <CardContent className="space-y-4">
