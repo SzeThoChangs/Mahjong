@@ -47,10 +47,7 @@ tiles in their discard pile.
 
 ## The work, in the order the pain is felt
 
-1. **Shard the quiz packs.** The freeze and the heap. One 10MB file becomes about fifty of a hundred
-   questions plus an index, so the first question arrives after 200KB. The design question is the
-   cause filter: it walks the whole pack today, so the index has to carry enough summary to pick a
-   shard without loading all fifty, or the filter quietly loads everything anyway.
+1. **Shard the quiz packs.** The freeze and the heap. Design settled below.
 2. **The layout pass.** The bottom bar, 48px targets everywhere, safe-area insets top and bottom.
    48 satisfies Apple's 44 and Google's 48 at once.
 3. **Split the bundle.** 596KB arrives as one file before anything is drawn.
@@ -75,3 +72,40 @@ somebody's privacy to look after, and it puts a wall in front of the thing we wa
 Every tile in your own hand is a button, so each needs 44px. Seven at 44px plus their gaps is 332px,
 which is exactly the usable width at 360. Fourteen tiles therefore wrap to two rows and the hand
 claims about 130px of height before anything else. No layout choice avoids this.
+
+
+## The sharding design, settled 2026-09-07
+
+The awkward part was never the splitting, it was the cause filter, and looking at how it works
+dissolved the problem rather than complicating it.
+
+**The cause is computed in the browser today, and it should not be.** `RealQuiz` runs `rankDiscards`
+and `suggestCause` over each question's own tiles to work out why the seat's throw failed, at about
+5ms a question, and it needs a background warmer running in 25-question slices so that filtering
+never walks cold. Sharding would break that warmer, because a shard can only warm itself.
+
+The fix is to compute the cause once, when the pack is built, and store it on the question as one
+short string. That deletes the warmer, the cache, the 5ms and the two-second cold walk in one go,
+and it lets an index answer "which shard holds a miscounted question" without fetching anything.
+
+**It is also more correct.** The label today is computed against YOUR table config, not the table the
+position was played at, which is the same mismatch the pack banner already warns about for the
+coach's reasoning. Baked at build time it uses the pack's own table, which is the table the hand was
+actually played on.
+
+The shape:
+
+    quiz/<pack>/index.json     { run, money, unit, table, questions, shards: [
+                                 { file, n, kinds: {discard, claim}, causes: {miscounted: 12, ...} } ] }
+    quiz/<pack>/000.json ...   { questions: [ ... ] }, a hundred each, every question carrying `c`
+
+The client loads the index, which is a few KB, picks a shard that can satisfy the current mode and
+cause filter from the tallies alone, and fetches only that. First question after about 200KB and a
+70ms parse instead of 10MB and 3.5 seconds. Offline, only the shards actually answered are kept,
+so the phone holds what was practised rather than five whole tables.
+
+Two things to be careful of when this is built. The pack builder must write the index and the shards
+in one pass so a tally can never disagree with a shard - a filter that promises a cause the shard
+does not contain is a bug that only shows up as an empty drill. And `index.json` at `quiz/index.json`
+already lists the packs; the per-pack index is a second file inside the pack's own directory, so the
+two must not be confused.
