@@ -10,17 +10,18 @@
  * Export writes every key. Restore puts them back. There is no server and no account, so this is
  * the whole of the backup story, and it is also how the record moves between two machines.
  */
-export const KEYS = ['mj.mistakes.v1', 'mj.spot.v1', 'mj.spotcause.v1', 'mj.practise.v1'] as const;
+export const KEYS = ['mj.mistakes.v1', 'mj.spot.v1', 'mj.spotcause.v1', 'mj.practise.v1', 'mj.history.v1'] as const;
 export type Key = typeof KEYS[number];
 
 export interface Backup { app: 'which-tile'; version: 1; savedAt: string; data: Partial<Record<Key, unknown>> }
 
 /** What is in the file, said in the plain words the buttons use. */
-export function summarise(b: Backup): { mistakes: number; sorted: number; spotAnswered: number; spotMisses: number } {
+export function summarise(b: Backup): { mistakes: number; sorted: number; spotAnswered: number; spotMisses: number; played: number } {
   const ms = (b.data['mj.mistakes.v1'] as { cause?: string }[] | undefined) ?? [];
   const spot = (b.data['mj.spot.v1'] as Record<string, { n: number; right: number }> | undefined) ?? {};
   const causes = (b.data['mj.spotcause.v1'] as Record<string, Record<string, number>> | undefined) ?? {};
   return {
+    played: ((b.data['mj.history.v1'] as unknown[] | undefined) ?? []).length,
     mistakes: ms.length,
     sorted: ms.filter((m) => !!m.cause).length,
     spotAnswered: Object.values(spot).reduce((a, c) => a + (c?.n ?? 0), 0),

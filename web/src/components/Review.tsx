@@ -23,6 +23,7 @@ import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { fanInHand } from 'sg-mahjong-engine';
 import { makeScenario, CONFIG } from '@/lib/scenario';
+import { readHistory, type Play } from '@/lib/history';
 import { tileLabel } from '@/lib/tiles';
 import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, bySource, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
@@ -55,7 +56,28 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   const tally = useMemo(() => causeTally(), [tick]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const sources = useMemo(() => bySource(), [tick]);
-  const current: Mistake | undefined = due[0];
+
+  /**
+   * Two jobs on one screen, and they are opposites.
+   *
+   * The schedule ASKS: it shows a hand you got wrong and withholds everything else, because the
+   * only thing that makes it stick is doing the thinking again. The log TELLS: you pick a hand you
+   * have already played and it opens with the answer and the reasoning already on screen. Both are
+   * in the method - the first is spaced retrieval, the second is finding out what the right answer
+   * was and why - and they need different behaviour rather than one screen hedging between them.
+   */
+  const [view, setView] = useState<'due' | 'log'>('due');
+  const [openId, setOpenId] = useState<string | null>(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const log = useMemo(() => readHistory(), [tick]);
+  const played = view === 'log' && openId ? log.find((h) => h.id === openId) : undefined;
+
+  // A log entry carries the same few fields the rebuild needs, so it can stand in for a card here.
+  const current: Mistake | undefined = played
+    ? ({ id: played.id, seed: played.seed, phase: played.phase, pack: played.pack, qid: played.qid,
+         picked: played.threw, coachPick: played.best, verdict: played.verdict, cost: played.cost,
+         firstSeen: played.at, why: '' } as unknown as Mistake)
+    : due[0];
 
   /**
    * A card comes back as the identical position, and there are two ways to rebuild one.
@@ -139,8 +161,10 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   const hand = pos?.hand ?? [];
 
   const answer = (k: number) => { if (pick === null) setPick(k); };
+  const openPlayed = (h: Play) => { setOpenId(h.id); setPick(h.threw); };
+  const closePlayed = () => { setOpenId(null); setPick(null); };
   const finish = () => {
-    if (!current || pick === null || !pos) return;
+    if (!current || pick === null || !pos || played) return;   // a look back moves nothing on
     // A quiz card is right if it is the throw the play-outs measured; a Train card if the coach
     // calls it best or also-fine. Different judges, and the record keeps them apart deliberately.
     const ok = quizQ ? pick === pos.best : (() => { const o = pos.options.find((x) => x.tile === pick); return !!o && (o.verdict === 'best' || o.verdict === 'fine'); })();
@@ -184,9 +208,64 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
         </Card>
   ) : null;
 
-  if (!open.length) {
+  const switcher = (
+    <div className="flex gap-1.5 text-sm">
+      <Button size="sm" variant={view === 'due' ? 'default' : 'outline'}
+        onClick={() => { setView('due'); closePlayed(); }}>Due now {due.length}</Button>
+      <Button size="sm" variant={view === 'log' ? 'default' : 'outline'}
+        onClick={() => { setView('log'); setPick(null); }}>Hands you have played {log.length}</Button>
+    </div>
+  );
+
+  if (view === 'log' && !played) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-4 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-semibold">Review</h2>{switcher}
+        </div>
+        <Card>
+          <CardHeader className="gap-1">
+            <CardTitle className="text-base">Hands you have played</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              The last {log.length ? log.length : 0} of them, newest first, whether they went well or badly.
+              Open one and it shows the answer and the reasoning straight away — this is for understanding a
+              hand, not for testing yourself on it again.
+            </p>
+          </CardHeader>
+          <CardContent className="text-sm">
+            {log.length === 0
+              ? <p className="text-muted-foreground">Nothing yet. Play a hand on the Train tab or the Real quiz and it will appear here.</p>
+              : (
+                <div className="flex flex-col">
+                  {log.map((h) => (
+                    <button key={h.id} onClick={() => openPlayed(h)}
+                      className="flex items-center gap-3 border-b py-3 text-left last:border-0 hover:bg-accent/50">
+                      <Badge variant="outline" className={h.right ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}>
+                        {h.right ? 'ok' : h.verdict}
+                      </Badge>
+                      <span className="flex items-center gap-1">
+                        <Tile kind={h.threw} size="xs" />
+                        {!h.right && <><span className="text-muted-foreground">not</span><Tile kind={h.best} size="xs" /></>}
+                      </span>
+                      <span className="ml-auto text-right text-xs text-muted-foreground">
+                        {howLongAgo(h.at, now)}<br />{h.judge === 'playouts' ? 'play-outs' : 'the coach'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!open.length && view === 'due') {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-semibold">Review</h2>{switcher}
+        </div>
         {diagnosis}
         <Card>
           <CardHeader><CardTitle className="text-base">Nothing to review yet</CardTitle></CardHeader>
@@ -204,6 +283,9 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     const next = [...open].sort((a, b) => a.due - b.due)[0]!;
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-semibold">Review</h2>{switcher}
+        </div>
         {diagnosis}
         <Card>
           <CardHeader><CardTitle className="text-base">All caught up</CardTitle></CardHeader>
@@ -220,6 +302,9 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   if (!pos) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-semibold">Review</h2>{switcher}
+        </div>
         {diagnosis}
         <Card>
           <CardHeader><CardTitle className="text-base">This one cannot be rebuilt</CardTitle></CardHeader>
@@ -239,22 +324,23 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-semibold">Review</h2>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Badge variant="outline">{due.length} due now</Badge>
-          <Badge variant="outline">{open.length} on the schedule</Badge>
-        </div>
+        {switcher}
       </div>
 
       {diagnosis}
 
       <Card>
         <CardHeader className="gap-1">
-          <CardTitle className="text-base">You got this hand wrong {howLongAgo(current.firstSeen, now)}</CardTitle>
+          <CardTitle className="text-base">
+            {played ? `You played this hand ${howLongAgo(played.at, now)}` : `You got this hand wrong ${howLongAgo(current.firstSeen, now)}`}
+          </CardTitle>
           <p className="text-xs text-muted-foreground">Judged by {pos.judge}{quizQ ? ', which is the honest grader here' : ', which is right about half the time on positions like this'}.</p>
           <p className="text-sm text-muted-foreground">
-            Work it out again from the tiles. What you threw last time is deliberately not shown — recognising
-            an answer is not the same as knowing it.
+            {played
+              ? 'Everything is shown: what you threw, what the judge threw, and why. Nothing here changes your schedule.'
+              : 'Work it out again from the tiles. What you threw last time is deliberately not shown — recognising an answer is not the same as knowing it.'}
           </p>
+          {played && <Button size="sm" variant="outline" className="self-start" onClick={closePlayed}>Back to the list</Button>}
         </CardHeader>
         <CardContent className="space-y-4">
           <PublicTable
@@ -298,9 +384,19 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
               <Separator />
               <div className="space-y-2 text-sm">
                 <p className={cn('font-medium', right ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
-                  {jargon(right ? `Right this time — ${tileLabel(pick)}.` : `Still wrong — you threw ${tileLabel(pick)}, ${quizQ ? 'the play-outs throw' : 'the *Coach* throws'} ${tileLabel(coachTile)}.`)}
+                  {jargon(played
+                    ? (right ? `You threw ${tileLabel(pick)}, and that was right.`
+                             : `You threw ${tileLabel(pick)}. ${quizQ ? 'The play-outs threw' : 'The *Coach* threw'} ${tileLabel(coachTile)}.`)
+                    : (right ? `Right this time — ${tileLabel(pick)}.`
+                             : `Still wrong — you threw ${tileLabel(pick)}, ${quizQ ? 'the play-outs throw' : 'the *Coach* throws'} ${tileLabel(coachTile)}.`))}
                 </p>
                 {pos.reasons(coachTile)[0] && <p className="text-muted-foreground">Why {tileLabel(coachTile)}: {pos.reasons(coachTile)[0]}.</p>}
+                {played && !right && pos.reasons(pick)[0] && <p className="text-muted-foreground">Why not {tileLabel(pick)}: {pos.reasons(pick)[0]}.</p>}
+                {played ? (
+                  <p className="text-muted-foreground">
+                    Looking back changes nothing: this hand keeps whatever place it already has on the schedule.
+                  </p>
+                ) : (<>
                 <p className="text-muted-foreground">
                   {right
                     ? `Moving on: back ${current.step + 1 >= INTERVALS_DAYS.length ? 'no more — this one is finished' : `in ${INTERVALS_DAYS[current.step + 1]} days`}.`
@@ -323,6 +419,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
                     Drop this one
                   </Button>
                 </div>
+                </>)}
               </div>
             </>
           )}

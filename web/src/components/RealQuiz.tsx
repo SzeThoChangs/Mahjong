@@ -13,6 +13,7 @@ import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG, JOKERS, PRACTISABLE } from '@/lib/scenario';
 import { recordMistake, causeTally } from '@/lib/mistakes';
+import { recordPlay } from '@/lib/history';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
@@ -283,6 +284,13 @@ export default function RealQuiz() {
     const v = verdictOf(bestAction.ev - act.ev, unit, act.se ?? 0);
     const kept = v === 'best' || v === 'fine' || v === 'unclear';
     setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: kept ? s.streak + 1 : 0 }));
+    // The log takes every discard answered here, right or wrong, so it can be opened again with the
+    // reasoning shown. Claims are left out for the same reason they are left out of the record: the
+    // screen that reopens a hand asks which tile, which is not the question a claim poses.
+    if (pack && q.k === 'discard' && a.startsWith('d:') && bestAction.a.startsWith('d:')) {
+      recordPlay({ judge: 'playouts', pack, qid: q.id, threw: Number(a.slice(2)), best: Number(bestAction.a.slice(2)),
+        verdict: v, cost: -(bestAction.ev - act.ev), right: kept });
+    }
     // A mistake judged by 128 play-outs is worth meeting again more than one judged by the coach,
     // and until now the record never heard from this tab at all. Discards only: the review screen
     // asks "which tile", and a claim question is a different question that it cannot pose.

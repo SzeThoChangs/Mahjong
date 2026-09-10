@@ -12,6 +12,7 @@ import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { makeScenario, makeScenarioFor, causeOf, PRACTISABLE, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
 import { recordMistake, setCause, causeTally, readPractise, writePractise } from '@/lib/mistakes';
+import { recordPlay } from '@/lib/history';
 import { cn } from '@/lib/utils';
 import { J } from '@/lib/jargon';
 
@@ -106,6 +107,11 @@ export default function Trainer() {
     const opt = scenario.ranking.options.find((o) => o.tile === k)!;
     const v = opt.verdict;
     setScore((s) => ({ ...s, [v]: s[v] + 1, streak: v === 'best' || v === 'fine' ? s.streak + 1 : 0 }));
+    // Every hand goes in the log, not just the ones that went wrong, so any of them can be opened
+    // again and explained. The record below keeps only mistakes, and keeps them to ask rather than
+    // to tell.
+    recordPlay({ judge: 'coach', seed, phase, threw: k, best: coachPick, verdict: v, cost: opt.delta,
+      right: v === 'best' || v === 'fine' });
     // A mistake you never meet again is a mistake you keep making. The position is rebuilt from the
     // seed, so the record is a few bytes rather than a hand.
     if (v === 'mistake' || v === 'blunder') {
