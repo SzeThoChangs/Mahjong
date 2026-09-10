@@ -5,6 +5,15 @@ the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured
 
 ## First thing: is the deploy green?
 
+Confirmed green at 18:20 on 2026-09-10: the merged Train tab, the 10k packs, the hand log and the
+green-dragon icon are all live and were loaded on a phone-sized viewport.
+
+**An agent may be mid-job.** A Fable agent was started at about 18:05 to shard the quiz packs (the
+design at the end of MOBILE.md). If `git status --short` shows changes under `web/public/quiz/`,
+`datagen/src/quizpack.ts`, `web/src/components/Train.tsx`, `Review.tsx` or `web/tools/singlefile.mjs`
+and nothing is committed, that is its work. It was told not to commit. Run `./check.sh`; if green,
+drive the Train tab and Review before committing it whole with `git commit --only <paths>`.
+
 HEAD builds again as of `880eb5b`, which committed the finished Train merge in one piece. Everything
 is pushed. Check https://github.com/SzeThoChangs/Mahjong/actions - the top "Deploy the trainer" run
 should be green and https://szethochangs.github.io/Mahjong/ should show the green-dragon icon in its
