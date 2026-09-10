@@ -3,32 +3,18 @@
 Read this first. `Framework - Mahjong.md` is the plan this project exists to produce. `PLAN.md` is
 the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured and why.
 
-## The one thing to do before anything else
+## First thing: is the deploy green?
 
-**HEAD does not build, and a merge is half-finished in the working tree.** Fix that first.
+HEAD builds again as of `880eb5b`, which committed the finished Train merge in one piece. Everything
+is pushed. Check https://github.com/SzeThoChangs/Mahjong/actions - the top "Deploy the trainer" run
+should be green and https://szethochangs.github.io/Mahjong/ should show the green-dragon icon in its
+tab. If it is red, read the failing step's annotations (the check-runs API returns them without
+signing in) and run `./check.sh` locally; it runs exactly what CI runs.
 
-What happened. Two Fable agents were working in this tree at once. One rebuilt the quiz packs (done,
-committed). The other was merging the Train tab into the Real quiz tab (see "The merge" below). While
-it worked, I committed the app icon with `git add <paths>` and then a bare `git commit`, which
-commits the whole index - and the agent had already staged its renames with `git mv`. So commit
-`0b9d065` carries `Train.tsx` and `GeneratedHand.tsx` without the `App.tsx` that imports them, and
-every deploy since has failed. The live site is unaffected: it still serves the last good build.
-
-Do this, in order:
-
-    ./check.sh                      # runs exactly what CI runs; read its header, it names three traps
-
-If it prints ALL GREEN, the agent finished: commit everything under web/src in ONE commit, push,
-and watch the deploy at https://github.com/SzeThoChangs/Mahjong/actions. Then commit `NEXT.md`.
-
-If it is not green, the agent was cut off mid-edit. `git status --short` will show what it touched
-(`App.tsx`, `GeneratedHand.tsx`, `Review.tsx`, `Train.tsx`, `lib/mistakes.ts`, `lib/scenario.ts`).
-Read `App.tsx` first - it must import `Train` and not `Trainer` or `RealQuiz` - then work through
-the errors. The design it was implementing is in "The merge" below; do not redesign it.
-
-Never again commit with a bare `git commit` while an agent may be in the tree. Use
-`git commit --only <paths>`. The two commits after the bad one were made that way and are clean:
-`180eec2` (the `--mix` flag) and `ab5e24f` (the 10k packs). Neither is pushed.
+How HEAD came to be broken, so it does not recur: two agents were working in this tree at once, and
+a bare `git commit` for the icon swept in the renames one of them had staged with `git mv`, leaving
+`App.tsx` importing files that no longer existed. Commit with `git commit --only <paths>` while any
+agent may be in the tree. Written up in memory as well.
 
 ## Where things are
 
@@ -36,19 +22,21 @@ Never again commit with a bare `git commit` while an agent may be in the tree. U
   address has no site and shows GitHub's 404. Deploys on every push to `evaluator-accuracy` via
   `.github/workflows/pages.yml`. The repo must stay public for Pages on a free account.
 - **Installed on a phone** it works offline after the first visit (`web/public/sw.js`).
-- **Icon:** the green dragon on maroon, committed in `b097a1c`, not yet live because that deploy
-  failed for the reason above.
+- **Icon:** the green dragon on maroon (`b097a1c`).
 - **Packs:** 10,000 questions on each of the three tables Changs plays, honest at every question,
   built with `--mix decisive` (commit `ab5e24f`). 14-16 MB each. The no-joker pack is half of all
   the decisive positions its run has, so it cannot grow without more grading.
 - **Hand log:** every answered discard is kept and can be reopened with the answer shown, on the
   Review tab under "Hands you have played". Built for friends who want to see a past hand and why.
+- **Docs still say "Real quiz"** in `PLAN.md`, `MOBILE.md`, `FINDINGS.md` and the framework. The
+  last two are records of what was measured and should keep the name they measured under; the first
+  two are forward-looking and should be updated.
 - **Single-file build:** `node web/tools/singlefile.mjs` folds the app into one 8.5 MB page for
   anywhere with no host. Published once as an artifact; superseded by the real site.
 
-## The merge (what the agent was building)
+## The merge (done, `880eb5b`)
 
-One practice tab called **Train**, which is the Real quiz's behaviour with a fallback:
+One practice tab called **Train**, which is the old Real quiz's behaviour with a fallback:
 - serves pack questions judged by the play-outs by default - the honest grader
 - falls back to a generated hand only when the filters leave nothing, and then says plainly that
   the hand is made up and marked by the *Coach*, which is right about half the time
@@ -59,6 +47,10 @@ One practice tab called **Train**, which is the Real quiz's behaviour with a fal
 Why: the two tabs differed only in who marks the answer. The packs are already filtered to decisive
 positions, which was Train's other claim, and both tabs already explain their reasoning. Changs said
 "I want the best coach/trainer", which decides every small call in favour of the play-outs.
+
+Driving it found three real bugs, all fixed in that commit; the commit message has them. The one
+worth remembering: the hand log's Review path fetched a 10 MB pack in a loop (282 requests) because
+a memo was missing - the kind of thing only clicking finds.
 
 ## Then, in the order the pain is felt
 
