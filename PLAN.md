@@ -113,7 +113,7 @@ dev-server middleware and cannot exist on static hosting — it shells out to th
 the 10 GB `data/gen/`. `RealQuiz` already gates that button behind `import.meta.env.DEV`, and
 Vite strips both the button and its handler from the production bundle.
 
-**First load is heavy:** `quiz/money.json` is 10.4 MB and the Real quiz fetches the whole pack
+**First load is heavy:** `quiz/money.json` is 10.4 MB and the Train tab fetches the whole pack
 up front. Vercel will compress it in transit and the `Cache-Control` headers in `vercel.json`
 keep it cached afterwards, but the first visit on mobile data will be slow. Splitting the pack
 is the fix if that ever matters.
@@ -162,7 +162,7 @@ a phone on mobile data pays that on first load.
 **Third: the PWA.** A manifest, icons, and a service worker via `vite-plugin-pwa`, which buys an
 installable icon, full-screen, and offline. Offline is the one that needs thought: the quiz packs
 are 20MB and caching them is most of the value, since the Train tab generates its own hands and
-would work offline almost for free while the Real quiz would not.
+would work offline almost for free while the Train tab's pack questions would not.
 
 **The thing to decide before any of this: one device or two.** Everything the app remembers lives in
 that browser's storage. Training on both a phone and a desktop produces two mistake records, two
@@ -185,7 +185,7 @@ play carries an error bar roughly two orders of magnitude wider than the thing i
 would be measuring — you cannot tell from a session, or from a month of them,
 whether you played well. An hour of play is perhaps sixty to a hundred discards
 of which a handful matter, and none of them are graded, where an hour on the
-Train and Real quiz tabs is a hundred-plus positions selected for having an
+Train tab is a hundred-plus positions selected for having an
 answer and every one of them judged. And the opponents would be a choice with
 consequences: three coaches punish a slow hand, the datagen personalities do not,
 and a value table tuned on one loses 0.21 chips a hand against the other. Nobody
@@ -225,7 +225,7 @@ against whether it won.
 | 1 — Data generator (`datagen/`) | **Done.** 150,000 hands / 8.84M decisions per run, 0 illegal actions, chips net zero, every hand replays from its seed. 6 bot personalities with controlled randomness; JSONL.gz + Parquet; validation stats and flags. |
 | 2 — Evaluator (`datagen/src/evaluate.ts`) | **Done.** `data/gen/run-money3` is the reference run: 479,923 evaluated decisions, adaptive 128 paired rollouts, 0 errors, 6h59m, resumable. Its noise floor is the central constraint on everything else — **29% of decisions have a clear best action at 1 SE and 9% at 2 SE; for discards it is 4%, for claims 27%, for self-actions 72%.** |
 | 3 — Model | **Closed, negative.** Three models were fitted on the decisive subset and all three were played for money. Discard model −0.544 ± 0.144, claim model +0.001 ± 0.092, both together −0.180 ± 0.145. None beats the hand-written book coach. See [FINDINGS.md](FINDINGS.md). |
-| App | **Five tabs, all live.** Train (synthetic quiz on the coach) · Real quiz (recorded positions graded on measured EVs) · Your hand (enter your own hand or a thrown tile and ask) · Film room (replay explorer with EV bars and reasoning) · Table setup (house money ladder). |
+| App | **Tabs, all live.** Train (recorded positions graded on measured EVs, with a made-up hand marked by the coach as a labelled fallback) · Your hand (enter your own hand or a thrown tile and ask) · Film room (replay explorer with EV bars and reasoning) · Table setup (house money ladder). |
 
 **The player is the book coach**, unchanged. Six candidate improvements were measured and none won —
 the three models above, plus pricing the flower/animal route to the minimum (−0.18), giving up on a

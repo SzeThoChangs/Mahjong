@@ -15,7 +15,8 @@ minimum, AND pushes Tips, Film room and Table setup off-screen behind a horizont
 nobody discovers. A bottom bar with an overflow sheet is the honest way to carry eight destinations
 on a phone, and it puts the four used every session where the thumb already rests.
 
-Still open: whether the four primary tabs are Train, Spot, Real quiz and Review - which is the
+Still open: whether the four primary tabs are Train, Spot, Review and Tips - now that Train and the
+Real quiz are one tab (2026-09-10), which is the
 practice hour's own 5/10/25/15 split, with Tips as the five-minute tail behind More - or whether
 Tips earns a slot.
 
