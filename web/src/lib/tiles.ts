@@ -1,10 +1,21 @@
 import { kindName, type TileKind } from 'sg-mahjong-engine';
+
+/**
+ * Faces come from /tiles by default, and from an embedded map when there is one.
+ *
+ * `tools/singlefile.mjs` folds the whole app into one HTML file so it can be handed to somebody
+ * without a server behind it. An `<img>` needs a real URL, so that build leaves a map of data URIs
+ * on the window and this reads it. Nothing is set in a normal build, so the path is unchanged.
+ */
+declare global { interface Window { __TILES?: Record<string, string>; __SINGLE_FILE?: boolean } }
+
 /** kind -> /tiles/<file>.png */
 export function tileSrc(k: TileKind): string {
   const n = kindName(k).replace(':', '_');
-  return `/tiles/${n}.png`;
+  return window.__TILES?.[n] ?? `/tiles/${n}.png`;
 }
 export const TILE_BACK = '/tiles/_back.png';
+export const tileBack = (): string => window.__TILES?.['_back'] ?? TILE_BACK;
 export function tileLabel(k: TileKind): string {
   const n = kindName(k);
   const m = /^([1-9])([wts])$/.exec(n);

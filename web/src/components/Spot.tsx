@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tile } from '@/components/Tile';
 import { HandContext } from '@/components/HandContext';
 import { PublicTable } from '@/components/PublicTable';
-import { TILE_BACK } from '@/lib/tiles';
+import { tileBack } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
 import { jargon, J } from '@/lib/jargon';
 import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, suggestedLook, type SpotKind, type SpotCause } from '@/lib/spotstats';
@@ -197,7 +197,7 @@ export default function Spot() {
       {hidden ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            <img src={TILE_BACK} alt="" className="mx-auto mb-3 w-14 opacity-70" />
+            <img src={tileBack()} alt="" className="mx-auto mb-3 w-14 opacity-70" />
             The position is face down. Answer from what you saw.
           </CardContent>
         </Card>
