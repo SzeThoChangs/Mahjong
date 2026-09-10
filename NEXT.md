@@ -43,6 +43,13 @@ If cut off, re-run the missing ones. From `datagen/`, one per pack, each takes a
 
 Run them under `nohup` so a closed session cannot kill them; log to `data/gen/pack-<name>-verified.log`.
 
+## Retired packs
+
+`money` (the 4-joker min-2 table under an older name) and `nowild` (0 jokers, min 2, a table Changs
+does not play) were dropped from the site on 2026-09-10 at his say-so; copies live in
+`data/gen/retired-packs/` for the audit tools. Any mistake card on a phone that points at them will
+show "cannot be rebuilt" with a button to drop it, which is the intended behaviour.
+
 ## Where things are
 
 - **Live:** https://szethochangs.github.io/Mahjong/ - with `/Mahjong/` on the end; the bare account
