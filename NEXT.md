@@ -13,16 +13,35 @@ question: 3,541 ms -> 784 ms, 15.03 MB -> 217 KB fetched, heap 164 MB -> 29 MB. 
 present in the new packs, so nobody's record is orphaned. Not measured on a real phone yet - that is
 the one number still owed, and Changs can supply it by opening the Train tab on 4G.
 
-## A two-hour build may be running or half-done
+## A three-hour build may be running, finished, or cut off - check before anything else
 
-Started about 19:30 on 2026-09-10: all three packs rebuilding with `--verify 512` (a second,
-independent pass that drops questions whose gap does not hold - see FINDINGS, "The packs overstate
-their certainty"). It rewrites `web/public/quiz/coach/`, `min1/` and `min1-nowild/` in place. Logs:
-`data/gen/pack-<name>-verified.log`; each ends with a "verified at 512 fresh play-outs" line and a
-"questions ->" line when done. If those lines are missing, the build was cut off: do not commit the
-pack directories, run the three commands from the log headers again. If present: `./check.sh`, then
-commit the three directories and `web/public/quiz/index.json` with `git commit --only`, push, and
-update the FINDINGS entry with the measured drop rate.
+Started 21:10 on 2026-09-10: all three packs rebuilding with `--verify 512`, a second independent
+pass that drops questions whose gap does not hold on fresh play-outs (FINDINGS: "The packs overstate
+their certainty"). Expected to finish around midnight for `coach` (41,894 hands to replay) and
+sooner for the other two. They rewrite `web/public/quiz/coach/`, `min1/` and `min1-nowild/` in
+place, so those directories are NOT safe to commit until each build's log says it finished.
+
+How to tell, per pack, from `data/gen/pack-<name>-verified.log`:
+
+    grep -E "verified at|questions ->" data/gen/pack-coach-verified.log
+
+Finished: both lines present ("verified at 512 fresh play-outs each: kept N, dropped M ..." then
+"N questions -> ..."). Cut off: either line missing. `pgrep -f quizpack.ts` says whether anything
+is still running.
+
+If all three finished: `./check.sh`, then commit the three directories and `web/public/quiz/
+index.json` together with `git commit --only`, push, watch the deploy, and add the measured drop
+rates to the FINDINGS entry (it predicts about a tenth; the smoke test at 64 play-outs dropped 60%,
+which was lack of power, not the curse - that is why the real pass uses 512).
+
+If cut off, re-run the missing ones. From `datagen/`, one per pack, each takes about an hour
+(coach nearer two):
+
+    node ../node_modules/.pnpm/tsx@4.23.12/node_modules/tsx/dist/cli.mjs src/quizpack.ts \
+      --dir ../data/gen/run-coach2 --out ../web/public/quiz --name coach --max 10000 --mix decisive --verify 512
+    ... same with run-min1 / min1, and run-min1-nowild / min1-nowild
+
+Run them under `nohup` so a closed session cannot kill them; log to `data/gen/pack-<name>-verified.log`.
 
 ## Where things are
 
