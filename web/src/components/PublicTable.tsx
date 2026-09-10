@@ -23,6 +23,7 @@ import type { TileKind } from 'sg-mahjong-engine';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tile } from '@/components/Tile';
 import { cn } from '@/lib/utils';
+import { J } from '@/lib/jargon';
 
 export interface SeatPublic {
   wind: string;

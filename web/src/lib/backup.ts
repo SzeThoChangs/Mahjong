@@ -61,7 +61,22 @@ export function downloadBackup(): { mistakes: number } {
  * at that would corrupt the one thing the schedule depends on. The caller asks first and says what
  * is about to be overwritten.
  */
-export function restoreBackup(text: string): { ok: true; was: ReturnType<typeof summarise>; now: ReturnType<typeof summarise> } | { ok: false; error: string } {
+type Summary = ReturnType<typeof summarise>;
+/**
+ * Why each half also carries the other's keys as optional.
+ *
+ * This is a discriminated union and `if (r.ok)` ought to be enough to tell the halves apart. It is
+ * not here: the project's tsconfig has no `strict`, and without `strictNullChecks` TypeScript
+ * declines to narrow on the discriminant, so reading `r.error` after checking `r.ok` is an error.
+ * Declaring the absent keys as optional-undefined makes both reads legal while `ok` still says which
+ * case you are in. The better fix is `strict`, which is a job of its own rather than one squeezed
+ * into a deploy.
+ */
+export type RestoreResult =
+  | { ok: true; was: Summary; now: Summary; error?: undefined }
+  | { ok: false; error: string; was?: undefined; now?: undefined };
+
+export function restoreBackup(text: string): RestoreResult {
   let parsed: unknown;
   try { parsed = JSON.parse(text); } catch { return { ok: false, error: 'that file is not JSON' }; }
   const b = parsed as Backup;

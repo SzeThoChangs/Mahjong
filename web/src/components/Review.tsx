@@ -29,9 +29,9 @@ import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, cause
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
-import { rankDiscards, suggestCause, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
-import { jargon, J } from '@/lib/jargon';
+import { jargon } from '@/lib/jargon';
 import { cn } from '@/lib/utils';
 import { asset } from '@/lib/asset';
 

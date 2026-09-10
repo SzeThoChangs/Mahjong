@@ -217,7 +217,9 @@ export class OnlyCheapCoachBot extends CoachBot {
  * chips, and that loss is the measurement, not a bug.
  */
 export class PlanBot extends CoachBot {
-  constructor(private readonly plan: TargetId) { super(); }
+  // written out rather than a constructor parameter property, which `erasableSyntaxOnly` forbids
+  private readonly plan: TargetId;
+  constructor(plan: TargetId) { super(); this.plan = plan; }
   protected override ctx(v: PlayerView): Context { return { ...ctxOf(v), onlyTarget: this.plan }; }
 }
 

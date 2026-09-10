@@ -31,9 +31,13 @@ export default function TableSetup() {
   const doRestore = (f: File) => {
     void f.text().then((text) => {
       const r = restoreBackup(text);
-      setBackupNote(r.ok
-        ? `Restored: ${r.now.mistakes} mistakes (${r.now.sorted} sorted) and ${r.now.spotAnswered} spot answers, replacing ${r.was.mistakes}. Reload the page to see them.`
-        : `Not restored — ${r.error}.`);
+      // an `if` rather than a ternary: this project's tsconfig has no `strict`, and the ternary did
+      // not narrow the result to its failing half, so `r.error` came out as an error
+      if (r.ok) {
+        setBackupNote(`Restored: ${r.now.mistakes} mistakes (${r.now.sorted} sorted) and ${r.now.spotAnswered} spot answers, replacing ${r.was.mistakes}. Reload the page to see them.`);
+      } else {
+        setBackupNote(`Not restored — ${r.error}.`);
+      }
     });
   };
 
