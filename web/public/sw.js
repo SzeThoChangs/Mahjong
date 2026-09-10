@@ -10,7 +10,10 @@ const VERSION = 'v1';
 const SHELL = `shell-${VERSION}`;   // the app itself: HTML, JS, CSS, tiles, icons
 const DATA = `data-${VERSION}`;     // packs, replays, reads - cached the first time they are read
 
-const SHELL_URLS = ['/', '/index.html', '/favicon.svg', '/apple-touch-icon.png', '/manifest.webmanifest'];
+/** The worker is served from the site's own base, so its scope is the right root to build on. */
+const BASE = new URL('./', self.registration.scope).pathname;
+const at = (p) => BASE + p.replace(/^\//, '');
+const SHELL_URLS = ['', 'index.html', 'favicon.svg', 'apple-touch-icon.png', 'manifest.webmanifest'].map(at);
 
 /**
  * The tile faces, precached because the app is unreadable without them.
@@ -27,7 +30,7 @@ const TILES = [
   'A_cat.png', 'A_centipede.png', 'A_mouse.png', 'A_rooster.png', 'E.png', 'F1.png', 'F2.png',
   'F3.png', 'F4.png', 'G.png', 'J.png', 'N.png', 'R.png', 'S.png', 'S1.png', 'S2.png', 'S3.png',
   'S4.png', 'W.png', 'Wh.png', '_back.png'
-].map((n) => '/tiles/' + n);
+].map((n) => at('tiles/' + n));
 
 /**
  * The bundle's own file names, read out of index.html at install time.
@@ -39,8 +42,8 @@ const TILES = [
  */
 async function bundleUrls() {
   try {
-    const html = await (await fetch('/index.html', { cache: 'reload' })).text();
-    return [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+    const html = await (await fetch(at('index.html'), { cache: 'reload' })).text();
+    return [...html.matchAll(/(?:src|href)="([^"]*\/assets\/[^"]+)"/g)].map((m) => m[1]);
   } catch { return []; }
 }
 
@@ -62,19 +65,19 @@ self.addEventListener('activate', (e) => {
 });
 
 /** Big, immutable, and only worth keeping once the player has opened that table. */
-const isData = (p) => p.startsWith('/quiz/') || p.startsWith('/replays/') || p.startsWith('/reads/') || p.startsWith('/profile/');
+const isData = (p) => p.startsWith(BASE + 'quiz/') || p.startsWith(BASE + 'replays/') || p.startsWith(BASE + 'reads/') || p.startsWith(BASE + 'profile/');
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;             // dev-only re-judge endpoint, never cached
+  if (url.pathname.startsWith(BASE + 'api/')) return;             // dev-only re-judge endpoint, never cached
 
   // A navigation must survive a dead network, so fall back to the shell rather than the browser's error page.
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).catch(() => caches.match('/index.html', { ignoreVary: true })
-      .then((r) => r ?? caches.match('/', { ignoreVary: true }))));
+    e.respondWith(fetch(req).catch(() => caches.match(at('index.html'), { ignoreVary: true })
+      .then((r) => r ?? caches.match(BASE, { ignoreVary: true }))));
     return;
   }
 

@@ -33,6 +33,7 @@ import { rankDiscards, suggestCause, type Context } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
 import { cn } from '@/lib/utils';
+import { asset } from '@/lib/asset';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
 
@@ -92,7 +93,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     if (!current?.pack) { setQuizQ(null); setQuizErr(null); return; }
     let live = true;
     setQuizQ(null); setQuizErr(null);
-    fetch(`/quiz/${current.pack}.json`)
+    fetch(asset(`quiz/${current.pack}.json`))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d: { questions: QuizQ[] }) => { if (!live) return; const found = d.questions.find((x) => x.id === current.qid); found ? setQuizQ(found) : setQuizErr('that question is no longer in the pack'); })
       .catch(() => { if (live) setQuizErr('could not load the pack this came from'); });

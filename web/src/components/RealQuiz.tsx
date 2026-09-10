@@ -19,6 +19,7 @@ import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
+import { asset } from '@/lib/asset';
 
 const WIND = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
@@ -75,10 +76,10 @@ export default function RealQuiz() {
   const [challenging, setChallenging] = useState(false);
   const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
 
-  useEffect(() => { fetch('/quiz/index.json').then((r) => r.json()).then((d: { packs: PackIx[] }) => { setPacks(d.packs); if (d.packs[0]) setPack(d.packs[0].id); }).catch(() => setPacks([])); }, []);
+  useEffect(() => { fetch(asset('quiz/index.json')).then((r) => r.json()).then((d: { packs: PackIx[] }) => { setPacks(d.packs); if (d.packs[0]) setPack(d.packs[0].id); }).catch(() => setPacks([])); }, []);
   useEffect(() => {
     if (!pack) return;
-    fetch(`/quiz/${pack}.json`).then((r) => r.json()).then((d: { unit: string; run?: string; questions: Q[] }) => {
+    fetch(asset(`quiz/${pack}.json`)).then((r) => r.json()).then((d: { unit: string; run?: string; questions: Q[] }) => {
       setUnit(d.unit); setQs(d.questions); setRunId(d.run ?? null);
       const idx = d.questions.map((_, i) => i);
       for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }

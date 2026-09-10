@@ -1,4 +1,5 @@
 import { kindName, type TileKind } from 'sg-mahjong-engine';
+import { asset } from './asset';
 
 /**
  * Faces come from /tiles by default, and from an embedded map when there is one.
@@ -12,9 +13,9 @@ declare global { interface Window { __TILES?: Record<string, string>; __SINGLE_F
 /** kind -> /tiles/<file>.png */
 export function tileSrc(k: TileKind): string {
   const n = kindName(k).replace(':', '_');
-  return window.__TILES?.[n] ?? `/tiles/${n}.png`;
+  return window.__TILES?.[n] ?? asset(`tiles/${n}.png`);
 }
-export const TILE_BACK = '/tiles/_back.png';
+export const TILE_BACK = asset('tiles/_back.png');
 export const tileBack = (): string => window.__TILES?.['_back'] ?? TILE_BACK;
 export function tileLabel(k: TileKind): string {
   const n = kindName(k);

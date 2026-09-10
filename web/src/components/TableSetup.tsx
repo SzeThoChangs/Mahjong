@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, taiBands, sideEconomics, COMBO_LABEL, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
+import { asset } from '@/lib/asset';
 
 const KEY = 'mahjong.money.config';
 export function loadConfig(): MoneyConfig {
@@ -41,7 +42,7 @@ export default function TableSetup() {
   const [compare, setCompare] = useState<string>(PRESETS[1]!.name);
 
   useEffect(() => { save(cfg); }, [cfg]);
-  useEffect(() => { fetch('/profile/money.json').then((r) => r.json()).then(setProfile).catch(() => setProfile(null)); }, []);
+  useEffect(() => { fetch(asset('profile/money.json')).then((r) => r.json()).then(setProfile).catch(() => setProfile(null)); }, []);
 
   const rows = useMemo(() => (profile ? priceProfile(profile, cfg) : []), [profile, cfg]);
   const other = PRESETS.find((p) => p.name === compare) ?? PRESETS[1]!;
@@ -296,7 +297,7 @@ interface ReadsData { hands: number; sampled: number; ready: Record<string, Read
 
 function Reads() {
   const [d, setD] = useState<ReadsData | null>(null);
-  useEffect(() => { fetch('/reads/money.json').then((r) => r.json()).then(setD).catch(() => setD(null)); }, []);
+  useEffect(() => { fetch(asset('reads/money.json')).then((r) => r.json()).then(setD).catch(() => setD(null)); }, []);
   if (!d) return null;
   const P = (t: Record<string, ReadCell>, k: string) => t[k] ? `${Math.round(t[k]!.p * 100)}%` : '—';
   const bar = (t: Record<string, ReadCell>, k: string) => (

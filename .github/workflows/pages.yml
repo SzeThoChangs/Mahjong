@@ -1,0 +1,55 @@
+# Build the trainer and publish it to GitHub Pages on every push to this branch.
+#
+# BASE_PATH is what makes it work under a project URL. A site at szethochangs.github.io serves from
+# the root and needs "/"; a site at szethochangs.github.io/which-tile/ serves from a folder, and
+# every path the app fetches has to carry it. The build reads it, `web/src/lib/asset.ts` applies it,
+# and the line below works out which case this repository is without being told twice.
+name: Deploy the trainer
+on:
+  push:
+    branches: [main, evaluator-accuracy]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Work out where the site will live
+        id: base
+        run: |
+          # a <user>.github.io repository is served at the root; anything else sits under its own name
+          if [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/${{ github.event.repository.name }}/" >> "$GITHUB_OUTPUT"
+          fi
+      - run: pnpm -C web build
+        env:
+          BASE_PATH: ${{ steps.base.outputs.path }}
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: web/dist }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

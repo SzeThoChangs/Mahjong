@@ -15,6 +15,7 @@ import { rankDiscards, claimReasons, claimCandidateOf, type Context } from 'sg-m
 import { CONFIG } from '@/lib/scenario';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
+import { asset } from '@/lib/asset';
 
 const WIND = ['東', '南', '西', '北'];
 
@@ -49,16 +50,16 @@ export default function Replay() {
   const [hand, setHand] = useState<HandData | null>(null);
   const [i, setI] = useState(0);
 
-  useEffect(() => { fetch('/replays/index.json').then((r) => r.json()).then((d: { runs: RunIx[] }) => { setRuns(d.runs); if (d.runs[0]) setRun(d.runs[0].id); }).catch(() => setRuns([])); }, []);
+  useEffect(() => { fetch(asset('replays/index.json')).then((r) => r.json()).then((d: { runs: RunIx[] }) => { setRuns(d.runs); if (d.runs[0]) setRun(d.runs[0].id); }).catch(() => setRuns([])); }, []);
   useEffect(() => {
     if (!run) return;
-    fetch(`/replays/${run}/index.json`).then((r) => r.json()).then((d: { unit: string; hands: HandIx[] }) => { setUnit(d.unit); setHands(d.hands); setHand(null); });
+    fetch(asset(`replays/${run}/index.json`)).then((r) => r.json()).then((d: { unit: string; hands: HandIx[] }) => { setUnit(d.unit); setHands(d.hands); setHand(null); });
   }, [run]);
 
   const combos = useMemo(() => ['all', ...new Set(hands.map((h) => h.combo))], [hands]);
   const list = useMemo(() => hands.filter((h) => (combo === 'all' || h.combo === combo) && (!onlyEvals || h.evals > 0)).slice(0, 60), [hands, combo, onlyEvals]);
 
-  const open = (f: string) => fetch(`/replays/${run}/${f}`).then((r) => r.json()).then((d: HandData) => { setHand(d); setI(0); });
+  const open = (f: string) => fetch(asset(`replays/${run}/${f}`)).then((r) => r.json()).then((d: HandData) => { setHand(d); setI(0); });
 
   if (!runs.length) return <div className="mx-auto max-w-5xl p-6 text-sm text-muted-foreground">No exported replays found. Run: <code>pnpm -C datagen exec tsx src/export.ts</code></div>;
 

@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  // Where the site will live. "/" for a dev server and for a host that serves it at a domain root;
+  // set BASE_PATH=/which-tile/ for a host that puts it under a folder, such as a GitHub Pages
+  // project site. Everything the app fetches or shows goes through `lib/asset.ts`, which reads it.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [react(), tailwindcss(), {
     name: 'challenge-api',                    // dev-only: re-judge a quiz position with more play-outs (spawns the datagen evaluator)
     configureServer(server) {

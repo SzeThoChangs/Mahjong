@@ -10,6 +10,7 @@ import { tileBack } from '@/lib/tiles';
 import { TIPS } from 'sg-mahjong-solver';
 import { jargon, J } from '@/lib/jargon';
 import { loadSpotStats, recordSpot, resetSpotStats, recordSpotCause, loadSpotCauses, SPOT_CAUSES, spotCauseLabel, suggestedLook, type SpotKind, type SpotCause } from '@/lib/spotstats';
+import { asset } from '@/lib/asset';
 
 /**
  * The spotting drill: look at a position for a few seconds, then say what was in it.
@@ -107,7 +108,7 @@ export default function Spot() {
   const lookHint = useMemo(() => suggestedLook(look, LOOKS), [look, missCause, tick]);
 
   useEffect(() => {
-    fetch('/quiz/spot.json')
+    fetch(asset('quiz/spot.json'))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`spot.json ${r.status}`))))
       .then((d: { positions: Spot[] }) => {
         const xs = [...d.positions];
