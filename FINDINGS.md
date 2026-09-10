@@ -1886,6 +1886,44 @@ one term the field breakdown keeps pointing to: every losing candidate gets read
 smaller, which is the danger weight's territory as much as the value tables', and the danger
 weight has only ever been swept against coaches.
 
+### The packs overstate their certainty by about a tenth, and one verdict Changs disputed was noise (2026-09-10)
+
+Changs threw 1筒 on `coach · 6310:4:31` and was charged a $4.03 "big mistake": 9條 at $5.47 against
+his $1.44, on 128 play-outs. The coach had thrown 1筒 too. Re-judged on this machine at 2,048 fresh
+play-outs: 9條 +3.92, 4筒 +3.78, 1筒 +3.64, all at a 25% win rate. The three tiles are within 28 cents
+of each other. He was right, and so was the coach; the pack was wrong on that position.
+
+WHY IT CAN HAPPEN. A question is admitted to a pack when its best beats its runner-up by more than
+two paired standard errors - measured on the same 128 play-outs the verdict is then reported from.
+Picking the winner from a noisy sample picks some of the sample's luck along with it, so the admitted
+gap is biased upward. That is the winner's curse, and nothing in the pipeline had ever measured it.
+This question passed at 2.8 SE (runner-up 4筒 at 2.26, paired SE 1.14) and collapsed to 0.14 SE on
+fresh dice.
+
+MEASURED. 40 discard questions drawn at random from the coach pack, each re-judged at 1,024 fresh
+play-outs, every one replaying cleanly:
+
+    pack's best still the best        36 of 40
+    mean gap, best minus runner-up     $5.64 on the pack's 128  ->  $5.14 fresh   (down 9%)
+    pack's runner-up now ahead          1 of 40, by 60 cents
+    the four that flipped              by $0.12, $0.15, $0.18, $0.60 - near-ties, not wrong calls
+
+So the packs stand. About one question in ten is a close call wearing a decisive badge, and the
+typical gap is overstated by about a tenth. Changs's hand was one of the one-in-ten, and a bad one:
+a $4 gap that was really 28 cents.
+
+WHAT IT MEANS FOR THE TRAINER. A "big mistake" verdict on a pack question is right about nine times
+in ten; the tenth is a coin flip the play-outs mistook for a call. That is far better than the coach's
+52.8% and still not the certainty the badge implies. The fix is cheap and mechanical: a second,
+independent pass over the admitted questions with fresh play-outs, dropping any whose gap does not
+hold at 2 SE. At 256 play-outs a question that is about 4 hours for the three 10k packs, and it would
+cost roughly 10% of each pack - which is the honest size. Not yet built; it should live in
+`quizpack.ts` as a `--verify` step so every rebuild does it, not as a one-off.
+
+The position id is now shown on the verdict screen, which is what made this checkable: quote pack
+and id and `challenge.ts` re-judges it here in seconds. That is a better instrument than the old
+challenge button, which could only run against the dev server.
+
 ### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
 
 Taking the jokers out changes what the coach should be afraid of and nothing about what it thinks a
