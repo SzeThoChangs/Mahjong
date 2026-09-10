@@ -13,6 +13,17 @@ question: 3,541 ms -> 784 ms, 15.03 MB -> 217 KB fetched, heap 164 MB -> 29 MB. 
 present in the new packs, so nobody's record is orphaned. Not measured on a real phone yet - that is
 the one number still owed, and Changs can supply it by opening the Train tab on 4G.
 
+## A two-hour build may be running or half-done
+
+Started about 19:30 on 2026-09-10: all three packs rebuilding with `--verify 512` (a second,
+independent pass that drops questions whose gap does not hold - see FINDINGS, "The packs overstate
+their certainty"). It rewrites `web/public/quiz/coach/`, `min1/` and `min1-nowild/` in place. Logs:
+`data/gen/pack-<name>-verified.log`; each ends with a "verified at 512 fresh play-outs" line and a
+"questions ->" line when done. If those lines are missing, the build was cut off: do not commit the
+pack directories, run the three commands from the log headers again. If present: `./check.sh`, then
+commit the three directories and `web/public/quiz/index.json` with `git commit --only`, push, and
+update the FINDINGS entry with the measured drop rate.
+
 ## Where things are
 
 - **Live:** https://szethochangs.github.io/Mahjong/ - with `/Mahjong/` on the end; the bare account

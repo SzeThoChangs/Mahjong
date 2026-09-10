@@ -10,9 +10,10 @@ import { join } from 'node:path';
 import { fanInHand, makeRng, type Meld } from 'sg-mahjong-engine';
 import { eachJsonlGz } from './stats.js';
 import { eachEval, phaseOfTurn, PHASES } from './evalstats.js';
-import { pairedSe, separationT, seVersionOf } from './se.js';
+import { pairedSe, separationT, seVersionOf, SE_VERSION } from './se.js';
 import { rulesForDir } from './tablerules.js';
-import { decisionsOfHand, type EvalRecord } from './evaluate.js';
+import { decisionsOfHand, evaluateDecision, type EvalRecord, type EvalArgs } from './evaluate.js';
+import { positionAt } from './position.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 import { liveCalls, rankDiscards, suggestCause, shardOf, shardFile, type Cause, type Context, type PackIndex } from 'sg-mahjong-solver';
 import type { HandRecord } from './records.js';
@@ -208,6 +209,14 @@ const causeOf = (e: EvalRecord, d: Decision, melds: Meld[], seat: number): Cause
       r.options, Number(e.sel.slice(2)), Number(e.best.slice(2))).suggested;
   } catch { return null; }
 };
+/** A record's options as the pack stores them: best first, each with its paired SE against the best. */
+function toActions(e: EvalRecord, version: number): Q['actions'] {
+  const sorted = [...e.actions].sort((a, b) => b.ev - a.ev);
+  return sorted.map((a) => {
+    const se = pairedSe(a, sorted[0]!, version);
+    return { a: a.a, ev: Number(a.ev.toFixed(2)), se: Number((Number.isFinite(se) ? se : 0).toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix };
+  });
+}
 for (const [key, list] of byHand) {
   const hr = hands.get(key); if (!hr) continue;
   const decs = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS);
@@ -234,10 +243,7 @@ for (const [key, list] of byHand) {
       disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
       bot: e.bot, spread: Number(ref.spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,
-      actions: e.actions.map((a) => {
-        const se = pairedSe(a, e.actions[0]!, seVersion);
-        return { a: a.a, ev: Number(a.ev.toFixed(2)), se: Number((Number.isFinite(se) ? se : 0).toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix };
-      }),
+      actions: toActions(e, seVersion),
     });
   }
   if (++handsDone % 500 === 0) process.stdout.write(`\r${handsDone}/${byHand.size} hands replayed`);
@@ -262,6 +268,57 @@ for (const [stratum, list] of byStratum) {
   kept.push(...list.slice(0, want.get(stratum) ?? list.length));
 }
 shuffle(kept);
+
+/**
+ * A second, independent look at every admitted question - the fix for the winner's curse.
+ *
+ * A question gets in by beating its runner-up by more than `--clear` SE on the same play-outs its
+ * verdict is then reported from. Choosing the winner from a noisy sample chooses some of the
+ * sample's luck along with it, so the admitted gap is biased upward. Measured on 2026-09-10 on 40
+ * random coach questions re-judged at 1,024 fresh play-outs: the best held on 36, the mean gap
+ * shrank 9%, and one reversed. Changs had disputed a $4.03 "big mistake" that fresh dice put at 28
+ * cents, and he was right.
+ *
+ * So with `--verify N` each admitted question is replayed and judged again on N play-outs with a
+ * different seed. One that no longer clears the bar is dropped; one that does keeps the FRESH
+ * numbers, which are unbiased and usually from a larger sample. That costs about a tenth of a pack,
+ * which is the honest size, and it is a step of the build rather than a one-off so every rebuild
+ * pays it.
+ */
+const VERIFY = Number(arg('verify', '0'));
+if (VERIFY > 0) {
+  const hrOf = new Map<string, HandRecord>();
+  for (const hr of hands.values()) hrOf.set(`${hr.g}:${hr.h}`, hr);
+  const decsOf = new Map<string, NonNullable<ReturnType<typeof decisionsOfHand>>>();
+  const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts: VERIFY, mode: 'sampled', policy: 'shanten',
+    seed: 424242 + VERIFY, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: false, coupled: true };
+  const survivors: Q[] = [];
+  let dropped = 0, changed = 0, unreplayable = 0, done = 0;
+  const t0 = Date.now();
+  for (const q of kept) {
+    const [g, h, d] = q.id.split(':').map(Number);
+    const hr = hrOf.get(`${g}:${h}`);
+    let decs = hr ? decsOf.get(`${g}:${h}`) : undefined;
+    if (hr && !decs) { const dd = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS); if (dd) { decs = dd; decsOf.set(`${g}:${h}`, dd); } }
+    const rec = decs?.find((x) => x.d === d);
+    const pos = hr && rec ? positionAt(hr, d!, rules, DEFAULT_RANDOMNESS) : null;
+    if (!hr || !rec || !pos) { unreplayable++; continue; }
+    const fresh = evaluateDecision(pos.g, rec, args, rules);
+    const sorted = [...fresh.actions].sort((a, b) => b.ev - a.ev);
+    const sep = sorted.length > 1 ? separationT(sorted[0]!, sorted[1]!, SE_VERSION) : 0;
+    if (++done % 250 === 0) {
+      const rate = (Date.now() - t0) / done;
+      process.stdout.write(`\r  verifying ${done}/${kept.length}  dropped ${dropped}  ~${Math.round(rate * (kept.length - done) / 60000)} min left`);
+    }
+    if (!(sep > clear)) { dropped++; continue; }
+    if (fresh.best !== q.best) changed++;
+    q.best = fresh.best; q.n = fresh.n; q.actions = toActions(fresh, SE_VERSION);
+    survivors.push(q);
+  }
+  kept.length = 0; kept.push(...survivors);
+  console.log(`\n  verified at ${VERIFY} fresh play-outs each: kept ${survivors.length}, dropped ${dropped} (${(100 * dropped / Math.max(1, done)).toFixed(1)}% did not hold at ${clear} SE), best changed on ${changed}, ${unreplayable} could not replay, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+}
+
 const tagged = kept.filter((q) => q.tp.length).length;
 const perTip = new Map<string, number>();
 for (const q of kept) for (const t of q.tp) perTip.set(t, (perTip.get(t) ?? 0) + 1);
