@@ -15,7 +15,7 @@ the one number still owed, and Changs can supply it by opening the Train tab on 
 
 ## A three-hour build may be running, finished, or cut off - check before anything else
 
-Started 21:10 on 2026-09-10: all three packs rebuilding with `--verify 512`, a second independent
+RESTARTED 01:40 on 2026-09-11, one pack at a time (min1, then min1-nowild, then coach): the first run at 21:10 ran all three at once, swapped the machine to a crawl and was killed. All three packs rebuilding with `--verify 512`, a second independent
 pass that drops questions whose gap does not hold on fresh play-outs (FINDINGS: "The packs overstate
 their certainty"). Expected to finish around midnight for `coach` (41,894 hands to replay) and
 sooner for the other two. They rewrite `web/public/quiz/coach/`, `min1/` and `min1-nowild/` in

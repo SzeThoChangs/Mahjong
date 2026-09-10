@@ -289,7 +289,12 @@ const VERIFY = Number(arg('verify', '0'));
 if (VERIFY > 0) {
   const hrOf = new Map<string, HandRecord>();
   for (const hr of hands.values()) hrOf.set(`${hr.g}:${hr.h}`, hr);
-  const decsOf = new Map<string, NonNullable<ReturnType<typeof decisionsOfHand>>>();
+  // Questions from one hand are verified together, so one hand's replay is all that is ever held.
+  // The first version cached every hand's decisions for the whole pass and ran three packs at once;
+  // on a 16 GB machine that was 6 GB of swap and forty seconds a question. The shuffle is restored
+  // afterwards, since shard placement and the order the app draws in must not depend on hand order.
+  kept.sort((a, b) => a.id.localeCompare(b.id));
+  let curKey = ''; let curDecs: NonNullable<ReturnType<typeof decisionsOfHand>> | null = null;
   const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts: VERIFY, mode: 'sampled', policy: 'shanten',
     seed: 424242 + VERIFY, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: false, coupled: true };
   const survivors: Q[] = [];
@@ -298,9 +303,8 @@ if (VERIFY > 0) {
   for (const q of kept) {
     const [g, h, d] = q.id.split(':').map(Number);
     const hr = hrOf.get(`${g}:${h}`);
-    let decs = hr ? decsOf.get(`${g}:${h}`) : undefined;
-    if (hr && !decs) { const dd = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS); if (dd) { decs = dd; decsOf.set(`${g}:${h}`, dd); } }
-    const rec = decs?.find((x) => x.d === d);
+    if (hr && curKey !== `${g}:${h}`) { curKey = `${g}:${h}`; curDecs = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS); }
+    const rec = hr ? curDecs?.find((x) => x.d === d) : undefined;
     const pos = hr && rec ? positionAt(hr, d!, rules, DEFAULT_RANDOMNESS) : null;
     if (!hr || !rec || !pos) { unreplayable++; continue; }
     const fresh = evaluateDecision(pos.g, rec, args, rules);
@@ -315,7 +319,7 @@ if (VERIFY > 0) {
     q.best = fresh.best; q.n = fresh.n; q.actions = toActions(fresh, SE_VERSION);
     survivors.push(q);
   }
-  kept.length = 0; kept.push(...survivors);
+  kept.length = 0; kept.push(...survivors); shuffle(kept);
   console.log(`\n  verified at ${VERIFY} fresh play-outs each: kept ${survivors.length}, dropped ${dropped} (${(100 * dropped / Math.max(1, done)).toFixed(1)}% did not hold at ${clear} SE), best changed on ${changed}, ${unreplayable} could not replay, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
 }
 
