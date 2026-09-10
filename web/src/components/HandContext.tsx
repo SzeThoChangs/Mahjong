@@ -3,7 +3,7 @@
  * how deep the hand is, and how much you are holding. Shown directly above the
  * tiles, because every one of them changes what the right tile is.
  *
- * Trainer and Real quiz both need this, so it lives in one place.
+ * The Train tab's pack questions and its made-up hands both need this, so it lives in one place.
  */
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';

@@ -22,7 +22,7 @@ import { Tile } from '@/components/Tile';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { fanInHand } from 'sg-mahjong-engine';
-import { makeScenario, CONFIG } from '@/lib/scenario';
+import { makeScenario, teachingHand, CONFIG } from '@/lib/scenario';
 import { readHistory, type Play } from '@/lib/history';
 import { tileLabel } from '@/lib/tiles';
 import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, causeTally, setCause, writePractise, bySource, INTERVALS_DAYS, type Mistake } from '@/lib/mistakes';
@@ -37,7 +37,7 @@ import { asset } from '@/lib/asset';
 
 const WIND_NAME = ['\u6771', '\u5357', '\u897f', '\u5317'];
 
-/** the slice of a pack question this screen needs - the same shape the Real quiz reads */
+/** the slice of a pack question this screen needs - the same shape the Train tab reads */
 interface QuizQ {
   id: string; k: string; seat: number; dl?: number; w: number; t: number; h: number[]; dr: number | null;
   b: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; best: string;
@@ -74,16 +74,19 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   const played = view === 'log' && openId ? log.find((h) => h.id === openId) : undefined;
 
   // A log entry carries the same few fields the rebuild needs, so it can stand in for a card here.
-  const current: Mistake | undefined = played
+  // Memoised, and it has to be: the pack fetch below keys on this object, and building a fresh one
+  // every render made each fetch's state change start another fetch - a 10MB pack, over and over,
+  // and the card never rendered because the question was reset to "loading" each time round.
+  const current: Mistake | undefined = useMemo(() => (played
     ? ({ id: played.id, seed: played.seed, phase: played.phase, pack: played.pack, qid: played.qid,
          picked: played.threw, coachPick: played.best, verdict: played.verdict, cost: played.cost,
          firstSeen: played.at, why: '' } as unknown as Mistake)
-    : due[0];
+    : due[0]), [played, due]);
 
   /**
    * A card comes back as the identical position, and there are two ways to rebuild one.
    *
-   * A Train card carries a seed, and `makeScenario` deals it again. A Real quiz card carries a pack
+   * A made-up hand carries a seed, and `makeScenario` deals it again. A pack card carries a pack
    * and a question id, and the pack file holds it - fetched here rather than stored, for the same
    * reason the seed is stored rather than the hand: a thousand cards should cost kilobytes.
    */
@@ -102,7 +105,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
 
   const scenario = useMemo(
     () => (current && !current.pack && current.seed !== undefined && current.phase
-      ? makeScenario(current.seed, current.phase, ((current.seed * 9301 + 49297) % 233280) / 233280 < 0.7)
+      ? makeScenario(current.seed, current.phase, teachingHand(current.seed))
       : null),
     [current],
   );
@@ -235,7 +238,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
           </CardHeader>
           <CardContent className="text-sm">
             {log.length === 0
-              ? <p className="text-muted-foreground">Nothing yet. Play a hand on the Train tab or the Real quiz and it will appear here.</p>
+              ? <p className="text-muted-foreground">Nothing yet. Play a hand on the Train tab and it will appear here.</p>
               : (
                 <div className="flex flex-col">
                   {log.map((h) => (

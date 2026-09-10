@@ -11,8 +11,8 @@
  * it is for is looking rather than testing: opening one shows the answer and the reasoning straight
  * away instead of holding them back.
  *
- * It costs almost nothing for the same reason the record does. A Train hand is entirely determined
- * by its seed, and a quiz hand lives in its pack, so an entry is a handful of numbers rather than a
+ * It costs almost nothing for the same reason the record does. A made-up hand is entirely determined
+ * by its seed, and a pack hand lives in its pack, so an entry is a handful of numbers rather than a
  * position. Two hundred of them are a few tens of kilobytes.
  */
 import type { Phase } from './mistakes';
@@ -25,10 +25,10 @@ export interface Play {
   id: string;
   at: number;
   judge: Judge;
-  /** a Train hand: the seed and phase rebuild it exactly */
+  /** a made-up hand: the seed and phase rebuild it exactly */
   seed?: number;
   phase?: Phase;
-  /** a Real quiz hand: the pack holds it */
+  /** a pack hand: the pack holds it */
   pack?: string;
   qid?: string;
   /** what you threw, and what the judge would have thrown */

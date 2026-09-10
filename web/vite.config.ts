@@ -19,7 +19,11 @@ export default defineConfig({
         const hand = (u.searchParams.get('hand') ?? '').replace(/[^\d,]/g, '');
         const rollouts = String(Math.min(2048, Number(u.searchParams.get('rollouts') ?? 512)));
         const datagen = path.resolve(__dirname, '../datagen');
-        execFile('npx', ['tsx', 'src/challenge.ts', '--dir', `../data/gen/${run}`, '--id', id, '--hand', hand, '--rollouts', rollouts],
+        // tsx by its real path, not through npx: the repo path contains a ':' and npm refuses to
+        // put .bin on PATH for it, so `npx tsx` answered "tsx: command not found" and every
+        // challenge was a 500.
+        const tsx = path.join(datagen, 'node_modules/tsx/dist/cli.mjs');
+        execFile(process.execPath, [tsx, 'src/challenge.ts', '--dir', `../data/gen/${run}`, '--id', id, '--hand', hand, '--rollouts', rollouts],
           { cwd: datagen, timeout: 180000, maxBuffer: 10 << 20 }, (err, stdout) => {
             res.setHeader('content-type', 'application/json');
             if (err && !stdout) { res.statusCode = 500; res.end(JSON.stringify({ error: String(err) })); return; }

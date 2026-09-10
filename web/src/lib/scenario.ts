@@ -95,6 +95,17 @@ function capture(seed: number, phase: Exclude<Phase, 'any'>): { view: PlayerView
   return null; // game ended before the target turn
 }
 
+/**
+ * Whether a seed deals a teaching hand or a plain random one: about seven in ten do.
+ *
+ * This is a function of the seed and nothing else, and it has to be, because the mistake record
+ * stores a seed and promises to rebuild the identical hand from it. It used to live as the same
+ * arithmetic in two components, and `makeScenarioFor` asked for a teaching hand on every seed it
+ * walked - so a card recorded from a practise walk could come back in Review as a different hand.
+ * One rule, read everywhere, closes that.
+ */
+export const teachingHand = (seed: number): boolean => ((seed * 9301 + 49297) % 233280) / 233280 < 0.7;
+
 export function makeScenario(seed: number, phase: Phase, wantInteresting: boolean): Scenario {
   const ph: Exclude<Phase, 'any'> = phase === 'any' ? (['early', 'mid', 'late'] as const)[seed % 3]! : phase;
   let fallback: Scenario | null = null;
@@ -189,13 +200,16 @@ export function causeOf(sc: Scenario): Cause | null {
  * up, and this hands you hands where exactly that cause bites. It walks seeds rather than captures
  * so the Train tab's "next" stays a seed, and it gives up after `maxSeeds` and returns the best
  * trap it saw, because a practice screen that hangs teaches nothing.
+ *
+ * Every seed is dealt under `teachingHand`, the same rule Review rebuilds it by. A seed the rule
+ * calls plain rarely lands on a trap anyway, so skipping the search on those loses almost nothing.
  */
 export function makeScenarioFor(seed: number, phase: Phase, cause: Cause, maxSeeds = 40): { scenario: Scenario; seed: number; matched: boolean } {
   let anyTrap: { scenario: Scenario; seed: number } | null = null;
   let first: { scenario: Scenario; seed: number } | null = null;
   for (let s = seed; s < seed + maxSeeds; s++) {
     // a seed whose sixteen captures all fail throws; walking many seeds will meet one, so skip it
-    let sc: Scenario; try { sc = makeScenario(s, phase, true); } catch { continue; }
+    let sc: Scenario; try { sc = makeScenario(s, phase, teachingHand(s)); } catch { continue; }
     first ??= { scenario: sc, seed: s };
     if (sc.difficulty !== 'trap') continue;
     if (causeOf(sc) === cause) return { scenario: sc, seed: s, matched: true };
@@ -203,7 +217,7 @@ export function makeScenarioFor(seed: number, phase: Phase, cause: Cause, maxSee
   }
   const fb = anyTrap ?? first;
   if (fb) return { ...fb, matched: false };
-  return { scenario: makeScenario(seed + maxSeeds, phase, true), seed: seed + maxSeeds, matched: false };
+  return { scenario: makeScenario(seed + maxSeeds, phase, teachingHand(seed + maxSeeds)), seed: seed + maxSeeds, matched: false };
 }
 
 /**

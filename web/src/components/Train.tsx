@@ -1,6 +1,19 @@
 /**
- * Real quiz: positions from actual recorded games, graded by the evaluator's
- * measured EV of every legal action. Not heuristics - play-out counts.
+ * Train: positions from actual recorded games, graded by the evaluator's measured EV of every
+ * legal action. Not heuristics - play-out counts.
+ *
+ * This was the "Real quiz" tab until 2026-09-10, and there was a second practice tab beside it that
+ * dealt hands from a seed and had the coach mark them. The two differed in one thing that matters,
+ * which is who marks the answer, and the play-outs are the honest judge: the coach picks their best
+ * 52.8% of the time on decisive positions and 36.1% early in a hand. Both tabs already explained
+ * themselves in words and could be aimed at a mistake cause, and the packs are already filtered to
+ * decisive positions, so nothing else separated them. One tab, then, and this is it.
+ *
+ * What the seeded hands uniquely had was supply: a hand on demand, with nothing to download. That
+ * survives as `GeneratedHand`, served only when the pack has nothing to offer - a cause filter that
+ * matches no question, or no pack loaded at all - and always under a note that says the hand is
+ * made up and who marked it. A coach verdict and a play-out verdict are never shown as the same
+ * kind of thing.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +25,9 @@ import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG, JOKERS, PRACTISABLE } from '@/lib/scenario';
-import { recordMistake, causeTally } from '@/lib/mistakes';
+import { recordMistake, causeTally, readPractise, writePractise } from '@/lib/mistakes';
 import { recordPlay } from '@/lib/history';
+import GeneratedHand from '@/components/GeneratedHand';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
@@ -62,9 +76,18 @@ const CAN_CHALLENGE = import.meta.env.DEV;
 const kindsOf = (a: string): number[] => a.startsWith('d:') ? [Number(a.slice(2))] : a.startsWith('chow:') ? a.slice(5).split(',').map(Number) : (/^\w+:(\d+)$/.exec(a) ? [Number(/^\w+:(\d+)$/.exec(a)![1])] : []);
 const actionText = (a: string) => a === 'win' ? 'Win' : a === 'pass' ? 'Pass' : a === 'proceed' ? 'No kong' : a.startsWith('d:') ? `Discard ${tileLabel(Number(a.slice(2)))}` : a.startsWith('pong') ? 'Pong' : a.startsWith('chow') ? 'Chow' : 'Kong';
 
-export default function RealQuiz() {
+export default function Train() {
   const [packs, setPacks] = useState<PackIx[]>([]);
   const [pack, setPack] = useState<string | null>(null);
+  /**
+   * Whether there is a pack to serve from at all. `loading` keeps the fallback from flashing up
+   * before the index has answered; `none` is the index missing or empty, which is what a fresh
+   * install with no signal sees, and the made-up hands are the right answer to it.
+   */
+  const [packState, setPackState] = useState<'loading' | 'ready' | 'none'>('loading');
+  const [packFailed, setPackFailed] = useState(false);
+  /** where the fallback deals from; it moves on when the fallback's own "next" is pressed */
+  const [genSeed, setGenSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [unit, setUnit] = useState('chips');
   const [qs, setQs] = useState<Q[]>([]);
   const [order, setOrder] = useState<number[]>([]);
@@ -76,29 +99,47 @@ export default function RealQuiz() {
   const [challenging, setChallenging] = useState(false);
   const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
 
-  useEffect(() => { fetch(asset('quiz/index.json')).then((r) => r.json()).then((d: { packs: PackIx[] }) => { setPacks(d.packs); if (d.packs[0]) setPack(d.packs[0].id); }).catch(() => setPacks([])); }, []);
+  useEffect(() => {
+    fetch(asset('quiz/index.json')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: { packs: PackIx[] }) => {
+        setPacks(d.packs);
+        if (d.packs[0]) { setPack(d.packs[0].id); setPackState('ready'); } else setPackState('none');
+      })
+      .catch(() => { setPacks([]); setPackState('none'); });
+  }, []);
   useEffect(() => {
     if (!pack) return;
-    fetch(asset(`quiz/${pack}.json`)).then((r) => r.json()).then((d: { unit: string; run?: string; questions: Q[] }) => {
-      setUnit(d.unit); setQs(d.questions); setRunId(d.run ?? null);
-      const idx = d.questions.map((_, i) => i);
-      for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }
-      setOrder(idx); setPos(0); setPicked(null);
-    });
+    setPackFailed(false); setQs([]);
+    fetch(asset(`quiz/${pack}.json`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: { unit: string; run?: string; questions: Q[] }) => {
+        setUnit(d.unit); setQs(d.questions); setRunId(d.run ?? null);
+        const idx = d.questions.map((_, i) => i);
+        for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }
+        setOrder(idx); setPos(0); setPicked(null);
+        if (!d.questions.length) setPackFailed(true);
+      })
+      // a pack that will not load - a 10MB file on a poor connection, or one being rebuilt under
+      // us - leaves the fallback to serve, rather than a blank screen
+      .catch(() => setPackFailed(true));
   }, [pack]);
 
   const filtered = useMemo(() => order.filter((i) => mode === 'all' || (mode === 'discard' ? qs[i]!.k === 'discard' : qs[i]!.k !== 'discard')), [order, qs, mode]);
 
   /**
-   * Serve questions about the cause that keeps going wrong, the way the Train tab does.
+   * Serve questions about the cause that keeps going wrong.
    *
    * A pack question already records what the seat ACTUALLY threw (`sel`) beside what the play-outs
    * measured as best, so where those differ the position holds a real mistake made by a real
    * player, and `suggestCause` reads why it failed. That is the label. It is computed lazily and
    * cached: doing all five thousand up front is seconds of work for a filter that may never be
-   * used, and walking forward until a match is what the Train tab does too.
+   * used, and walking forward until a match is cheap.
+   *
+   * The choice is shared with the Review tab through `readPractise`, which is how its "practise
+   * this" button lands here with the filter already set, and it survives a reload for the same
+   * reason the old tab's did: the cause that keeps coming up does not change between sessions.
    */
-  const [causeFilter, setCauseFilter] = useState<Cause | null>(null);
+  const [causeFilter, setCauseFilterState] = useState<Cause | null>(() => readPractise());
+  const setCauseFilter = (c: Cause | null) => { setCauseFilterState(c); writePractise(c); };
   const causeCache = useRef(new Map<string, Cause | null>());
   const causeOfQ = (qq: Q | undefined): Cause | null => {
     if (!qq) return null;
@@ -130,32 +171,50 @@ export default function RealQuiz() {
    * a drill. Doing the whole pack up front is the same work in one lump. Doing it in small slices
    * after the pack loads costs nothing anybody can feel and leaves every later walk hitting cache.
    */
+  /**
+   * True once every question in the pack has its label, at which point a walk can cover the whole
+   * pack for free. The walk reads the ref rather than the state so that finishing the labelling
+   * does not swap a made-up hand for a pack question while you are still looking at it; the next
+   * press of "next" picks the change up.
+   */
+  const [labelled, setLabelled] = useState(false);
+  const labelledRef = useRef(false);
   useEffect(() => {
+    setLabelled(false); labelledRef.current = false;
     if (!qs.length) return;
     let stopped = false, i = 0;
     const step = () => {
       if (stopped) return;
       const until = Math.min(i + 25, qs.length);
       for (; i < until; i++) causeOfQ(qs[i]);
-      if (i < qs.length) window.setTimeout(step, 30);
+      if (i < qs.length) window.setTimeout(step, 30); else { labelledRef.current = true; setLabelled(true); }
     };
     const id = window.setTimeout(step, 300);   // let the first question render first
     return () => { stopped = true; window.clearTimeout(id); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qs]);
 
-  /** how many questions to walk before giving up and serving the next one regardless */
+  /**
+   * How many unlabelled questions to walk before giving up. Once the pack is labelled the walk is
+   * all cache hits and covers everything, so "no match" then means the pack really has none - and
+   * that is when the made-up hand steps in. Causes are read off discards, so the filter has nothing
+   * to say about claim questions and is not applied in claim mode; the strip that sets it is hidden
+   * there too, which is how the screen says so.
+   */
   const WALK = 400;
+  const noPack = packState === 'none' || packFailed;
+  const causeApplies = causeFilter !== null && (mode !== 'claim' || noPack);
   const chosen = useMemo(() => {
     const len = Math.max(1, filtered.length);
-    if (!causeFilter) return { idx: filtered[pos % len] ?? 0, matched: true };
-    for (let step = 0; step < Math.min(WALK, len); step++) {
+    if (!causeApplies) return { idx: filtered[pos % len] ?? 0, matched: true };
+    const limit = labelledRef.current ? len : Math.min(WALK, len);
+    for (let step = 0; step < limit; step++) {
       const idx = filtered[(pos + step) % len] ?? 0;
       if (causeOfQ(qs[idx]) === causeFilter) return { idx, matched: true };
     }
     return { idx: filtered[pos % len] ?? 0, matched: false };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered, pos, causeFilter, qs]);
+  }, [filtered, pos, causeFilter, causeApplies, qs]);
   const q = qs[chosen.idx];
   const teaches = useMemo(() => causeOfQ(q), [q]);  // eslint-disable-line react-hooks/exhaustive-deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,8 +320,77 @@ export default function RealQuiz() {
     return out.map((a) => (a.se === undefined ? a : { ...a, se: a.se * k }));
   }, [q, money]);
 
-  if (!packs.length) return <div className="mx-auto max-w-3xl p-6 text-sm text-muted-foreground">No quiz packs found. Run: <code>pnpm -C datagen exec tsx src/quizpack.ts</code></div>;
-  if (!q) return null;
+  /**
+   * The strip of controls along the top, shared by the pack path and the fallback so that the
+   * pack switcher and the cause filter are the way back from a made-up hand to a measured one.
+   */
+  const causeChoices = tally.slice(0, 3).map((t) => t.cause);
+  if (causeFilter && !causeChoices.includes(causeFilter)) causeChoices.push(causeFilter);   // a practise cause set from Review that is not in this tab's top three still needs its button
+  const controls = (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
+      {/*
+        A pack is a record of one table. The coach's opinion beside each question is computed live
+        from this app's own table config, so a pack from a different table gets its reasoning from
+        the wrong game - the play-out verdict stays right, the explanation beside it does not.
+        Worth saying out loud rather than leaving the reader to notice.
+      */}
+      {(() => {
+        const t = packs.find((p) => p.id === pack)?.table;
+        if (!t) return null;
+        const mine = { wildcards: JOKERS, minimumTai: CONFIG.minimum_fan };
+        const same = t.wildcards === mine.wildcards && t.minimumTai === mine.minimumTai;
+        return (
+          <span className={cn('ml-2 text-xs', same ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
+            {t.wildcards} <J>Jokers</J> · {t.minimumTai} <J>Tai</J> minimum
+            {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the <J>Measured Best</J> answers hold but the <J>Coach</J>'s reasoning beside them is computed for your table, not this pack's</>}
+          </span>
+        );
+      })()}
+      <span className="ml-auto" />
+      {!noPack && (['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
+      {/* the honest grader, aimed at whatever keeps going wrong; hidden in claim mode, where a cause has nothing to say */}
+      {causeChoices.length > 0 && (mode !== 'claim' || noPack) && (
+        <span className="flex flex-wrap items-center gap-1">
+          <span className="ml-2 text-xs text-muted-foreground">about:</span>
+          <Button size="sm" variant={causeFilter === null ? 'secondary' : 'ghost'} onClick={() => { setCauseFilter(null); setPicked(null); }}>anything</Button>
+          {causeChoices.map((c) => (
+            <Button key={c} size="sm" variant={causeFilter === c ? 'secondary' : 'ghost'} title={`${tally.find((t) => t.cause === c)?.n ?? 0} of your recorded mistakes`}
+              onClick={() => { setCauseFilter(c); setPicked(null); }}>{causeLabel(c)}</Button>
+          ))}
+        </span>
+      )}
+    </div>
+  );
+
+  if (!noPack && (packState === 'loading' || !q)) return <div className="mx-auto max-w-5xl px-4 py-5 text-sm text-muted-foreground">Loading the pack…</div>;
+
+  /**
+   * The fallback: a made-up hand, marked by the coach. Served only when the pack has nothing for
+   * the current filters or there is no pack, and never without saying so. The note above the hand
+   * is the whole point of the arrangement - the coach is right about half the time, and a verdict
+   * from it must not be mistaken for one from the play-outs.
+   */
+  if (noPack || !q || (causeApplies && !chosen.matched)) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
+        {controls}
+        <Card className="border-amber-400 dark:border-amber-700">
+          <CardContent className="pt-4 text-sm space-y-1">
+            <p className="font-medium">This hand is made up, and the <J>Coach</J> marks it.</p>
+            <p className="text-muted-foreground">
+              {noPack
+                ? <>No question pack could be loaded, so there is no measured position to show. </>
+                : <>Nothing in this pack{labelled ? '' : ' nearby'} is about "{causeLabel(causeFilter!)}", so the engine dealt one instead, aimed at that <J>cause</J> where it can be. Pick <i>anything</i>, or another pack, to get back to measured positions. </>}
+              The <J>Coach</J> is a set of rules that explains itself well, but it picks the play-outs' best only about half the time — 52.8% on <J>decisive</J> positions and 36.1% early in a hand. Treat its verdict as an opinion to argue with, not a measurement.
+            </p>
+          </CardContent>
+        </Card>
+        <GeneratedHand seed={genSeed} cause={causeApplies ? causeFilter : null}
+          onNext={(s) => { setGenSeed(s); setPicked(null); setPos((p) => p + 1); }} />
+      </div>
+    );
+  }
 
   const repriced = !!q?.actions?.some((a) => a.mix);
   // q.n is the play-out BUDGET, not what each move got: successive halving stops rolling out an
@@ -314,49 +442,15 @@ export default function RealQuiz() {
   };
 
   const discardKinds = new Set(q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))));
-  const causeNote = causeFilter && !chosen.matched
-    ? `no "${causeLabel(causeFilter)}" question in the next ${WALK} — showing the next one instead`
-    : teaches ? `the throw actually made here was: ${causeLabel(teaches)}` : null;
+  // an unmatched filter never reaches here: the fallback above serves it
+  const causeNote = teaches ? `the throw actually made here was: ${causeLabel(teaches)}` : null;
   const sorted = [...q.h].sort((a, b) => a - b);
   const drIdx = q.dr !== null ? sorted.indexOf(q.dr) : -1;
   const handTiles = drIdx >= 0 ? [...sorted.slice(0, drIdx), ...sorted.slice(drIdx + 1)] : sorted;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
-        {/*
-          A pack is a record of one table. The coach's opinion beside each question is computed live
-          from this app's own table config, so a pack from a different table gets its reasoning from
-          the wrong game - the play-out verdict stays right, the explanation beside it does not.
-          Worth saying out loud rather than leaving the reader to notice.
-        */}
-        {(() => {
-          const t = packs.find((p) => p.id === pack)?.table;
-          if (!t) return null;
-          const mine = { wildcards: JOKERS, minimumTai: CONFIG.minimum_fan };
-          const same = t.wildcards === mine.wildcards && t.minimumTai === mine.minimumTai;
-          return (
-            <span className={cn('ml-2 text-xs', same ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
-              {t.wildcards} <J>Jokers</J> · {t.minimumTai} <J>Tai</J> minimum
-              {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the <J>Measured Best</J> answers hold but the <J>Coach</J>'s reasoning beside them is computed for your table, not this pack's</>}
-            </span>
-          );
-        })()}
-        <span className="ml-auto" />
-        {(['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
-        {/* the honest grader, aimed at whatever keeps going wrong - the Train tab's idea on real positions */}
-        {tally.length > 0 && (
-          <span className="flex flex-wrap items-center gap-1">
-            <span className="ml-2 text-xs text-muted-foreground">about:</span>
-            <Button size="sm" variant={causeFilter === null ? 'secondary' : 'ghost'} onClick={() => { setCauseFilter(null); setPicked(null); }}>anything</Button>
-            {tally.slice(0, 3).map((t) => (
-              <Button key={t.cause} size="sm" variant={causeFilter === t.cause ? 'secondary' : 'ghost'} title={`${t.n} of your recorded mistakes`}
-                onClick={() => { setCauseFilter(t.cause); setPicked(null); }}>{causeLabel(t.cause)}</Button>
-            ))}
-          </span>
-        )}
-      </div>
+      {controls}
 
       <Card>
         <CardContent className="pt-4">

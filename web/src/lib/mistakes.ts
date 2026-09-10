@@ -27,22 +27,23 @@ export type Phase = 'early' | 'mid' | 'late' | 'any';
 /**
  * A mistake is one of two things, and the difference is who judged it.
  *
- * A Train mistake carries `seed` and `phase`, and `makeScenario` rebuilds the identical hand from
+ * A made-up hand carries `seed` and `phase`, and `makeScenario` rebuilds the identical hand from
  * them. It was judged by the coach, which explains itself in words and picks the play-outs' best
  * 52.8% of the time on decisive positions - so a card from here is worth meeting again, and is not
- * proof you were wrong.
+ * proof you were wrong. These came from the old Train tab, and since 2026-09-10 they come only from
+ * that tab's fallback, when the pack has nothing for the current filter.
  *
- * A Real quiz mistake carries `pack` and `qid`, and the pack file holds the position. It was judged
- * by 128 play-outs an option, which is the honest grader, and the record was built without any of
+ * A pack mistake carries `pack` and `qid`, and the pack file holds the position. It was judged by
+ * 128 play-outs an option, which is the honest grader, and the record was built without any of
  * these until 2026-09-06 - every card in it came from the weaker judge while the better one threw
  * its verdicts away after each question.
  */
 export interface Mistake {
   id: string;
-  /** a generated Train position */
+  /** a made-up position, dealt from the seed */
   seed?: number;
   phase?: Phase;
-  /** a Real quiz position: which pack, and the question's id inside it */
+  /** a pack position: which pack, and the question's id inside it */
   pack?: string;
   qid?: string;
   /** what you threw the first time, and what the coach threw */
@@ -165,7 +166,7 @@ export function bySource(): { trainer: number; quiz: number } {
   return { trainer: all.filter((m) => !m.pack).length, quiz: all.filter((m) => !!m.pack).length };
 }
 
-/** The cause the Train tab is practising, if any - set from Review, kept across reloads. */
+/** The cause the Train tab is serving questions about, if any - set from Review or the tab itself, kept across reloads. */
 const PRACTISE_KEY = 'mj.practise.v1';
 export function readPractise(): Cause | null {
   try { return (localStorage.getItem(PRACTISE_KEY) as Cause | null) || null; } catch { return null; }
