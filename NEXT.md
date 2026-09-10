@@ -70,6 +70,9 @@ Green dragon on maroon. Jargon is written `*like this*`, italic, coloured by kin
 - web is on TypeScript 6 (strict by default), the rest on 5; use each package's own compiler.
 - The repo path has a colon, so pnpm's `.bin` shims fail; `check.sh` shows the real paths.
 - A bare `git commit` sweeps whatever an agent staged. Pathspec, always.
+- `BASE_PATH` rewrites what Vite emits, not the static files in `web/public/`. The manifest's
+  `start_url` and `scope` must be relative (`./`), or an installed copy opens on the host's root -
+  which on this host is a 404. Found by Changs on his phone, 2026-09-10.
 
 ## Pointers
 
