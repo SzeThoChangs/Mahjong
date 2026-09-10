@@ -104,9 +104,32 @@ const strata = [...seen.entries()].sort((a, b) => b[1] - a[1]);
  * `--overdraw 2.5`.
  */
 const OVERDRAW = Number(arg('overdraw', '5'));
+/**
+ * What a stratum's share of the pack is a share OF.
+ *
+ *   run       (default) its share of every decision seen, so the pack mirrors where decisions
+ *             happen in a real hand. The cost shows in early discards: they are 24-38% of decisions
+ *             and 1.5-2.6% of them are decisive, so the stratum runs dry at about 5,000 questions
+ *             and is padded with close calls from there - 58% padding in the no-joker pack shipped
+ *             on 2026-09-10 before anyone looked.
+ *   decisive  its share of the decisive positions that exist. No stratum can run short, because
+ *             each takes a proportional slice of a pool that is by definition there, so the pack is
+ *             honest at every question and as large as the data allows. It skews to mid-game,
+ *             late-game and claims, which is where being right matters - a drill full of early
+ *             positions is a drill of coin flips, because early in a hand most throws do not matter
+ *             yet. The phase-mix line at the end shows the skew rather than hiding it.
+ */
+const MIX = arg('mix', 'run') as 'run' | 'decisive';
+const totalDecisive = [...decisive.values()].reduce((a, l) => a + l.length, 0);
+if (MIX === 'decisive' && maxQ > totalDecisive) {
+  console.log(`  --max ${maxQ} is more than the ${totalDecisive} decisive positions there are; building all of them`);
+}
 const want = new Map<string, number>();
 for (const [stratum, n] of strata) {
-  const target = Math.round((n / totalSeen) * maxQ);
+  const share = MIX === 'decisive'
+    ? (decisive.get(stratum) ?? []).length / Math.max(1, totalDecisive)
+    : n / totalSeen;
+  const target = Math.round(share * Math.min(maxQ, MIX === 'decisive' ? totalDecisive : maxQ));
   want.set(stratum, target);
   const pool = shuffle(decisive.get(stratum) ?? []);
   const take = pool.slice(0, Math.round(target * OVERDRAW));
