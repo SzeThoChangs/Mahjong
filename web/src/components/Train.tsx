@@ -348,7 +348,15 @@ export default function Train() {
   if (causeFilter && !causeChoices.includes(causeFilter)) causeChoices.push(causeFilter);   // a practise cause set from Review that is not in this tab's top three still needs its button
   const controls = (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      {packs.map((p) => <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>{p.id} · {p.questions}{p.money ? ' · $' : ''}</Button>)}
+      {/* A pack is a table, so the button says the table. The file names (coach, min1, min1-nowild)
+          are the runs they were built from, which meant nothing to Changs on his phone; a pack built
+          before the table field existed still falls back to its name. */}
+      {packs.map((p) => (
+        <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>
+          {p.table ? <>{p.table.wildcards} <J>Jokers</J> · min {p.table.minimumTai} <J>Tai</J></> : p.id}
+          <span className="ml-1.5 opacity-70">{p.questions.toLocaleString()}{p.money ? ' · $' : ''}</span>
+        </Button>
+      ))}
       {/*
         A pack is a record of one table. The coach's opinion beside each question is computed live
         from this app's own table config, so a pack from a different table gets its reasoning from
