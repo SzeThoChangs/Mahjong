@@ -8,26 +8,10 @@ the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured
 Confirmed green at 18:20 on 2026-09-10: the merged Train tab, the 10k packs, the hand log and the
 green-dragon icon are all live and were loaded on a phone-sized viewport.
 
-**The sharding is built and sitting uncommitted in the working tree.** A Fable agent started at about
-18:05 sharded the quiz packs to the design at the end of MOBILE.md and finished at about 18:40 with
-`./check.sh` green and the Train tab and Review driven. `git status --short` shows its work: the
-three pack directories under `web/public/quiz/` (the monolithic `coach.json`, `min1.json` and
-`min1-nowild.json` are deleted), `datagen/src/quizpack.ts`, `packlib.ts` and `buildrare.ts`,
-`solver/src/pack.ts` and its test, `web/src/components/Train.tsx`, `Review.tsx`,
-`web/tools/singlefile.mjs`, and a paragraph in MOBILE.md. It was told not to commit. Commit it whole
-with `git commit --only <paths>`; the pack directories are about 47MB across three hundred files,
-which is the same bytes as before in more files.
-
-HEAD builds again as of `880eb5b`, which committed the finished Train merge in one piece. Everything
-is pushed. Check https://github.com/SzeThoChangs/Mahjong/actions - the top "Deploy the trainer" run
-should be green and https://szethochangs.github.io/Mahjong/ should show the green-dragon icon in its
-tab. If it is red, read the failing step's annotations (the check-runs API returns them without
-signing in) and run `./check.sh` locally; it runs exactly what CI runs.
-
-How HEAD came to be broken, so it does not recur: two agents were working in this tree at once, and
-a bare `git commit` for the icon swept in the renames one of them had staged with `git mv`, leaving
-`App.tsx` importing files that no longer existed. Commit with `git commit --only <paths>` while any
-agent may be in the tree. Written up in memory as well.
+**The sharding is committed (`8946d51`) and pushed.** Measured on this Mac, pack button to first
+question: 3,541 ms -> 784 ms, 15.03 MB -> 217 KB fetched, heap 164 MB -> 29 MB. Every old qid is
+present in the new packs, so nobody's record is orphaned. Not measured on a real phone yet - that is
+the one number still owed, and Changs can supply it by opening the Train tab on 4G.
 
 ## Where things are
 
@@ -67,13 +51,10 @@ a memo was missing - the kind of thing only clicking finds.
 
 ## Then, in the order the pain is felt
 
-1. **Shard the quiz packs.** At 15 MB a pack, the Real quiz's parse-on-open is 3.5s on this Mac and
-   15-25s on a phone. Design is settled in `MOBILE.md`: hundred-question shards plus an index, and the
-   *Cause* label baked into the pack at build time so the index can pick a shard without loading one.
-2. **The phone layout pass.** Bottom tab bar (decided), 48px targets, safe-area insets. `MOBILE.md`
+1. **The phone layout pass.** Bottom tab bar (decided), 48px targets, safe-area insets. `MOBILE.md`
    has the measurements. Open question: are the four primary tabs Train, Spot, Review and Tips?
-3. **Split the bundle** and **an update prompt** so testers are not stuck on a stale version.
-4. **The export button** does nothing in the single-file artifact version; irrelevant on the real
+2. **Split the bundle** and **an update prompt** so testers are not stuck on a stale version.
+3. **The export button** does nothing in the single-file artifact version; irrelevant on the real
    site, where it works.
 
 ## Decided, so do not reopen
