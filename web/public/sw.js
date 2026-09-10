@@ -6,14 +6,14 @@
  * opens, so the shell and the tiles are cached up front and a pack is kept only once it has
  * actually been used. Open a table once on wifi and it is yours on the train.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';   // bumped for the new icon, which lives in the cached shell
 const SHELL = `shell-${VERSION}`;   // the app itself: HTML, JS, CSS, tiles, icons
 const DATA = `data-${VERSION}`;     // packs, replays, reads - cached the first time they are read
 
 /** The worker is served from the site's own base, so its scope is the right root to build on. */
 const BASE = new URL('./', self.registration.scope).pathname;
 const at = (p) => BASE + p.replace(/^\//, '');
-const SHELL_URLS = ['', 'index.html', 'favicon.svg', 'apple-touch-icon.png', 'manifest.webmanifest'].map(at);
+const SHELL_URLS = ['', 'index.html', 'favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'manifest.webmanifest'].map(at);
 
 /**
  * The tile faces, precached because the app is unreadable without them.
