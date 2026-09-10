@@ -5,7 +5,7 @@
  * Two streaming passes over the evals: the first keeps only a key and a spread per decision so the sample
  * can be drawn, the second re-reads and materialises just the few thousand records that were picked.
  */
-import { mkdirSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fanInHand, makeRng, type Meld } from 'sg-mahjong-engine';
 import { eachJsonlGz } from './stats.js';
@@ -14,7 +14,7 @@ import { pairedSe, separationT, seVersionOf } from './se.js';
 import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand, type EvalRecord } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
-import { liveCalls } from 'sg-mahjong-solver';
+import { liveCalls, rankDiscards, suggestCause, shardOf, shardFile, type Cause, type Context, type PackIndex } from 'sg-mahjong-solver';
 import type { HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
@@ -169,10 +169,45 @@ for (const f of readdirSync(dir).filter((x) => x.startsWith('hands-') && x.endsW
 // `tp` is the ids of the shape tips this position is about, from `shapetag.ts` - not stored for the
 // app to read (it works them out again from the hand, so the wording stays in one place) but for the
 // pack summary, which reports how many questions each tip can be taught on.
-interface Q { tp: string[]; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+// `c` is why the seat's own throw failed, where it did fail - see `causeOf` below.
+interface Q { tp: string[]; c: Cause | null; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
+/**
+ * Why the seat's own throw failed, read off the position at build time.
+ *
+ * A question records what the seat actually threw beside what the play-outs measured as best, so
+ * where those differ the position holds a real mistake, and `suggestCause` can say what kind. The
+ * app used to work this out in the browser, at about five milliseconds a question, and needed a
+ * background pass over the whole pack so that filtering by cause never walked cold. A sharded pack
+ * cannot run that pass, because a shard can only label itself, so the label is baked here instead
+ * and the index can say which shard holds a "miscounted" question without anyone fetching it.
+ *
+ * It is also the more honest label. The browser computed it against whatever table the APP was set
+ * to; this uses the table the hand was actually played at, which is the one in the run's manifest.
+ * Where the two tables differ the two labels can differ, and this one is the right one.
+ */
+const minimumFan: 1 | 2 = rules.minimum_tai === 2 ? 2 : 1;
+type Decision = NonNullable<ReturnType<typeof decisionsOfHand>>[number];
+const causeOf = (e: EvalRecord, d: Decision, melds: Meld[], seat: number): Cause | null => {
+  if (e.k !== 'discard' || e.sel === e.best || !e.sel.startsWith('d:') || !e.best.startsWith('d:')) return null;
+  try {
+    // everything the seat can see that is not its own concealed hand or own melds: the pool, the
+    // other seats' exposed melds, and their bonus tiles. Without it the coach counts four copies
+    // of a tile that is already dead on the table.
+    const visible: number[] = d.pub.dl.map((x) => x[1]!);
+    d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...m.slice(2)); });
+    d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...bs); });
+    const ctx: Context = {
+      seat, prevailingWind: d.w, bonus: d.me.b, playerTurns: d.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai, visible,
+      opponentMelds: d.pub.m.map((ms, s) => (s === d.p ? -1 : ms.length)).filter((n) => n >= 0),
+    };
+    const r = rankDiscards(d.me.h, melds, ctx);
+    return suggestCause(d.me.h, melds, { bonus: d.me.b, seat, prevailingWind: d.w, melds, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai },
+      r.options, Number(e.sel.slice(2)), Number(e.best.slice(2))).suggested;
+  } catch { return null; }
+};
 for (const [key, list] of byHand) {
   const hr = hands.get(key); if (!hr) continue;
   const decs = decisionsOfHand(hr, rules, DEFAULT_RANDOMNESS);
@@ -193,7 +228,7 @@ for (const [key, list] of byHand) {
     };
     const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws, view).map((c) => c.tip) : [];
     questions.push({
-      tp,
+      tp, c: causeOf(e, d, melds, view.seat),
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
@@ -243,16 +278,65 @@ mkdirSync(outDir, { recursive: true });
  * likely to deal in. A grader reading this pack needs to know which game it is looking at.
  */
 const table = { wildcards: rules.jokers.count, minimumTai: rules.minimum_tai };
-writeFileSync(join(outDir, `${name}.json`), JSON.stringify({ run: dir.split('/').pop(), money, unit: money ? '$' : 'chips', table, questions: kept }));
-// The index lists the QUIZ packs, and this directory holds more than those: `spot.json` moved in on
-// 2026-09-04 and has positions rather than questions, so a scan that trusts the extension puts a
-// phantom pack in the Real Quiz picker. Anything without questions is not a quiz pack.
-const packs = readdirSync(outDir).filter((f) => f.endsWith('.json') && f !== 'index.json').map((f) => {
-  const p = JSON.parse(readFileSync(join(outDir, f), 'utf8')) as { money?: boolean; unit?: string; table?: unknown; questions?: unknown[] };
-  return p.questions ? { id: f.replace('.json', ''), money: p.money, unit: p.unit, table: p.table, questions: p.questions.length } : null;
-}).filter((x) => x !== null);
+/**
+ * The pack is a directory of shards, not one file - see `pack.ts` in the solver for the shape and
+ * for why a question's shard is a hash of its id. The index and the shards are written in one pass
+ * from the same lists, so a tally can never disagree with the shard it describes: a filter that
+ * promised a cause the shard did not hold would only ever show up as an empty drill.
+ *
+ * The directory is cleared first. A smaller rebuild over an old one would otherwise leave the old
+ * build's tail shards in place, unlisted by the new index but still there for anything that reads
+ * the directory rather than the index.
+ */
+const SHARD = 100;
+const modulo = Math.max(1, Math.ceil(kept.length / SHARD));
+const packDir = join(outDir, name);
+rmSync(packDir, { recursive: true, force: true });
+mkdirSync(packDir, { recursive: true });
+const buckets: Q[][] = Array.from({ length: modulo }, () => []);
+for (const q of kept) buckets[shardOf(q.id, modulo)]!.push(q);
+const shards = buckets.map((qs, i) => {
+  const kinds: Record<string, number> = {}, causes: Record<string, number> = {};
+  for (const q of qs) {
+    kinds[q.k] = (kinds[q.k] ?? 0) + 1;
+    if (q.c) causes[q.c] = (causes[q.c] ?? 0) + 1;
+  }
+  writeFileSync(join(packDir, shardFile(i)), JSON.stringify({ questions: qs }));
+  return { file: shardFile(i), n: qs.length, kinds, causes };
+});
+const packIx: PackIndex = { run: dir.split('/').pop()!, money, unit: money ? '$' : 'chips', table, questions: kept.length, placement: { by: 'fnv1a32', modulo }, shards };
+writeFileSync(join(packDir, 'index.json'), JSON.stringify(packIx));
+const labelled = kept.filter((q) => q.c).length;
+const perCause = new Map<string, number>();
+for (const q of kept) if (q.c) perCause.set(q.c, (perCause.get(q.c) ?? 0) + 1);
+console.log(`${labelled} questions carry a cause  [${[...perCause].sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${n}`).join(', ') || 'none'}]`);
+
+/**
+ * The TOP-LEVEL index, `quiz/index.json`, which lists the packs and is the file the app reads
+ * first. It is a different file from the per-pack `quiz/<name>/index.json` written just above,
+ * and the two must not be confused: this one says which packs exist, that one says what is in
+ * each shard of one pack.
+ *
+ * Two layouts live in this directory. A sharded pack is a directory holding an index; a pack built
+ * before 2026-09-10 (`money.json`, `nowild.json`) is still one file, and the app opens it as one
+ * big shard. And not every file here is a quiz pack: `spot.json` moved in on 2026-09-04 and has
+ * positions rather than questions, so a scan that trusts the extension puts a phantom pack in the
+ * picker. Anything without questions is not a quiz pack.
+ */
+type Listed = { id: string; money?: boolean; unit?: string; table?: unknown; questions: number; shards?: number };
+const packs = readdirSync(outDir, { withFileTypes: true }).map((ent): Listed | null => {
+  if (ent.isDirectory()) {
+    try {
+      const ix = JSON.parse(readFileSync(join(outDir, ent.name, 'index.json'), 'utf8')) as PackIndex;
+      return { id: ent.name, money: ix.money, unit: ix.unit, table: ix.table, questions: ix.questions, shards: ix.shards.length };
+    } catch { return null; }
+  }
+  if (!ent.name.endsWith('.json') || ent.name === 'index.json') return null;
+  const p = JSON.parse(readFileSync(join(outDir, ent.name), 'utf8')) as { money?: boolean; unit?: string; table?: unknown; questions?: unknown[] };
+  return p.questions ? { id: ent.name.replace('.json', ''), money: p.money, unit: p.unit, table: p.table, questions: p.questions.length } : null;
+}).filter((x) => x !== null).sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(join(outDir, 'index.json'), JSON.stringify({ packs }));
-console.log(`\n${kept.length} questions -> ${outDir}/${name}.json (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
+console.log(`\n${kept.length} questions -> ${packDir}/ in ${modulo} shards (${money ? 'dollars' : 'chips'}); ${drifted} drifted hands skipped, ${mismatched} mismatched decisions dropped`);
 // Phase is a selection key now, so this is the check that it worked rather than a warning that it
 // did not. The two rows should agree to within rounding; a gap means a stratum was backfilled or
 // ran dry, and the lines above say which.

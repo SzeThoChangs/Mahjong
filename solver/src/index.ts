@@ -10,3 +10,4 @@ export * from './shapetag.js';
 export * from './copy.js';
 export * from './cause.js';
 export type { ReadsTables } from './reads.js';
+export * from './pack.js';

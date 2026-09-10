@@ -8,11 +8,15 @@ the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured
 Confirmed green at 18:20 on 2026-09-10: the merged Train tab, the 10k packs, the hand log and the
 green-dragon icon are all live and were loaded on a phone-sized viewport.
 
-**An agent may be mid-job.** A Fable agent was started at about 18:05 to shard the quiz packs (the
-design at the end of MOBILE.md). If `git status --short` shows changes under `web/public/quiz/`,
-`datagen/src/quizpack.ts`, `web/src/components/Train.tsx`, `Review.tsx` or `web/tools/singlefile.mjs`
-and nothing is committed, that is its work. It was told not to commit. Run `./check.sh`; if green,
-drive the Train tab and Review before committing it whole with `git commit --only <paths>`.
+**The sharding is built and sitting uncommitted in the working tree.** A Fable agent started at about
+18:05 sharded the quiz packs to the design at the end of MOBILE.md and finished at about 18:40 with
+`./check.sh` green and the Train tab and Review driven. `git status --short` shows its work: the
+three pack directories under `web/public/quiz/` (the monolithic `coach.json`, `min1.json` and
+`min1-nowild.json` are deleted), `datagen/src/quizpack.ts`, `packlib.ts` and `buildrare.ts`,
+`solver/src/pack.ts` and its test, `web/src/components/Train.tsx`, `Review.tsx`,
+`web/tools/singlefile.mjs`, and a paragraph in MOBILE.md. It was told not to commit. Commit it whole
+with `git commit --only <paths>`; the pack directories are about 47MB across three hundred files,
+which is the same bytes as before in more files.
 
 HEAD builds again as of `880eb5b`, which committed the finished Train merge in one piece. Everything
 is pushed. Check https://github.com/SzeThoChangs/Mahjong/actions - the top "Deploy the trainer" run

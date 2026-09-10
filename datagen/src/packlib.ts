@@ -18,7 +18,7 @@
  * 72% of the time in these packs, so a calling rule scoring 80% against a 50% coin is below average.
  * Every tool built on this must carry its own unconditional control arms.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { shanten, isJoker, type TileKind } from 'sg-mahjong-engine';
 
@@ -156,10 +156,39 @@ export function report(title: string, table: Map<string, Score>, width = 28) {
  * that is where a tool says which decisions it is about at all.
  */
 /** every quiz pack in a directory, as questions (the spotting pack is not one and is skipped) */
+/**
+ * The quiz packs in a directory, by id, in either of the two layouts that live there.
+ *
+ * Since 2026-09-10 a pack is a directory of shards with its own `index.json` (see `pack.ts` in the
+ * solver); the packs built before that are still one `<id>.json` each. The tools that score rules
+ * against packs want every question of a pack in one list either way, and none of them should
+ * know which layout it came from.
+ */
+export function packIds(quizDir: string): string[] {
+  return readdirSync(quizDir, { withFileTypes: true })
+    .map((ent) => (ent.isDirectory()
+      ? (existsSync(join(quizDir, ent.name, 'index.json')) ? ent.name : null)
+      : (ent.name.endsWith('.json') && ent.name !== 'index.json' ? ent.name.replace(/\.json$/, '') : null)))
+    .filter((x): x is string => x !== null)
+    .sort();
+}
+
+/** every question of one pack, or null when there is no such pack - a file without questions is not a pack */
+export function readPack(quizDir: string, id: string): PackQ[] | null {
+  const ix = join(quizDir, id, 'index.json');
+  if (existsSync(ix)) {
+    const { shards } = JSON.parse(readFileSync(ix, 'utf8')) as { shards: { file: string }[] };
+    return shards.flatMap((s) => (JSON.parse(readFileSync(join(quizDir, id, s.file), 'utf8')) as { questions: PackQ[] }).questions);
+  }
+  const file = join(quizDir, `${id}.json`);
+  if (!existsSync(file)) return null;
+  return (JSON.parse(readFileSync(file, 'utf8')) as { questions?: PackQ[] }).questions ?? null;
+}
+
 export function loadPacks(quizDir: string, only?: string): { file: string; questions: PackQ[] }[] {
-  return readdirSync(quizDir)
-    .filter((f) => f.endsWith('.json') && f !== 'index.json' && (!only || f === `${only}.json`))
-    .map((f) => ({ file: f, questions: (JSON.parse(readFileSync(join(quizDir, f), 'utf8')) as { questions?: PackQ[] }).questions ?? [] }))
+  return packIds(quizDir)
+    .filter((id) => !only || id === only)
+    .map((id) => ({ file: id, questions: readPack(quizDir, id) ?? [] }))
     .filter((p) => p.questions.length);
 }
 
@@ -171,16 +200,13 @@ export function scorePacks<C>(opts: {
   /** relative chance this action is the best one, knowing only what it is - see `fitNull` */
   weight?: (q: PackQ, c: C, action: string) => number;
 }): Map<string, Score> {
-  const files = readdirSync(opts.quizDir).filter((f) => f.endsWith('.json') && f !== 'index.json' && (!opts.only || f === `${opts.only}.json`));
   const pooled = new Map<string, Score>();
   let packsRead = 0;
-  for (const f of files) {
-    const pack = JSON.parse(readFileSync(join(opts.quizDir, f), 'utf8')) as { questions?: PackQ[] };
-    if (!pack.questions) continue;   // the spotting pack lives in the same directory and is not a quiz
+  for (const { file: f, questions } of loadPacks(opts.quizDir, opts.only)) {
     packsRead++;
     const st = new Map<string, Score>();
     let used = 0, total = 0;
-    for (const q of pack.questions) {
+    for (const q of questions) {
       total++;
       const ctx = opts.prepare(q);
       if (ctx === null) continue;

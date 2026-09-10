@@ -33,6 +33,7 @@ import { botsFor } from './position.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 import { evaluateDecision, type EvalArgs } from './evaluate.js';
 import { liveCalls } from 'sg-mahjong-solver';
+import { readPack } from './packlib.js';
 import type { DecisionRecord } from './records.js';
 import type { Meld } from 'sg-mahjong-engine';
 
@@ -183,9 +184,10 @@ function harvestTemplates(): TileKind[][] {
   // `suitOf` names the suit; the arithmetic wants its index
   const rotate = (h: TileKind[], by: number) => h.map((k) => (k < 27 ? (((Math.floor(k / 9) + by) % 3) * 9 + (k % 9)) as TileKind : k));
   for (const pack of ['coach', 'money']) {
-    let j: { questions: { k: string; h: number[]; m: number[][]; b: number[]; seat: number; dl: number; w: number; actions: { a: string }[] }[] };
-    try { j = JSON.parse(readFileSync(`../web/public/quiz/${pack}.json`, 'utf8')); } catch { continue; }
-    for (const q of j.questions) {
+    // `readPack` reads either layout, since `coach` became a directory of shards on 2026-09-10
+    const questions = readPack('../web/public/quiz', pack);
+    if (!questions) continue;
+    for (const q of questions) {
       if (q.k !== 'discard' || q.m.length || q.h.length !== 14 || q.h.some(isJoker)) continue;
       const throws = q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2)) as TileKind);
       const calls = liveCalls(q.h, 0, throws, { bonus: q.b, seat: (q.seat - q.dl + 4) % 4, prevailingWind: q.w, melds: [], minimumFan: 2, selfDrawMinimumFan: 1 });

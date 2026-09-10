@@ -110,3 +110,15 @@ in one pass so a tally can never disagree with a shard - a filter that promises 
 does not contain is a bug that only shows up as an empty drill. And `index.json` at `quiz/index.json`
 already lists the packs; the per-pack index is a second file inside the pack's own directory, so the
 two must not be confused.
+
+**Built 2026-09-10, with one addition to the shape.** Which shard a question lives in is a hash of
+its id, and the per-pack index records the modulus as `placement: { by: 'fnv1a32', modulo: 101 }`.
+The Review tab needs to find the shard for a stored card from its pack and question id alone, and
+the two obvious ways both cost something: a qid-to-shard map in the index is ten thousand entries
+and about 160KB, most of what the sharding was meant to save, and renaming questions after their
+shard would orphan every mistake card and log entry already in somebody's browser. Hashing keeps the
+id exactly as it was, so cards stored before the shards still open, at the price of shards being
+about a hundred questions each rather than exactly a hundred (77 to 129 on the coach pack). The
+hash lives in one place, `solver/src/pack.ts`, and is pinned by a test. A reader must use the
+modulus from the index rather than count the shards it can see, because the single-file build
+carries only the first few shards and a stored card's shard is still where the full build put it.

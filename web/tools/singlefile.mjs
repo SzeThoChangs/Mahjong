@@ -7,10 +7,10 @@
  * nowhere: it can be published as an artifact, mailed, or opened off a phone's downloads. That is
  * the difference between friends testing this week and friends waiting for a hosting account.
  *
- * WHAT IT COSTS. Each quiz pack is cut to its first `--questions` rather than all 5,000, and the
- * Film room to one run of `--hands` rather than 360 across two, which is what keeps the page inside
- * the 16MB an artifact allows. Both are cut by rewriting the index as well as the files, so a list
- * never offers something that cannot be opened. Everything else is whole: the Train tab deals from a
+ * WHAT IT COSTS. Each quiz pack is cut to its first `--questions` rather than all 10,000 - for a
+ * sharded pack, the first shards that fit - and the Film room to one run of `--hands` rather than
+ * 360 across two, which is what keeps the page inside the 16MB an artifact allows. Both are cut by
+ * rewriting the index as well as the files, so a list never offers something that cannot be opened. Everything else is whole: the Train tab deals from a
  * seed and needs no data at all, and Spot, Review, Tips and Table setup carry theirs.
  *
  * HOW. Two seams, both of which the app supports on its own rather than being rewritten here. Images
@@ -53,10 +53,30 @@ const files = {};
 const index = JSON.parse(read('quiz/index.json'));
 const packs = index.packs.filter((p) => WANTED.includes(p.id));
 for (const p of packs) {
-  const pack = JSON.parse(read(`quiz/${p.id}.json`));
-  const kept = pack.questions.slice(0, MAX_Q);
-  files[`/quiz/${p.id}.json`] = JSON.stringify({ ...pack, questions: kept });
-  p.questions = kept.length;
+  if (p.shards) {
+    /**
+     * A sharded pack (2026-09-10 on) is a directory: its own index, and a shard file of about a
+     * hundred questions each. Carry the index and the first shards that fit inside `--questions`,
+     * and rewrite the index to list only those, so the Train tab never asks for a shard that is
+     * not here. The placement modulus is kept as it was: a stored card finds its shard by hashing
+     * its id against that number, and the answer must be the same one the full build gave.
+     */
+    const ix = JSON.parse(read(`quiz/${p.id}/index.json`));
+    const kept = [];
+    let n = 0;
+    for (const s of ix.shards) {
+      if (kept.length && n + s.n > MAX_Q) break;
+      kept.push(s); n += s.n;
+      files[`/quiz/${p.id}/${s.file}`] = read(`quiz/${p.id}/${s.file}`);
+    }
+    files[`/quiz/${p.id}/index.json`] = JSON.stringify({ ...ix, questions: n, shards: kept });
+    p.questions = n; p.shards = kept.length;
+  } else {
+    const pack = JSON.parse(read(`quiz/${p.id}.json`));
+    const kept = pack.questions.slice(0, MAX_Q);
+    files[`/quiz/${p.id}.json`] = JSON.stringify({ ...pack, questions: kept });
+    p.questions = kept.length;
+  }
 }
 files['/quiz/index.json'] = JSON.stringify({ packs });
 files['/quiz/spot.json'] = read('quiz/spot.json');

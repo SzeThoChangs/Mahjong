@@ -29,7 +29,7 @@ import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, cause
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
-import { rankDiscards, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, shardOf, shardFile, type Context, type PackIndex } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
 import { cn } from '@/lib/utils';
@@ -87,8 +87,14 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
    * A card comes back as the identical position, and there are two ways to rebuild one.
    *
    * A made-up hand carries a seed, and `makeScenario` deals it again. A pack card carries a pack
-   * and a question id, and the pack file holds it - fetched here rather than stored, for the same
+   * and a question id, and the pack holds it - fetched here rather than stored, for the same
    * reason the seed is stored rather than the hand: a thousand cards should cost kilobytes.
+   *
+   * Since 2026-09-10 a pack is a directory of shards, and which shard holds a question follows
+   * from its id and the modulus in the pack's index (see `pack.ts` in the solver), so one shard
+   * of about 160KB is fetched rather than the whole pack. The ids did not change, so a card
+   * stored before the shards still finds its question. A pack that is still one file - `money`,
+   * `nowild` - has no index, and is read whole as before.
    */
   const [quizQ, setQuizQ] = useState<QuizQ | null>(null);
   const [quizErr, setQuizErr] = useState<string | null>(null);
@@ -96,10 +102,17 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     if (!current?.pack) { setQuizQ(null); setQuizErr(null); return; }
     let live = true;
     setQuizQ(null); setQuizErr(null);
-    fetch(asset(`quiz/${current.pack}.json`))
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((d: { questions: QuizQ[] }) => { if (!live) return; const found = d.questions.find((x) => x.id === current.qid); found ? setQuizQ(found) : setQuizErr('that question is no longer in the pack'); })
-      .catch(() => { if (live) setQuizErr('could not load the pack this came from'); });
+    const ok = (r: Response) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))));
+    const gone = () => { if (live) setQuizErr('that question is no longer in the pack'); };
+    const found = (d: { questions: QuizQ[] }) => { if (!live) return; const x = d.questions.find((x) => x.id === current.qid); x ? setQuizQ(x) : gone(); };
+    const failed = () => { if (live) setQuizErr('could not load the pack this came from'); };
+    fetch(asset(`quiz/${current.pack}/index.json`)).then(ok).then(
+      (ix: PackIndex) => fetch(asset(`quiz/${current.pack}/${shardFile(shardOf(current.qid ?? '', ix.placement.modulo))}`))
+        // a shard the build does not carry (the single-file page keeps only the first few) is a question that is not here, not a dead network
+        .then((r) => (r.status === 404 ? gone() : ok(r).then(found)))
+        .catch(failed),
+      () => fetch(asset(`quiz/${current.pack}.json`)).then(ok).then(found).catch(failed),
+    );
     return () => { live = false; };
   }, [current]);
 
@@ -313,7 +326,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
         <Card>
           <CardHeader><CardTitle className="text-base">This one cannot be rebuilt</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>{quizErr ?? 'the position could not be rebuilt'}. A quiz card points into a pack file, and a rebuilt pack does not keep the old question ids.</p>
+            <p>{quizErr ?? 'the position could not be rebuilt'}. A quiz card points into a pack, and a pack rebuilt from different games does not keep the old question ids.</p>
             <Button size="sm" variant="outline" onClick={() => { forget(current.id); setTick((t) => t + 1); }}>Drop it from the schedule</Button>
           </CardContent>
         </Card>

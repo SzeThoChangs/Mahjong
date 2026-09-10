@@ -30,7 +30,7 @@ import { recordPlay } from '@/lib/history';
 import GeneratedHand from '@/components/GeneratedHand';
 import { priceMix, type OutcomeMix } from '@/lib/money';
 import { loadConfig } from '@/components/TableSetup';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, suggestCause, causeLabel, TIPS, type Context, type Cause } from 'sg-mahjong-solver';
+import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
 import { asset } from '@/lib/asset';
@@ -41,14 +41,33 @@ const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreg
 
 /** `table` is absent on packs built before 2026-09-06, when nothing recorded which table a pack came from. */
 interface PackTable { wildcards: number; minimumTai: number }
-interface PackIx { id: string; money: boolean; unit: string; questions: number; table?: PackTable }
+/** `shards` is how many shard files a pack is cut into; absent on a pack that is still one file. */
+interface PackIx { id: string; money: boolean; unit: string; questions: number; table?: PackTable; shards?: number }
+/** the slice of a pack's own `index.json` this tab reads - see `pack.ts` in the solver for the whole of it */
+interface Ix { run: string | null; unit: string; questions: number; shards: ShardIx[] }
 // `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
 // the play-outs can tell them apart. Packs built before 2026-08-26 have no `se` field.
 interface Action { a: string; ev: number; se?: number; win: number; dealin: number; draw: number; n?: number; mix?: OutcomeMix }
 // `disc` = the discard pool as [seat, kind, claimedBy]; `pm` / `pb` = every seat's exposed melds and
 // bonus tiles. Packs built before 2026-08-26 lack them, so every use is guarded.
-interface Q { id: string; k: string; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
+// `c` = why the seat's own throw failed, read off the position when the pack was built, at the table
+// the hand was played on. Null where the seat threw the measured best, or where nothing separates
+// the two tiles; absent on packs built before 2026-09-10, which therefore never match a cause.
+interface Q { id: string; k: string; c?: string | null; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
+
+/** the tallies a shard entry carries, counted here for a pack built before packs were sharded */
+const tallyOf = (file: string, qs: Q[]): ShardIx => {
+  const kinds: Record<string, number> = {}, causes: Record<string, number> = {};
+  for (const qq of qs) { kinds[qq.k] = (kinds[qq.k] ?? 0) + 1; if (qq.c) causes[qq.c] = (causes[qq.c] ?? 0) + 1; }
+  return { file, n: qs.length, kinds, causes };
+};
+/** 0..n-1 in a random order, so a shard is walked differently each time it comes round */
+const shuffled = (n: number): number[] => {
+  const a = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j]!, a[i]!]; }
+  return a;
+};
 
 const VERDICT_STYLE: Record<Verdict, string> = {
   best: 'bg-emerald-600 text-white', unclear: 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-50',
@@ -89,9 +108,24 @@ export default function Train() {
   /** where the fallback deals from; it moves on when the fallback's own "next" is pressed */
   const [genSeed, setGenSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [unit, setUnit] = useState('chips');
-  const [qs, setQs] = useState<Q[]>([]);
-  const [order, setOrder] = useState<number[]>([]);
+  /**
+   * The pack's own index: what each shard holds, so a shard is fetched only when the filters need
+   * it. A pack built before 2026-09-10 is one file, and is opened as a single shard whose tallies
+   * are counted on arrival, so the rest of this tab need not know which layout it is looking at.
+   */
+  const [ix, setIx] = useState<Ix | null>(null);
+  /** the shard on screen, and the order its questions are being walked in */
+  const [loaded, setLoaded] = useState<{ shard: number; qs: Q[]; order: number[] } | null>(null);
   const [pos, setPos] = useState(0);
+  const shardCache = useRef(new Map<number, Q[]>());
+  /**
+   * Which shards have been walked under the current filters, and which turned out to hold
+   * nothing that fits although their tally said they would. The second should never happen -
+   * the builder writes the tallies and the shards from one list - but if it does, the drill must
+   * move on rather than fetch the same shard forever. Both start again when the filters change.
+   */
+  const [walked, setWalked] = useState<Set<number>>(() => new Set());
+  const [barren, setBarren] = useState<Set<number>>(() => new Set());
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
   const [score, setScore] = useState({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
@@ -109,30 +143,34 @@ export default function Train() {
   }, []);
   useEffect(() => {
     if (!pack) return;
-    setPackFailed(false); setQs([]);
-    fetch(asset(`quiz/${pack}.json`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((d: { unit: string; run?: string; questions: Q[] }) => {
-        setUnit(d.unit); setQs(d.questions); setRunId(d.run ?? null);
-        const idx = d.questions.map((_, i) => i);
-        for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }
-        setOrder(idx); setPos(0); setPicked(null);
-        if (!d.questions.length) setPackFailed(true);
-      })
-      // a pack that will not load - a 10MB file on a poor connection, or one being rebuilt under
-      // us - leaves the fallback to serve, rather than a blank screen
-      .catch(() => setPackFailed(true));
-  }, [pack]);
-
-  const filtered = useMemo(() => order.filter((i) => mode === 'all' || (mode === 'discard' ? qs[i]!.k === 'discard' : qs[i]!.k !== 'discard')), [order, qs, mode]);
+    setPackFailed(false); setIx(null); setLoaded(null); setPos(0); setPicked(null);
+    setWalked(new Set()); setBarren(new Set());
+    shardCache.current = new Map();
+    let live = true;
+    const ok = (r: Response) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))));
+    const listed = packs.find((p) => p.id === pack);
+    const load: Promise<Ix> = listed?.shards
+      ? fetch(asset(`quiz/${pack}/index.json`)).then(ok).then((d: Ix) => d)
+      : fetch(asset(`quiz/${pack}.json`)).then(ok).then((d: { unit: string; run?: string; questions: Q[] }) => {
+          if (live) shardCache.current.set(0, d.questions);
+          return { run: d.run ?? null, unit: d.unit, questions: d.questions.length, shards: [tallyOf(`${pack}.json`, d.questions)] };
+        });
+    load.then((d) => { if (!live) return; setUnit(d.unit); setRunId(d.run); setIx(d); if (!d.questions) setPackFailed(true); })
+      // a pack that will not load - no signal, or one being rebuilt under us - leaves the fallback
+      // to serve, rather than a blank screen
+      .catch(() => { if (live) setPackFailed(true); });
+    return () => { live = false; };
+  }, [pack, packs]);
 
   /**
    * Serve questions about the cause that keeps going wrong.
    *
-   * A pack question already records what the seat ACTUALLY threw (`sel`) beside what the play-outs
+   * A pack question records what the seat ACTUALLY threw (`sel`) beside what the play-outs
    * measured as best, so where those differ the position holds a real mistake made by a real
-   * player, and `suggestCause` reads why it failed. That is the label. It is computed lazily and
-   * cached: doing all five thousand up front is seconds of work for a filter that may never be
-   * used, and walking forward until a match is cheap.
+   * player, and the pack builder has read why it failed into the question's `c`. Until 2026-09-10
+   * this tab worked that out itself, at five milliseconds a question, with a background pass over
+   * the whole pack so the filter never walked cold. A sharded pack cannot run that pass, and does
+   * not need to: the index's tallies say which shards hold which causes before any is fetched.
    *
    * The choice is shared with the Review tab through `readPractise`, which is how its "practise
    * this" button lands here with the filter already set, and it survives a reload for the same
@@ -140,83 +178,65 @@ export default function Train() {
    */
   const [causeFilter, setCauseFilterState] = useState<Cause | null>(() => readPractise());
   const setCauseFilter = (c: Cause | null) => { setCauseFilterState(c); writePractise(c); };
-  const causeCache = useRef(new Map<string, Cause | null>());
-  const causeOfQ = (qq: Q | undefined): Cause | null => {
-    if (!qq) return null;
-    const hit = causeCache.current.get(qq.id);
-    if (hit !== undefined) return hit;
-    let out: Cause | null = null;
-    if (qq.k === 'discard' && qq.sel !== qq.best && qq.sel?.startsWith('d:') && qq.best.startsWith('d:')) {
-      try {
-        const melds: Meld[] = qq.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-        const visible: number[] = [];
-        for (const d of qq.disc ?? []) visible.push(d[1]!);
-        (qq.pm ?? []).forEach((ms, s2) => { if (s2 !== qq.seat) for (const m of ms) visible.push(...m.slice(2)); });
-        const seat = qq.dl !== undefined ? (qq.seat - qq.dl + 4) % 4 : qq.seat;
-        const ctx: Context = { seat, prevailingWind: qq.w, bonus: qq.b, playerTurns: qq.t, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
-          opponentMelds: (qq.pm ?? []).map((ms, s2) => (s2 === qq.seat ? -1 : ms.length)).filter((n) => n >= 0) };
-        const r = rankDiscards(qq.h, melds, ctx);
-        out = suggestCause(qq.h, melds, { bonus: qq.b, seat, prevailingWind: qq.w, melds, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan },
-          r.options, Number(qq.sel.slice(2)), Number(qq.best.slice(2))).suggested;
-      } catch { out = null; }
-    }
-    causeCache.current.set(qq.id, out);
-    return out;
-  };
-  /**
-   * Label the pack in the background, a few at a time, so the filter never walks cold.
-   *
-   * Labelling costs about 2ms a question in node and nearer 5ms in a browser, so a 400-question
-   * walk from a standing start is a two-second pause between questions - measured, and unusable for
-   * a drill. Doing the whole pack up front is the same work in one lump. Doing it in small slices
-   * after the pack loads costs nothing anybody can feel and leaves every later walk hitting cache.
-   */
-  /**
-   * True once every question in the pack has its label, at which point a walk can cover the whole
-   * pack for free. The walk reads the ref rather than the state so that finishing the labelling
-   * does not swap a made-up hand for a pack question while you are still looking at it; the next
-   * press of "next" picks the change up.
-   */
-  const [labelled, setLabelled] = useState(false);
-  const labelledRef = useRef(false);
-  useEffect(() => {
-    setLabelled(false); labelledRef.current = false;
-    if (!qs.length) return;
-    let stopped = false, i = 0;
-    const step = () => {
-      if (stopped) return;
-      const until = Math.min(i + 25, qs.length);
-      for (; i < until; i++) causeOfQ(qs[i]);
-      if (i < qs.length) window.setTimeout(step, 30); else { labelledRef.current = true; setLabelled(true); }
-    };
-    const id = window.setTimeout(step, 300);   // let the first question render first
-    return () => { stopped = true; window.clearTimeout(id); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qs]);
-
-  /**
-   * How many unlabelled questions to walk before giving up. Once the pack is labelled the walk is
-   * all cache hits and covers everything, so "no match" then means the pack really has none - and
-   * that is when the made-up hand steps in. Causes are read off discards, so the filter has nothing
-   * to say about claim questions and is not applied in claim mode; the strip that sets it is hidden
-   * there too, which is how the screen says so.
-   */
-  const WALK = 400;
   const noPack = packState === 'none' || packFailed;
+  // Causes are read off discards, so the filter has nothing to say about claim questions and is
+  // not applied in claim mode; the strip that sets it is hidden there too, which is how the
+  // screen says so.
   const causeApplies = causeFilter !== null && (mode !== 'claim' || noPack);
-  const chosen = useMemo(() => {
-    const len = Math.max(1, filtered.length);
-    if (!causeApplies) return { idx: filtered[pos % len] ?? 0, matched: true };
-    const limit = labelledRef.current ? len : Math.min(WALK, len);
-    for (let step = 0; step < limit; step++) {
-      const idx = filtered[(pos + step) % len] ?? 0;
-      if (causeOfQ(qs[idx]) === causeFilter) return { idx, matched: true };
-    }
-    return { idx: filtered[pos % len] ?? 0, matched: false };
+  /** whether one question fits the mode and the cause filter */
+  const fits = (qq: Q) => (mode === 'all' || (mode === 'discard' ? qq.k === 'discard' : qq.k !== 'discard')) && (!causeApplies || qq.c === causeFilter);
+  /** whether a shard holds anything that fits, from its tallies alone - the index is enough to know */
+  const canServe = (s: ShardIx) => {
+    const ofKind = mode === 'all' ? s.n : mode === 'discard' ? (s.kinds.discard ?? 0) : s.n - (s.kinds.discard ?? 0);
+    return ofKind > 0 && (!causeApplies || (s.causes[causeFilter!] ?? 0) > 0);
+  };
+  const filterKey = `${mode}|${causeApplies ? causeFilter : ''}`;
+  useEffect(() => { setWalked(new Set()); setBarren(new Set()); }, [filterKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const eligible = useMemo(() => (ix ? ix.shards.map((_, i) => i).filter((i) => !barren.has(i) && canServe(ix.shards[i]!)) : []), [ix, barren, filterKey]);
+  /** the question on screen: the first from `pos` in the loaded shard's order that fits */
+  const chosenAt = useMemo(() => {
+    if (!loaded) return -1;
+    for (let i = pos; i < loaded.order.length; i++) if (fits(loaded.qs[loaded.order[i]!]!)) return i;
+    return -1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered, pos, causeFilter, causeApplies, qs]);
-  const q = qs[chosen.idx];
-  const teaches = useMemo(() => causeOfQ(q), [q]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loaded, pos, filterKey]);
+  const q = chosenAt >= 0 ? loaded!.qs[loaded!.order[chosenAt]!] : undefined;
+  /**
+   * Move to another shard when the one on screen has nothing more for these filters.
+   *
+   * The next shard is drawn at random from those the index says can serve and that have not been
+   * walked yet; when every one has been, the walk starts over. One shard is fetched at a time and
+   * only when it is needed, which is the whole point: the first question costs one shard of about
+   * 160KB rather than the whole pack, and offline the phone holds what was practised.
+   */
+  useEffect(() => {
+    if (!ix || q) return;
+    let live = true;
+    const done = new Set(walked);
+    if (loaded) {
+      done.add(loaded.shard);
+      if (!loaded.qs.some(fits) && canServe(ix.shards[loaded.shard]!)) { setBarren((b) => new Set(b).add(loaded.shard)); return; }
+    }
+    let pool = eligible.filter((i) => !done.has(i));
+    if (!pool.length) { if (!eligible.length) return; pool = eligible; done.clear(); }
+    const shard = pool[Math.floor(Math.random() * pool.length)]!;
+    done.add(shard);
+    setWalked(done);
+    const show = (qq: Q[]) => { if (live) { setLoaded({ shard, qs: qq, order: shuffled(qq.length) }); setPos(0); } };
+    const hit = shardCache.current.get(shard);
+    if (hit) { show(hit); return; }
+    fetch(asset(`quiz/${pack}/${ix.shards[shard]!.file}`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: { questions: Q[] }) => { shardCache.current.set(shard, d.questions); show(d.questions); })
+      // a shard that will not come - no signal, or a pack being rebuilt under us - is left out of
+      // this walk rather than fetched again and again
+      .catch(() => { if (live) setBarren((b) => new Set(b).add(shard)); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ix, q, eligible, loaded, pack]);
+  /** the pack has been read and nothing in it fits: the index says so, and no shard was fetched to find out */
+  const exhausted = ix !== null && eligible.length === 0;
+  const teaches = (q?.c ?? null) as Cause | null;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const tally = useMemo(() => (causeTally() as { cause: Cause | 'unsorted'; n: number }[]).filter((t): t is { cause: Cause; n: number } => t.cause !== 'unsorted' && PRACTISABLE.includes(t.cause)), [pack]);
   // The coach (book heuristics) explains the position; the measured EVs above remain the authority.
@@ -363,7 +383,7 @@ export default function Train() {
     </div>
   );
 
-  if (!noPack && (packState === 'loading' || !q)) return <div className="mx-auto max-w-5xl px-4 py-5 text-sm text-muted-foreground">Loading the pack…</div>;
+  if (!noPack && !exhausted && (packState === 'loading' || !q)) return <div className="mx-auto max-w-5xl px-4 py-5 text-sm text-muted-foreground">Loading the pack…</div>;
 
   /**
    * The fallback: a made-up hand, marked by the coach. Served only when the pack has nothing for
@@ -371,7 +391,7 @@ export default function Train() {
    * is the whole point of the arrangement - the coach is right about half the time, and a verdict
    * from it must not be mistaken for one from the play-outs.
    */
-  if (noPack || !q || (causeApplies && !chosen.matched)) {
+  if (noPack || exhausted || !q) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
         {controls}
@@ -381,7 +401,9 @@ export default function Train() {
             <p className="text-muted-foreground">
               {noPack
                 ? <>No question pack could be loaded, so there is no measured position to show. </>
-                : <>Nothing in this pack{labelled ? '' : ' nearby'} is about "{causeLabel(causeFilter!)}", so the engine dealt one instead, aimed at that <J>cause</J> where it can be. Pick <i>anything</i>, or another pack, to get back to measured positions. </>}
+                : causeApplies
+                  ? <>Nothing in this pack is about "{causeLabel(causeFilter!)}", so the engine dealt one instead, aimed at that <J>cause</J> where it can be. Pick <i>anything</i>, or another pack, to get back to measured positions. </>
+                  : <>Nothing in this pack fits the current mode, so the engine dealt one instead. Pick another mode, or another pack, to get back to measured positions. </>}
               The <J>Coach</J> is a set of rules that explains itself well, but it picks the play-outs' best only about half the time — 52.8% on <J>decisive</J> positions and 36.1% early in a hand. Treat its verdict as an opinion to argue with, not a measurement.
             </p>
           </CardContent>
@@ -430,7 +452,7 @@ export default function Train() {
       });
     }
   };
-  const next = () => { setPicked(null); setChallengeResult(null); setPos((p) => p + 1); };
+  const next = () => { setPicked(null); setChallengeResult(null); setPos(chosenAt + 1); };
   const runsChallenge = async () => {
     if (!pack || picked === null) return;
     setChallenging(true); setChallengeResult(null);
