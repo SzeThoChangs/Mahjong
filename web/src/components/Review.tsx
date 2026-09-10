@@ -380,7 +380,10 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
             </div>
           </div>
 
-          {pick !== null && (
+          {/* `coachTile` is the judge's own throw and is null on a position that has none, which is
+              also a position there is nothing to explain about. Guarding here rather than at each
+              use narrows it for the whole block. */}
+          {pick !== null && coachTile !== null && (
             <>
               <Separator />
               <div className="space-y-2 text-sm">
