@@ -652,6 +652,10 @@ export default function Train() {
             })}
             <div className="pt-2 flex items-center gap-2">
               <Button onClick={next}>Next position</Button>
+              {/* The one handle a person has on a position they dispute. Without it, "that verdict
+                  was wrong" cannot be checked by anybody, because the id lives only in the hand log.
+                  Quote pack and id and the position can be re-judged here at 2,048 play-outs. */}
+              <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground select-all">{pack} · {q.id}</span>
               {/* /api/challenge is a Vite dev-server middleware (vite.config.ts); the deployed site is
                   static, so the button would only ever 404 there. Show it where it can actually run. */}
               {CAN_CHALLENGE && <Button variant="outline" disabled={challenging} onClick={runsChallenge}>{challenging ? 'Re-judging — up to a minute…' : 'Challenge the verdict (512 play-outs)'}</Button>}
