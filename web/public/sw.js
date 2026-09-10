@@ -6,7 +6,7 @@
  * opens, so the shell and the tiles are cached up front and a pack is kept only once it has
  * actually been used. Open a table once on wifi and it is yours on the train.
  */
-const VERSION = 'v2';   // bumped for the new icon, which lives in the cached shell
+const VERSION = 'v3';   // bumped for the icon, which lives in the cached shell
 const SHELL = `shell-${VERSION}`;   // the app itself: HTML, JS, CSS, tiles, icons
 const DATA = `data-${VERSION}`;     // packs, replays, reads - cached the first time they are read
 
