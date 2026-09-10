@@ -1,76 +1,92 @@
-# Where we left off — 2026-09-06, end of day
+# Where we left off — 2026-09-10, evening
 
 Read this first. `Framework - Mahjong.md` is the plan this project exists to produce. `PLAN.md` is
-the app's roadmap. `FINDINGS.md` is everything we measured and why.
+the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured and why.
 
-## The three things that are finished
+## The one thing to do before anything else
 
-**The playbook.** All 103 cards have a verdict: 59 measured, 18 contradicted, 4 confirmed by
-counting, 6 rules of the table, 16 advice that states nothing testable. Nothing is left untested.
-Every verdict is scored twice, against the coin its own split implies and against a baseline that
-knows what each action is, and the second column is the one to quote.
+**HEAD does not build, and a merge is half-finished in the working tree.** Fix that first.
 
-**The framework.** `Framework - Mahjong.md`: the parts of the skill, the pattern library with its
-verdicts, how dishonest the feedback is and what to grade against instead, the eight mistake causes,
-seven stages, and an hour on Tuesday, Thursday and Saturday. It names the eighteen contradicted
-cards so the plan cannot teach them. Its figures were checked against `tips.ts` when it was written;
-re-check them if verdicts change.
+What happened. Two Fable agents were working in this tree at once. One rebuilt the quiz packs (done,
+committed). The other was merging the Train tab into the Real quiz tab (see "The merge" below). While
+it worked, I committed the app icon with `git add <paths>` and then a bare `git commit`, which
+commits the whole index - and the agent had already staged its renames with `git mv`. So commit
+`0b9d065` carries `Train.tsx` and `GeneratedHand.tsx` without the `App.tsx` that imports them, and
+every deploy since has failed. The live site is unaffected: it still serves the last good build.
 
-**The value tables.** The shipped row-scaled table is at its family's ceiling on both fields. A
-table fitted on the field alone plays the field level and no better, two tables 43% apart in their
-numbers produce the same game against that opponent, and both knobs - the gain and the population
-weight - are dead. Anything further has to change the SHAPE: per-breakdown corrections rather than
-per-row, or a term these tables do not have.
+Do this, in order:
 
-## What the app does now
+    ./check.sh                      # runs exactly what CI runs; read its header, it names three traps
 
-All five components, each with a cause attached. The Train tab draws hands where the cause that
-keeps coming up in your record actually bites. The Spot drill asks why a miss happened and moves its
-own look time from the answer. The mistake record is fed by both practice tabs and marks which judge
-each card came from, because the coach picks the play-outs' best 52.8% of the time on decisive
-positions and 36.1% early, while the Real quiz is judged by 128 play-outs an option.
+If it prints ALL GREEN, the agent finished: commit everything under web/src in ONE commit, push,
+and watch the deploy at https://github.com/SzeThoChangs/Mahjong/actions. Then commit `NEXT.md`.
 
-## The one thing nobody has written down about the coach
+If it is not green, the agent was cut off mid-edit. `git status --short` will show what it touched
+(`App.tsx`, `GeneratedHand.tsx`, `Review.tsx`, `Train.tsx`, `lib/mistakes.ts`, `lib/scenario.ts`).
+Read `App.tsx` first - it must import `Train` and not `Trainer` or `RealQuiz` - then work through
+the errors. The design it was implementing is in "The merge" below; do not redesign it.
 
-Its two halves are calibrated to different opponents. The value tables were fitted on `run-coach2`,
-coach against coach. The danger reads in `solver/src/reads.ts` were measured on `run-money4`, which
-is the personality field - the header of that file says so. We now know the value weights ARE
-field-specific, costing 0.21 chips a game when carried across, and that the danger WEIGHT is not,
-coming out at 40 on both fields. What the reads themselves do is the missing piece.
+Never again commit with a bare `git commit` while an agent may be in the tree. Use
+`git commit --only <paths>`. The two commits after the bad one were made that way and are clean:
+`180eec2` (the `--mix` flag) and `ab5e24f` (the 10k packs). Neither is pushed.
 
-Half of that 2x2 is already filled and both cells are nulls: coach-measured reads played against
-coaches came in at -0.054 and -0.013. The missing cell is coach-measured reads against the field,
-and `reads2/coach.json` and `reads2/money4.json` both exist, so it is a `--reads` flag on
-`fieldtest.ts` - the same shape as the `--dwa` flag added today - plus four ranges.
+## Where things are
 
-## Where to start next, in order
+- **Live:** https://szethochangs.github.io/Mahjong/ - with `/Mahjong/` on the end; the bare account
+  address has no site and shows GitHub's 404. Deploys on every push to `evaluator-accuracy` via
+  `.github/workflows/pages.yml`. The repo must stay public for Pages on a free account.
+- **Installed on a phone** it works offline after the first visit (`web/public/sw.js`).
+- **Icon:** the green dragon on maroon, committed in `b097a1c`, not yet live because that deploy
+  failed for the reason above.
+- **Packs:** 10,000 questions on each of the three tables Changs plays, honest at every question,
+  built with `--mix decisive` (commit `ab5e24f`). 14-16 MB each. The no-joker pack is half of all
+  the decisive positions its run has, so it cannot grow without more grading.
+- **Hand log:** every answered discard is kept and can be reopened with the answer shown, on the
+  Review tab under "Hands you have played". Built for friends who want to see a past hand and why.
+- **Single-file build:** `node web/tools/singlefile.mjs` folds the app into one 8.5 MB page for
+  anywhere with no host. Published once as an artifact; superseded by the real site.
 
-**1. Done on 2026-09-06, and the coach's danger side is closed.** Coach-measured reads played
-against the field: -0.035 +/- 0.039 over 32,000 paired deals, the tightest of the three cells, and
-all three are nulls. Which population the deal-in table was measured on does not change how the
-coach plays against either opponent. Combined with the weight being 40 on both fields, nothing about
-how the app judges danger is an artefact of its fitting population, and the framework's caveat has
-been narrowed to say so. The value side remains the field-specific half.
+## The merge (what the agent was building)
 
-**2. Done on 2026-09-06.** The Real quiz can be aimed at a cause. A pack question records what the
-seat actually threw beside what the play-outs measured, so where they differ the position holds a
-real mistake and `suggestCause` reads why it failed - that is the label, and it needs nothing new in
-the pack. Measured before it shipped: labelling costs about 2ms a question, the rarest label fires
-one in 86, and a 400-question walk finds one about 99% of the time with a message when it does not.
-The first version walked cold and took 1.9 seconds a question in the browser, which no drill can
-wear; the cache is now warmed in 25-question slices after the pack loads and a filter switch costs
-3 to 52ms.
+One practice tab called **Train**, which is the Real quiz's behaviour with a fallback:
+- serves pack questions judged by the play-outs by default - the honest grader
+- falls back to a generated hand only when the filters leave nothing, and then says plainly that
+  the hand is made up and marked by the *Coach*, which is right about half the time
+- never presents a *Coach* verdict and a play-out verdict as the same thing
+- the mistake record and the hand log keep working, and both still say which judge marked a hand
+- the old Real quiz tab disappears; nothing else in the tab bar changes
 
-**3. Stop measuring, and start training.** This was agreed on 2026-09-06 and it is the real answer
-rather than a fallback. Every line the measurement could close by itself is closed: all 103 cards
-have verdicts, the value tables are at their family's ceiling on both fields, the danger side is
-field-independent end to end, and the framework is written. What is left cannot be produced by more
-compute - it is somebody following the plan for a few weeks and a mistake record with real mistakes
-in it. The next person here should be led by what that record says. If it says nothing yet, the
-honest answer is that there is nothing to do but the hour on Tuesday, Thursday and Saturday.
+Why: the two tabs differed only in who marks the answer. The packs are already filtered to decisive
+positions, which was Train's other claim, and both tabs already explain their reasoning. Changs said
+"I want the best coach/trainer", which decides every small call in favour of the play-outs.
 
-## House-keeping note for whoever writes here next
+## Then, in the order the pain is felt
 
-This file had grown two "Where to start next" sections by prepending, and every item in both was
-already done. It is the continuity file; if a section is finished, delete it rather than leaving a
-"Done on" note above another list.
+1. **Shard the quiz packs.** At 15 MB a pack, the Real quiz's parse-on-open is 3.5s on this Mac and
+   15-25s on a phone. Design is settled in `MOBILE.md`: hundred-question shards plus an index, and the
+   *Cause* label baked into the pack at build time so the index can pick a shard without loading one.
+2. **The phone layout pass.** Bottom tab bar (decided), 48px targets, safe-area insets. `MOBILE.md`
+   has the measurements. Open question: are the four primary tabs Train, Spot, Review and Tips?
+3. **Split the bundle** and **an update prompt** so testers are not stuck on a stale version.
+4. **The export button** does nothing in the single-file artifact version; irrelevant on the real
+   site, where it works.
+
+## Decided, so do not reopen
+
+Bottom bar over top bar. The square table stays on a phone at a 22px tile. No login for friends
+testing - each phone keeps its own record; the export is the bridge. Honest packs over balanced ones.
+Green dragon on maroon. Jargon is written `*like this*`, italic, coloured by kind (`JARGON.md`).
+
+## Traps that cost a day, all now written down
+
+- `web/tsconfig.json` is a solution file with `"files": []`; `tsc --noEmit -p .` checks nothing.
+- `tsc -b` is incremental; use `--force`.
+- web is on TypeScript 6 (strict by default), the rest on 5; use each package's own compiler.
+- The repo path has a colon, so pnpm's `.bin` shims fail; `check.sh` shows the real paths.
+- A bare `git commit` sweeps whatever an agent staged. Pathspec, always.
+
+## Pointers
+
+- Repo: https://github.com/SzeThoChangs/Mahjong (branch `evaluator-accuracy`)
+- Phone mockup that settled the layout: https://claude.ai/code/artifact/e1788fde-df9e-43db-adfc-8da2352febc5
+- Tips cards as a standalone page: https://claude.ai/code/artifact/263e56ef-880a-45e5-ab45-5fb37fdbda38
