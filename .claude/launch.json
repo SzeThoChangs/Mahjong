@@ -39,6 +39,17 @@
       ],
       "cwd": "web",
       "port": 5178
+    },
+    {
+      "name": "project-root",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5179"
+      ],
+      "cwd": ".",
+      "port": 5179
     }
   ]
 }

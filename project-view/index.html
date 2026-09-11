@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mahjong — project view</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#/">Mahjong<br><span>project view</span></a>
+    <nav id="nav"></nav>
+    <a id="proto-link" class="proto-link" href="../prototype/" target="_blank" rel="noopener">Prototype ↗</a>
+    <p class="derived">Derived from the Markdown files each time this page loads. Nothing is written back. If this page and the files disagree, <strong>the files are right</strong>.</p>
+    <p class="derived"><span id="loaded"></span> · <button id="reload" type="button">Re-read</button></p>
+    <p id="load-errors" class="derived error-text"></p>
+  </aside>
+  <main id="main"></main>
+</div>
+<script src="md.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -88,8 +88,11 @@ as the rule above.
 
 **Iteration:** 1, the seed.
 
-**Status:** IN PROGRESS. The lead session is building it; this file describes what it is for and
-what it must teach, not screens that have not been seen.
+**Status:** SEEDED on 2026-09-12 and runnable. `prototype/build.sh` folds the current source into
+`app.html`; `index.html`, `features.html` and `workflows.html` are the launchpads, generated from
+`FEATURES.md` and `WORKFLOWS.md` at load time rather than retyped, and every card opens the screen
+its record names. Nothing has been prototyped here yet that is not already in production, which is
+the point of a seed: the next feature starts from what exists.
 
 **Objective:** Give the owner, and anyone prototyping a feature, a copy of the app as it is today
 that runs from one file with no server, so that a change can be tried and reacted to before it is

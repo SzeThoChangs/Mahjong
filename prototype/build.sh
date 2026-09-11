@@ -12,3 +12,4 @@ SINGLE_FILE=1 node "$V" build >/dev/null
 node tools/singlefile.mjs --questions 500 --hands 30 --out ../prototype/app.html
 node "$V" build >/dev/null     # leave dist/ as the normal split build again
 echo "prototype/app.html rebuilt from the current source"
+node ../prototype/backlink.mjs ../prototype/app.html   # the link back to the project interface, on every screen (Part 16)
