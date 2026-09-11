@@ -42,6 +42,13 @@ If cut off, re-run the missing ones. From `datagen/`, one per pack, each takes a
 
 Run them under `nohup` so a closed session cannot kill them; log to `data/gen/pack-<name>-verified.log`.
 
+## PUSHED 12:40 on 2026-09-11 at Changs's "Push": everything below is live
+
+Commits 2caa444 (web batch), 130fb92 (framework draft), 102b0c1 (eight new files the first
+commit missed - `git commit --only` skips untracked paths; `git add` new files first). Deploy
+green on 102b0c1. Still to come: the top-up packs (stream 2 below), which need copying from
+`data/gen/topup/quiz/` and a commit of their own when `topup.done` appears.
+
 ## Overnight 2026-09-11 (Changs asleep from ~04:40): three streams running
 
 1. **Verify chain** as above; caffeinate is armed on it so the Mac does not idle-sleep. When it ends
