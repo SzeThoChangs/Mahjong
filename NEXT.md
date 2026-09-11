@@ -46,8 +46,9 @@ Run them under `nohup` so a closed session cannot kill them; log to `data/gen/pa
 
 Commits 2caa444 (web batch), 130fb92 (framework draft), 102b0c1 (eight new files the first
 commit missed - `git commit --only` skips untracked paths; `git add` new files first). Deploy
-green on 102b0c1. Still to come: the top-up packs (stream 2 below), which need copying from
-`data/gen/topup/quiz/` and a commit of their own when `topup.done` appears.
+green on 102b0c1. The top-up packs landed 15:19 and were copied in and pushed at 15:25: coach 10,500, min1
+10,473, min1-nowild 10,257, every earlier question id still present (0 orphaned cards). The
+`data/gen/topup/` directory can be deleted once the deploy is confirmed.
 
 ## Overnight 2026-09-11 (Changs asleep from ~04:40): three streams running
 

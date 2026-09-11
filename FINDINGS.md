@@ -1942,6 +1942,9 @@ admitted at 2.1 SE has roughly even odds of clearing 2 SE again on fresh dice. T
 changed on about one question in 400. So every question now on the site has cleared the bar twice
 on independent play-outs, and the "big mistake" verdicts are as certain as the badge implies. The
 cost is the pack size: near 8,100 instead of 10,000, which a rebuild admitting 12,800 restores.
+Done the same day: admitting 12,800 held 10,500 / 10,473 / 10,257 (18.0% / 18.2% / 19.9%
+dropped), so the drop rate did not rise going deeper into the candidate pool, and every question
+id from the 8k packs is in the 10k ones.
 
 ### The Challenge button runs on the phone, from the question alone (2026-09-11)
 
