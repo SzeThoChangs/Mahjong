@@ -18,11 +18,11 @@
  * the same actions are legal that the pack judged; the money is the schedule the player set up in
  * Table setup, which is also what the verdict on screen was priced in.
  */
-import { makeRules, type RulesConfig, type MoneyRules } from 'sg-mahjong-engine';
+import { makeRules, type RulesConfig, type MoneyRules, type Snapshot } from 'sg-mahjong-engine';
 import { pairedGap, type PackQuestion, type RejudgedAction } from 'sg-mahjong-solver';
 import { RULES } from './scenario';
 import { shootTotal, type MoneyConfig } from './money';
-import type { ChallengeMessage, ChallengeRequest } from '../workers/rejudge.worker';
+import type { ChallengeMessage, ChallengeRequest, PositionRequest, WorkerRequest } from '../workers/rejudge.worker';
 
 /**
  * How many fresh play-outs each compared action gets.
@@ -73,10 +73,11 @@ export interface ChallengeOutcome {
 }
 
 /**
- * Run one challenge. `compare` is the pick first, then the reference, then any third action.
- * Resolves with the outcome; `onProgress` is called as play-outs complete.
+ * Send one request to the play-out worker and wait for its answer. One worker per request, ended
+ * when it answers: the work is a second or a few, and a worker kept alive between presses would
+ * hold the engine's memory for nothing.
  */
-export function challenge(req: Omit<ChallengeRequest, 'rollouts' | 'seed'> & { rollouts?: number }, onProgress: (done: number, total: number) => void): Promise<ChallengeOutcome> {
+function runWorker(msg: WorkerRequest, onProgress: (done: number, total: number) => void): Promise<{ actions: RejudgedAction[]; ms: number }> {
   return new Promise((resolve, reject) => {
     let worker: Worker;
     // The single-file build (tools/singlefile.mjs) has no server to fetch the worker's chunk from,
@@ -87,24 +88,84 @@ export function challenge(req: Omit<ChallengeRequest, 'rollouts' | 'seed'> & { r
         ? new Worker(URL.createObjectURL(new Blob([inline], { type: 'text/javascript' })), { type: 'module' })
         : new Worker(new URL('../workers/rejudge.worker.ts', import.meta.url), { type: 'module' });
     } catch (e) { reject(e instanceof Error ? e : new Error(String(e))); return; }
-    const rollouts = req.rollouts ?? CHALLENGE_ROLLOUTS;
-    // a different seed from anything the pack builder uses, and different on every press, so a
-    // second challenge is a second opinion rather than the same dice again
-    const seed = 900000 + Math.floor(Math.random() * 1e6);
     worker.onmessage = (e: MessageEvent<ChallengeMessage>) => {
       const m = e.data;
       if (m.type === 'progress') { onProgress(m.done, m.total); return; }
       worker.terminate();
       if (m.type === 'error') { reject(new Error(m.message)); return; }
-      const pick = m.actions.find((a) => a.a === req.compare[0]), ref = m.actions.find((a) => a.a === req.compare[1]);
-      if (!pick || !ref) { reject(new Error('the play-outs came back without the actions asked for')); return; }
-      const { gap, se } = pairedGap(ref, pick);
-      resolve({ gap, se, n: rollouts, ms: m.ms, actions: m.actions, reference: ref.a });
+      resolve({ actions: m.actions, ms: m.ms });
     };
     worker.onerror = (e) => { worker.terminate(); reject(new Error(e.message || 'the play-out worker failed')); };
-    const msg: ChallengeRequest = { q: req.q, rules: req.rules, compare: req.compare, rollouts, seed };
     worker.postMessage(msg);
   });
+}
+
+/** a seed different from anything the pack builder uses, and different on every press, so a
+ *  second judgement is a second opinion rather than the same dice again */
+const freshSeed = () => 900000 + Math.floor(Math.random() * 1e6);
+
+/**
+ * Run one challenge. `compare` is the pick first, then the reference, then any third action.
+ * Resolves with the outcome; `onProgress` is called as play-outs complete.
+ */
+export async function challenge(req: Omit<ChallengeRequest, 'rollouts' | 'seed'> & { rollouts?: number }, onProgress: (done: number, total: number) => void): Promise<ChallengeOutcome> {
+  const rollouts = req.rollouts ?? CHALLENGE_ROLLOUTS;
+  const msg: ChallengeRequest = { q: req.q, rules: req.rules, compare: req.compare, rollouts, seed: freshSeed() };
+  const m = await runWorker(msg, onProgress);
+  const pick = m.actions.find((a) => a.a === req.compare[0]), ref = m.actions.find((a) => a.a === req.compare[1]);
+  if (!pick || !ref) throw new Error('the play-outs came back without the actions asked for');
+  const { gap, se } = pairedGap(ref, pick);
+  return { gap, se, n: rollouts, ms: m.ms, actions: m.actions, reference: ref.a };
+}
+
+/**
+ * How many play-outs each action gets when a decision from the Play tab is judged.
+ *
+ * Half the Challenge button's budget, because a discard there compares six actions rather than
+ * three: six at 256 is the same 1,536 play-outs a challenge spends, so a judgement costs about a
+ * second on the Mac and a few on a phone. The error bar is wider than a challenge's by about
+ * root two, and the verdict words say so by leaning on it.
+ */
+export const PLAY_ROLLOUTS = 256;
+
+/** What the judge said about one decision made at the table, in the Challenge button's language. */
+export interface PlayVerdict {
+  /** best: yours came top and clear of the runner-up. close: inside the noise either way.
+   *  mistake: another action was clear of yours. */
+  kind: 'best' | 'close' | 'mistake';
+  /** the action the pick was measured against: the best of the rest when the pick came top,
+   *  the best otherwise */
+  reference: string;
+  /** EV of the reference minus EV of the pick, on paired play-outs: positive means the pick is worse */
+  gap: number;
+  se: number;
+  n: number;
+  ms: number;
+  /** what each compared action was worth, best first */
+  actions: { a: string; ev: number; win: number }[];
+}
+
+/**
+ * Judge one captured decision. `compare` names the actions to play out, the pick among them.
+ *
+ * The bar is the Challenge button's: two paired standard errors. A pick that beat the best of the
+ * rest by more than that is best; one beaten by more than that is a mistake; anything else is
+ * inside the noise, and the honest word for that is close - not a worse move, an unmeasurable one.
+ */
+export async function judgePlay(snap: Snapshot, rules: RulesConfig, seat: number, compare: string[], pick: string, key: string, onProgress: (done: number, total: number) => void): Promise<PlayVerdict> {
+  const msg: PositionRequest = { snap, rules, seat, compare, rollouts: PLAY_ROLLOUTS, seed: freshSeed(), key };
+  const m = await runWorker(msg, onProgress);
+  const sorted = [...m.actions].sort((x, y) => y.ev - x.ev);
+  const mine = sorted.find((a) => a.a === pick);
+  if (!mine || !sorted[0]) throw new Error('the play-outs came back without the action you took');
+  const top = sorted[0];
+  const ref = top.a === pick ? sorted[1] : top;
+  const actions = sorted.map((a) => ({ a: a.a, ev: a.ev, win: a.win }));
+  if (!ref) return { kind: 'best', reference: pick, gap: 0, se: 0, n: PLAY_ROLLOUTS, ms: m.ms, actions };
+  const { gap, se } = pairedGap(ref, mine);
+  const clear = Math.abs(gap) > 2 * se;
+  const kind = !clear ? 'close' : gap > 0 ? 'mistake' : 'best';
+  return { kind, reference: ref.a, gap, se, n: PLAY_ROLLOUTS, ms: m.ms, actions };
 }
 
 /**

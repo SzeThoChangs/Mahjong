@@ -1986,6 +1986,23 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### The whole-hand judge is honest on throws and not yet on claims (2026-09-11)
+
+The Play tab judges each of your decisions with `rejudge`, the same instrument as the packs and the
+Challenge button. On a first played hand it called a Pass on an offered win better than taking it
+($11.57 against $7.00), and the Win eventually taken a mistake for the same reason.
+
+WHY. The play-outs run `shanten` bots, which never fold and rarely win first, so a hand that is
+still waiting keeps its whole future value in the roll-out while a hand cashed for the table minimum
+banks a small number and stops. The bias is toward playing on. It is invisible in the packs because
+those are mostly discards, where both branches carry on, and it shows on every claim in a whole
+hand, where one branch ends the hand and the other does not.
+
+WHAT WAS DONE. The Play tab says so on screen rather than being believed: trust it on throws, not
+yet on Pong, Chow or taking a win. The fix is a stronger rollout policy for claim questions,
+measured against known claim results (calling beats passing 72% unconditionally, 88% when it makes
+the hand Ting Pai) before it is trusted. Not built as of 2026-09-11.
+
 ### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
 
 Taking the jokers out changes what the coach should be afraid of and nothing about what it thinks a

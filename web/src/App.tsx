@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 const AskHand = lazy(() => import('@/components/AskHand'));
 const Replay = lazy(() => import('@/components/Replay'));
 const TableSetup = lazy(() => import('@/components/TableSetup'));
+// The game, a prototype: one hand against three coaches, then a review of every decision. Behind
+// More on a phone, because PLAN.md is clear that it is not the training tool.
+const Play = lazy(() => import('@/components/Play'));
 
 /** every destination, in the order the top bar shows them */
 const TABS = [
@@ -24,6 +27,7 @@ const TABS = [
   { id: 'review', label: 'Review' },
   { id: 'tips', label: 'Tips' },
   { id: 'film', label: 'Film room' },
+  { id: 'play', label: 'Play' },
   { id: 'table', label: 'Table setup' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -59,7 +63,7 @@ export default function App() {
       <div className={cn(phone && 'pb-[calc(4.5rem+env(safe-area-inset-bottom))]')}>
         <LoadGuard key={tab}>
           <Suspense fallback={<p className="mx-auto max-w-5xl p-4 text-sm text-muted-foreground">Loading…</p>}>
-            {tab === 'train' ? <Train /> : tab === 'spot' ? <Spot /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review onPractise={() => setTab('train')} /> : tab === 'table' ? <TableSetup /> : <Replay />}
+            {tab === 'train' ? <Train /> : tab === 'spot' ? <Spot /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review onPractise={() => setTab('train')} /> : tab === 'table' ? <TableSetup /> : tab === 'play' ? <Play /> : <Replay />}
           </Suspense>
         </LoadGuard>
       </div>
