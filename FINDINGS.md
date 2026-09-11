@@ -1924,6 +1924,25 @@ The position id is now shown on the verdict screen, which is what made this chec
 and id and `challenge.ts` re-judges it here in seconds. That is a better instrument than the old
 challenge button, which could only run against the dev server.
 
+BUILT AND MEASURED (2026-09-11). `--verify N` is in `quizpack.ts`: after admission, every kept
+question is re-judged on N fresh coupled play-outs with a different seed, and dropped unless its
+best still beats its runner-up by 2 SE. A smoke test at 64 play-outs dropped 60%, which was lack of
+power rather than the curse, so the real pass uses 512. Run one pack at a time (three at once
+swapped the Mac to 40 seconds a question), each about two hours:
+
+    pack          admitted   held    dropped   best changed
+    coach          10,001    8,133    18.7%        25
+    min1           10,001    8,156    18.4%        26
+    min1-nowild    10,000    8,002    20.0%        28
+
+The drop is about a fifth, twice the tenth the 40-question re-judge predicted. The two numbers are
+not in conflict: the re-judge asked whether the best was still the best (it was, 36 of 40), while
+the verify pass asks the stricter question of whether the gap still clears 2 SE, and a question
+admitted at 2.1 SE has roughly even odds of clearing 2 SE again on fresh dice. The best answer
+changed on about one question in 400. So every question now on the site has cleared the bar twice
+on independent play-outs, and the "big mistake" verdicts are as certain as the badge implies. The
+cost is the pack size: near 8,100 instead of 10,000, which a rebuild admitting 12,800 restores.
+
 ### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
 
 Taking the jokers out changes what the coach should be afraid of and nothing about what it thinks a
