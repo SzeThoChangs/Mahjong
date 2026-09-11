@@ -36,9 +36,28 @@ type TabId = (typeof TABS)[number]['id'];
  *  five-minute tail. The rest go behind More. Settled in MOBILE.md. */
 const PRIMARY: readonly TabId[] = ['train', 'spot', 'review', 'tips'];
 
+/**
+ * The tab in the address bar, so a screen can be linked to: `#play` opens the Play tab.
+ *
+ * It is what makes the prototype launchpads work - a feature record that names a screen has to be
+ * able to open THAT screen, not the front page - and it is useful on its own, because a link sent
+ * to somebody testing can land them where the thing being asked about actually is. An unknown or
+ * missing hash falls back to Train, which is where the hour starts.
+ */
+function tabFromHash(): TabId {
+  const h = location.hash.replace(/^#/, '');
+  return (TABS.some((t) => t.id === h) ? h : 'train') as TabId;
+}
+
 export default function App() {
-  const [tab, setTab] = useState<TabId>('train');
+  const [tab, setTab] = useState<TabId>(tabFromHash);
   const phone = usePhone();
+  useEffect(() => {
+    const onHash = () => setTab(tabFromHash());
+    addEventListener('hashchange', onHash);
+    return () => removeEventListener('hashchange', onHash);
+  }, []);
+  const show = (t: TabId) => { setTab(t); history.replaceState(null, '', `#${t}`); };
   return (
     // the top inset is the notch and the status bar on a phone installed to the home screen; on
     // anything else env() is zero and the class does nothing
@@ -49,7 +68,7 @@ export default function App() {
           than dragging the whole page sideways, which is what happened when the tips tab was added. */}
       {!phone && (
         <div className="mx-auto max-w-5xl overflow-x-auto px-4 pt-4">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
+          <Tabs value={tab} onValueChange={(v) => show(v as TabId)}>
             <TabsList className="w-max">
               {/* one practice tab: pack positions marked by play-outs, with a made-up hand only as
                   a labelled fallback. The coach-marked tab that used to sit beside it is folded in. */}
@@ -63,11 +82,11 @@ export default function App() {
       <div className={cn(phone && 'pb-[calc(4.5rem+env(safe-area-inset-bottom))]')}>
         <LoadGuard key={tab}>
           <Suspense fallback={<p className="mx-auto max-w-5xl p-4 text-sm text-muted-foreground">Loading…</p>}>
-            {tab === 'train' ? <Train /> : tab === 'spot' ? <Spot /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review onPractise={() => setTab('train')} /> : tab === 'table' ? <TableSetup /> : tab === 'play' ? <Play /> : <Replay />}
+            {tab === 'train' ? <Train /> : tab === 'spot' ? <Spot /> : tab === 'ask' ? <AskHand /> : tab === 'tips' ? <Tips /> : tab === 'review' ? <Review onPractise={() => show('train')} /> : tab === 'table' ? <TableSetup /> : tab === 'play' ? <Play /> : <Replay />}
           </Suspense>
         </LoadGuard>
       </div>
-      {phone && <BottomBar tab={tab} setTab={setTab} />}
+      {phone && <BottomBar tab={tab} setTab={show} />}
     </div>
   );
 }

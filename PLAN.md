@@ -1,252 +1,234 @@
-# "Which tile?" — a Singapore Mahjong discard trainer
+# PLAN
 
-A web app. It shows you a hand and asks: **which tile do you discard?** You tap
-one. It tells you what it would have done and why, in plain language, using the
-playbook. Optionally you enter a real hand and ask it.
+## Purpose of this file
 
-No game, no bots to play against — today. The engine is the referee and the
-solver is the coach; the page is a question-and-answer loop. A playable game is
-where this is heading, and the section below says why it is not here yet.
+This file describes how the project intends to move from where it is toward the outcomes in
+`PROJECT.md`. The app's original roadmap, which this file replaces, is preserved as received at
+`INPUTS/PLAN-original-2026-09-12.md`; its architecture and status content now live in
+`PROJECT.md` and `STATUS.md`, and its forward-looking content is folded in below.
 
-## What you see
+## It answers
 
-```
-┌────────────────────────────────────────────────────────────┐
-│  Seat: West   Prevailing: East   Turn 14   Min 2 / Max 5   │
-│  Your flowers:  [F3] [A:cat]          Fan in hand: 2       │
-│                                                            │
-│  [2t][3t][4t] [6s][7s][8s] [1w][1w] [E][E] [9w] [5t] [R] [7w]│
-│                        ▲ you just drew 7w                  │
-│                                                            │
-│         Which tile do you discard?  (tap one)              │
-└────────────────────────────────────────────────────────────┘
-```
+Where are we going, and how are we approaching delivery?
 
-After you tap:
+## What belongs here
 
-```
-  You discarded 9w.   ✓ Good — same as the coach.
+The delivery approach, the current phase, the phases done and to come, the workstreams, the
+sequence and priorities, milestones, how things are tested and verified, how releases happen,
+dependencies, and who does what.
 
-  Plan: Chicken, fallback armed (2 Fan from F3 + cat).
-  Why 9w: lone terminal, no neighbours, not your suit-in-progress.
-  Also fine: R (1 point worse).  Mistake: 1w (breaks your only pair).
+## What does not belong here
 
-  Rule 4213 before 12 → after 12.  Win chance at turn 14: ~31%.
-```
+- The buildable work itself; that is `USER-STORIES.md`.
+- Current state; that is `STATUS.md`.
+- The immediate next action; that is `NEXT.md`.
+- Why an approach was chosen; that is `DECISIONS.md`.
+- The measurements that shaped the sequence; those are `FINDINGS.md`.
 
-Three modes, built in this order:
+## Rules
 
-1. **Quiz** — the app deals the hand. Score kept per session. This is the product.
-2. **Solver** — you tap in your own 14 tiles + seat/wind/flowers, it answers.
-3. **Later** — call-or-pass questions (pong this? chow this?), then push-or-fold
-   with opponents' discards shown.
+Do not present an uncertain sequence or date as a commitment. Below, `AGREED` means the owner
+said so, `TARGET` means the project is aiming at it, and `ESTIMATE` means a guess. Where an order
+is the agent's recommendation and the owner has not confirmed it, it is marked `PROPOSED`.
 
-## How the coach decides (v1)
+## When to update
 
-For each of the 14 tiles you could throw:
+When the approach, sequence, phases, priorities, milestones or dependencies materially change.
+Not because work progressed; that is `STATUS.md`.
 
-1. Take the other 13. Score them four ways — Rule 4213 (Chicken), Rule 961
-   (Half-Color, best suit), Rule 5313 (All-Chow / Ping Wu), All-Pong ratio.
-2. Convert each to chips-per-game using the book's MF2 tables at the current
-   Player Turns. Chicken only counts if the fallback is armed (2 Fan in hand,
-   or 1 Fan and self-draw-only).
-3. Hand value = best of the four, plus a small shape bonus for how many tile
-   kinds would improve it next draw.
-4. Rank the 14 discards by resulting value. Top one is the answer; anything
-   within a small margin is "also fine"; big drops are "mistakes" with a reason
-   (breaks your only pair, leaves a single wait, throws a live value tile…).
+## Relationship to other files
 
-Every number here already exists in `knowledge/sources/strategy.dataanalytic.json`.
-The explanations come from `knowledge/playbook.json` rule text.
+This file sequences the work toward the outcomes in `PROJECT.md`. `STATUS.md` reports actual
+position against it. Material plan changes are recorded in `CHANGELOG.md` and justified in
+`DECISIONS.md`. The framework, `Framework - Mahjong.md`, is the plan for the owner's training; this
+file is the plan for the software and the record that serve it.
 
-**Verification:** the same solver drives a bot in the existing simulator. If
-coach-bots beat the baseline bots and walk toward the book's stats (23% win,
-14% draws, 48 turns), the advice is real. If not, we know before anyone plays.
-
-## Architecture
-
-```
-Mahjong/                      (git repo, pnpm workspace)
-├── engine/    exists   rules engine — tiles, wall, win detection, Fan, payouts
-├── solver/    new      evaluators, target selection, discard ranking, explanations
-├── web/       new      Vite + React + TS, static, tile images in public/tiles
-├── data/      exists   tiles, scoring, rules, table.config.json
-├── knowledge/ exists   playbook (rule text the UI quotes)
-└── assets/    exists   tile PNGs (source for web/public/tiles)
-```
-
-- **Static site, no backend.** Everything runs in the browser. Vercel serves it.
-- `engine/config.ts` uses `node:fs` — split so the browser build imports the
-  table config as JSON and never touches Node APIs.
-- Solver is pure TypeScript with no DOM, so the simulator and the web page share it.
-
-## Deploy
-
-`vercel.json` at the repo root does the configuration, and it deploys **from the repo root,
-not from `web/`**. That matters: `web/src/lib/scenario.ts` imports
-`../../../data/table.config.json`, and the `workspace:*` deps live in `engine/` and `solver/`,
-so a `web/`-rooted deploy would need Vercel's "include files outside the root directory"
-toggle and fail confusingly without it. Rooting at the repo removes the problem.
-
-```json
-{ "framework": "vite", "installCommand": "pnpm install",
-  "buildCommand": "pnpm -C web build", "outputDirectory": "web/dist" }
-```
-
-Verified locally: `rm -rf web/dist && pnpm -C web build` produces a 24 MB `web/dist` with
-`index.html` + hashed `assets/` + the static data directories.
-
-**Steps (the repo has no git remote yet, and the branch is `evaluator-accuracy`):**
-
-1. Create an empty GitHub repo. Do **not** initialise it with any files.
-2. `git remote add origin <url>` and push. `.gitignore` is verified clean — `git ls-files`
-   shows none of the copyrighted book scans, the `.acsm`, or the 10 GB `data/gen/` are
-   tracked, so nothing copyrighted can leave the machine.
-3. Vercel → New Project → import the repo. Leave **Root Directory as the repo root**;
-   `vercel.json` supplies framework, install, build and output. Nothing else to configure —
-   there are no environment variables anywhere in `web/`.
-4. Pick the production branch (currently `evaluator-accuracy`; rename to `main` if you want
-   the usual default).
-
-**What does not survive the move to production, by design:** `/api/challenge` is a Vite
-dev-server middleware and cannot exist on static hosting — it shells out to the evaluator over
-the 10 GB `data/gen/`. `RealQuiz` already gates that button behind `import.meta.env.DEV`, and
-Vite strips both the button and its handler from the production bundle.
-
-**First load is heavy:** `quiz/money.json` is 10.4 MB and the Train tab fetches the whole pack
-up front. Vercel will compress it in transit and the `Cache-Control` headers in `vercel.json`
-keep it cached afterwards, but the first visit on mobile data will be slow. Splitting the pack
-is the fix if that ever matters.
-
-## Build order
-
-| # | Step | Done when |
-|---|---|---|
-| 1 | Repo: git init, .gitignore, pnpm workspace, engine browser-safe | `pnpm -r test` green |
-| 2 | Solver: evaluators + MF2 tables + discard ranking + explanations | unit tests on book worked examples; coach-bot beats IsolationBot in sim |
-| 3 | Web quiz: deal → tap → verdict + explanation, session score | works locally, tiles render |
-| 4 | Vercel deploy | URL you can open on your phone |
-| 5 | Solver mode (enter your own hand) | — |
-| 6 | Call-or-pass, push-or-fold questions | — |
-
-Step 2 is the real work. Steps 3–4 are a day. Step 1 is an hour.
-
-## On the phone, and on the other table
-
-Three things were asked for on 2026-09-06, and the order below is by what each costs against what it
-settles rather than by how large it sounds.
-
-**First, and cheapest: does the no-wildcard table play differently?** Every run in this project was
-generated at `jokers.count: 4` - both quiz packs, the value tables, the danger reads, every tips
-verdict. Changs plays games without wildcards too, which means the trainer may be calibrated to half
-the game he plays. The engine already parameterises this properly: the count validates from zero,
-the wall takes it, scoring guards on it, so it is a config change and a fresh run rather than new
-code. Do NOT rebuild the packs first. Generate one coach run at zero wildcards beside one at four,
-about fifteen minutes, and compare the headline rates - win rate, draw rate, the turn a seat reaches
-*Ting Pai*, deal-in by turn. If those are close, nothing needs rebuilding and the finding is that
-the tables travel. If they are far apart, then the packs and the value tables want a second edition
-and that is a day of compute, not fifteen minutes. Measure before paying.
-
-**Second: production.** `vercel.json` is already configured - vite framework, `pnpm -C web build`,
-`web/dist` - so the deploy itself is close to done. The blocker is that this repository has no git
-remote at all, so there is nothing for a host to build from. Create the remote, push, connect it,
-and the app is on a URL. That alone is what lets him train on a phone: mobile browsers run the app
-today, no PWA required, which is why this comes before the PWA rather than with it.
-
-Two things to settle before a public URL. The pattern library is reworded from a tactics book and
-sits in `knowledge/`, and while the cards are heavily rewritten and annotated with our own
-measurements, publishing them openly is a different act from using them privately - his book, his
-call, and a password-protected deployment is available if he would rather. And the packs are 20MB;
-a phone on mobile data pays that on first load.
-
-**Third: the PWA.** A manifest, icons, and a service worker via `vite-plugin-pwa`, which buys an
-installable icon, full-screen, and offline. Offline is the one that needs thought: the quiz packs
-are 20MB and caching them is most of the value, since the Train tab generates its own hands and
-would work offline almost for free while the Train tab's pack questions would not.
-
-**The thing to decide before any of this: one device or two.** Everything the app remembers lives in
-that browser's storage. Training on both a phone and a desktop produces two mistake records, two
-schedules and two cause tallies, and the record is the spine of the method - splitting it costs more
-than the convenience is worth. The honest options are to pick one device and treat the other as
-read-only, or to use the save-and-restore in Table setup as a manual bridge, or to build real sync,
-which needs a server and an account and would end the "no server, nothing leaves your browser"
-property the app currently has. Pick one before the record has a month in it, not after.
-
-## Where this is going: a game
-
-The app poses positions. Eventually it should deal a hand and let you play it
-out against three opponents, and that is the direction to build in.
-
-It is not the training tool, and that has to be said plainly or the drills will
-quietly lose their hour to it. Three reasons, all measured. A hand's result has
-a standard deviation of about 10.7 chips even when the walls are paired, and a
-real improvement to the coach is worth 0.1 to 0.2 chips a hand, so an evening of
-play carries an error bar roughly two orders of magnitude wider than the thing it
-would be measuring — you cannot tell from a session, or from a month of them,
-whether you played well. An hour of play is perhaps sixty to a hundred discards
-of which a handful matter, and none of them are graded, where an hour on the
-Train tab is a hundred-plus positions selected for having an
-answer and every one of them judged. And the opponents would be a choice with
-consequences: three coaches punish a slow hand, the datagen personalities do not,
-and a value table tuned on one loses 0.21 chips a hand against the other. Nobody
-knows which of those a human sits nearer.
-
-What a game gives that no drill can is the whole hand. Sequencing it, deciding to
-fold in the middle of one, making calls in context rather than in isolation, and
-watching the wall run out. Those are the seventh stage of
-`Framework - Mahjong.md`, and the plan already asks for one whole-hand session a
-week. Until the game exists, the Film room covers most of it — real recorded
-hands, scrubbed decision by decision, with what every legal move was worth — and
-it has grading attached, which live play against bots would not.
-
-So: build it, but build it after the parts that carry the training, and treat it
-as the place where everything else gets used rather than as another drill. What
-it needs that does not exist yet is a game loop in the browser, a way to sit the
-coach in the other three chairs, and — the part worth thinking hardest about —
-some way to review the hand afterwards against the measured best rather than
-against whether it won.
-
-## Open items
-
-- **Rust / WASM:** not now. Revisit only if we start tuning runs in the millions of games; first fix would be algorithmic in TS (cache evaluations, prune candidates), WASM port of the solver hot loop only after that.
-
-- Tile images: the four animals are low-res (~90px source). Fine for v1; a sharper
-  photo later.
-- Table config still has unconfirmed items (unplayable tiles, Pay-All threshold,
-  self-draw bonus Fan). They don't block the trainer; they'd matter for push/fold.
-- Section 6.5 of the book (All-Pong at MF2) was never captured; the solver uses
-  MF1 All-Pong tables with the general MF2 correction until it is.
 ---
 
-## Where it stands (2026-08-30)
+## Delivery Approach
 
-| Layer | Status |
-|---|---|
-| 1 — Data generator (`datagen/`) | **Done.** 150,000 hands / 8.84M decisions per run, 0 illegal actions, chips net zero, every hand replays from its seed. 6 bot personalities with controlled randomness; JSONL.gz + Parquet; validation stats and flags. |
-| 2 — Evaluator (`datagen/src/evaluate.ts`) | **Done.** `data/gen/run-money3` is the reference run: 479,923 evaluated decisions, adaptive 128 paired rollouts, 0 errors, 6h59m, resumable. Its noise floor is the central constraint on everything else — **29% of decisions have a clear best action at 1 SE and 9% at 2 SE; for discards it is 4%, for claims 27%, for self-actions 72%.** |
-| 3 — Model | **Closed, negative.** Three models were fitted on the decisive subset and all three were played for money. Discard model −0.544 ± 0.144, claim model +0.001 ± 0.092, both together −0.180 ± 0.145. None beats the hand-written book coach. See [FINDINGS.md](FINDINGS.md). |
-| App | **Tabs, all live.** Train (recorded positions graded on measured EVs, with a made-up hand marked by the coach as a labelled fallback) · Your hand (enter your own hand or a thrown tile and ask) · Film room (replay explorer with EV bars and reasoning) · Table setup (house money ladder). |
+Measure before building, and spend the cheap measurement before the expensive rebuild. Every
+change to the coach is played for money on paired deals before it ships (D-003). Every change to
+the packs is checked against the run it came from. Every change to the app is driven in a browser
+before it is committed, because three of the last real bugs were found by clicking and none by
+reading. From 2026-09-12, a new feature is prototyped in `prototype/` before its production code
+is written (D-025).
 
-**The player is the book coach**, unchanged. Six candidate improvements were measured and none won —
-the three models above, plus pricing the flower/animal route to the minimum (−0.18), giving up on a
-hand that cannot reach it (−0.039), and folding on threat (no threshold ahead). `DANGER_WEIGHT = 40`
-was swept against money and 40 is right.
+The app serves the framework, not the other way round. The framework's practice hour is the
+product, and the app exists so that hour can be run with honest grading and a self-scheduling
+mistake record.
 
-**What is left, in the order I would do it.**
+Work ships continuously: a push to `evaluator-accuracy` deploys, and an update bar tells every
+installed phone.
 
-1. Nothing on the player. Six measured losses say the coach is at a local optimum that heuristic
-   tweaks and fitted models do not move.
-2. The app is where the wins came from. Obvious gaps: **Your hand** does not remember your table
-   between visits, and the quiz packs skew late (46% late-hand against 26% in the run) because
-   decisive positions cluster there — the early discards a trainer would add most value on are
-   exactly the ones the evaluator cannot separate.
-3. If the player is ever revisited: **truncated rollouts plus a terminal value estimate** is the
-   only remaining lever that cuts variance and compute together, and it would help most where the
-   packs are weakest. Its original justification — a 2.66-chip gap — turned out to be 0.54, so it
-   is no longer urgent.
+## Current Phase
 
-**Engine.** Rules layer (`engine/src/rules.ts`), recorder hooks, resumable `GameState` (snapshot /
-resume), `Wall.fromSnapshot`. Includes robbing the kong, Seven/Eight-Flower and all-animals
-specials, Pay-All liability (config-gated, off by default pending house-rule confirmation), and
-wildcards — count, the no-discard rule, and the withdrawal of the four-wildcard limit hand above
-four.
+LIVE, in the stretch where the owner uses what exists and says what is wrong with it. The next
+build decision waits on that (Q-001, Q-004).
+
+## Phases
+
+### Phase 1 — Foundations
+
+**Objective:** An engine that plays the owner's table legally, a knowledge base from the two
+books, a data generator and a play-out grader.
+
+**Work:** Engine with a configurable rules layer; the merged playbook; six bot personalities;
+150,000-hand runs with about 480,000 graded decisions; the paired standard error corrected.
+
+**Dependencies:** The owner's table rules (D-001).
+
+**Exit Condition:** Met on 2026-08-30. Hands replay from their seed, chips net to zero, and the
+grader's noise floor is measured.
+
+### Phase 2 — The coach and the measured record
+
+**Objective:** Find out what actually improves the book coach, and write down what does not.
+
+**Work:** Three fitted models, six heuristics, the danger sweep, the value-table refits, the
+tips scored against the play-outs, the reads measured by replay.
+
+**Dependencies:** Phase 1.
+
+**Exit Condition:** Met on 2026-09-06. The coach is at its family's ceiling on both opponent
+populations, the danger side is closed, and every playbook card has a verdict (D-004, D-005,
+D-006, D-013).
+
+### Phase 3 — The five-part trainer
+
+**Objective:** The parent's five components, in software, on the owner's table.
+
+**Work:** The Tips page as the library; the Spot drill; the Train tab; the Review tab with causes
+and a schedule; the Film room; Your hand; Table setup with save and restore.
+
+**Dependencies:** Phase 2, for the verdicts on the cards.
+
+**Exit Condition:** Met on 2026-09-06, with Train and Real quiz merged on 2026-09-10 (D-012).
+
+### Phase 4 — The owner's tables
+
+**Objective:** Advice that is honest at each table the owner plays.
+
+**Work:** The four-corner comparison; the no-joker pack; packs per table with the table named on
+the button; every question verified twice.
+
+**Dependencies:** Phase 1's engine parameterising jokers and the minimum.
+
+**Exit Condition:** Met on 2026-09-11 (D-010, D-011, D-009). What remains from this phase is
+R-002, the coach's own reads at the no-joker table, and Q-011, the per-card labels.
+
+### Phase 5 — On the phone
+
+**Objective:** Installable, offline, usable with a thumb, and never parsing a whole pack.
+
+**Work:** The service worker and manifest; sharded packs with the cause baked in; the bottom bar,
+48px targets and safe areas; on-demand chunks; the update bar; the Challenge button running on the
+device.
+
+**Dependencies:** A public URL, which arrived on 2026-09-10 (D-020).
+
+**Exit Condition:** Met on 2026-09-11 (D-015, D-017, D-018, D-019). Two residuals: Q-002, the
+late-game table at 360px, and Q-005, the 4G load time.
+
+### Phase 6 — Use it
+
+**Objective:** Find out whether the thing works for the person it was built for.
+
+**Work:** The owner runs the practice hour for a week and plays a few hands on the Play tab.
+Friends test on their phones. The owner reads the framework draft and says what is wrong.
+
+**Dependencies:** The owner's time. `AGREED` as the next thing, per `NEXT.md`.
+
+**Exit Condition:** Answers to Q-001, Q-002, Q-003 and Q-004.
+
+### Phase 7 — The game
+
+**Objective:** The place where everything else gets used: a whole hand, then a session.
+
+**Work:** In the order the agent recommends, `PROPOSED` and not yet confirmed by the owner:
+
+1. The claim judge. A stronger rollout policy for claim questions, measured against the known
+   claim results before it is trusted (R-001). Nothing about the game is worth building on a
+   review that is wrong about calls.
+2. The rest of the game: sessions, rotation, a running score. Only after the loop has been played
+   and the review is trusted (D-021).
+3. Smaller: an export button that posts a friend's record to Changs; whether to correct the pack
+   phase mix (Q-009).
+
+**Dependencies:** Phase 6's answers.
+
+**Exit Condition:** A session can be played and reviewed end to end.
+
+### Later, and deliberately not scheduled
+
+- The coach selecting its reads and danger weight by table (R-002). Measured and unwired; needs
+  the owner to say it matters.
+- Per-card table labels and a table control in Table setup (Q-011).
+- Truncated rollouts with a terminal value, the one lever that cuts variance and compute
+  together, if the player is ever revisited. No longer urgent (D-004).
+- A per-opponent danger model. Not to be started without a better reason than "finer" (D-005).
+- A real login, only if friends' records turn out to be worth collecting (D-016).
+- A Rust or WASM port, only past millions of games (D-026).
+
+## Workstreams
+
+| Workstream | Where | What it carries now |
+|---|---|---|
+| Engine | `engine/` | Stable; the rules layer is read from config |
+| Coach | `solver/` | Closed at its ceiling; R-002 is the one known gap |
+| Data and grading | `datagen/` | Pack builds with verify; the claim-judge policy would live here and in `solver/src/rejudge.ts` |
+| App | `web/` | Phase 7, plus Q-002 and Q-003 |
+| Framework | `Framework - Mahjong.md` | Awaiting review; C-003 to fix |
+| Record | `FINDINGS.md`, the canonical files | Kept current as work lands |
+| Prototype | `prototype/` | Seeded 2026-09-12; new features start here |
+
+## Sequence / Priorities
+
+1. The owner's week of use and his answers (Phase 6).
+2. The claim judge (Phase 7, item 1).
+3. The rest of the game.
+4. The residuals from Phases 4 and 5 as the owner asks for them.
+
+The original roadmap's three modes, quiz, solver and call-or-pass, are all built: Train, Your
+hand, and claim questions inside Train. Its "one device or two" question is still open (Q-010).
+
+## Milestones
+
+| Milestone | Target | Confidence | Status |
+|---|---|---|---|
+| Owner's verdict on the Play loop and the framework | About 2026-09-19 | ESTIMATE | Waiting on the owner |
+| Claim judge measured against the known claim results | After that | TARGET | Not started |
+| A full session playable and reviewable | After the claim judge | TARGET | Not started |
+| Friends' feedback collected | Not set | ESTIMATE | Nothing recorded yet |
+
+## Testing and Verification Approach
+
+`./check.sh` runs what CI runs: each package typechecked with its own compiler, the engine and
+solver tests, and the web build. A change to the coach is verified by the money harness with a
+`self` arm at exactly zero and ranges named in advance (D-003). A change to a pack is verified by
+`quizpack` reporting zero drifted hands, and by the `--verify` pass (D-009). A change to the app
+is driven in a browser, and on a phone where the change is about phones. A finding is written to
+`FINDINGS.md` with its date, its sample and its error bar before it is quoted anywhere.
+
+## Release / UAT / Maintenance
+
+A push to `evaluator-accuracy` or `main` builds and deploys to GitHub Pages. The service worker is
+stamped with a hash of the bundle, so installed phones show a "new version is ready" bar and
+reload on demand. There is no staging site; the single-file build in `web/tools/singlefile.mjs`
+serves as a fallback for anywhere with no host. Acceptance is the owner and his friends using it.
+Maintenance is the pack rebuilds, which cost about two hours a pack with verify and must run one at
+a time.
+
+## Dependencies
+
+- The owner's time and his answers (Phase 6).
+- GitHub Pages on a free account, which needs the repository public (DEP-001).
+- The Mac for grading: about eight hours per 480,000 decisions, one long build at a time, with a
+  check for memory hogs first.
+- The copyrighted sources staying on the owner's machine (D-024).
+
+## Team / Responsibilities
+
+Changs owns the product, the table rules, the framework's acceptance and every decision listed as
+his in `OPEN-ITEMS.md`. Claude sessions build, measure and keep the record; when several run at
+once they commit by pathspec and check for running jobs first. Friends test and report.

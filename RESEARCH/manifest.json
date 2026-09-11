@@ -1,0 +1,66 @@
+{
+  "generated": "2026-09-12",
+  "note": "Derived and disposable. Regenerate when research files are added or removed. If this disagrees with the folders, the folders are right.",
+  "excluded": [
+    {
+      "path": "136 ready to use MJ strategy and tactics/",
+      "why": "copyrighted source material, git-ignored, registered by reference only"
+    },
+    {
+      "path": "Data Analytic Evluation of Singapore Mahjong/",
+      "why": "copyrighted source material, git-ignored, registered by reference only"
+    }
+  ],
+  "files": [
+    {
+      "path": "FINDINGS.md",
+      "title": "Findings \u2014 the measured record",
+      "kind": "markdown"
+    },
+    {
+      "path": "knowledge/PLAYBOOK.md",
+      "title": "Singapore Mahjong \u2014 combined playbook",
+      "kind": "markdown"
+    },
+    {
+      "path": "knowledge/README.md",
+      "title": "Knowledge base",
+      "kind": "markdown"
+    },
+    {
+      "path": "knowledge/sources/COVERAGE.md",
+      "title": "Source coverage \u2014 what carried over, what did not",
+      "kind": "markdown"
+    },
+    {
+      "path": "knowledge/sources/COVERAGE-dataanalytic.md",
+      "title": "Source 2 coverage \u2014 *A Data Analytic Evaluation of Singapore Mahjong*",
+      "kind": "markdown"
+    },
+    {
+      "path": "RESEARCH/README.md",
+      "title": "RESEARCH/",
+      "kind": "markdown"
+    },
+    {
+      "path": "knowledge/playbook.json",
+      "title": "playbook.json",
+      "kind": "json"
+    },
+    {
+      "path": "knowledge/sources/strategy.dataanalytic.json",
+      "title": "strategy.dataanalytic.json",
+      "kind": "json"
+    },
+    {
+      "path": "knowledge/sources/tactics.singapore.json",
+      "title": "tactics.singapore.json",
+      "kind": "json"
+    },
+    {
+      "path": "knowledge/sources/tables.study.json",
+      "title": "tables.study.json",
+      "kind": "json"
+    }
+  ]
+}

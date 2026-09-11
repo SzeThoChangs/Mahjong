@@ -1,129 +1,176 @@
-# Where we left off — 2026-09-12
+# NEXT
 
-Read this first. `Framework - Mahjong.md` is the plan this project exists to produce. `PLAN.md` is
-the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured and why.
+## Purpose of this file
 
-## Nothing is running. The site is green and current.
+This file is the project's immediate handoff.
 
-Live at https://szethochangs.github.io/Mahjong/ (the `/Mahjong/` matters). Last deploy 636a7a3.
-Everything below is pushed; the tree is clean.
+## It answers
 
-## What landed on 2026-09-11
+What did we just do, where did we stop, and what should happen next?
 
-- **Every pack question verified twice.** `--verify 512` in `quizpack.ts` re-judges each admitted
-  question on fresh play-outs and drops it unless the gap still clears 2 SE. About a fifth went.
-  Rebuilt at `--max 12800` so the packs are back at ten thousand: coach 10,500, min1 10,473,
-  min1-nowild 10,257. Every earlier question id survives, so no stored card is orphaned.
-- **The phone pass, all four items.** Bottom bar (Train/Spot/Review/Tips/More), 48px targets,
-  safe areas, square table kept at a 22px tile; an update bar after every deploy; on-demand tabs
-  with the worker precaching every chunk; and the Challenge button running in the browser.
-- **The Play tab (prototype).** One hand against three coaches, then every decision judgeable
-  against the measured best. Committed 636a7a3.
-- **Framework draft.** "The mistake types" and "The patterns" rewritten with a Sources list.
+A fresh person or agent should be able to read this and continue **without reconstructing the
+previous working session**.
 
-## What needs Changs
+## What belongs here
 
-1. **Play a few hands and use the practice hour for a week.** The two questions: does the Play
-   loop feel like mahjong, and is the review worth reading. That decides what gets built next.
-2. **The late-game table at 360px.** With ~50 discards the square is ~410px wide against 320px of
-   card, so it scrolls inside its card. Accept that, or a smaller tile on late hands.
-3. **Read the framework draft** and say what is wrong in it.
-4. **The one number still owed:** pack button to first question on a real phone on 4G.
+The last work package, what was completed, what changed, what was left unfinished, the exact
+stopping point, the single recommended next action and why, and what would need to be true to
+proceed.
 
-## What is next to build, in the order I would do it
+## What does not belong here
 
-1. **The claim judge.** The Play review under-prices taking a win or making a call, because the
-   play-out bots never fold and rarely win first (FINDINGS, "The whole-hand judge is honest on
-   throws and not yet on claims"). The screen says so. The fix is a stronger rollout policy for
-   claim questions, measured against the known claim results before it is trusted.
-2. **The rest of the game**, per PLAN.md "Where this is going: a game": sessions, rotation, a
-   running score. Only after the loop has been played and the review is trusted.
-3. **Smaller:** an export button that posts a friend's record to Changs; the pack phase mix now
-   leans mid-hand (50% against 40% in the run).
+- Overall project state → `STATUS.md`
+- Long-term sequencing → `PLAN.md`
+- History → `CHANGELOG.md`
+- Unresolved knowledge → `OPEN-ITEMS.md`
 
-## Things that will bite whoever works here next
+**Do not turn this into a second `STATUS.md`.** This file is about the transition between what
+just happened and what happens next.
 
-- The repo path has a colon, so pnpm `.bin` shims fail. Call tools by their real dist paths and
-  glob the version directory. `./check.sh` runs exactly what CI runs; `tsc --noEmit -p .` in web/
-  checks nothing because that tsconfig is a solution file.
-- `git commit --only -- <paths>` silently skips UNTRACKED files inside a directory you name. `git
-  add` every new file first, or the pushed commit will not build. This has happened twice.
-- One long build at a time, and check `ps -eo rss,command | sort -rn | head` first: an idle Ollama
-  model held 3.5GB and made a two-hour build look like a twenty-hour one.
-- The single-file build needs `SINGLE_FILE=1 vite build` before `tools/singlefile.mjs`, and it
-  carries the Challenge worker inline on `window.__WORKER_SRC`.
+## Rules
 
-## Retired packs
+**Identify ONE primary next action.** "After That" may list likely subsequent steps, but they are
+not commitments and should be reassessed once the immediate action is done.
 
+**Do not invent a next step merely to keep work moving.** If the project cannot safely proceed,
+say what is blocking it and what owner decision is required.
 
-`money` (the 4-joker min-2 table under an older name) and `nowild` (0 jokers, min 2, a table Changs
-does not play) were dropped from the site on 2026-09-10 at his say-so; copies live in
-`data/gen/retired-packs/` for the audit tools. Any mistake card on a phone that points at them will
-show "cannot be rebuilt" with a button to drop it, which is the intended behaviour.
+## When asked "what's next?"
 
-## Where things are
+**Do not simply read this file back.** Reassess first — `PROJECT.md`, `STATUS.md`, this file,
+`PLAN.md`, `OPEN-ITEMS.md`, and the actual state of the current work — then determine the most
+useful next action, update this file, and answer from the updated version.
 
-- **Live:** https://szethochangs.github.io/Mahjong/ - with `/Mahjong/` on the end; the bare account
-  address has no site and shows GitHub's 404. Deploys on every push to `evaluator-accuracy` via
-  `.github/workflows/pages.yml`. The repo must stay public for Pages on a free account.
-- **Installed on a phone** it works offline after the first visit (`web/public/sw.js`).
-- **Icon:** the green dragon on maroon (`b097a1c`).
-- **Packs:** 10,000 questions on each of the three tables Changs plays, honest at every question,
-  built with `--mix decisive` (commit `ab5e24f`). 14-16 MB each. The no-joker pack is half of all
-  the decisive positions its run has, so it cannot grow without more grading.
-- **Hand log:** every answered discard is kept and can be reopened with the answer shown, on the
-  Review tab under "Hands you have played". Built for friends who want to see a past hand and why.
-- **Docs still say "Real quiz"** in `PLAN.md`, `MOBILE.md`, `FINDINGS.md` and the framework. The
-  last two are records of what was measured and should keep the name they measured under; the first
-  two are forward-looking and should be updated.
-- **Single-file build:** `node web/tools/singlefile.mjs` folds the app into one 8.5 MB page for
-  anywhere with no host. Published once as an artifact; superseded by the real site.
+## When to update
 
-## The merge (done, `880eb5b`)
+After meaningful work; when work stops part-way through something; when the recommended next action
+materially changes; before handing over to another session, agent, machine or person; and whenever
+the owner asks what's next.
 
-One practice tab called **Train**, which is the old Real quiz's behaviour with a fallback:
-- serves pack questions judged by the play-outs by default - the honest grader
-- falls back to a generated hand only when the filters leave nothing, and then says plainly that
-  the hand is made up and marked by the *Coach*, which is right about half the time
-- never presents a *Coach* verdict and a play-out verdict as the same thing
-- the mistake record and the hand log keep working, and both still say which judge marked a hand
-- the old Real quiz tab disappears; nothing else in the tab bar changes
+## Relationship to other files
 
-Why: the two tabs differed only in who marks the answer. The packs are already filtered to decisive
-positions, which was Train's other claim, and both tabs already explain their reasoning. Changs said
-"I want the best coach/trainer", which decides every small call in favour of the play-outs.
+`STATUS.md` says where the project is overall; this file says where the *work* stopped and what
+happens next. `PLAN.md` holds the long-term sequence — the action recommended here should be
+consistent with it. `CHANGELOG.md` holds history; this file is not a log. Blockers named here are
+recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting on them belongs in
+`DECISIONS.md`.
 
-Driving it found three real bugs, all fixed in that commit; the commit message has them. The one
-worth remembering: the hand log's Review path fetched a 10 MB pack in a loop (282 requests) because
-a memo was missing - the kind of thing only clicking finds.
+---
 
-## Then, in the order the pain is felt
+## Last Updated
 
-1. **The phone layout pass.** Bottom tab bar (decided), 48px targets, safe-area insets. `MOBILE.md`
-   has the measurements. Open question: are the four primary tabs Train, Spot, Review and Tips?
-2. **Split the bundle** and **an update prompt** so testers are not stuck on a stale version.
-3. **The export button** does nothing in the single-file artifact version; irrelevant on the real
-   site, where it works.
+2026-09-12 17:20
 
-## Decided, so do not reopen
+## Last Session / Work Package
 
-Bottom bar over top bar. The square table stays on a phone at a 22px tile. No login for friends
-testing - each phone keeps its own record; the export is the bridge. Honest packs over balanced ones.
-Green dragon on maroon. Jargon is written `*like this*`, italic, coloured by kind (`JARGON.md`).
+### What We Were Doing
 
-## Traps that cost a day, all now written down
+Laying the P-Starter project structure over an existing, live project, at the owner's request. The
+app itself was already built, deployed and in use; what was missing was a place for the specs and
+the decisions to live. The same session also seeded the prototype as a snapshot of the current
+build, because the owner decided the prototype should be the current build and that future features
+get prototyped before production code is written.
 
-- `web/tsconfig.json` is a solution file with `"files": []`; `tsc --noEmit -p .` checks nothing.
-- `tsc -b` is incremental; use `--force`.
-- web is on TypeScript 6 (strict by default), the rest on 5; use each package's own compiler.
-- The repo path has a colon, so pnpm's `.bin` shims fail; `check.sh` shows the real paths.
-- A bare `git commit` sweeps whatever an agent staged. Pathspec, always.
-- `BASE_PATH` rewrites what Vite emits, not the static files in `web/public/`. The manifest's
-  `start_url` and `scope` must be relative (`./`), or an installed copy opens on the host's root -
-  which on this host is a 404. Found by Changs on his phone, 2026-09-10.
+### What Was Completed
 
-## Pointers
+- The sixteen canonical files exist and are populated from the evidence that was already here:
+  `PLAN.md` and `NEXT.md` rewritten to the P-Starter shape, the other fourteen created.
+- `INPUTS/`, `RESEARCH/` and `prototype/` created. The old `PLAN.md` and `NEXT.md` are preserved in
+  `INPUTS/` rather than lost.
+- Twenty-six decisions harvested out of `FINDINGS.md`, `MOBILE.md` and the commit history into
+  `DECISIONS.md`, where before they were scattered and only findable by reading everything.
+- Twenty-four open items recorded, including five conflicts nobody had written down.
+- The prototype seeded: `prototype/build.sh` regenerates `prototype/app.html`, a single-file
+  snapshot of the current build that runs with no server.
+- The app now reads and writes the tab in the address bar, so a feature record can link to its own
+  screen instead of the front page.
+- `vercel.json` removed. It configured a service this project does not deploy to, and a later
+  session reading it would have believed otherwise.
 
-- Repo: https://github.com/SzeThoChangs/Mahjong (branch `evaluator-accuracy`)
-- Phone mockup that settled the layout: https://claude.ai/code/artifact/e1788fde-df9e-43db-adfc-8da2352febc5
-- Tips cards as a standalone page: https://claude.ai/code/artifact/263e56ef-880a-45e5-ab45-5fb37fdbda38
+### What Changed
+
+- One production change: tab deep-linking in `web/src/App.tsx`.
+- Everything else is new project-knowledge files, the prototype scaffolding and the project
+  interface. No behaviour of the app changed.
+
+### What Was Not Completed
+
+- The owner has not reviewed any of it. The files are the agents' best reading of the evidence, not
+  confirmed intent, and they are marked accordingly.
+- Eight questions surfaced during the reading that need the owner, listed below.
+- The framework's description of the practice hour still contradicts the app (`C-003`).
+
+### Files / Areas Changed
+
+- The sixteen canonical files at the project root, plus `INPUTS/`, `RESEARCH/`, `prototype/` and
+  `project-view/`.
+- `web/src/App.tsx` for the hash routing.
+- `.gitignore`, for the generated prototype snapshot.
+
+## Where We Stopped
+
+The structure is complete and the working tree is uncommitted. Nothing is running.
+
+## Recommended Next Action
+
+### Next
+
+The owner answers the questions under **Owner Input Required**, starting with the practice hour.
+
+### Why
+
+The structure now records what this project believes, and most of it is the agents' reading of code
+and documents rather than anything the owner has confirmed. The single largest thing it cannot
+settle for itself is what the practice hour is, now that the two practice tabs are one tab. That
+question is upstream of the training plan, of what the app should do next, and of whether the
+framework draft is right. Building anything else first risks building it against a plan that is
+about to change.
+
+### Expected Outcome
+
+`C-003` closed, the framework's practice hour matching the app, and the open items that turn on it
+either answered or knowingly deferred.
+
+## After That
+
+1. Fix the claim judge, so the Play tab's review can be trusted on calls and on taking a win.
+2. Play a week of hands and practice hours, and record what the loop actually feels like.
+3. Build the next piece of the game, if the week says the loop is worth it.
+
+*Likely subsequent steps, not commitments. Reassess after the immediate action.*
+
+## Blockers / Dependencies Before Proceeding
+
+- None. Work can continue without the answers; it just risks being aimed wrongly.
+
+## Owner Input Required
+
+These came out of reading the whole project against itself. The first is the one that matters.
+
+1. **What is the practice hour now?** The framework splits it between a coach-graded tab and a
+   play-out-graded one. Those merged on 2026-09-10. (`C-003`, `Q-004`)
+2. **Should a mistake ask for its cause when it is made?** The framework says the app suggests one
+   and you confirm it; the app only asks the next day, at review.
+3. **Should the Spot drill open at eight seconds** rather than five, as the framework says?
+4. **Should the Train tab read the table set in Table setup?** Play and the Challenge button do;
+   Train reads a fixed config, so the app disagrees with itself about which table you are at.
+5. **Should Play hands and the table settings be in the backup file, and should a Play mistake
+   enter the mistake record?**
+6. **The late-game table at 360px** scrolls inside its card. Accept it, or a smaller tile on late
+   hands? (`Q-002`)
+7. **Are Train, Spot, Review and Tips the right four primary tabs**, now that Play exists? (`Q-003`)
+8. **Does the no-joker safety advice matter enough to wire in?** The coach uses the four-joker
+   danger reads at every table, and the no-joker table was measured to want braver ones. (`R-002`)
+
+## Resume Instruction
+
+A fresh session should:
+
+1. read `PROJECT.md`;
+2. read `STATUS.md`;
+3. read this file;
+4. retrieve only the context the next action requires;
+5. verify the actual current project/repository state;
+6. continue from **Recommended Next Action**.
+
+Do not redo completed work unless the project state shows it was not actually completed.

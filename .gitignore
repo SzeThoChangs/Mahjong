@@ -21,3 +21,6 @@ data/gen/
 __pycache__/
 web/dist/
 web/dist-single/
+
+# the prototype snapshot is generated, not committed (prototype/build.sh rebuilds it)
+prototype/app.html
