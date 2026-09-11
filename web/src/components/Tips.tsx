@@ -169,7 +169,7 @@ export default function Tips() {
           const n = TIPS.filter((t) => t.phase === p.id).length;
           return (
             <a key={p.id} href={`#tips-${p.id}`}
-              className="rounded-md border px-2 py-1 text-muted-foreground hover:bg-secondary hover:text-foreground">
+              className="inline-flex items-center rounded-md border px-2 py-1 text-muted-foreground hover:bg-secondary hover:text-foreground max-sm:min-h-12">
               {p.title} <span className="tabular-nums">{n}</span>
             </a>
           );

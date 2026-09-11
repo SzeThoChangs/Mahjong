@@ -70,7 +70,14 @@ export interface Mistake {
   /** how many times it has been met again, and how many of those went right */
   seen: number;
   right: number;
+  /**
+   * The verdict that put this card here was challenged on fresh play-outs and did not hold. The
+   * card stays in the schedule - a coin flip is not proof the throw was right - but the note says
+   * the charge was overstated, with the fresh gap, its error and the play-out count.
+   */
+  challenged?: Challenge;
 }
+export interface Challenge { gap: number; se: number; n: number; at: number }
 
 /** a day, three days, a week, two weeks, a month */
 export const INTERVALS_DAYS = [1, 3, 7, 14, 30] as const;
@@ -117,6 +124,15 @@ export function reviewed(id: string, right: boolean, now = Date.now()): void {
   m.seen++;
   if (right) { m.right++; m.step++; } else { m.step = 0; }
   m.due = now + (INTERVALS_DAYS[Math.min(m.step, INTERVALS_DAYS.length - 1)]! * DAY);
+  write(all);
+}
+
+/** Note that fresh play-outs did not uphold the verdict on a pack card. */
+export function challengeMistake(pack: string, qid: string, c: Challenge): void {
+  const all = read();
+  const m = all.find((x) => x.id === `${pack}:${qid}`);
+  if (!m) return;
+  m.challenged = c;
   write(all);
 }
 

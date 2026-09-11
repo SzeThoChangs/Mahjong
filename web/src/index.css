@@ -73,4 +73,16 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; }
+
+  /* A phone, which is anything under Tailwind's `sm`. Two rules that every screen needs and none
+     should have to remember. A thumb needs 48px (Apple asks 44, Google 48), so every control gets
+     that much hit area whatever its visual size: `min-height` beats a utility's `height`, so an
+     `h-8` chip simply becomes a taller chip. And iOS zooms the whole page when a field it focuses
+     has a font under 16px, so no field may. Checkboxes keep their own size; their label is the
+     target. */
+  @media (width < 40rem) {
+    button, [role="tab"], select,
+    input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="file"]) { min-height: 3rem; }
+    input, select, textarea { font-size: 1rem; }
+  }
 }

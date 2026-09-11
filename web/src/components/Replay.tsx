@@ -77,7 +77,7 @@ export default function Replay() {
         <Card><CardHeader className="pb-2"><CardTitle className="text-base">Pick a hand</CardTitle></CardHeader>
           <CardContent className="grid gap-1.5 sm:grid-cols-2">
             {list.map((h) => (
-              <button key={h.file} onClick={() => open(h.file)} className="flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent">
+              <button key={h.file} onClick={() => open(h.file)} className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent">
                 <span className="font-medium w-24">{h.winner === null ? 'Draw' : `${WIND[h.winner]} wins`}</span>
                 <span className="text-muted-foreground w-28 truncate">{jargon(`${h.combo}${h.fan !== null ? ` · ${h.fan} *Tai*` : ''}`)}</span>
                 <span className="text-muted-foreground">第{Math.max(1, Math.ceil(h.turns / 4))}巡</span>

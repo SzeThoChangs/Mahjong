@@ -15,7 +15,7 @@
  * made up and who marked it. A coach verdict and a play-out verdict are never shown as the same
  * kind of thing.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,15 +25,18 @@ import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { CONFIG, JOKERS, PRACTISABLE } from '@/lib/scenario';
-import { recordMistake, causeTally, readPractise, writePractise } from '@/lib/mistakes';
-import { recordPlay } from '@/lib/history';
-import GeneratedHand from '@/components/GeneratedHand';
-import { priceMix, type OutcomeMix } from '@/lib/money';
-import { loadConfig } from '@/components/TableSetup';
+import { recordMistake, challengeMistake, causeTally, readPractise, writePractise } from '@/lib/mistakes';
+import { recordPlay, challengePlay } from '@/lib/history';
+import { priceMix, loadConfig, type OutcomeMix } from '@/lib/money';
+import { challenge, challengeKind, canChallenge, rulesForPack, CHALLENGE_ROLLOUTS, type ChallengeOutcome } from '@/lib/rejudge';
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
 import { asset } from '@/lib/asset';
+
+// The made-up hand is the fallback, not the tab, so its code arrives only on the day a pack has
+// nothing to offer rather than with every page load. The service worker still keeps it offline.
+const GeneratedHand = lazy(() => import('@/components/GeneratedHand'));
 
 const WIND = ['東', '南', '西', '北'];
 /** the small caption that says what a run of tiles actually IS */
@@ -89,8 +92,6 @@ const verdictOf = (regret: number, unit: string, se = 0): Verdict => {
   if (regret <= Math.max(mistake, 3 * se)) return 'mistake';
   return 'blunder';
 };
-/** The recount runs in the dev server's /api/challenge middleware; a static build has no such route. */
-const CAN_CHALLENGE = import.meta.env.DEV;
 
 const kindsOf = (a: string): number[] => a.startsWith('d:') ? [Number(a.slice(2))] : a.startsWith('chow:') ? a.slice(5).split(',').map(Number) : (/^\w+:(\d+)$/.exec(a) ? [Number(/^\w+:(\d+)$/.exec(a)![1])] : []);
 const actionText = (a: string) => a === 'win' ? 'Win' : a === 'pass' ? 'Pass' : a === 'proceed' ? 'No kong' : a.startsWith('d:') ? `Discard ${tileLabel(Number(a.slice(2)))}` : a.startsWith('pong') ? 'Pong' : a.startsWith('chow') ? 'Chow' : 'Kong';
@@ -129,9 +130,12 @@ export default function Train() {
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
   const [score, setScore] = useState({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
-  const [runId, setRunId] = useState<string | null>(null);   // from the pack we already have; refetching it costs 10MB
-  const [challenging, setChallenging] = useState(false);
-  const [challengeResult, setChallengeResult] = useState<null | { error?: string; stale?: boolean; ms?: number; ev?: { best: string; actions: Action[]; n: number } }>(null);
+  /**
+   * The Challenge button's state: running with a count, or finished with an outcome or a reason
+   * it could not run. The play-outs happen in a Web Worker (`lib/rejudge.ts`), so the page stays
+   * live and the count moves.
+   */
+  const [challengeState, setChallengeState] = useState<null | { running: true; done: number; total: number } | { running: false; outcome?: ChallengeOutcome; error?: string }>(null);
 
   useEffect(() => {
     fetch(asset('quiz/index.json')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
@@ -155,7 +159,7 @@ export default function Train() {
           if (live) shardCache.current.set(0, d.questions);
           return { run: d.run ?? null, unit: d.unit, questions: d.questions.length, shards: [tallyOf(`${pack}.json`, d.questions)] };
         });
-    load.then((d) => { if (!live) return; setUnit(d.unit); setRunId(d.run); setIx(d); if (!d.questions) setPackFailed(true); })
+    load.then((d) => { if (!live) return; setUnit(d.unit); setIx(d); if (!d.questions) setPackFailed(true); })
       // a pack that will not load - no signal, or one being rebuilt under us - leaves the fallback
       // to serve, rather than a blank screen
       .catch(() => { if (live) setPackFailed(true); });
@@ -416,8 +420,10 @@ export default function Train() {
             </p>
           </CardContent>
         </Card>
-        <GeneratedHand seed={genSeed} cause={causeApplies ? causeFilter : null}
-          onNext={(s) => { setGenSeed(s); setPicked(null); setPos((p) => p + 1); }} />
+        <Suspense fallback={<p className="text-sm text-muted-foreground">Dealing…</p>}>
+          <GeneratedHand seed={genSeed} cause={causeApplies ? causeFilter : null}
+            onNext={(s) => { setGenSeed(s); setPicked(null); setPos((p) => p + 1); }} />
+        </Suspense>
       </div>
     );
   }
@@ -460,15 +466,36 @@ export default function Train() {
       });
     }
   };
-  const next = () => { setPicked(null); setChallengeResult(null); setPos(chosenAt + 1); };
+  const next = () => { setPicked(null); setChallengeState(null); setPos(chosenAt + 1); };
+  /**
+   * Judge the verdict again on fresh play-outs, here, with no server. The pick is measured against
+   * the pack's best (or, when the pick was the best, against the runner-up), with the runner-up
+   * along as a third action where it is a different tile. When the original verdict charged a
+   * mistake and the fresh dice do not uphold it, the hand log and the mistake card are told, and
+   * the session tally moves the answer to "too close to call".
+   */
   const runsChallenge = async () => {
-    if (!pack || picked === null) return;
-    setChallenging(true); setChallengeResult(null);
+    if (!pack || picked === null || !pickedAction || !verdict) return;
+    if (!canChallenge(q)) { setChallengeState({ running: false, error: 'this pack was built before questions carried the whole table, so the position cannot be rebuilt here' }); return; }
+    const pickWasBest = picked === bestAction.a;
+    const reference = pickWasBest ? actions[1]?.a : bestAction.a;
+    if (!reference) return;
+    const compare = [picked, reference];
+    const runnerUp = actions[1]?.a;
+    if (runnerUp && !compare.includes(runnerUp)) compare.push(runnerUp);
+    const table = packs.find((p) => p.id === pack)?.table;
+    setChallengeState({ running: true, done: 0, total: compare.length * CHALLENGE_ROLLOUTS });
     try {
-      const res = await fetch(`/api/challenge?run=${runId ?? pack}&id=${q.id}&hand=${q.h.join(',')}&rollouts=512`).then((r) => r.json());
-      setChallengeResult(res);
-    } catch { setChallengeResult({ error: 'challenge needs the local dev server' }); }
-    setChallenging(false);
+      const outcome = await challenge({ q: { ...q, id: q.id }, rules: rulesForPack(table, unit, money), compare }, (done, total) => setChallengeState({ running: true, done, total }));
+      setChallengeState({ running: false, outcome });
+      const charged = verdict === 'mistake' || verdict === 'blunder';
+      if (charged && challengeKind(outcome.gap, outcome.se, pickWasBest) !== 'holds') {
+        const note = { gap: outcome.gap, se: outcome.se, n: outcome.n, at: Date.now() };
+        challengePlay(pack, q.id, note);
+        challengeMistake(pack, q.id, note);
+        setScore((s) => ({ ...s, [verdict]: Math.max(0, s[verdict] - 1), unclear: s.unclear + 1, lost: s.lost - regret + Math.max(0, outcome.gap) }));
+      }
+    } catch (e) { setChallengeState({ running: false, error: e instanceof Error ? e.message : String(e) }); }
   };
 
   const discardKinds = new Set(q.actions.filter((a) => a.a.startsWith('d:')).map((a) => Number(a.a.slice(2))));
@@ -518,17 +545,17 @@ export default function Train() {
         </CardHeader>
         <CardContent className="space-y-3 @container">
           {(q.m.length > 0 || q.b.length > 0) && (
-            <div className="flex flex-nowrap items-end gap-x-4 pb-1 border-b">
+            <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-x-4 gap-y-2 pb-1 border-b">
               {q.b.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <span className={LABEL}>Your <J>Bonus Tiles</J></span>
-                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
+                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
                 </div>
               )}
               {q.m.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <span className={LABEL}>Your <J>Melds</J></span>
-                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
+                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">
                     {q.m.map((m, i) => (
                       <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m[1] === 1} />)}</span>
                     ))}
@@ -538,7 +565,8 @@ export default function Train() {
             </div>
           )}
           {(q.m.length > 0 || q.b.length > 0) && <span className={cn(LABEL, 'block')}>In your hand — concealed</span>}
-          <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
+          {/* on a phone the tiles are fixed at 38px and wrap to two rows: see Tile's `fluid` */}
+          <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 gap-y-2 sm:gap-1.5">
             {handTiles.map((k, i) => (
               <Tile key={i} kind={k} size="md" fluid
                 onClick={q.k === 'discard' && picked === null && discardKinds.has(k) ? () => choose(`d:${k}`) : undefined}
@@ -664,31 +692,46 @@ export default function Train() {
                   was wrong" cannot be checked by anybody, because the id lives only in the hand log.
                   Quote pack and id and the position can be re-judged here at 2,048 play-outs. */}
               <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground select-all">{pack} · {q.id}</span>
-              {/* /api/challenge is a Vite dev-server middleware (vite.config.ts); the deployed site is
-                  static, so the button would only ever 404 there. Show it where it can actually run. */}
-              {CAN_CHALLENGE && <Button variant="outline" disabled={challenging} onClick={runsChallenge}>{challenging ? 'Re-judging — up to a minute…' : 'Challenge the verdict (512 play-outs)'}</Button>}
+              {/* The verdict rests on the same play-outs that admitted the question, so about one in
+                  ten overstates. This judges the pick again on fresh dice, on this device, with no
+                  server - see `lib/rejudge.ts`. Gone once it has answered: a second press would be
+                  a second opinion on new dice, and the tally must not be moved twice. */}
+              {challengeState === null && actions.length > 1 && (
+                <Button variant="outline" onClick={runsChallenge}>Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs)</Button>
+              )}
             </div>
-            {challengeResult && (
-              <div className="mt-2 rounded-md border p-3 text-sm space-y-1">
-                {challengeResult.error && <div className="text-muted-foreground">{challengeResult.error}</div>}
-                {challengeResult.ev && (() => {
-                  const na = challengeResult.ev.actions;
-                  const nBest = na[0]!;
-                  const nPick = na.find((a) => a.a === picked);
-                  const overturned = picked !== null && nBest.a === picked && bestAction.a !== picked;
-                  const stillBest = nBest.a === bestAction.a;
+            {challengeState && (
+              <div className="mt-2 rounded-md border p-3 text-sm space-y-2">
+                {challengeState.running ? (
+                  <>
+                    <div>Re-judging on fresh play-outs… {challengeState.done.toLocaleString()} of {challengeState.total.toLocaleString()}</div>
+                    <div className="h-2 rounded bg-secondary overflow-hidden"><div className="h-full bg-sky-500 transition-[width]" style={{ width: `${100 * challengeState.done / Math.max(1, challengeState.total)}%` }} /></div>
+                  </>
+                ) : challengeState.error ? (
+                  <div className="text-muted-foreground">Could not re-judge this one: {challengeState.error}.</div>
+                ) : challengeState.outcome && picked !== null && (() => {
+                  const o = challengeState.outcome;
+                  const pickWasBest = picked === bestAction.a;
+                  const kind = challengeKind(o.gap, o.se, pickWasBest);
+                  const mine = actionText(picked).toLowerCase(), ref = actionText(o.reference).toLowerCase();
+                  const x = fmt(Math.abs(o.gap)), y = fmt(o.se);
+                  const words = !pickWasBest
+                    ? kind === 'holds' ? <><b>Holds:</b> on fresh play-outs your {mine} is still {x} worse than {ref} (about ±{y}).</>
+                      : kind === 'close' ? <><b>Too close to call:</b> the fresh gap is {x}, inside the noise of ±{y} — the pack's verdict was a coin flip.</>
+                        : <><b>Reversed:</b> on fresh play-outs your {mine} comes out {x} better than {ref}.</>
+                    : kind === 'holds' ? <><b>Holds:</b> on fresh play-outs your {mine} is still {x} better than the runner-up, {ref} (about ±{y}).</>
+                      : kind === 'close' ? <><b>Too close to call:</b> the fresh gap to the runner-up is {x}, inside the noise of ±{y} — the pack's verdict was a coin flip.</>
+                        : <><b>Reversed:</b> on fresh play-outs the runner-up, {ref}, comes out {x} better than your {mine}.</>;
                   return (
                     <>
-                      <div className="font-medium">{overturned ? '🎉 Overturned — the recount says YOUR move is best.' : stillBest ? 'Verdict stands on the recount.' : `The recount prefers ${actionText(nBest.a).toLowerCase()} — a genuinely close position.`}</div>
-                      <div className="text-muted-foreground">512 fresh play-outs per move: your {picked !== null ? actionText(picked).toLowerCase() : ''} {nPick ? fmt(nPick.ev) : '?'} vs best {actionText(nBest.a).toLowerCase()} {fmt(nBest.ev)} (was {fmt(bestAction.ev)} at {bestAction.n ?? q.n}).</div>
-                      {nPick && (() => {
-                        // the recount buys precision as 1/sqrt(n), so its resolution is the pack's scaled by
-                        // sqrt(n_pack / n_recount) - using the PICKED move's own count, not the budget
-                        const res = pickedSe > 0 ? pickedSe * Math.sqrt((pickedAction.n ?? q.n) / Math.max(1, challengeResult.ev!.n)) : 0.3;
-                        return Math.abs(nBest.ev - nPick.ev) < res
-                          ? <div className="text-muted-foreground">Gap under {fmt(res)} — still inside what {challengeResult.ev!.n} play-outs can resolve; call it a coin flip.</div>
-                          : null;
-                      })()}
+                      <div className={cn(kind === 'holds' ? '' : kind === 'close' ? 'text-slate-700 dark:text-slate-200' : 'text-emerald-700 dark:text-emerald-300')}>{words}</div>
+                      {/* fresh EVs count from this decision, not from the deal, so they sit at a
+                          different level from the pack's; the gap is what to read */}
+                      <div className="text-xs text-muted-foreground">
+                        {o.n} fresh play-outs each, {(o.ms / 1000).toFixed(1)}s: {o.actions.map((a) => `${actionText(a.a).toLowerCase()} ${fmt(a.ev)}`).join(' · ')}.
+                        {/* claims are in neither the log nor the record (see `choose`), so only a discard has entries to note */}
+                        {!pickWasBest && (verdict === 'mistake' || verdict === 'blunder') && kind !== 'holds' && <> Moved to "too close to call" in the session tally{q.k === 'discard' ? ', and noted on the hand log and the mistake card' : ''}.</>}
+                      </div>
                     </>
                   );
                 })()}

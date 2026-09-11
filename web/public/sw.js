@@ -6,9 +6,18 @@
  * opens, so the shell and the tiles are cached up front and a pack is kept only once it has
  * actually been used. Open a table once on wifi and it is yours on the train.
  */
-const VERSION = 'v4';   // bumped so installed phones refetch the manifest with the fixed start_url
-const SHELL = `shell-${VERSION}`;   // the app itself: HTML, JS, CSS, tiles, icons
-const DATA = `data-${VERSION}`;     // packs, replays, reads - cached the first time they are read
+const VERSION = 'v5';   // bump when the data format changes: a new number throws the cached packs away
+/**
+ * Stamped by the build (`stamp-sw` in vite.config.ts) with a hash of the bundle's file names.
+ *
+ * A browser only installs a new worker when this file's bytes change, and before the stamp they
+ * changed only when somebody remembered to bump VERSION. Every deploy that touches the bundle now
+ * changes the worker too, which is what lets the page offer the new version instead of sitting on
+ * the old one until the phone is restarted.
+ */
+const BUILD = 'dev';
+const SHELL = `shell-${VERSION}-${BUILD}`;   // the app itself: HTML, JS, CSS, tiles, icons
+const DATA = `data-${VERSION}`;              // packs, replays, reads - cached the first time they are read
 
 /** The worker is served from the site's own base, so its scope is the right root to build on. */
 const BASE = new URL('./', self.registration.scope).pathname;
@@ -33,20 +42,39 @@ const TILES = [
 ].map((n) => at('tiles/' + n));
 
 /**
- * The bundle's own file names, read out of index.html at install time.
+ * The bundle's own file names, read at install time.
  *
  * Vite hashes them, so they cannot be listed here, and they cannot be left to be picked up on first
  * use either: the browser has already fetched the script and the stylesheet by the time this worker
  * registers, so they never pass through the fetch handler below and never reach the cache. The first
  * version of this file made that mistake and went offline to a blank page with a correct title.
+ *
+ * Two sources, joined. `files.json` is the list the build writes of every file it emitted, which is
+ * the only place the tabs that load on demand (Your hand, Film room, Table setup) are named: a phone
+ * that never opened Table setup on wifi would otherwise find it missing on the train. index.html is
+ * scanned as well, so that a build without the list still caches what it can.
  */
 async function bundleUrls() {
+  const found = new Set();
+  try {
+    const files = await (await fetch(at('files.json'), { cache: 'reload' })).json();
+    for (const entry of Object.values(files)) {
+      for (const f of [entry.file, ...(entry.css ?? []), ...(entry.assets ?? [])]) if (f) found.add(at(f));
+    }
+  } catch { /* an older build, or a host that would not serve it: fall through to the scan */ }
   try {
     const html = await (await fetch(at('index.html'), { cache: 'reload' })).text();
-    return [...html.matchAll(/(?:src|href)="([^"]*\/assets\/[^"]+)"/g)].map((m) => m[1]);
-  } catch { return []; }
+    for (const m of html.matchAll(/(?:src|href)="([^"]*\/assets\/[^"]+)"/g)) found.add(m[1]);
+  } catch { /* no network: the install fails at addAll below and is retried next time */ }
+  return [...found];
 }
 
+/**
+ * Install, and then wait. The old worker keeps serving the page that is open until that page asks
+ * for the swap (the SKIP_WAITING message below) or is closed, because the page is still running
+ * the old bundle and might yet ask for one of its chunks by name; activating under it would delete
+ * the cache those live in.
+ */
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const c = await caches.open(SHELL);
@@ -54,8 +82,12 @@ self.addEventListener('install', (e) => {
     await Promise.all(TILES.map((u) => c.add(u).catch(() => { /* a missing face is not worth failing over */ })));
     const assets = await bundleUrls();
     await Promise.all(assets.map((u) => c.add(u).catch(() => { /* one missing asset must not fail the install */ })));
-    await self.skipWaiting();
   })());
+});
+
+/** The page's "Reload" button: take over now rather than when every tab has closed. */
+self.addEventListener('message', (e) => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -72,7 +104,6 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith(BASE + 'api/')) return;             // dev-only re-judge endpoint, never cached
 
   // A navigation must survive a dead network, so fall back to the shell rather than the browser's error page.
   if (req.mode === 'navigate') {

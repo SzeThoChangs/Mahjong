@@ -243,7 +243,7 @@ export default function Spot() {
                   </div>
                 </div>
               )}
-              <div className="flex items-end gap-1">
+              <div className="flex max-sm:flex-wrap items-end gap-1">
                 {[...s.h].sort((a, b) => a - b).map((k, i) => <Tile key={i} kind={k} fluid />)}
                 {s.dr !== null && <><span className="w-2" /><Tile kind={s.dr} fluid badge="drew" /></>}
               </div>

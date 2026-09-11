@@ -39,7 +39,15 @@ export interface Play {
   /** chips given up, negative or zero */
   cost: number;
   right: boolean;
+  /**
+   * The verdict was challenged on fresh play-outs and did not hold: the fresh gap between the
+   * pack's best and the throw, its standard error, and how many play-outs each got. Only written
+   * when the original verdict charged a mistake and the fresh dice called it a coin flip or turned
+   * it round, because that is the case where the log's own verdict is now known to overstate.
+   */
+  challenged?: Challenge;
 }
+export interface Challenge { gap: number; se: number; n: number; at: number }
 
 const KEY = 'mj.history.v1';
 /** Enough to look back over several sessions without the log ever being worth pruning by hand. */
@@ -66,4 +74,13 @@ export function recordPlay(p: Omit<Play, 'id' | 'at'>, now = Date.now()): void {
 
 export function clearHistory(): void {
   try { localStorage.removeItem(KEY); } catch { /* ignore */ }
+}
+
+/** Note a challenge against the most recent log entry for a pack question. */
+export function challengePlay(pack: string, qid: string, c: Challenge): void {
+  const list = readHistory();
+  const p = list.find((x) => x.pack === pack && x.qid === qid);
+  if (!p) return;
+  p.challenged = c;
+  writeHistory(list);
 }

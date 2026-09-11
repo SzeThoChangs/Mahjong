@@ -12,15 +12,15 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
-import { GameState, makeRng, tableConfigOf, IsolationBot, ShantenBot, kindOf, type Bot, type ClaimOption, type LegalAction, type PlayerView, type RulesConfig, type SelfAction, type Snapshot, type TileInstance } from 'sg-mahjong-engine';
-import { positionAt, determinize } from './position.js';
+import { GameState, makeRng, kindOf, type Bot, type RulesConfig } from 'sg-mahjong-engine';
+import { rejudge, rolloutBots as solverRolloutBots, type ActionEval, type OutcomeMix } from 'sg-mahjong-solver';
+import { positionAt } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
 import { loadHands, eachJsonlGz } from './stats.js';
 import { JsonlGzWriter } from './writer.js';
 import { rulesForDir } from './tablerules.js';
-import { CoachBot } from 'sg-mahjong-solver';
-import { encAction, fnv1a, type DecisionRecord, type HandRecord } from './records.js';
+import type { DecisionRecord, HandRecord } from './records.js';
 import { SE_VERSION } from './se.js';
 
 /**
@@ -35,127 +35,32 @@ import { SE_VERSION } from './se.js';
  */
 export type Policy = 'fast' | 'shanten' | 'efficiency' | 'coach';
 export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean; only?: ReadonlySet<string> }
-/** Outcome mix for one action, from the acting seat's point of view.
- *  `w` keys are `<role><fan>` where role is: W self-draw win, D discard win, s pays the shooter share,
- *  o pays the other share, z pays a self-draw share, l pays everything (pay-all), n pays nothing, d draw.
- *  `led` is the summed ledger units (kongEach, kongFed, biteFH, biteFO, biteAH, biteAO).
- *  Together these let any money schedule be priced later without re-simulating. */
-export interface OutcomeMix { w: Record<string, number>; led: [number, number, number, number, number, number, number] }
-export interface ActionEval { a: string; ev: number; sd: number; win: number; dealin: number; draw: number; n: number; gap: number; gapSe: number; mix?: OutcomeMix }
-// gap = EV(best) - EV(this), gapSe = standard error of that gap computed on PAIRED rollouts (same hidden states)
+/** The per-action numbers and the outcome mix are the solver's now (`solver/src/rejudge.ts`), so the
+ *  phone's Challenge button and this grader share one definition of them. */
+export type { ActionEval, OutcomeMix };
 export interface EvalRecord { g: number; h: number; d: number; k: string; t: number; seat: number; bot: string; sel: string; mode: string; policy: string; n: number; actions: ActionEval[]; best: string; selEv: number; regret: number }
 
 /**
- * Common random numbers that survive a claim.
- *
- * Rollout i already deals every action the same hidden state, but the rollout bots draw from one
- * sequential stream per seat. As soon as two branches diverge - a claim consumes a different number
- * of draws than a pass - the streams slide out of step, and everything after that point is
- * effectively independent. That is why the pairing decays to a correlation of 0.42 on discards and
- * 0.11 on claims, and why the paired error bar is a full chip at 128 rollouts.
- *
- * The fix costs nothing: key each decision's randomness to the POSITION the bot faces rather than
- * to how many draws preceded it. Two branches that reach the same position then draw the same
- * numbers however differently they got there, and the pairing holds to the end of the hand. The
- * value is still a hash-derived uniform and still independent of the action under evaluation, so
- * the estimator stays unbiased - only its variance drops.
+ * The four bots that play a hand out. The loop itself, the position-keyed coupling that keeps the
+ * pairing alive through a claim, and the named policies live in `solver/src/rejudge.ts`; the one
+ * policy that is datagen's own - `efficiency`, the personality bot with its randomness - is passed
+ * in as a factory.
  */
-const positionKey = (v: PlayerView, kind: string, extra = ''): string =>
-  `${kind}:${v.playerTurns}:${v.discardLog.length}:${v.melds.length}:${v.hand.map(kindOf).sort((x, y) => x - y).join('.')}${extra}`;
-
-/** A bot whose randomness is re-keyed from the position in front of it before every decision. */
-class CoupledBot implements Bot {
-  constructor(private inner: Bot, private reseed: (key: string) => void) {}
-  chooseDiscard(v: PlayerView): TileInstance {
-    this.reseed(positionKey(v, 'd'));
-    return this.inner.chooseDiscard(v);
-  }
-  chooseSelfAction(v: PlayerView, o: SelfAction[]): SelfAction | null {
-    this.reseed(positionKey(v, 's', `:${o.map((x) => x.kind).join('|')}`));
-    return this.inner.chooseSelfAction(v, o);
-  }
-  chooseClaim(v: PlayerView, o: ClaimOption[]): ClaimOption | null {
-    this.reseed(positionKey(v, 'c', `:${v.lastDiscard ? kindOf(v.lastDiscard.tile) : -1}:${o.map((x) => x.kind).join('|')}`));
-    return this.inner.chooseClaim(v, o);
-  }
-}
-
 export function rolloutBots(policy: Policy, seed: number, randomness: RandomnessConfig, coupled = true): Bot[] {
-  const build = (rng: () => number): Bot =>
-    policy === 'fast' ? new IsolationBot(rng, 0.6, 0.4)
-    : policy === 'shanten' ? new ShantenBot(rng)
-    : policy === 'coach' ? new CoachBot()
-    : makeBot('efficiency', rng, randomness);
-  return [0, 1, 2, 3].map((s) => {
-    if (!coupled) return build(makeRng(seed * 4 + s));
-    let stream = makeRng(seed * 4 + s);                                    // until the first decision re-keys it
-    return new CoupledBot(build(() => stream()), (key) => { stream = makeRng(fnv1a(`${seed}:${s}:${key}`)); });
-  });
+  return solverRolloutBots(policy === 'efficiency' ? (rng) => makeBot('efficiency', rng, randomness) : policy, seed, coupled);
 }
 
-/** Evaluate one decision at the given live position. */
+/** Evaluate one decision at the given live position. The play-outs are the solver's `rejudge`;
+ *  this names the decision so its hidden states are reproducible, and shapes the record. */
 export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs, rules: RulesConfig): EvalRecord {
   const pending = g.pending()!;
   const seat = pending.seat;
-  const base = g.snapshot();
-  const cfg = tableConfigOf(rules);
-  // dedupe discard actions by kind (same kind, different instance are identical decisions)
-  const legal: LegalAction[] = []; const seenKinds = new Set<string>();
-  for (const l of pending.legal) { const k = encAction(l); if (seenKinds.has(k)) continue; seenKinds.add(k); legal.push(l); }
-
-  // rollout i uses hidden state i and rollout-bot seeds i for EVERY action (common random numbers)
-  const hiddenCache = new Map<number, Snapshot>();
-  const hidden = (i: number): Snapshot => {
-    if (a.mode === 'oracle') return base;
-    let h = hiddenCache.get(i);
-    if (!h) { const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`); h = determinize(GameState.fromSnapshot(base, cfg, { rules }), seat, makeRng(rSeed)); hiddenCache.set(i, h); }
-    return h;
-  };
-  const acc = legal.map((act) => ({ act, key: encAction(act), sum: 0, sumsq: 0, win: 0, dealin: 0, draw: 0, n: 0, outcomes: [] as number[], mix: { w: {} as Record<string, number>, led: [0, 0, 0, 0, 0, 0, 0] as [number, number, number, number, number, number, number] } }));
-  const roll = (x: typeof acc[number], i: number) => {
-    const rSeed = fnv1a(`${rec.g}:${rec.h}:${rec.d}:${i}:${a.seed}`);
-    const h = GameState.fromSnapshot(hidden(i), cfg, { rules });
-    h.apply(x.act);
-    const res = h.run(rolloutBots(a.policy, rSeed ^ 0x5bd1e995, a.randomness, a.coupled !== false));
-    const v = res.chipsDelta[seat]!; x.sum += v; x.sumsq += v * v; x.n++; x.outcomes[i] = v;
-    if (res.winner === seat) x.win++; else if (res.winner === null) x.draw++; else if (res.discarder === seat) x.dealin++;
-    // record the outcome in re-priceable form
-    const L = res.ledger[seat]!;
-    x.mix.led[0] += L.kongConcealed; x.mix.led[1] += L.kongExposed; x.mix.led[2] += L.kongFed;
-    x.mix.led[3] += L.biteFlowerHidden; x.mix.led[4] += L.biteFlowerOpen; x.mix.led[5] += L.biteAnimalHidden; x.mix.led[6] += L.biteAnimalOpen;
-    let role: string;
-    if (res.winner === null) role = 'd';
-    else if (res.winner === seat) role = res.selfDraw || res.score?.combination === 'shi_san_yao' ? 'W' : 'D';
-    else if (res.liable !== null) role = res.liable === seat ? 'l' : 'n';
-    else if (res.selfDraw || res.score?.combination === 'shi_san_yao') role = 'z';
-    else role = res.discarder === seat ? 's' : 'o';
-    const key = role + (res.score?.fan ?? 0);
-    x.mix.w[key] = (x.mix.w[key] ?? 0) + 1;
-  };
-  if (!a.adaptive || acc.length <= 2) {
-    for (const x of acc) for (let i = 0; i < a.rollouts; i++) roll(x, i);
-  } else {
-    // successive halving: everyone gets n0; the top half gets up to 2n0; the top quarter up to 4n0 (= a.rollouts)
-    const n0 = Math.max(4, Math.ceil(a.rollouts / 4));
-    let alive = [...acc]; let target = n0;
-    while (true) {
-      for (const x of alive) for (let i = x.n; i < target; i++) roll(x, i);
-      if (alive.length <= 2 || target >= a.rollouts) break;
-      alive.sort((p, q) => q.sum / q.n - p.sum / p.n);
-      alive = alive.slice(0, Math.max(2, Math.ceil(alive.length / 2)));
-      target = Math.min(a.rollouts, target * 2);
-    }
-  }
-  const evOf = (x: typeof acc[number]) => x.sum / x.n;
-  const bestAcc = acc.reduce((p, q) => (evOf(q) > evOf(p) ? q : p));
-  const actions: ActionEval[] = acc.map((x) => {
-    const ev = evOf(x);
-    // paired gap to the best action over the rollout indices both have
-    let m = 0, m2 = 0, k = 0;
-    for (let i = 0; i < Math.min(x.outcomes.length, bestAcc.outcomes.length); i++) { const a = bestAcc.outcomes[i], b = x.outcomes[i]; if (a === undefined || b === undefined) continue; const d = a - b; m += d; m2 += d * d; k++; }
-    const gap = k ? m / k : 0, gapVar = k > 1 ? Math.max(0, m2 / k - gap * gap) * k / (k - 1) : 0;   // Bessel: population -> unbiased sample variance
-    return { a: x.key, ev, sd: Math.sqrt(Math.max(0, x.sumsq / x.n - ev * ev)), win: x.win / x.n, dealin: x.dealin / x.n, draw: x.draw / x.n, n: x.n, gap, gapSe: Math.sqrt(gapVar / Math.max(1, k)), mix: x.mix };
+  const judged = rejudge(g.snapshot(), rules, seat, pending.legal, {
+    rollouts: a.rollouts, seed: a.seed, key: `${rec.g}:${rec.h}:${rec.d}`,
+    policy: a.policy === 'efficiency' ? (rng) => makeBot('efficiency', rng, a.randomness) : a.policy,
+    coupled: a.coupled !== false, adaptive: a.adaptive, oracle: a.mode === 'oracle',
   });
+  const actions: ActionEval[] = judged.map(({ outcomes: _drop, ...x }) => x);
   actions.sort((x, y) => y.ev - x.ev);
   const selEv = actions.find((x) => x.a === rec.sel)?.ev ?? NaN;
   return { g: rec.g, h: rec.h, d: rec.d, k: rec.k, t: rec.t, seat, bot: rec.bot, sel: rec.sel, mode: a.mode, policy: a.policy, n: a.rollouts, actions, best: actions[0]!.a, selEv, regret: actions[0]!.ev - selEv };

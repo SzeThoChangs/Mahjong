@@ -10,15 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, taiBands, sideEconomics, COMBO_LABEL, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
+import { PRESETS, base, zmTotal, shootTotal, shootSplit, priceProfile, taiBands, sideEconomics, COMBO_LABEL, loadConfig, saveConfig, type MoneyConfig, type PayMode, type Profile, type ComboValue } from '@/lib/money';
 import { asset } from '@/lib/asset';
 
-const KEY = 'mahjong.money.config';
-export function loadConfig(): MoneyConfig {
-  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw) as MoneyConfig; } catch { /* ignore */ }
-  return PRESETS[0]!;
-}
-const save = (c: MoneyConfig) => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch { /* ignore */ } };
 const money = (x: number) => `$${x % 1 === 0 ? x.toFixed(0) : x.toFixed(2)}`;
 const Num = ({ v, on }: { v: number; on: (n: number) => void }) => (
   <input type="number" min={0} value={v} onChange={(e) => on(Number(e.target.value))} className="w-16 rounded border bg-background px-2 py-0.5 ml-1" />
@@ -45,7 +39,7 @@ export default function TableSetup() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [compare, setCompare] = useState<string>(PRESETS[1]!.name);
 
-  useEffect(() => { save(cfg); }, [cfg]);
+  useEffect(() => { saveConfig(cfg); }, [cfg]);
   useEffect(() => { fetch(asset('profile/money.json')).then((r) => r.json()).then(setProfile).catch(() => setProfile(null)); }, []);
 
   const rows = useMemo(() => (profile ? priceProfile(profile, cfg) : []), [profile, cfg]);
@@ -94,8 +88,9 @@ export default function TableSetup() {
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">On a discard win, who pays?</span>
+            {/* the labels are sentences, and a sentence on one line is wider than a phone */}
             {([['shooter', 'Shooter pays — the discarder alone pays it all'], ['everyone', 'Everyone pays — shooter double, other two one share each'], ['even', 'All three pay the same share']] as [PayMode, string][]).map(([m, label]) => (
-              <Button key={m} size="sm" variant={cfg.payMode === m ? 'default' : 'outline'} onClick={() => setCfg({ ...cfg, payMode: m })}>{label}</Button>
+              <Button key={m} size="sm" variant={cfg.payMode === m ? 'default' : 'outline'} className="max-sm:h-auto max-sm:max-w-full max-sm:whitespace-normal max-sm:text-left" onClick={() => setCfg({ ...cfg, payMode: m })}>{label}</Button>
             ))}
           </div>
 

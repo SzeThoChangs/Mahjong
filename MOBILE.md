@@ -51,9 +51,17 @@ tiles in their discard pile.
 1. **Shard the quiz packs.** The freeze and the heap. Design settled below.
 2. **The layout pass.** The bottom bar, 48px targets everywhere, safe-area insets top and bottom.
    48 satisfies Apple's 44 and Google's 48 at once.
-3. **Split the bundle.** 596KB arrives as one file before anything is drawn.
+3. **Split the bundle.** 596KB arrives as one file before anything is drawn. DONE 2026-09-11:
+   Your hand, Film room, Table setup and the made-up-hand fallback load on demand; the first
+   script is 553KB (177KB gzipped) because Train, Spot and Tips need React, the engine and the
+   tips text on first paint. The worker precaches every chunk from a `files.json` the build
+   writes, so every tab still works offline after one visit. The single-file build needs
+   `SINGLE_FILE=1` so the chunks fold back into one script.
 4. **An update prompt.** Otherwise a tester's phone sits on a stale version behind the service
-   worker every time we redeploy. This matters precisely because friends are testing.
+   worker every time we redeploy. This matters precisely because friends are testing. DONE
+   2026-09-11: a "new version is ready" bar with a Reload button; the build stamps the worker
+   with a hash of the bundle so the bar appears after every deploy without anyone bumping a
+   version; the app checks for an update when it comes back to the foreground, at most hourly.
 5. **The device matrix.** 360 (Galaxy A and most budget Android), 375 (iPhone SE and mini), 393
    (iPhone 14-16, Pixel), 430 (Pro Max, Ultra). Build at 360 and the rest follow. iOS additionally
    ignores the manifest in favour of the apple-touch-icon, has no address bar to fall back on in

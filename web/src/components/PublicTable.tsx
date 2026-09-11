@@ -16,14 +16,23 @@
  * Nothing in the pile is dimmed. A concealed set is dashed — that is the one remaining mark, and it
  * means face-down, not gone.
  *
- * Below `sm` there is not room for four seats around a centre, so the same data renders as stacked
- * rows instead. Both layouts read from the same `seats`.
+ * On a phone the square stays, at a 22px tile. It used to give up below `sm` and stack the seats
+ * into rows, which threw away the one thing a pile carries - which seat threw it, and when - and
+ * reading danger off the discards is half of what this app teaches. What the square costs on a
+ * phone is height, and a late-game pile can still be wider than a 360px screen, in which case the
+ * table scrolls inside its own card rather than dragging the page. The spacing is spent where it
+ * means something and nowhere else: tiles that lie together on a real table touch, so there is no
+ * gap inside a pile or inside a set; 6px sits between a seat's flowers and each of their sets;
+ * 11px between everything a seat has shown and the pile they have thrown, because those are two
+ * different rings of the table and a Pong face up in front of somebody means something entirely
+ * different from the same three tiles in their discards. MOBILE.md settled all of this.
  */
 import type { TileKind } from 'sg-mahjong-engine';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tile } from '@/components/Tile';
 import { cn } from '@/lib/utils';
 import { J } from '@/lib/jargon';
+import { usePhone } from '@/lib/phone';
 
 export interface SeatPublic {
   wind: string;
@@ -42,19 +51,18 @@ export interface SeatPublic {
 const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground';
 /** a real table stacks its discards six to a row in front of each player */
 const PER_ROW = 6;
-/** must match Tile's `sm` width (w-9), or the pile wraps a tile early. This is the short side of a
- *  tile either way up: the width of an upright one, the height of a turned one - so one number
- *  sizes the row tracks for the seats across and the column tracks for the seats down. */
-const TILE = 36;
+/** the tile the table is drawn at: Tile's `sm` (w-9) on anything wide enough, its `xxs` on a
+ *  phone. The width must match Tile's own or the pile wraps a tile early. This is the short side
+ *  of a tile either way up: the width of an upright one, the height of a turned one - so one
+ *  number sizes the row tracks for the seats across and the column tracks for the seats down. */
+type Size = { size: 'sm' | 'xxs'; tile: number; phone: boolean };
+const WIDE: Size = { size: 'sm', tile: 36, phone: false };
+const PHONE: Size = { size: 'xxs', tile: 22, phone: true };
 
 type Side = 'bottom' | 'right' | 'top' | 'left';
 /** Every seat's tiles face THAT seat, as they would on a real table: the player opposite reads
  *  theirs upside down from where you sit, not the right way up. */
 const ROT: Record<Side, 0 | 90 | 180 | 270> = { bottom: 0, right: 270, top: 180, left: 90 };
-
-function Caption({ label, count }: { label: string; count: number }) {
-  return <span className={LABEL}>{label} <span className="tabular-nums opacity-60">{count}</span></span>;
-}
 
 /**
  * Where the i-th tile of a pile goes, in the grid's own row and column.
@@ -95,18 +103,18 @@ function place(i: number, total: number, side: Side): { gridRow: number; gridCol
  * squeezed, so the upright seats broke at five per row while the turned seats got six. Each tile is
  * then placed by hand, because auto-placement cannot fill in four different directions.
  */
-function Pool({ seat, side }: { seat: SeatPublic; side: Side }) {
+function Pool({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
   const rot = ROT[side];
   const down = side === 'left' || side === 'right';
   const total = seat.discards.length;
   const n = Math.max(1, Math.min(PER_ROW, total));
   return (
-    <div className="grid gap-0.5"
+    <div className={cn('grid', at.phone ? 'gap-0' : 'gap-0.5')}
       style={down
-        ? { gridTemplateRows: `repeat(${n}, ${TILE}px)`, gridAutoColumns: 'max-content' }
-        : { gridTemplateColumns: `repeat(${n}, ${TILE}px)`, gridAutoRows: 'max-content' }}>
+        ? { gridTemplateRows: `repeat(${n}, ${at.tile}px)`, gridAutoColumns: 'max-content' }
+        : { gridTemplateColumns: `repeat(${n}, ${at.tile}px)`, gridAutoRows: 'max-content' }}>
       {seat.discards.map((d, i) => (
-        <div key={i} style={place(i, total, side)}><Tile kind={d.kind} size="sm" rot={rot} /></div>
+        <div key={i} style={place(i, total, side)}><Tile kind={d.kind} size={at.size} rot={rot} /></div>
       ))}
     </div>
   );
@@ -114,22 +122,23 @@ function Pool({ seat, side }: { seat: SeatPublic; side: Side }) {
 
 /** flowers and locked sets: a seat's SHOWN tiles, in the outer ring away from the pile, always on
  *  a single line running the same way as that seat's pile */
-function Shown({ seat, side }: { seat: SeatPublic; side: Side }) {
+function Shown({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
   const rot = ROT[side];
   const across = side === 'left' || side === 'right';
   if (!seat.bonus.length && !seat.melds.length) return null;
   // one line however many sets there are: wrapping split a seat's sets across two columns/rows,
   // which read as belonging to different players
+  const inside = at.phone ? 'gap-0' : 'gap-0.5';   // tiles in one set touch
   return (
-    <div className={cn('flex flex-nowrap gap-3', across ? 'flex-col' : 'items-end justify-center')}>
+    <div className={cn('flex flex-nowrap', at.phone ? 'gap-1.5' : 'gap-3', across ? 'flex-col' : 'items-end justify-center')}>
       {seat.bonus.length > 0 && (
-        <div className={cn('flex gap-0.5', across && 'flex-col')}>
-          {seat.bonus.map((k, i) => <Tile key={i} kind={k} size="sm" rot={rot} />)}
+        <div className={cn('flex', inside, across && 'flex-col')}>
+          {seat.bonus.map((k, i) => <Tile key={i} kind={k} size={at.size} rot={rot} />)}
         </div>
       )}
       {seat.melds.map((m, i) => (
-        <div key={i} className={cn('flex gap-0.5', across && 'flex-col')}>
-          {m.tiles.map((k, j) => <Tile key={j} kind={k} size="sm" rot={rot} concealed={m.concealed} />)}
+        <div key={i} className={cn('flex', inside, across && 'flex-col')}>
+          {m.tiles.map((k, j) => <Tile key={j} kind={k} size={at.size} rot={rot} concealed={m.concealed} />)}
         </div>
       ))}
     </div>
@@ -149,14 +158,14 @@ function SeatName({ seat, className }: { seat: SeatPublic; className?: string })
 }
 
 /** the acting seat's concealed hand, shown in the film room where there is nothing below the table */
-function Concealed({ seat }: { seat: SeatPublic }) {
+function Concealed({ seat, at }: { seat: SeatPublic; at: Size }) {
   if (!seat.hand?.length) return null;
   return (
     <div className="flex flex-col gap-1">
       <span className={LABEL}>{seat.you ? 'Your hand' : `${seat.wind}'s hand`} — concealed</span>
-      <div className="flex flex-wrap items-end gap-0.5" style={{ maxWidth: 9 * (TILE + 2) }}>
-        {[...seat.hand].sort((a, b) => a - b).filter((k) => k !== seat.drawn).map((k, i) => <Tile key={i} kind={k} size="sm" />)}
-        {seat.drawn != null && <span className="ml-1.5"><Tile kind={seat.drawn} size="sm" badge="drew" /></span>}
+      <div className="flex flex-wrap items-end gap-0.5" style={{ maxWidth: 9 * (at.tile + 2) }}>
+        {[...seat.hand].sort((a, b) => a - b).filter((k) => k !== seat.drawn).map((k, i) => <Tile key={i} kind={k} size={at.size} />)}
+        {seat.drawn != null && <span className="ml-1.5"><Tile kind={seat.drawn} size={at.size} badge="drew" /></span>}
       </div>
     </div>
   );
@@ -171,6 +180,7 @@ export function PublicTable({ seats, you, centre }: {
   centre?: React.ReactNode;
 }) {
   const has = (s: SeatPublic | undefined) => !!s && (s.bonus.length > 0 || s.melds.length > 0 || s.discards.length > 0 || !!s.hand?.length);
+  const sz = usePhone() ? PHONE : WIDE;
   if (!seats.some(has)) return null;
 
   // counter-clockwise from you: +1 right, +2 opposite, +3 left. `seats` comes from callers as a
@@ -184,79 +194,54 @@ export function PublicTable({ seats, you, centre }: {
 
   return (
     <Card>
-      <CardContent className="pt-5">
-        {/* ---------- the table, sm and up. Six turned tiles across is wide; if the card is still
-             narrower than that, the table scrolls inside itself rather than clipping. ---------- */}
-        <div className="hidden sm:block overflow-x-auto">
-          <div className="grid w-max mx-auto gap-x-3 gap-y-2 rounded-2xl bg-muted/40 p-3"
+      <CardContent className={cn('pt-5', sz.phone && 'px-1')}>
+        {/* ---------- the table. Six turned tiles across is wide; if the card is still narrower
+             than that, the table scrolls inside itself rather than clipping. On a phone the gaps
+             are the ones the header explains: none inside a pile or a set, 6px between a seat's
+             flowers and sets, 11px between what a seat has shown and their pile - which here is
+             5px of grid gap, the pile's 2px border and its 4px of padding. ---------- */}
+        <div className="overflow-x-auto">
+          <div className={cn('grid w-max mx-auto rounded-2xl bg-muted/40', sz.phone ? 'gap-[5px] p-1' : 'gap-x-3 gap-y-2 p-3')}
           style={{ gridTemplateColumns: 'auto auto auto', gridTemplateRows: 'auto auto auto' }}>
 
+          {/* The seats along the sides are named down their edge, as they sit. On a phone that
+              costs 28px a side that the piles need, so their names go in the top corners instead,
+              which are empty anyway, each pulled towards its own seat. */}
+          {sz.phone && <div className="col-start-1 row-start-1 self-end justify-self-end"><SeatName seat={left} /></div>}
+          {sz.phone && <div className="col-start-3 row-start-1 self-end justify-self-start"><SeatName seat={right} /></div>}
+
           <div className="col-start-2 row-start-1 flex flex-col items-center gap-1.5">
-            <SeatName seat={top} /><Shown seat={top} side="top" />
+            <SeatName seat={top} /><Shown seat={top} side="top" at={sz} />
           </div>
 
           <div className="col-start-1 row-start-2 flex items-center gap-2">
-            <SeatName seat={left} className="[writing-mode:vertical-rl] rotate-180" /><Shown seat={left} side="left" />
+            {!sz.phone && <SeatName seat={left} className="[writing-mode:vertical-rl] rotate-180" />}<Shown seat={left} side="left" at={sz} />
           </div>
 
           {/* The middle: the discard pile, each seat's throws in front of that seat.
               The dashed box is the one line that separates thrown tiles from shown ones - two
               different kinds of information sitting a few millimetres apart - so it is drawn to be
               seen rather than hinted at. */}
-          <div className="col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/45 bg-background/70 px-2 py-2"
-            style={{ gridTemplateColumns: 'auto minmax(6rem,auto) auto' }}>
-            <div className="col-start-2 row-start-1"><Pool seat={top} side="top" /></div>
-            <div className="col-start-1 row-start-2"><Pool seat={left} side="left" /></div>
-            <div className="col-start-2 row-start-2 self-center px-2 py-1 text-center">{centre}</div>
-            <div className="col-start-3 row-start-2"><Pool seat={right} side="right" /></div>
-            <div className="col-start-2 row-start-3"><Pool seat={bottom} side="bottom" /></div>
+          <div className={cn('col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/45 bg-background/70', sz.phone ? 'p-1' : 'px-2 py-2')}
+            style={{ gridTemplateColumns: sz.phone ? 'auto minmax(4.5rem,auto) auto' : 'auto minmax(6rem,auto) auto' }}>
+            <div className="col-start-2 row-start-1"><Pool seat={top} side="top" at={sz} /></div>
+            <div className="col-start-1 row-start-2"><Pool seat={left} side="left" at={sz} /></div>
+            <div className={cn('col-start-2 row-start-2 self-center text-center', sz.phone ? 'px-1' : 'px-2 py-1')}>{centre}</div>
+            <div className="col-start-3 row-start-2"><Pool seat={right} side="right" at={sz} /></div>
+            <div className="col-start-2 row-start-3"><Pool seat={bottom} side="bottom" at={sz} /></div>
           </div>
 
           <div className="col-start-3 row-start-2 flex items-center gap-2">
-            <Shown seat={right} side="right" /><SeatName seat={right} className="[writing-mode:vertical-rl]" />
+            <Shown seat={right} side="right" at={sz} />{!sz.phone && <SeatName seat={right} className="[writing-mode:vertical-rl]" />}
           </div>
 
           <div className="col-start-2 row-start-3 flex flex-col items-center gap-1.5">
-            <Shown seat={bottom} side="bottom" /><SeatName seat={bottom} />
+            <Shown seat={bottom} side="bottom" at={sz} /><SeatName seat={bottom} />
           </div>
 
           {/* only ever one seat is mid-decision, and its hand reads best upright, under the table */}
-          {holder && <div className="col-span-3 row-start-4 flex justify-center pt-1"><Concealed seat={holder} /></div>}
+          {holder && <div className="col-span-3 row-start-4 flex justify-center pt-1"><Concealed seat={holder} at={sz} /></div>}
           </div>
-        </div>
-
-        {/* ---------- stacked rows, below sm: four seats around a middle do not fit ---------- */}
-        <div className="sm:hidden">
-          {centre && <div className="flex justify-center pb-3 text-center">{centre}</div>}
-          {[0, 1, 2, 3].map((off) => at(off)).filter(has).map((s, i) => (
-            <div key={s.wind + i} className={cn('flex items-start gap-x-3 py-3 text-xs', i > 0 && 'border-t')}>
-              <span className={cn('w-14 shrink-0 pt-4', s.you ? 'font-semibold' : 'text-muted-foreground')}>
-                {s.wind}{s.you ? ' (you)' : ''}
-              </span>
-              {/* the groups wrap inside their own column, so a wrapped row stays under the groups
-                  rather than sliding back under the seat name */}
-              <div className="flex min-w-0 flex-1 flex-wrap items-start gap-x-6 gap-y-3">
-                {s.hand?.length ? <Concealed seat={s} /> : null}
-                {s.bonus.length > 0 && (
-                  <div className="flex flex-col gap-1"><Caption label="Flowers" count={s.bonus.length} />
-                    <div className="flex flex-wrap items-end gap-0.5">{s.bonus.map((k, j) => <Tile key={j} kind={k} size="sm" />)}</div>
-                  </div>
-                )}
-                {s.melds.length > 0 && (
-                  <div className="flex flex-col gap-1"><Caption label="Open sets" count={s.melds.length} />
-                    <div className="flex flex-wrap items-end gap-0.5">
-                      {s.melds.map((m, j) => <span key={j} className="flex gap-0.5 mr-2 last:mr-0">{m.tiles.map((k, x) => <Tile key={x} kind={k} size="sm" concealed={m.concealed} />)}</span>)}
-                    </div>
-                  </div>
-                )}
-                {s.discards.length > 0 && (
-                  <div className="flex flex-col gap-1"><Caption label="Discarded" count={s.discards.length} />
-                    <div className="flex flex-wrap items-end gap-0.5">{s.discards.map((d, j) => <Tile key={j} kind={d.kind} size="sm" />)}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
 
         {anyConcealed && (

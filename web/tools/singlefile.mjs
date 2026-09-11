@@ -38,6 +38,16 @@ const jsSrc = /<script[^>]+src="(\/assets\/[^"]+\.js)"/.exec(html)?.[1];
 if (!cssHref || !jsSrc) throw new Error('could not find the built css and js in index.html');
 const css = read(cssHref.slice(1));
 const js = read(jsSrc.slice(1));
+// The normal build puts the Your hand, Film room and Table setup tabs in files of their own, fetched
+// on first use, and a page with no server behind it cannot fetch them. `SINGLE_FILE=1 vite build`
+// folds them back into the one script; anything else is refused here rather than shipped broken.
+// A Web Worker is a script of its own by nature (the Challenge button's play-outs run in one), so
+// it is carried as text and started from a blob; `lib/rejudge.ts` looks for it on the window.
+const isWorker = (f) => /\.worker-[\w-]+\.js$/.test(f);
+const scripts = readdirSync(join(DIST, 'assets')).filter((f) => f.endsWith('.js') && !isWorker(f));
+if (scripts.length !== 1) throw new Error(`dist/assets has ${scripts.length} scripts; build with SINGLE_FILE=1 so the on-demand tabs are folded into one`);
+const workers = {};
+for (const f of readdirSync(join(DIST, 'assets')).filter(isWorker)) workers[f.replace(/\.worker-[\w-]+\.js$/, '')] = read(`assets/${f}`);
 
 // ---- the tile faces, as data URIs ------------------------------------------------------------
 const tiles = {};
@@ -110,6 +120,7 @@ for (const dir of ['reads', 'profile']) {
 const shim = `
 window.__SINGLE_FILE = true;
 window.__TILES = ${JSON.stringify(tiles)};
+window.__WORKER_SRC = ${JSON.stringify(workers)};
 window.__FILES = ${JSON.stringify(files)};
 (function () {
   var real = window.fetch.bind(window);
@@ -123,7 +134,11 @@ window.__FILES = ${JSON.stringify(files)};
 })();
 `;
 
-const page = `<style>${css}</style>
+// The artifact viewer wraps the page in its own head, but a phone opening the file straight from
+// its downloads gets no charset and no viewport, which means mojibake and the desktop layout.
+const page = `<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>${css}</style>
 <div id="root"></div>
 <script>${shim}</script>
 <script type="module">${js}</script>

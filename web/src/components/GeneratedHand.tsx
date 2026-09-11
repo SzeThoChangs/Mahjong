@@ -167,17 +167,17 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
         </CardContent>
         <CardContent className="@container">
           {(scenario.melds.length > 0 || scenario.bonus.length > 0) && (
-            <div className="flex flex-nowrap items-end gap-x-4 pb-2 mb-2 border-b">
+            <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-x-4 gap-y-2 pb-2 mb-2 border-b">
               {scenario.bonus.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <span className={LABEL}>Your <J>Bonus Tiles</J></span>
-                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
+                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">{scenario.bonus.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
                 </div>
               )}
               {scenario.melds.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <span className={LABEL}>Your <J>Melds</J></span>
-                  <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1">
+                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">
                     {scenario.melds.map((m, i) => (
                       <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.tiles.map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m.concealed} />)}</span>
                     ))}
@@ -187,7 +187,8 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
             </div>
           )}
           {(scenario.melds.length > 0 || scenario.bonus.length > 0) && <span className={cn(LABEL, 'block pb-1')}>In your hand — concealed</span>}
-          <div className="flex flex-nowrap items-end gap-0.5 sm:gap-1.5">
+          {/* on a phone the tiles are fixed at 38px and wrap to two rows: see Tile's `fluid` */}
+          <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 gap-y-2 sm:gap-1.5">
             {sortedHand.map((k, i) => (
               <Tile key={i} kind={k} size="md" fluid onClick={pick === null && throwable.has(k) ? () => choose(k) : undefined}
                 highlight={pick !== null && k === coachPick} dim={pick !== null && k !== pick && k !== coachPick} />

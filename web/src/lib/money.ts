@@ -182,3 +182,15 @@ export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
   for (let i = 0; i < amt.length; i++) total += (mix.led[i] ?? 0) * amt[i]!;
   return total / Math.max(1, n);
 }
+
+/**
+ * The table the player set up, kept in the browser. It lives here rather than in the Table setup
+ * screen because Train prices every action under it, and Train must not have to carry that whole
+ * screen in its file to read one setting.
+ */
+const KEY = 'mahjong.money.config';
+export function loadConfig(): MoneyConfig {
+  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw) as MoneyConfig; } catch { /* ignore */ }
+  return PRESETS[0]!;
+}
+export const saveConfig = (c: MoneyConfig): void => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch { /* ignore */ } };

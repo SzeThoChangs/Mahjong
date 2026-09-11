@@ -26,6 +26,19 @@
         "--strictPort"
       ],
       "port": 5175
+    },
+    {
+      "name": "web-single",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5178",
+        "--directory",
+        "dist-single"
+      ],
+      "cwd": "web",
+      "port": 5178
     }
   ]
 }

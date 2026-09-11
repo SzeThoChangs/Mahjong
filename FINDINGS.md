@@ -1943,6 +1943,46 @@ changed on about one question in 400. So every question now on the site has clea
 on independent play-outs, and the "big mistake" verdicts are as certain as the badge implies. The
 cost is the pack size: near 8,100 instead of 10,000, which a rebuild admitting 12,800 restores.
 
+### The Challenge button runs on the phone, from the question alone (2026-09-11)
+
+The re-judge used to need the Mac: the button called a dev-server route that replayed the recorded
+hand and ran `evaluateDecision`, so on the deployed site it could only 404. It now runs in a Web
+Worker on the device, offline, and the pack builder and the phone share one implementation.
+
+WHAT MOVED. The play-out loop - re-deal the hidden tiles, take the action, let the shanten bots play
+it out, keep the money, pair the outcomes across actions - is `solver/src/rejudge.ts` now, with
+`determinize` and the position-keyed coupling beside it. `datagen/src/evaluate.ts` calls it. A
+20-question pack built with `--verify 64` before and after the move is identical to the byte.
+
+THE REBUILD. A phone has no run to replay, so `solver/src/question.ts` builds the position from the
+question: every visible tile placed, each opponent's concealed count read off its melds, the wall
+sized from what is unseen, the no-throw-back memory replayed from the discard log, who fed whose
+bao replayed the same way, and a claim read as one on the last discard unless the seat threw that
+tile itself or is barred from it, in which case it is a kong being robbed. Two facts a question does
+not carry: the chips already moved in the hand, which shifts every action's EV by the same constant
+and nothing else; and whether the drawn tile was a replacement, which is known after a fed kong and
+otherwise settled on a `self` question by whether the pack could declare a win.
+
+MEASURED, `datagen/src/rejudgecheck.ts` on the min1 pack. With `canonical` re-deals - the unseen
+tiles drawn in kind order, so the recorded position and the rebuilt one get the same deals however
+their instances are numbered - 100 of 100 questions give identical play-outs outcome for outcome,
+best agrees on 100, gap difference 0.00 SE, mean EV difference 0.000 after the chips offset; all
+462 questions in the shards read rebuild and offer exactly the actions the pack judged. On wall-order
+deals, which is what the button itself uses, the two differ by play-out noise: best agrees on 30 of
+30, the gap best-vs-runner-up differs by up to 2.38 combined SE with 2 of 30 past 2 SE - what noise
+predicts for a perfect rebuild, and the canonical run shows those two are identical in state.
+
+ON THE MAC. Three actions at 512 fresh play-outs each take 0.6s of play-outs in the in-app browser,
+about 1.0s from press to answer; a two-action claim 0.2s. So 512 stays, and a phone at three to five
+times slower is a few seconds behind a progress bar. The worker's chunk is added to `files.json` by
+the build so the service worker precaches it.
+
+WHAT IT SAYS. The pick is compared with the pack's best (and the runner-up when that is a third
+tile) on paired play-outs, at the same two-SE bar the pack admits on: holds, too close to call, or
+reversed. When a mistake verdict does not hold, the hand log and the mistake card carry a
+`challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
+close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
+
 ### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
 
 Taking the jokers out changes what the coach should be afraid of and nothing about what it thinks a

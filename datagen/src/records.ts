@@ -1,5 +1,6 @@
 /** Compact, serialisable records. Tiles are numeric kinds (0..45); see engine/src/tiles.ts for the layout. */
-import { kindOf, type Decision, type InstMeld, type LegalAction, type TileKind } from 'sg-mahjong-engine';
+import { kindOf, type Decision, type InstMeld, type TileKind } from 'sg-mahjong-engine';
+import { encAction } from 'sg-mahjong-solver';
 import type { BotType } from './bots.js';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
 
@@ -46,15 +47,9 @@ export function encodeDecision(d: Decision, meta: { g: number; h: number; d: num
     legal: d.legal.map(encAction), sel: encAction(d.selected), bot: meta.bot, f,
   };
 }
-/** compact action string; instance ids are engine-internal and dropped */
-export function encAction(a: LegalAction): string {
-  switch (a.a) {
-    case 'discard': return `d:${a.kind}`;
-    case 'kong4': case 'kong1': case 'kong3': case 'pong': return `${a.a}:${a.kind}`;
-    case 'chow': return `chow:${a.kinds.join(',')}`;
-    default: return a.a;
-  }
-}
+/** compact action strings and the hash that keys every seed: the solver's, so the phone and the
+ *  Mac agree on both to the bit */
+export { encAction, fnv1a } from 'sg-mahjong-solver';
 
 export interface HandRecord {
   g: number; h: number; seed: number; dl: number; w: number;
@@ -83,9 +78,3 @@ export interface HandRecord {
   seq?: string[];
 }
 export interface TruthRecord { g: number; h: number; seed: number; dl: number; w: number; wall: number[]; }
-
-/** FNV-1a 32-bit over a string, hex */
-export function fnv1a(s: string, h = 0x811c9dc5): number {
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return h >>> 0;
-}
