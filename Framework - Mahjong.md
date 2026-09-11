@@ -60,35 +60,72 @@ rather than drilled.
 ## The patterns
 
 The pattern library is the Tips page in the app, and it is not a reading list. It is 103 cards, each
-with a badge saying how much we believe it:
-
-Fifty-nine are measured, which means we checked them against played hands and they hold. Four are
-confirmed by counting alone, which is stronger than it sounds — no error bars. Six are rules of this
-table rather than claims about play. Sixteen are advice that states nothing testable, kept because
-they are worth reading. And eighteen are contradicted: measured, and false here.
+with a badge saying how much we believe it. Fifty-nine are measured against played hands and hold.
+Four are confirmed by counting alone. Six are rules of this table. Sixteen state nothing testable
+and are kept because they are worth reading. And eighteen are contradicted: measured, and false here.
 
 **Do not learn the eighteen.** They are `four_tile_ranking`, `honour_wait_timing`,
 `break_mediocre_ready`, `last_chance_timing`, `locate_the_fourth`, `withhold_safe_tiles`,
 `squeeze_the_caller`, `wind_discard_order`, `call_to_skip_draw`, `rebuild_waits`,
 `middle_tile_hands_undefended`, `discard_provenance`, `discarded_value_pair`, `second_copy_call`,
 `fear_the_chaser`, `one_turn_is_not_the_fight`, `not_the_third_fighter` and `binary_commitment`.
-Several are the opposite of true. The card for each one says what we measured and why the book's
-reasoning fails, and reading them is worth an evening — knowing why a plausible rule is wrong is
-worth more than one more rule that is right.
+Several are the opposite of true. Each card says what we measured and why the book's reasoning
+fails, and reading them is worth an evening.
 
-Learn these first, because they are the best evidenced and they decide the most hands. Break a
-finished shape to escape a lone-tile *Wait*, which the play-outs take 89% of the time against 47% by
-luck and which survives every correction we know how to apply. Commit to a colour hand at the deal
-when you hold ten or more of one suit plus *Honours*, and do not commit at seven or eight. Count their
-*Melds*, because a seat with three exposed sets is one tile from *Ting Pai* 39.5% of the time against 4.9%
-with none, and that single number is the strongest free signal on the table. And what a seat threw
-early is what it never had: a tile one rank from an early discard is held by that seat 14% of the
-time against 22% for a tile of the same suit further away.
+The rest are drilled in four groups, in this order: shape, then calling, then *Waits*, then danger.
+The order comes from the sixth idea, that difficulty has to climb in steps, and from what the
+measurements say is large and what is small. Shape can be practised with nobody else at the table.
+Calling needs one other seat. *Waits* need the *Discard Pool*. Danger needs three hidden hands, which
+is the hardest thing in the game and where our own numbers are least sure.
 
-Then learn one mechanism that four separate cards turn on, because it explains more than any of
-them. A suited tile deals in mostly by completing a run. So every argument of the form "they cannot
-hold a pair of it, therefore it is safe" is nearly worthless, and three cards that make that
-argument all fail. What does make a tile safe is the run *Waits* being dead.
+Shape comes first because it is arithmetic about tiles, so it holds at both of Changs's tables, with
+*Jokers* and without, and because it carries the biggest results we have. A throw that costs the
+hand no distance is the *Measured Best* 85% of the time, against 34% by luck. When a hand can stay
+*Ting Pai* two ways and one *Wait* is twice as wide, the play-outs take the wide one about 90% of
+the time against 47%. Holding ten or more of one suit plus *Honours* at the deal, throw outside the
+suit, which is best 71% of the time against 23%; at seven or eight, do not commit. Those three are
+the first month, and they are the bottom rung of the ladder: a rule you can be shown, work through
+with the *Coach*, and then try alone. The published theory agrees. Riichi Book 1 builds a hand as
+five *Blocks*, four sets and a pair, and says to improve the weakest *Block* first because it
+finishes last (Chiba, 2016). That transfers, because it is about tiles and not about *Riichi*. One
+part does not. The Japanese rule to fix one pair and break the third fails here, measured, because
+*Pong Pong* pays 2 *Tai* and 2 is the minimum, so a third pair is a road to a hand you are allowed
+to win with. A count of accepting tiles cannot see the minimum.
+
+Calling comes second, earlier than books put it, for two reasons. It is the decision the play-outs
+grade most sharply, with 27% of claims having a clear best action against 4% of discards, so the
+feedback there is the most honest in the app, which is the seventh idea. And the rules are few and
+large. Calling beats passing 72% of the time with no condition at all. A call that makes the hand
+*Ting Pai* is best 88% of the time and one that costs it a step is best 6%. From a hand already
+*Ting Pai*, call only when it leaves you on more live tiles, which is best 78% of the time, and pass
+when it does not, where calling is best 27%. Whether an opponent looks dangerous changes none of
+this, and neither does how late it is. Remember that at this table a *Chow* comes only from the seat
+on your left and play runs to your right, so calling advice from Japanese material points at the
+wrong seat.
+
+*Waits* come third, with less time than a book would give them, because most of what is true about
+them is small. Prefer a *Wait* that reaches an edge, but the gap between the best and worst
+two-sided *Wait* is between 3 and 10 points. A *Terminal* *Wait* beats a *Middle Tile* *Wait* by
+about a quarter. An *Honour* *Wait* is good early and dead late, and what decides it is how many
+copies are face up. The one *Wait* rule that is not small is about the minimum: a winning tile that
+leaves you under 2 *Tai* is not a winning tile, and the play-outs take the declarable *Wait* over
+90% of the time. So the *Wait* drill is three questions in order. How wide is it, which is shape.
+Can I declare on it, which is the table. And only then, does it reach an edge.
+
+Danger comes last because it is the top rung. The reads that survive are
+few. A seat's own discards deal in to it four to eight times less often than a fresh tile, which is
+the Japanese *Genbutsu* and the only defensive idea that transfers whole. A tile already thrown by
+anyone is about half as dangerous. A seat with three *Melds* face up is one tile from *Ting Pai*
+39.5% of the time against 4.9% with none. A tile one rank from an early discard is held by that seat
+14% of the time against 22%. And a seat that threw what it had just drawn is *Ting Pai* 25.5% of the
+time against 16.4%. The Japanese *Suji* idea, that a thrown 5 makes the 2 and the 8 safer because
+the common two-sided *Wait* is blocked, rests on the mechanism we found too, that suited tiles deal
+in mostly by completing a run (tenpaiman, 2012). What does not transfer is the anchor. In *Riichi* a
+declaration tells you who is waiting. Nobody declares here, so the *Meld* count and the
+threw-what-it-drew tell have to do that job, and neither is certain. Two warnings belong with this
+group. Every argument of the form "they cannot hold a pair of it, so it is safe" is nearly worthless
+here, measured three ways. And more defence loses money steadily, so the danger drill is about
+throwing the right tile when you are scared, not about being scared more often.
 
 ## How honest the feedback is
 
@@ -162,22 +199,71 @@ This is the eighth idea, and it is the part most people skip. Every mistake gets
 happened, and the practice you do next is aimed at whatever keeps coming up. More puzzles will not
 fix a problem that is really about safety.
 
-Eight *Causes* fit this game. You never learnt the idea behind the right tile. You knew the idea and
-did not see it in this hand. You saw the situation but that throw was never on your list. You
-considered it and got the counting wrong. The counting was fine and you misread how dangerous your
-tile was. You were building a different hand from the one worth building. You missed something on
-the table. Or you found the right tile and threw something else anyway.
+Eight *Causes* fit this game, and they are the eight the Review tab offers. The app suggests one
+from the position and you confirm or correct it with a tap. Below is what each looks like at the
+table, how to recognise it in your log afterwards, and what fixes it. The sorting only starts once
+the result is out of the way. A throw that dealt in was not a mistake unless a safer throw was the
+*Measured Best*, and a throw that won was not right because it won. People find this nearly
+impossible: the same decision is judged worse when it turns out badly, even by people who say the
+outcome should not count (Baron and Hershey, 1988), and that result replicated cleanly in 2023.
 
-The app does half of this sorting for you. It reads the position and suggests a *Cause* — which shape
-card your throw broke, whether your tile cost the hand a step, whether you were on a different plan,
-whether yours was simply the more dangerous tile — and you confirm or correct it with one tap. The
-Review tab then tells you which *Cause* keeps coming up, and the Train tab will draw hands where
-exactly that *Cause* bites.
+You never learnt it. The throw broke a rule you have never read, usually one of the three big shape
+rules, and the card the app names is one you cannot give the reason for. The fix is the fourth
+idea: read the card, close it, explain it out loud, then do a short run of hands of that one type
+before it goes back into the mix, which is the one time the third idea allows a run.
+
+You knew it and did not see it. You can recite the rule and the hand did not look like the rule,
+usually a shape you know in a suit or arrangement you had not met. The fix is the Spot drill's shape
+question, not more reading.
+
+You never considered that tile. The right throw surprised you when the app showed it. The Train tab is built for it: say the candidates out loud before you choose, because finding options and proving them are different jobs.
+
+You miscounted. This covers what is left and how wide a *Wait* is. In the log the tell is a *Wait*
+you thought was live with three copies face up, or a narrow *Wait* kept over a wider one, which is
+the mistake the play-outs punish hardest. Counting is drilled by doing it every throw until it is
+not a separate step.
+
+You misjudged the safety. The counting was fine and the danger was wrong. This has two forms and
+the second is the one people miss. Too brave is throwing a fresh *Middle Tile* at a seat with three
+*Melds* when your own discard, or a tile already on the floor, would do. Too scared costs at least
+as much: turning the *Coach's* caution up loses money at every setting tried. In the log, a run of
+this *Cause* on late throws is too brave and a run on early throws is too scared. Believing a false
+read is the same *Cause*: feeding the seat with nothing showing, which is the second most expensive
+hand on the board, or fearing the late chaser, when the first seat to reach *Ting Pai* wins about
+twice as often. The fix is the Real quiz aimed at this *Cause*.
+
+You played for the wrong plan. Three things hide under this one. The colour hand: committing at
+seven or eight of a suit, or refusing at ten. The minimum: reaching *Ting Pai* on a *Wait* the
+2 *Tai* rule will not let you declare, which comes up about once in 180 throws. And the *Jokers*,
+which are a fact about the whole table. Without them a hand runs 54 *Turns* instead of 40, a late
+throw is about twice as likely to complete somebody, *Half Colour* is worth more and the cheap hand
+less. Playing a *Joker* table's patience at a no-*Joker* table is a plan mistake even when every
+throw was fine. In the log this *Cause* is a hand that was tidy all the way to a result you could
+not cash.
+
+You missed a tile on the table. Something in the *Discard Pool* or a *Meld* was face up and you did
+not take it in, and the replay shows it sitting there. The fix is the Spot drill's *Meld* question,
+and nothing else will do it.
+
+You knew, and threw something else. You found the right tile and did not play it. Two things cause
+this at a live table, and the note you write beside the card tells them apart. The first is tilt.
+After a bad beat the next few throws are made to get even rather than to be right. When your sense of how
+well you played attaches to whether you won, every losing streak becomes evidence against you, and
+the fix is to judge a session by the quality of the throws, in a ratio of about three process goals
+to one result goal (Tendler and Carter, 2011). The rule for this plan is short: after a deal-in,
+name whether the throw was the *Measured Best* before you name what it cost. The second is speed. A
+live table has no clock but it has three people waiting, and a throw made to keep up is a throw not
+thought about. Nothing here measures speed, so the fix is our best guess: shorten the Spot look until
+the shape question is right at three seconds, because a slow throw is usually a slow read.
+
+Calling has its own version of two of these. Passing a call that would have made you *Ting Pai* is
+"never considered", because a pass is a choice and most people do not list it. Calling when it
+costs a step is "wrong plan".
 
 The Spot drill has its own four, because it trains seeing rather than deciding: you did not take it
-in, you ran out of time, you saw it and read it wrongly, or you guessed. That distinction matters.
-Running out of time means lengthen the look. Misreading means the problem is not your eyes at all,
-and no amount of spotting practice will fix it.
+in, you ran out of time, you saw it and read it wrongly, or you guessed. Running out of time means
+lengthen the look. Misreading means the problem is not your eyes at all, and no amount of spotting
+practice will fix it.
 
 ## The stages
 
@@ -307,3 +393,26 @@ remembers is in your browser and nowhere else, so save it: the Table setup tab h
 writes your whole record to a file and another that puts it back. Do that at the end of the first
 week and then whenever you remember. A mistake record is worth most in its third and fourth week,
 which is exactly when losing it would cost the most.
+
+## Sources
+
+Every number in this file that is not attributed below was measured in this project and is written
+up, with its date and its error bars, in `FINDINGS.md`.
+
+Baron, J. and Hershey, J. C. (1988). Outcome bias in decision evaluation. Journal of Personality and
+Social Psychology, 54(4), 569–579. https://pubmed.ncbi.nlm.nih.gov/3367280/ — the same decision is
+judged worse when it turns out badly; used for why a mistake is sorted only after the result is set
+aside. The 2023 replication by Aiyer and others is at https://rips-irsp.com/articles/10.5334/irsp.751.
+
+Tendler, J. and Carter, B. (2011). The Mental Game of Poker.
+https://jaredtendler.com/books/the-mental-game-of-poker/ — tilt as the result of attaching your sense
+of skill to results; the three-to-one ratio of process goals to result goals is from Tendler's 2013
+PokerNews piece, https://www.pokernews.com/strategy/jared-tendler-in-defense-of-results-oriented-goals-15650.htm.
+
+Chiba, D. (2016). Riichi Book 1. https://riichi.wiki/Riichi_Book_1, with the book itself at
+https://f.hubspotusercontent-eu1.net/hubfs/26591288/Mahjong%20documents/Riichi/RiichiBook1.pdf — the
+five-block method, used for the shape group and for the pair rule that does not transfer here.
+
+tenpaiman (2012). Basic Defense Techniques in Mahjong. https://osamuko.com/basic-defense-techniques-in-mahjong/
+— *Genbutsu* and *Suji*, and the note that both apply against open hands with no *Riichi* declared;
+used for what does and does not transfer in the danger group.
