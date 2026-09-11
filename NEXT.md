@@ -1,96 +1,60 @@
-# Where we left off — 2026-09-10, evening
+# Where we left off — 2026-09-12
 
 Read this first. `Framework - Mahjong.md` is the plan this project exists to produce. `PLAN.md` is
 the app's roadmap, `MOBILE.md` the phone pass, `FINDINGS.md` everything measured and why.
 
-## First thing: is the deploy green?
+## Nothing is running. The site is green and current.
 
-Confirmed green at 18:20 on 2026-09-10: the merged Train tab, the 10k packs, the hand log and the
-green-dragon icon are all live and were loaded on a phone-sized viewport.
+Live at https://szethochangs.github.io/Mahjong/ (the `/Mahjong/` matters). Last deploy 636a7a3.
+Everything below is pushed; the tree is clean.
 
-**The sharding is committed (`8946d51`) and pushed.** Measured on this Mac, pack button to first
-question: 3,541 ms -> 784 ms, 15.03 MB -> 217 KB fetched, heap 164 MB -> 29 MB. Every old qid is
-present in the new packs, so nobody's record is orphaned. Not measured on a real phone yet - that is
-the one number still owed, and Changs can supply it by opening the Train tab on 4G.
+## What landed on 2026-09-11
 
-## A three-hour build may be running, finished, or cut off - check before anything else
+- **Every pack question verified twice.** `--verify 512` in `quizpack.ts` re-judges each admitted
+  question on fresh play-outs and drops it unless the gap still clears 2 SE. About a fifth went.
+  Rebuilt at `--max 12800` so the packs are back at ten thousand: coach 10,500, min1 10,473,
+  min1-nowild 10,257. Every earlier question id survives, so no stored card is orphaned.
+- **The phone pass, all four items.** Bottom bar (Train/Spot/Review/Tips/More), 48px targets,
+  safe areas, square table kept at a 22px tile; an update bar after every deploy; on-demand tabs
+  with the worker precaching every chunk; and the Challenge button running in the browser.
+- **The Play tab (prototype).** One hand against three coaches, then every decision judgeable
+  against the measured best. Committed 636a7a3.
+- **Framework draft.** "The mistake types" and "The patterns" rewritten with a Sources list.
 
-RESTARTED 01:40 on 2026-09-11, one pack at a time (min1, then min1-nowild, then coach): the first run at 21:10 ran all three at once, swapped the machine to a crawl and was killed. The relaunch crawled too for its first hour (10 s a question) while the swap from the killed run drained; by 02:45 it was back to 0.6 s a question with min1 at 750/10001 verified, dropping about 1 in 6. min1 FINISHED 04:27 on 2026-09-11: kept 8,156 of 10,001 admitted (18.4% did not hold at 2 SE on fresh play-outs, best changed on 26), written to `web/public/quiz/min1/` in 82 shards - not yet committed. min1-nowild FINISHED 06:19: kept 8,002 of 10,000 (20.0% dropped, best changed on 28), written to `web/public/quiz/min1-nowild/` in 81 shards - not yet committed. coach FINISHED 08:15: kept 8,133 of 10,001 (18.7% dropped, best changed on 25). All three verified packs committed and pushed 08:20 with the FINDINGS entry; the top-up (stream 2 below) started by itself at ~08:20. Note the verified packs land nearer 8.2k than the 10k Changs asked for; a top-up (`--max` ~12,300 so the drop lands at 10k) is a decision for him once all three are in. `data/gen/verify-chain.log` gets a "start <pack>" line as each begins. All three packs rebuilding with `--verify 512`, a second independent
-pass that drops questions whose gap does not hold on fresh play-outs (FINDINGS: "The packs overstate
-their certainty"). They rewrite `web/public/quiz/coach/`, `min1/` and `min1-nowild/` in
-place, so those directories are NOT safe to commit until each build's log says it finished.
+## What needs Changs
 
-How to tell, per pack, from `data/gen/pack-<name>-verified.log`:
+1. **Play a few hands and use the practice hour for a week.** The two questions: does the Play
+   loop feel like mahjong, and is the review worth reading. That decides what gets built next.
+2. **The late-game table at 360px.** With ~50 discards the square is ~410px wide against 320px of
+   card, so it scrolls inside its card. Accept that, or a smaller tile on late hands.
+3. **Read the framework draft** and say what is wrong in it.
+4. **The one number still owed:** pack button to first question on a real phone on 4G.
 
-    grep -E "verified at|questions ->" data/gen/pack-coach-verified.log
+## What is next to build, in the order I would do it
 
-Finished: both lines present ("verified at 512 fresh play-outs each: kept N, dropped M ..." then
-"N questions -> ..."). Cut off: either line missing. `pgrep -f quizpack.ts` says whether anything
-is still running.
+1. **The claim judge.** The Play review under-prices taking a win or making a call, because the
+   play-out bots never fold and rarely win first (FINDINGS, "The whole-hand judge is honest on
+   throws and not yet on claims"). The screen says so. The fix is a stronger rollout policy for
+   claim questions, measured against the known claim results before it is trusted.
+2. **The rest of the game**, per PLAN.md "Where this is going: a game": sessions, rotation, a
+   running score. Only after the loop has been played and the review is trusted.
+3. **Smaller:** an export button that posts a friend's record to Changs; the pack phase mix now
+   leans mid-hand (50% against 40% in the run).
 
-If all three finished: `./check.sh`, then commit the three directories and `web/public/quiz/
-index.json` together with `git commit --only`, push, watch the deploy, and add the measured drop
-rates to the FINDINGS entry (it predicts about a tenth; the smoke test at 64 play-outs dropped 60%,
-which was lack of power, not the curse - that is why the real pass uses 512).
+## Things that will bite whoever works here next
 
-If cut off, re-run the missing ones. From `datagen/`, one per pack, each takes about an hour
-(coach nearer two):
-
-    node ../node_modules/.pnpm/tsx@4.23.12/node_modules/tsx/dist/cli.mjs src/quizpack.ts \
-      --dir ../data/gen/run-coach2 --out ../web/public/quiz --name coach --max 10000 --mix decisive --verify 512
-    ... same with run-min1 / min1, and run-min1-nowild / min1-nowild
-
-Run them under `nohup` so a closed session cannot kill them; log to `data/gen/pack-<name>-verified.log`.
-
-## PUSHED 12:40 on 2026-09-11 at Changs's "Push": everything below is live
-
-Commits 2caa444 (web batch), 130fb92 (framework draft), 102b0c1 (eight new files the first
-commit missed - `git commit --only` skips untracked paths; `git add` new files first). Deploy
-green on 102b0c1. The top-up packs landed 15:19 and were copied in and pushed at 15:25: coach 10,500, min1
-10,473, min1-nowild 10,257, every earlier question id still present (0 orphaned cards). The
-`data/gen/topup/` directory can be deleted once the deploy is confirmed.
-
-## Overnight 2026-09-11 (Changs asleep from ~04:40): three streams running
-
-1. **Verify chain** as above; caffeinate is armed on it so the Mac does not idle-sleep. When it ends
-   (`data/gen/verify.done` appears): `./check.sh`, commit the three pack directories plus
-   `web/public/quiz/index.json` with `git commit --only`, push, watch the deploy, add the measured
-   drop rates to FINDINGS ("packs overstate their certainty": min1 dropped 18.4%).
-2. **Top-up to 10,000**, queued in `data/gen/topup/run.sh` (its own caffeinate). It waits for
-   `verify.done`, then rebuilds each pack at `--max 12800 --verify 512` into `data/gen/topup/quiz/`
-   (NOT web/public/quiz, so the committed packs are never half-written). Logs in
-   `data/gen/topup/pack-<name>.log`, `chain.log`; `topup.done` marks the end, expected mid-afternoon.
-   When done: check each pack's kept count, copy `data/gen/topup/quiz/<name>/` over
-   `web/public/quiz/<name>/`, regenerate/copy `quiz/index.json`, check.sh, commit, push.
-3. **Two Fable agents** in this working tree, both told not to run git: one doing the phone layout
-   pass (bottom bar with Train/Spot/Review/Tips + More, 48px targets, safe areas, square table kept
-   on phones; touches web/src only), one drafting "The mistake types" and "The patterns" in
-   `Framework - Mahjong.md` with a Sources list. BOTH FINISHED by 05:45: their changes sit
-   uncommitted for review. `./check.sh` is ALL GREEN with the layout changes in. The layout preview
-   is published at https://claude.ai/code/artifact/5a732dfe-0a3f-48a8-b16e-a99695c50fae (single
-   file, 600 questions a pack). One open point from the layout agent: a late-game table (50
-   discards) is ~410px wide at 22px tiles against 320px of card at 360, so it scrolls inside its
-   card; fitting it needs a smaller tile than the settled 22px. Changs decides.
-   06:45: a third agent finished MOBILE items 3 and 4 (bundle split with lazy tabs, SW update bar,
-   build-stamped worker). check.sh ALL GREEN with everything in. Also uncommitted. The single-file
-   build now needs `SINGLE_FILE=1 vite build` first.
-   11:45: a fourth agent built the IN-BROWSER CHALLENGE BUTTON (Changs asked "where is my
-   challenge button"): the play-out core moved to `solver/src/rejudge.ts` (datagen calls it; a
-   20-question pack build is bit-identical before/after), `solver/src/question.ts` rebuilds a
-   position from a pack question alone (proved identical outcome-for-outcome on 100 questions via
-   `datagen/src/rejudgecheck.ts`), a web worker runs 512 fresh play-outs on the phone (~1 s on the
-   Mac), and the result is written to the hand log and mistake card as a `challenged` note. The
-   dev-only /api/challenge is gone. check.sh ALL GREEN. Uncommitted with the rest.
-   12:10: the single-file build carries the worker inline (`window.__WORKER_SRC`, blob worker in
-   `web/src/lib/rejudge.ts`) and now has its own charset+viewport metas; Challenge verified in the
-   one-file preview (2.7 s for three actions at 512 on the loaded Mac). Preview republished at the
-   artifact URL above. `.claude/launch.json` gained `web-single` (python http.server on 5178 over
-   web/dist-single) for checking that build.
-   Top-up: min1 finished 10:32 (kept 10,473 of 12,801, 18.2% dropped) (see data/gen/topup/pack-min1.log), min1-nowild running, coach next.
-   Memory: an idle Ollama model was holding 3.5GB and swapping the Mac; unloaded 05:20 via
-   `curl localhost:11434/api/generate -d '{"model":"<name>","keep_alive":0}'` (app left running).
+- The repo path has a colon, so pnpm `.bin` shims fail. Call tools by their real dist paths and
+  glob the version directory. `./check.sh` runs exactly what CI runs; `tsc --noEmit -p .` in web/
+  checks nothing because that tsconfig is a solution file.
+- `git commit --only -- <paths>` silently skips UNTRACKED files inside a directory you name. `git
+  add` every new file first, or the pushed commit will not build. This has happened twice.
+- One long build at a time, and check `ps -eo rss,command | sort -rn | head` first: an idle Ollama
+  model held 3.5GB and made a two-hour build look like a twenty-hour one.
+- The single-file build needs `SINGLE_FILE=1 vite build` before `tools/singlefile.mjs`, and it
+  carries the Challenge worker inline on `window.__WORKER_SRC`.
 
 ## Retired packs
+
 
 `money` (the 4-joker min-2 table under an older name) and `nowild` (0 jokers, min 2, a table Changs
 does not play) were dropped from the site on 2026-09-10 at his say-so; copies live in
