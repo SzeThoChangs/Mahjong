@@ -69,7 +69,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | C-002 | CONFLICT | The original plan says Vercel; the site is on GitHub Pages; `vercel.json` remains | RESOLVED | Agent |
 | C-003 | CONFLICT | The framework describes two practice tabs with two judges; the app has one | OPEN | Changs |
 | DEP-001 | DEPENDENCY | GitHub Pages on the free tier needs the repository public, with the sources excluded | OPEN | Changs |
-| R-001 | RISK | The whole-hand judge under-prices taking a win or making a call | OPEN | Agent |
+| R-001 | RISK | The judge is measured wrong about taking a win; the cause is unknown | OPEN, narrowed | Agent |
 | R-002 | RISK | The coach uses the four-joker danger reads and weight at every table | OPEN | Agent |
 | R-003 | RISK | The no-joker pack cannot grow without more grading | OPEN | Agent |
 | R-004 | RISK | Positive measurements shrink on fresh deals | OPEN | Agent |
@@ -616,32 +616,44 @@ would publish the owner's books.
 
 ---
 
-## R-001 — The whole-hand judge under-prices taking a win or making a call
+## R-001 — The whole-hand judge is wrong about taking a win, and the cause is unknown
 
 **Type:** RISK
 
-**Description:** The Play tab judges each decision with the same play-outs as the packs. On the
-first played hand it called a pass on an offered win better than taking it, $11.57 against $7.00.
-The play-out bots never fold and rarely win first, so a hand still waiting keeps its whole future
-value in the roll-out while a hand cashed for the minimum banks a small number and stops. The bias
-is toward playing on. It is invisible in the packs, which are mostly discards where both branches
-carry on, and it shows on every claim in a whole hand.
+**Description:** The Play tab judges each decision with the same play-outs as the packs. On
+positions where a win is on offer and could be declined, it prefers declining about half the time,
+and that preference costs money: a coach that declines a win under two *Tai* loses 0.229 chips a
+game over 8,000 paired deals, and under three *Tai*, 0.944. Measured 2026-09-13.
 
-**Why It Matters:** The Play review is the reason the Play tab exists, and on calls and wins it is
-wrong in a known direction. The screen says so.
+The reason first written here was that the play-out bots never fold, so a waiting hand keeps its
+future value while a cashed one stops. **That was measured and it is wrong.** Putting the Coach in
+the other three chairs moves the gap by -0.48 ± 0.35, the wrong way. Replaying the hand's real
+hidden tiles instead of guessing them moves it by +1.13 ± 1.15. Three explanations are excluded -
+the rollout opponents, the hidden-tile guess, and noise - and none has replaced them. FINDINGS
+carries all of it.
 
-**Likelihood / Impact:** Certain on claim decisions; the size of the bias is unmeasured.
+**Why It Matters:** The Play review is the reason the Play tab exists. On one decision it is
+measured to be wrong, and the mechanism that would tell us which *other* decisions are affected is
+not understood. *Pong* and *Chow* verdicts have not been tested either way; the money test above
+covers declining a win, not calling a tile.
+
+**Likelihood / Impact:** Certain on the decision to take a win, and measured. Unknown on calls.
 
 **Owner:** Agent.
 
-**Mitigation:** The Play tab says on screen to trust it on throws and not yet on Pong, Chow or
-taking a win. The fix, a stronger rollout policy for claim questions, must be measured against the
-known claim results (calling beats passing 72% unconditionally and 88% when it makes the hand
-*Ting Pai*) before it is trusted. Not built as of 2026-09-12.
+**Mitigation:** The Play tab no longer marks taking a win as a mistake; the verdict reads "Not
+judged" and says why, and the session tally does not count it. The screen says throws are trusted
+and calls have not been checked. That is containment, not a fix.
 
-**Related:** D-002, D-021, Q-001, `PLAN.md`.
+**Resolution Method:** Two pieces, in this order. First, find the cause: the excluded explanations
+narrow it, and the next candidates worth instrumenting are what the acting seat's own rollout bot
+does after declining, and whether the hand-level payoff is complete for a branch that ends the hand
+early. Second, run the same paired-money design on calling rather than winning, which is the only
+thing that will settle *Pong* and *Chow*.
 
-**Status:** OPEN
+**Related:** D-002, D-021, D-027, Q-001, `PLAN.md`, `PROTOTYPE.md`.
+
+**Status:** OPEN, narrowed
 
 **Resolution:**
 

@@ -131,8 +131,9 @@ export const PLAY_ROLLOUTS = 256;
 /** What the judge said about one decision made at the table, in the Challenge button's language. */
 export interface PlayVerdict {
   /** best: yours came top and clear of the runner-up. close: inside the noise either way.
-   *  mistake: another action was clear of yours. */
-  kind: 'best' | 'close' | 'mistake';
+   *  mistake: another action was clear of yours. winTaken: you declared a win and the play-outs
+   *  preferred carrying on, which is the one verdict this judge is measured to get wrong. */
+  kind: 'best' | 'close' | 'mistake' | 'winTaken';
   /** the action the pick was measured against: the best of the rest when the pick came top,
    *  the best otherwise */
   reference: string;
@@ -164,7 +165,19 @@ export async function judgePlay(snap: Snapshot, rules: RulesConfig, seat: number
   if (!ref) return { kind: 'best', reference: pick, gap: 0, se: 0, n: PLAY_ROLLOUTS, ms: m.ms, actions };
   const { gap, se } = pairedGap(ref, mine);
   const clear = Math.abs(gap) > 2 * se;
-  const kind = !clear ? 'close' : gap > 0 ? 'mistake' : 'best';
+  let kind: PlayVerdict['kind'] = !clear ? 'close' : gap > 0 ? 'mistake' : 'best';
+  /**
+   * Taking a win is never called a mistake here, because on this one decision the judge is
+   * measured to be wrong. On fifty recorded positions where a win could be declined it preferred
+   * carrying on about half the time, and that preference is not an artefact: swapping the rollout
+   * opponents for the Coach did not move it, and neither did replaying the hand's real hidden
+   * tiles instead of guessing them. What settled it was money. A coach that declines a win under
+   * two Tai loses 0.23 chips a game over 8,000 paired deals, and under three Tai, 0.94 - the
+   * effect grows with the threshold, which is what a real one does. FINDINGS carries all three
+   * measurements. Until the cause is found, the honest thing is to say nothing rather than teach
+   * the opposite of what wins.
+   */
+  if (kind === 'mistake' && pick === 'win') kind = 'winTaken';
   return { kind, reference: ref.a, gap, se, n: PLAY_ROLLOUTS, ms: m.ms, actions };
 }
 

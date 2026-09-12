@@ -75,6 +75,7 @@ practice but should not claim the owner said it.
 | D-024 | 2026-08-23 | The copyrighted source material never leaves the machine | ACTIVE |
 | D-025 | 2026-09-12 | `prototype/` is ACTIVE, is a snapshot of the current build, and new features are prototyped there first | ACTIVE |
 | D-026 | 2026-08-30 | No Rust or WASM port for now | ACTIVE |
+| D-027 | 2026-09-13 | The Play review never marks taking a win as a mistake | ACTIVE |
 
 ---
 
@@ -909,3 +910,30 @@ truncated rollouts with a terminal value, which is a change of method rather tha
 **Impact:** Compute stays a constraint; see `PROJECT.md`.
 
 **Related Items:** D-004.
+
+---
+
+## D-027 — The Play review never marks taking a win as a mistake
+
+**Date:** 2026-09-13 · **Decided by:** Agent, on measurement · **Status:** ACTIVE
+
+**What was decided:** When a player declares a win and the play-outs prefer some other action, the
+Play tab's review shows "Not judged" and a sentence saying why, rather than "Mistake". The session
+tally does not count it.
+
+**Why:** The judge is measured to be wrong on exactly this decision. On 50 recorded positions where
+a win could be declined it preferred carrying on 23 times, and a coach that follows that preference
+loses 0.229 chips a game at a two *Tai* threshold and 0.944 at three, over 8,000 paired deals each,
+against three coaches and against the mixed field alike. Two candidate explanations were tested and
+excluded: the rollout opponents move the gap by -0.48 ± 0.35, and replaying the real hidden tiles
+moves it by +1.13 ± 1.15. `FINDINGS.md` carries all of it.
+
+**What was rejected, and why:** Leaving the verdict in with a warning. A player reading "Mistake"
+against a win they took learns the opposite of what makes money, and a warning at the top of the
+page does not undo a badge next to the decision. Also rejected: changing the rollout policy, which
+was the fix the previous entry proposed - it is measured not to be the cause.
+
+**What would reverse it:** Finding the cause and fixing it, then showing the verdict again. This is
+containment of a defect, not a view about mahjong.
+
+**Related:** `R-001`, D-002, D-021, `FINDINGS.md`, `datagen/src/winprice.ts`, `datagen/src/declinewin.ts`.

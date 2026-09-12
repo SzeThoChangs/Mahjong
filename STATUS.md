@@ -40,33 +40,35 @@ recorded in `DECISIONS.md` once made.
 
 ## Last Updated
 
-2026-09-12
+2026-09-13
 
 ## Current Phase
 
-LIVE. The app is deployed, installable, offline-capable and in use. See `PROJECT.md`.
+LIVE, and inside it Phase 6 of `PLAN.md` — *Use it*. See `PROJECT.md` for why the phase is LIVE.
 
 ## Current Focus
 
-Two things. The owner is to use the app for a week, play a few hands on the Play tab, and read the
-framework draft; that decides what is built next. And the project pack is being set up: the
-canonical files from `P-Starter.md`, with `prototype/` seeded as a snapshot of the current build
-under D-025.
+Waiting on the owner. The claim judge was measured on 2026-09-13 and produced a decision (`D-027`),
+so the one piece of work that needed nothing from him is done for now. What is left in it - finding
+why the judge is wrong, and testing calls as opposed to wins - is recorded under `R-001` and is
+worth doing after a week of use rather than before, because use may say the Play tab matters less
+than the drills do.
+
+The owner's week of use, a few played hands, and a read of the framework draft answer `Q-001` to
+`Q-004` and decide what is built next.
 
 ## In Progress
 
 | Work | Owner / Agent | State |
 |---|---|---|
-| The P-Starter bootstrap: the eight files this agent owns, and the definition spine and `NEXT.md`, `CLAUDE.md` and the project interface owned by others | Lead session and its agents | IN PROGRESS, uncommitted |
-| `prototype/` seeded as a runnable snapshot of the current build | Lead session | IN PROGRESS, uncommitted |
 | The owner's week of use | Changs | Not started as far as the record shows |
 
-The working tree carries uncommitted changes to `.gitignore` and `web/src/App.tsx`, and the
-untracked `INPUTS/`, `P-Starter.md` and `prototype/`. Those are the lead's work in flight, not
-stray edits.
+Nothing is running. The working tree carries the claim-judge work, uncommitted at the time of
+writing.
 
 ## Recently Completed
 
+- 2026-09-12: the P-Starter project pack, the project interface and the prototype launchpads, committed as `1257e4e` and `62d55ec` and deployed green.
 - 2026-09-12: the Play tab, one whole hand against three coaches with every decision judgeable
   afterwards (commit `636a7a3`); `NEXT.md` rewritten.
 - 2026-09-11: every pack question verified on 512 fresh play-outs and the packs rebuilt to about

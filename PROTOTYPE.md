@@ -258,25 +258,42 @@ prototype tracks a live product by decision; see the Lifecycle state section.
 
 ### The claim judge
 
-**Uncertainty addressed:** `R-001`. The whole-hand judge under-prices taking a win or making a
-call, because the play-out bots never fold and rarely win first.
+**Uncertainty addressed:** `R-001`. Whether the whole-hand judge can be trusted on the decision to
+take a win or make a call.
 
-**Origin:** Agent proposal, `PROPOSED`. Recorded as the first item in `NEXT.md` on 2026-09-12 and
-in `PLAN.md` Phase 7; the owner has not yet confirmed the order.
+**Origin:** Agent proposal, recorded in `NEXT.md` on 2026-09-12 and in `PLAN.md` Phase 7. Run on
+2026-09-13.
 
-**Why construction rather than another method:** Nothing can be read that answers it. The bias is a
-property of the rollout policy, and the only way to know whether a stronger policy fixes it is to
-build the policy and measure it.
+**Why construction rather than another method:** Nothing could be read that answers it. The claim
+in the record was about a mechanism inside the play-outs, and the only way to test a mechanism is
+to vary it and see whether the number moves.
 
-**What it is:** A rollout policy for claim questions that can fold and can take a win, played on
-the graded claim positions in the packs and compared with the known results: calling beats
-passing 72% of the time unconditionally, 88% when it makes the hand *Ting Pai*, and 6% when it
-costs the hand a step.
+**What was built:** Two tools in `datagen/`, both small and both kept. `winprice.ts` takes recorded
+positions where a win was on offer and could be declined, and judges each under interchangeable
+arms on the same seed and the same play-outs - a different rollout opponent, or the hand's real
+hidden tiles instead of guessed ones. `declinewin.ts` runs the project's paired-money design over
+a coach that declines cheap wins against one that does not.
 
-**What would constitute a useful result:** The new policy reproducing those three numbers within
-their error bars on the packs, and then, on the first played hand, no longer calling a pass on an
-offered win better than taking it.
+**Findings, 2026-09-13:**
 
-**Status:** PROPOSED
+1. **The stated cause is wrong.** Swapping the rollout opponents for the Coach moves the gap by
+   -0.48 against a standard error of 0.35, and in the opposite direction to the prediction.
+2. **The hidden-tile guess is not the cause either.** Using the hand's real tiles moves it by
+   +1.13 ± 1.15, and of the 23 positions where the judge declines a win, the real tiles agree with
+   it on 19.
+3. **The judge is nonetheless wrong.** Declining cheap wins loses money at every threshold and
+   against both fields, 0.229 chips a game under two *Tai* and 0.944 under three, over 8,000
+   paired deals each. An effect that grows with the dose is a real one.
+4. **So the cause is unknown.** Three explanations are excluded and none replaces them.
 
-**Findings:** None yet.
+**What was accepted into the project:** `D-027`, the review no longer marks taking a win as a
+mistake. `R-001` rewritten and narrowed. The `FINDINGS.md` entry replaced - the old one asserted
+a mechanism from a single played hand, and the mechanism was not there.
+
+**What it does not establish:** Anything about *Pong* and *Chow*. The money test covers declining
+a win, not calling a tile, and the two are different decisions. Saying so is the point: the
+previous entry generalised from one hand to every claim, and that is what went wrong.
+
+**Status:** RUN, and it produced a decision. The follow-on - finding the cause, and the same money
+design applied to calling - is recorded in `R-001` under Resolution Method, not here.
+

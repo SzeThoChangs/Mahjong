@@ -1986,22 +1986,59 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
-### The whole-hand judge is honest on throws and not yet on claims (2026-09-11)
+### The whole-hand judge prices a claim the same way it prices a throw, and is wrong about taking a win (2026-09-13)
 
-The Play tab judges each of your decisions with `rejudge`, the same instrument as the packs and the
-Challenge button. On a first played hand it called a Pass on an offered win better than taking it
-($11.57 against $7.00), and the Win eventually taken a mistake for the same reason.
+The entry that stood here from 2026-09-11 said the Play tab's judge under-prices a call because
+the play-out bots never fold and rarely win first, so a hand still waiting keeps its future value
+while a hand cashed for the minimum banks a small number and stops. That was written from one
+played hand and a plausible mechanism. Both halves have now been measured and the mechanism is
+wrong. The conclusion survives; the reason does not.
 
-WHY. The play-outs run `shanten` bots, which never fold and rarely win first, so a hand that is
-still waiting keeps its whole future value in the roll-out while a hand cashed for the table minimum
-banks a small number and stops. The bias is toward playing on. It is invisible in the packs because
-those are mostly discards, where both branches carry on, and it shows on every claim in a whole
-hand, where one branch ends the hand and the other does not.
+THE SETUP. `datagen/src/winprice.ts` finds recorded positions where a win was legally on offer and
+could be declined - 50 of them, one per hand so the sample is not one hand's luck - and judges each
+under different arms on the same seed and the same 512 play-outs. Taking a win is terminal and its
+payoff is exact, so no arm can move it; any movement is in the alternative, and the gap between
+them is what the verdict on screen is made of. The win's value came back identical to the cent
+across every arm, which is the check that the measurement works at all.
 
-WHAT WAS DONE. The Play tab says so on screen rather than being believed: trust it on throws, not
-yet on Pong, Chow or taking a win. The fix is a stronger rollout policy for claim questions,
-measured against known claim results (calling beats passing 72% unconditionally, 88% when it makes
-the hand Ting Pai) before it is trusted. Not built as of 2026-09-11.
+    arm                          mean win   mean alternative   mean gap   win is best
+    shanten bots (shipped)         15.71          10.71          +5.01       27 / 50
+    three Coaches                  15.71          11.19          +4.52       27 / 50
+    shanten, the REAL hidden tiles 15.72           9.58          +6.14       26 / 50
+
+NEITHER CANDIDATE HOLDS. Putting the Coach in the other three chairs moves the gap by -0.48 against
+a standard error of 0.35, and moves it the wrong way: better opponents make a cheap win look
+slightly *worse*, not better. Four verdicts flip and they flip two each way. Replacing the guessed
+hidden tiles with the hand's real ones moves the gap by +1.13 against a standard error of 1.15.
+Of the 23 positions where the judge declines the win, the real tiles agree with it on 19. So the
+judge is not being misled by weak opponents and it is not being misled by its own guessing. It
+genuinely thinks declining an available win is right about half the time.
+
+THE COACH DISAGREES, AND THE MONEY AGREES WITH THE COACH. `CoachBot` takes an available win in
+both code paths, without a condition. `datagen/src/declinewin.ts` runs the project's own bar over
+that disagreement: paired deals, the same seat, the same wall, one thing different - arm B declines
+a win worth fewer than N Tai while more than 20 tiles remain, which is the crudest version of what
+the judge is saying.
+
+    threshold and field                     coach minus decliner   paired deals
+    under 2 Tai, three Coaches                 +0.229 ± 0.027       8,000   (8.6 SE)
+    under 3 Tai, three Coaches                 +0.944 ± 0.061       8,000  (15.5 SE)
+    under 2 Tai, the recorded field            +0.191 ± 0.024       8,000   (8.0 SE)
+
+Declining loses everywhere, and it loses four times as much at the higher threshold. An effect that
+grows with the dose is a real one, not noise, and it is the same direction against three Coaches
+and against the mixed field. Taking the win is right and the judge is wrong about it.
+
+WHAT WAS DONE. The Play tab no longer calls taking a win a mistake. The verdict reads "Not judged"
+and says why in a sentence. The session tally does not count it. Teaching a player to decline wins
+that win money would be worse than saying nothing, and saying nothing is what the evidence
+supports today.
+
+WHAT IS STILL UNKNOWN. Why. Three explanations are now excluded - the rollout opponents, the
+hidden-tile guess, and noise - and no replacement has been measured. Until one is, the same doubt
+hangs over *Pong* and *Chow* verdicts, which have not been tested either way: the money test here
+covers declining a win, not calling a tile. That is `R-001` in `OPEN-ITEMS.md`, and the instrument
+for it is the same paired-money design used above.
 
 ### The no-joker table wants a braver danger weight and the same value tables (2026-09-06)
 

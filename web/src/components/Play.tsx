@@ -381,7 +381,7 @@ export default function Play() {
               decision to take a win or make a call, and it says so rather than being believed.
               FINDINGS carries the measurement; the fix is a stronger rollout policy for claims.
             */}
-            <p className="text-muted-foreground">Trust it on throws. On <J>Pong</J>, <J>Chow</J> and taking a win it is not reliable yet: the play-outs push on rather than cashing a small win, so they under-price a claim.</p>
+            <p className="text-muted-foreground">Trust it on throws. It does not mark taking a win against you, because on that one decision it is measured to be wrong. On <J>Pong</J> and <J>Chow</J> it has not been checked either way.</p>
             <div className="flex flex-wrap gap-2 pt-1">
               <Button onClick={deal}>Play another hand</Button>
               {judgedCount < hand.decisions.length && (
@@ -441,13 +441,14 @@ function DecisionRow({ d, verdict, progress, error, onJudge }: {
   const ringAt = chosenKind === null || ringOnDrawn ? -1 : shown.indexOf(chosenKind);
   const v = verdict?.v;
   const style = v?.kind === 'best' ? 'bg-emerald-600 text-white' : v?.kind === 'mistake' ? 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50' : 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-50';
-  const badge = v?.kind === 'best' ? 'Best' : v?.kind === 'mistake' ? 'Mistake' : 'Too close to call';
+  const badge = v?.kind === 'best' ? 'Best' : v?.kind === 'mistake' ? 'Mistake' : v?.kind === 'winTaken' ? 'Not judged' : 'Too close to call';
   const x = v ? fmt(Math.abs(v.gap)) : '', y = v ? fmt(v.se) : '', ref = v ? textOf(v.reference) : '';
   const mineTop = v ? v.actions[0]?.a === chosen : false;
   const words = !v ? null
     : v.actions.length < 2 ? <>Nothing else was legal, so there was nothing to compare.</>
     : v.kind === 'best' ? <>Nothing compared came close: the runner-up, {ref}, is {x} behind (about ±{y}).</>
     : v.kind === 'mistake' ? <>{ref[0]!.toUpperCase() + ref.slice(1)} was worth <b>{x}</b> more (about ±{y}).</>
+    : v.kind === 'winTaken' ? <>The play-outs preferred {ref} by {x}, and that is the one thing this judge is known to get wrong: a player who declines cheap wins loses money. Taking a win is not marked against you.</>
     : mineTop ? <>Yours came top, but {ref} is within the noise — {x} apart, about ±{y}.</>
     : <>{ref[0]!.toUpperCase() + ref.slice(1)} measured {x} better, inside the noise of ±{y} — not a worse move, an unmeasurable one.</>;
 

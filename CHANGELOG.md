@@ -46,6 +46,23 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-13 — The claim judge measured, and the review stops second-guessing a win
+
+**Changed:** The Play tab's review no longer marks taking a win as a mistake; the verdict reads
+"Not judged" and gives the reason, and the session tally ignores it. The warning above the review
+now says what is actually known. Two measurement tools are added to `datagen/`, `winprice.ts` and
+`declinewin.ts`.
+
+**Why:** The warning that stood there claimed the judge under-prices a call because the play-out
+bots never fold. That came from one played hand. Measured over 50 recorded win offers, neither the
+rollout opponents nor the guessed hidden tiles move the number, so the stated cause is wrong - but
+the judge is wrong anyway, because a coach that declines cheap wins loses 0.229 chips a game at two
+*Tai* and 0.944 at three, over 8,000 paired deals against both fields.
+
+**Impact:** `D-027` recorded. `R-001` rewritten and narrowed to what is measured. The `FINDINGS.md`
+entry replaced. Nothing about *Pong* and *Chow* is settled, and the record now says so rather than
+generalising from a single hand.
+
 ### 2026-09-12 — The project pack is introduced, and the prototype folder is made active
 
 **Changed:**

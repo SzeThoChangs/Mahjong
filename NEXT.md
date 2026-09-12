@@ -59,82 +59,77 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-09-12 17:20
+2026-09-13 02:30
 
 ## Last Session / Work Package
 
 ### What We Were Doing
 
-Laying the P-Starter project structure over an existing, live project, at the owner's request. The
-app itself was already built, deployed and in use; what was missing was a place for the specs and
-the decisions to live. The same session also seeded the prototype as a snapshot of the current
-build, because the owner decided the prototype should be the current build and that future features
-get prototyped before production code is written.
+The claim judge (`R-001`) — the one item on the plan that needed nothing from the owner. The Play
+tab's review carried a warning that it could not be trusted on calls or on taking a win, and a
+stated reason. Both had been written from a single played hand, so the first job was to measure
+them rather than build the fix they implied.
 
 ### What Was Completed
 
-- The sixteen canonical files exist and are populated from the evidence that was already here:
-  `PLAN.md` and `NEXT.md` rewritten to the P-Starter shape, the other fourteen created.
-- `INPUTS/`, `RESEARCH/` and `prototype/` created. The old `PLAN.md` and `NEXT.md` are preserved in
-  `INPUTS/` rather than lost.
-- Twenty-six decisions harvested out of `FINDINGS.md`, `MOBILE.md` and the commit history into
-  `DECISIONS.md`, where before they were scattered and only findable by reading everything.
-- Twenty-four open items recorded, including five conflicts nobody had written down.
-- The prototype seeded: `prototype/build.sh` regenerates `prototype/app.html`, a single-file
-  snapshot of the current build that runs with no server.
-- The app now reads and writes the tab in the address bar, so a feature record can link to its own
-  screen instead of the front page.
-- `vercel.json` removed. It configured a service this project does not deploy to, and a later
-  session reading it would have believed otherwise.
+- The stated reason is measured and wrong. Putting the Coach in the other three chairs moves the
+  gap by -0.48 against a standard error of 0.35, and in the opposite direction to the prediction.
+- A second explanation is excluded too: replaying the hand's real hidden tiles instead of guessing
+  them moves the gap by +1.13 ± 1.15.
+- The judge is nonetheless wrong on this decision, shown by the project's own bar. A coach that
+  declines a win under two *Tai* loses 0.229 chips a game over 8,000 paired deals, and under three
+  *Tai*, 0.944, against three coaches and against the mixed field alike.
+- The review no longer marks taking a win as a mistake (`D-027`). It reads "Not judged" and says
+  why in a sentence; the session tally ignores it.
+- `FINDINGS.md`, `R-001`, `PROTOTYPE.md`, `DECISIONS.md`, `STATUS.md` and `CHANGELOG.md` updated to
+  what is measured. Two tools kept: `datagen/src/winprice.ts` and `datagen/src/declinewin.ts`.
 
 ### What Changed
 
-- One production change: tab deep-linking in `web/src/App.tsx`.
-- Everything else is new project-knowledge files, the prototype scaffolding and the project
-  interface. No behaviour of the app changed.
+- `web/src/lib/rejudge.ts` gains a fourth verdict kind; `web/src/components/Play.tsx` renders it
+  and the warning above the review is rewritten.
+- No other app behaviour moved.
 
 ### What Was Not Completed
 
-- The owner has not reviewed any of it. The files are the agents' best reading of the evidence, not
-  confirmed intent, and they are marked accordingly.
-- Eight questions surfaced during the reading that need the owner, listed below.
-- The framework's description of the practice hour still contradicts the app (`C-003`).
+- **Why** the judge prefers declining is still unknown. Three explanations are excluded and none
+  replaces them.
+- *Pong* and *Chow* verdicts remain untested in either direction. The money test covers declining
+  a win, not calling a tile.
 
 ### Files / Areas Changed
 
-- The sixteen canonical files at the project root, plus `INPUTS/`, `RESEARCH/`, `prototype/` and
-  `project-view/`.
-- `web/src/App.tsx` for the hash routing.
-- `.gitignore`, for the generated prototype snapshot.
+- `web/src/lib/rejudge.ts`, `web/src/components/Play.tsx`.
+- `datagen/src/winprice.ts`, `datagen/src/declinewin.ts` (new).
+- `FINDINGS.md`, `OPEN-ITEMS.md`, `DECISIONS.md`, `PROTOTYPE.md`, `STATUS.md`, `CHANGELOG.md`.
 
 ## Where We Stopped
 
-The structure is complete and the working tree is uncommitted. Nothing is running.
+The work is committed and the deploy is green. Nothing is running.
 
 ## Recommended Next Action
 
 ### Next
 
-The owner answers the questions under **Owner Input Required**, starting with the practice hour.
+The owner uses the app for a week and plays a few hands, then answers the questions under **Owner
+Input Required**.
 
 ### Why
 
-The structure now records what this project believes, and most of it is the agents' reading of code
-and documents rather than anything the owner has confirmed. The single largest thing it cannot
-settle for itself is what the practice hour is, now that the two practice tabs are one tab. That
-question is upstream of the training plan, of what the app should do next, and of whether the
-framework draft is right. Building anything else first risks building it against a plan that is
-about to change.
+Every remaining piece of work is aimed by something only he can say. The judge's remaining defect
+matters a lot if the Play tab turns out to be where he spends his time and very little if it does
+not, and a week of use is the cheapest way to find out which. The practice-hour question is
+upstream of the training plan, of the app, and of whether the framework draft is right, and it has
+been open since the two practice tabs merged.
 
 ### Expected Outcome
 
-`C-003` closed, the framework's practice hour matching the app, and the open items that turn on it
-either answered or knowingly deferred.
+`Q-001` to `Q-004` answered, `C-003` closed, and a defensible order for the rest of Phase 7.
 
 ## After That
 
-1. Fix the claim judge, so the Play tab's review can be trusted on calls and on taking a win.
-2. Play a week of hands and practice hours, and record what the loop actually feels like.
+1. Find why the judge prefers declining a win, now that three explanations are excluded.
+2. Run the same paired-money design on calling rather than winning, to settle *Pong* and *Chow*.
 3. Build the next piece of the game, if the week says the loop is worth it.
 
 *Likely subsequent steps, not commitments. Reassess after the immediate action.*
