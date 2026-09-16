@@ -268,6 +268,32 @@ prototype tracks a live product by decision; see the Lifecycle state section.
 
 ## Targeted Experiments / Spikes
 
+### Should the Coach call Pong more or less at a no-Joker table?
+
+**Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on
+positions where the pack says Pong. A count of changed answers cannot say which is right.
+
+**Origin:** Changs chose the money test over re-grading, 2026-09-17.
+
+**What was built:** `datagen/src/coachgrade.ts --select pong`, which judges every chosen Pong
+question twice on the same deals, and `datagen/src/pongmoney.ts`, which plays paired deals where one
+seat's Coach holds Pongs to a different bar from the shipped 0.4 chips. Self-check before any
+result: at a bar of 0.4 it returns exactly 0.000 against the shipped Coach on both fields, with the
+same Pong count, over 240 paired deals each.
+
+**Named before the run:**
+
+- Stage one: 600 of the 2,193 0-Joker pack questions whose best is Pong, hashed by id, at 256
+  play-outs, simple bots against the no-Joker Coach.
+- Stage two: Pong bars 0, 1.5 and 3 against the shipped 0.4, 2,000 deals per seat in all four
+  chairs, 8,000 paired deals each. Deals 7710001 to 7712000 against three Coaches, 7720001 to 7722000
+  against the recorded personalities. A bar is called better only at more than two standard errors.
+
+**Status:** RUNNING
+
+**Findings:** None yet.
+
+
 ### The claim judge
 
 **Uncertainty addressed:** `R-001`. Whether the whole-hand judge can be trusted on the decision to

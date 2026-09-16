@@ -34,8 +34,15 @@ const hard = (q: Q) => {
 const dir = `../web/public/quiz/${pack}`;
 const ix = JSON.parse(readFileSync(join(dir, 'index.json'), 'utf8')) as { table: { wildcards: number } };
 const all: Q[] = [];
+/**
+ * `--select hard` (default) is the app's hard-only test. `--select pong` takes every claim where the
+ * pack's best is a Pong, and judges only that Pong against passing - the positions the money test
+ * asks about.
+ */
+const select = arg('select', 'hard');
+const picked = (q: Q) => (select === 'pong' ? q.k === 'claim' && q.best.startsWith('pong') && q.actions.some((a) => a.a === 'pass') : hard(q));
 for (const f of readdirSync(dir).filter((x) => /^\d+\.json$/.test(x)).sort())
-  for (const q of (JSON.parse(readFileSync(join(dir, f), 'utf8')) as { questions: Q[] }).questions) if (hard(q)) all.push(q);
+  for (const q of (JSON.parse(readFileSync(join(dir, f), 'utf8')) as { questions: Q[] }).questions) if (picked(q)) all.push(q);
 // a fixed, spread-out sample: order by a hash of the id, take the first N, then this worker's share
 const sample = all.sort((a, b) => fnv1a(a.id) - fnv1a(b.id)).slice(0, N).filter((_, i) => i % workers === worker);
 
@@ -49,7 +56,7 @@ for (const q of sample) {
   try {
     const snap = snapshotFromQuestion(q, rules);
     const p = pendingOf(snap, rules);
-    const want = [...q.actions].sort((x, y) => y.ev - x.ev).slice(0, top).map((x) => x.a);
+    const want = select === 'pong' ? [q.best, 'pass'] : [...q.actions].sort((x, y) => y.ev - x.ev).slice(0, top).map((x) => x.a);
     const legal = p.legal.filter((l) => want.includes(encAction(l)));
     const judge = (policy: 'shanten' | (() => CoachBot)) => {
       const r = rejudge(snap, rules, p.seat, legal, { rollouts, seed, key: q.id, policy });
@@ -60,7 +67,9 @@ for (const q of sample) {
     const C = judge(coach);
     const inC = (a: string) => C.all.find((x) => x.a === a)!;
     const g = pairedGap(inC(C.best), inC(S.best));         // coach arm: its own best minus the shanten arm's best
-    const line = { id: q.id, k: q.k, pack: q.best, shanten: S.best, coach: C.best, gap: g.gap, se: g.se, clear: C.best !== S.best && g.gap > 2 * g.se, ms: Date.now() - t0 };
+    const evOf = (arm: typeof S, a: string) => arm.all.find((x) => x.a === a)?.ev ?? null;
+    const line = { id: q.id, k: q.k, t: q.t, pack: q.best, shanten: S.best, coach: C.best, gap: g.gap, se: g.se, clear: C.best !== S.best && g.gap > 2 * g.se,
+      evS: Object.fromEntries(want.map((a) => [a, evOf(S, a)])), evC: Object.fromEntries(want.map((a) => [a, evOf(C, a)])), ms: Date.now() - t0 };
     appendFileSync(out, JSON.stringify(line) + '\n');
     console.log(`${q.id.padEnd(14)} ${q.k.padEnd(8)} pack ${q.best.padEnd(12)} shanten ${S.best.padEnd(12)} coach ${C.best.padEnd(12)} ${line.clear ? 'CHANGED' : C.best !== S.best ? 'noise' : 'same'}  ${(line.ms / 1000).toFixed(0)}s`);
   } catch (e) {
