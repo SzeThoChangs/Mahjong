@@ -40,7 +40,7 @@ recorded in `DECISIONS.md` once made.
 
 ## Last Updated
 
-2026-09-13
+2026-09-16
 
 ## Current Phase
 
@@ -48,26 +48,22 @@ LIVE, and inside it Phase 6 of `PLAN.md` — *Use it*. See `PROJECT.md` for why 
 
 ## Current Focus
 
-Waiting on the owner. The claim judge was measured on 2026-09-13 and produced a decision (`D-027`),
-so the one piece of work that needed nothing from him is done for now. What is left in it - finding
-why the judge is wrong, and testing calls as opposed to wins - is recorded under `R-001` and is
-worth doing after a week of use rather than before, because use may say the Play tab matters less
-than the drills do.
-
-The owner's week of use, a few played hands, and a read of the framework draft answer `Q-001` to
-`Q-004` and decide what is built next.
+Changs is using the app and sending what is wrong with it screen by screen. On 2026-09-16 that
+produced `D-028` and `D-029`: harder questions by default, his own table (0 Jokers, min 1) as the
+default everywhere, the Coach reasoning at the table in play, and a green table. The open question
+behind it is whether "hard only" is hard enough for him (`A-005`), which only his use can answer.
 
 ## In Progress
 
 | Work | Owner / Agent | State |
 |---|---|---|
-| The owner's week of use | Changs | Not started as far as the record shows |
+| Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
 
-Nothing is running. The working tree carries the claim-judge work, uncommitted at the time of
-writing.
+Nothing is running. The working tree is clean after the 2026-09-16 push.
 
 ## Recently Completed
 
+- 2026-09-16: hard only on by default, 0 Jokers and min 1 as the default pack and Table setup, the Coach's reasoning at the table in play, the green felt table, the seat details in the question card, and the dealer badge under the wind on phones (`f34d847`, `1b64f3f`); ten passes for each set recorded in `MISTAKES.md`.
 - 2026-09-12: the P-Starter project pack, the project interface and the prototype launchpads, committed as `1257e4e` and `62d55ec` and deployed green.
 - 2026-09-12: the Play tab, one whole hand against three coaches with every decision judgeable
   afterwards (commit `636a7a3`); `NEXT.md` rewritten.
@@ -88,8 +84,12 @@ writing.
 - The phone's rebuild of a position from a pack question alone gives identical play-outs, outcome
   for outcome, on 100 of 100 questions against the recorded run (`datagen/src/rejudgecheck.ts`,
   2026-09-11).
-- Offline: built, served, server stopped, page reloaded; the app renders, deals and draws its
-  tiles with nothing on the network (commit `804a911`, 2026-09-07).
+- Offline: measured 2026-09-13 at 23:49 against the deployed site, `szethochangs.github.io/Mahjong/`,
+  in a fresh browser at 393px. The service worker installs and controls the page after one online
+  load. With the network cut, the page reloads with no page errors, and ten positions in a row
+  answer and load with every tile drawn, 27 to 102 tiles each, none broken. Each run, between 13 and
+  84 background requests for `/quiz/coach/` shards fail offline; none stopped a position loading.
+  Not checked: a local build of the uncommitted working tree.
 - Layout at 360, 393 and 430: no control under 48px, no sideways page scroll (commit `2caa444`).
 - The `self` arm of the money harness returns exactly zero, which is the check that every
   chips-per-game figure in `FINDINGS.md` depends on.

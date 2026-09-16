@@ -49,8 +49,8 @@ It should stay short and stable. Project changes normally change the project fil
 
 The project files are agent memory, not owner forms. The owner should never have to operate them.
 
-The owner: provides information · answers material questions · reviews the prototype · gives
-feedback · makes decisions when genuinely required.
+The owner: provides information, answers material questions, reviews the prototype, gives
+feedback, makes decisions when genuinely required.
 
 The owner should **never** be asked which file something belongs in, which ID to create, whether
 something is a spec rule or a feature, whether it is an open item, whether a decision or changelog
@@ -189,7 +189,7 @@ if not, record a `CONFLICT` and surface it. Do not rewrite files to make them lo
 automatically project truth.**
 
 Do not edit an input to agree with current understanding. Cite sources for consequential content
-(e.g. `INPUTS/2026-03-04-brief.pdf § 4.2`). Add new material with a dated filename.
+(e.g. `INPUTS/2026-03-04-brief.pdf section 4.2`). Add new material with a dated filename.
 
 
 ---
@@ -402,10 +402,31 @@ A count is not evidence of the thing the count was supposed to prove.
 
 ---
 
+## After building or changing anything
+
+**Run the ten passes** — define the test boundary, then one pass per dimension, recorded in
+`MISTAKES.md` with the pasted `date` output. They cannot be shortened, skipped or declared satisfied
+early; a dimension that genuinely cannot apply is recorded as `not run — <reason>`. Only the owner
+lifts this. The full procedure is in `P-Starter.md`, Part 9.
+
+**Report measurements, not verdicts, and every report says `Not checked: ...`.**
+
+**When a kind of mistake repeats, increase its count in `MISTAKES.md` immediately.** On every third
+occurrence, say so plainly with *I am fucked up*, adding one *very* for each further three, and build
+a check that can catch it.
+
+`check-evidence.js` runs after every edit through `.claude/settings.json`. `check-screens.js` opens
+every screen of the prototype — run it with `BASE_URL` pointing at the running prototype, and set
+`STAT_SELECTOR` before trusting a clean result.
+
+---
+
 ## Structure
 
-The canonical structure is the sixteen files above plus `INPUTS/`, `RESEARCH/` and `prototype/`. Do
-not add canonical files or directories, and do not split existing ones.
+The canonical structure is the seventeen files above, including `MISTAKES.md`, plus
+`check-evidence.js`, `check-screens.js`, `check-screens-known.json`, the `.claude/settings.json` hook,
+and the directories `INPUTS/`, `RESEARCH/` and `prototype/`. Do not add canonical files or
+directories, and do not split existing ones.
 
 If a file genuinely becomes too large or unnavigable, do not migrate it automatically. Explain the
 problem, why the current structure is insufficient, the smallest change that solves it, and how

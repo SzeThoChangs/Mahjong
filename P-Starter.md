@@ -92,19 +92,19 @@ The owner provides messy, incomplete material — requirements, ideas, meeting n
 client documents, screenshots, emails, existing specs, feedback, change requests, rough thoughts —
 and communicates naturally:
 
-> "Client changed this requirement." · "This screen is wrong." · "We decided to use Apple Watch."
-> · "Forget this feature for v1." · "This workflow needs approval first." · "What's blocking us?"
+> "Client changed this requirement.", "This screen is wrong.", "We decided to use Apple Watch.",
+> "Forget this feature for v1.", "This workflow needs approval first.", "What's blocking us?"
 
 The agent translates that into the right project-state changes.
 
 ## What the owner does — and does not do
 
-**The owner:** provides information · answers material questions · reviews the prototype · gives
-feedback · makes decisions when genuinely required · reviews the actual product.
+**The owner:** provides information, answers material questions, reviews the prototype, gives
+feedback, makes decisions when genuinely required, reviews the actual product.
 
-**The owner never has to decide:** which file information belongs in · which ID to create ·
-whether something is SPEC or FEATURES · whether something is an open item · whether a decision
-needs recording · whether the changelog needs updating · which files need synchronising.
+**The owner never has to decide:** which file information belongs in, which ID to create,
+whether something is SPEC or FEATURES, whether something is an open item, whether a decision
+needs recording, whether the changelog needs updating, which files need synchronising.
 
 That is the agent's job, every time.
 
@@ -151,7 +151,7 @@ whether that changes a journey, the spec, a feature, a workflow, a story, an ass
 decision, the plan, the prototype, status, the next action, or project history — then updates only
 what actually changed.
 
-The owner should never have to say *"update WF-004, F-007, US-012 and SPEC §4.3."*
+The owner should never have to say *"update WF-004, F-007, US-012 and SPEC section 4.3."*
 
 ## Generate first, clarify second
 
@@ -178,11 +178,19 @@ PROJECT.md      USERS.md        USER-JOURNEYS.md   SPEC.md
 FEATURES.md     WORKFLOWS.md    USER-STORIES.md    PROTOTYPE.md
 RESEARCH.md     OPEN-ITEMS.md   DECISIONS.md       PLAN.md
 STATUS.md       NEXT.md         CHANGELOG.md       CLAUDE.md
+MISTAKES.md
+
+check-evidence.js   check-screens.js   check-screens-known.json
+.claude/settings.json
 
 INPUTS/         RESEARCH/       prototype/
 ```
 
-Sixteen Markdown files and three directories. That is the whole structure.
+Seventeen Markdown files, two check scripts with one findings file, one hook file, and three
+directories. That is the whole structure.
+
+**`MISTAKES.md`, the two scripts and the hook exist for the ten passes (Part 9).** `check-screens.js`
+and `check-screens-known.json` are created only where the project has a UI.
 
 Note the two pairings: `PROTOTYPE.md` with `prototype/`, and `RESEARCH.md` with `RESEARCH/`. In
 both, **the Markdown file is the register — what exists, what it found, what was accepted — and the
@@ -241,6 +249,9 @@ lost that understanding.** Writing to the project files is the work, not paperwo
 | `NEXT.md` | Where did we stop and what should happen next? |
 | `CHANGELOG.md` | What materially changed over time? |
 | `CLAUDE.md` | How should the agent work here? |
+| `MISTAKES.md` | What does the agent get wrong repeatedly, and what did each set of passes measure? |
+| `check-evidence.js` | Does every claim that something was checked say when or how? |
+| `check-screens.js` | Does every reachable screen render without errors, blanks or broken values? |
 | Git | What exactly changed in the files and code? |
 | `prototype/` | The working prototype implementation. |
 
@@ -306,8 +317,8 @@ format change that fixes it** (Part 11). Complexity must be earned.
 
 ## The distinctions that blur
 
-**`STATUS` vs `NEXT` vs `PLAN` vs `CHANGELOG`** — current state · immediate handoff · intended
-direction · meaningful history. All four can be true at once:
+**`STATUS` vs `NEXT` vs `PLAN` vs `CHANGELOG`** — current state, immediate handoff, intended
+direction, meaningful history. All four can be true at once:
 
 > `STATUS`: "Prototype v2 is active. Seven of nine core workflows tested."
 > `NEXT`: "Equipment search done; QR camera permissions unfinished. Next: US-014, test on device."
@@ -317,14 +328,14 @@ direction · meaningful history. All four can be true at once:
 Keep `STATUS` and `NEXT` **short**. They are read at the start of every session and exist for agent
 continuity, not as reports.
 
-**`DECISIONS` vs `CHANGELOG`** — the choice and its reasoning · that something materially changed
+**`DECISIONS` vs `CHANGELOG`** — the choice and its reasoning, that something materially changed
 and when. A changelog entry references the decision; it does not restate the reasoning.
 
 **`USER-JOURNEYS` vs `WORKFLOWS`** — the end-to-end experience toward an outcome, normally
-containing several workflows · one operational task performed to completion. Do not restate
+containing several workflows, one operational task performed to completion. Do not restate
 workflow steps inside a journey.
 
-**`SPEC` vs `FEATURES` vs `USER-STORIES`** — what must be true · a meaningful capability · a
+**`SPEC` vs `FEATURES` vs `USER-STORIES`** — what must be true, a meaningful capability, a
 buildable, testable slice. The rule is written once, in `SPEC.md`.
 
 **`INPUTS/`** — evidence, preserved as received. Not automatically project truth.
@@ -385,13 +396,13 @@ DEFINE ⇄ PROTOTYPE
 
 Descriptive, not mandatory gates. Projects skip phases and revisit them.
 
-Do not treat these as synonyms: **defined** is not baselined · **prototyped** is not defined ·
-**baselined** is not built · **built** is not verified · **verified** is not released · **live** is
-not finished · **maintenance** does not mean no further product change.
+Do not treat these as synonyms: **defined** is not baselined, **prototyped** is not defined,
+**baselined** is not built, **built** is not verified, **verified** is not released, **live** is
+not finished, **maintenance** does not mean no further product change.
 
-Where each lives: `PROJECT.md` the phase · `STATUS.md` what is happening within it · `PLAN.md`
-intended movement · `PROTOTYPE.md` the prototype's own state · `CHANGELOG.md` material phase
-changes · `NEXT.md` the immediate action.
+Where each lives: `PROJECT.md` the phase, `STATUS.md` what is happening within it, `PLAN.md`
+intended movement, `PROTOTYPE.md` the prototype's own state, `CHANGELOG.md` material phase
+changes, `NEXT.md` the immediate action.
 
 ## DEFINE ⇄ PROTOTYPE — the only pair that loops
 
@@ -418,8 +429,8 @@ collection of isolated experiments.
 The central question: **"Is this actually what we mean to build?"**
 
 It exists so the owner can react to something concrete instead of specifying abstractly, and say
-things like *yes this is right · no this is wrong · move this · this workflow makes no sense · this
-information is missing · we don't need this · this should happen earlier · this user needs another
+things like *yes this is right, no this is wrong, move this, this workflow makes no sense, this
+information is missing, we don't need this, this should happen earlier, this user needs another
 action.* **That feedback is project evidence.**
 
 **The prototype participates in product definition.** It is not a validation step bolted on at the
@@ -517,8 +528,8 @@ understate rather than shout — these notes are footnotes, not warnings.
 ## When an uncertainty appears, ask what would resolve it
 
 Finding an uncertainty does not tell you what work resolves it. Ask *what evidence would settle
-this*: asking the owner · verifying against `INPUTS/` · inspecting an existing system or dataset ·
-research · measurement or testing · a technical spike · a prototype · another evidence-producing
+this*: asking the owner, verifying against `INPUTS/`, inspecting an existing system or dataset,
+research, measurement or testing, a technical spike, a prototype, another evidence-producing
 method.
 
 Avoid three failures: do not automatically build an experiment because an uncertainty exists (most
@@ -568,9 +579,9 @@ documented.
 `prototype/` is now a **historical design and learning artefact**, expected to become outdated.
 **That is normal and correct.**
 
-Do not: keep it synchronised with production · implement every production change in it · update it
-merely because production changed · treat its behaviour as current intended behaviour · treat
-divergence as a defect · use it as an implementation source of truth · spend effort maintaining it
+Do not: keep it synchronised with production, implement every production change in it, update it
+merely because production changed, treat its behaviour as current intended behaviour, treat
+divergence as a defect, use it as an implementation source of truth, spend effort maintaining it
 once its purpose is fulfilled.
 
 `PROTOTYPE.md` records the state — `NOT STARTED`, `ACTIVE`, `HISTORICAL`. Those three suffice; add
@@ -622,7 +633,7 @@ honest and cheap to fill later; the second is indistinguishable from real knowle
 relied upon.
 
 Preserve the uncertainty in `OPEN-ITEMS.md`, and cite sources for consequential content — e.g.
-`INPUTS/2026-03-04-client-brief.pdf § 4.2`.
+`INPUTS/2026-03-04-client-brief.pdf section 4.2`.
 
 ## Provenance laundering — prohibited
 
@@ -720,6 +731,229 @@ and a change that raises it can be a change that made the work worse.
 Where output has a shape a person can recognise — a page, a screen, a document,
 a diagram — look at the output itself before believing any measure of it. Where
 it does not, say what the number is evidence of and what it is not.
+
+## Ten passes after every change
+
+**After building or changing anything, run ten passes over every workflow the change touches.**
+
+**Each pass checks one dimension.** It is not ten repeats of the same check.
+
+**The ten passes cannot be shortened, skipped or declared satisfied early.** Only the owner can lift
+this requirement. Where a dimension genuinely cannot apply to a change, record it as
+`not run — <reason>`. That is visible, and allowed. Leaving a dimension out, or marking it done
+without doing it, is what is forbidden.
+
+**The test boundary decides how much each pass covers.** A one-word change has a small boundary. What
+never shrinks is the number of dimensions.
+
+**A pass is not just a script.** Open the workflow and perform it through the real interface, either
+by hand or by driving the browser. Check that every step can be reached and behaves as the workflow
+requires.
+
+### Before the ten passes: define the test boundary
+
+Before Pass 1, write down:
+
+- Every workflow affected by the change.
+- Every screen affected by the change.
+- Every access restriction affected.
+- Every important value, record or calculation the change can alter.
+
+This becomes the test boundary for the ten passes.
+
+**Do not reduce the boundary during testing** because something appears unaffected.
+
+If the code changes after a pass, any pass that could be affected by that change is no longer valid
+and must be run again.
+
+If a defect is fixed, re-run the pass that found it and any other pass that could have been affected
+by the fix.
+
+### The ten dimensions
+
+| # | Dimension | What to check |
+|---|---|---|
+| 1 | **Cold start** | *Where the project has a UI.* Clear stored application data and load fresh. Check every affected screen. Does it render correctly without relying on old state? |
+| 2 | **Errors** | *Where the project has a UI.* Check the browser console, page errors and failed network or API requests on every affected screen. Zero errors, or name every one. |
+| 3 | **Links** | Click every link, button and navigation control on affected screens. Everything must lead somewhere real. Nothing should dead-end or trap the user with no way back. |
+| 4 | **Workflow steps** | Perform every step of each affected workflow. Test refusals too: empty fields, missing selections, invalid values and invalid actions must be rejected with a useful message. |
+| 5 | **Writes** | Create or change data. Save it, reload and read it back. The correct value must survive the reload. |
+| 6 | **The data it moves** | Check that the records, values or calculations the action should change actually changed, by the correct amount. Do not only check that the final total balances. |
+| 7 | **Reconciliation** | Where two screens, reports or calculations represent the same thing, compare them. They must agree. Totals must equal the values that make them up. |
+| 8 | **Access** | *Where the project restricts anything.* Repeat affected workflows under every relevant level of access. Test what each may and may not do. Forbidden actions must be refused by the system, not merely hidden. Test direct URLs and actions where relevant. |
+| 9 | **Width** | *Where the project has a UI.* Check phone widths from 280 to 375px and desktop at 1280px. No unintended sideways scrolling, clipped controls, unreadable text or unreachable actions. |
+| 10 | **Look at it** | Screenshot every affected screen — or, with no UI, open the actual output — and read it. Check labels, numbers, spacing, alignment, wording and meaning. Something that technically renders can still be wrong or unusable. |
+
+### How to record it
+
+Record every set in `MISTAKES.md` (Part 15 template), in this form:
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+
+For **Found**, write one of:
+
+- A number, such as `0`, `2` or `7`.
+- `not run — <reason>`.
+- `not checked — <reason>`.
+
+**Never leave it blank. Never write done, passed, looks fine or works.**
+
+Before recording a set, run `date` and **paste the actual output** into `MISTAKES.md`. Do not type
+the time from memory.
+
+### Rules that go with it
+
+**Report measurements, not verdicts.**
+
+> Bad: *Responsive layout works.*
+>
+> Good: *6 affected screens checked at 280px, 320px, 375px and 1280px. 0 unintended horizontal
+> overflow found.*
+
+**Always name what was not checked.** Every report must contain `Not checked: ...`. If everything in
+the defined test boundary was checked, write `Not checked: none within the defined test boundary.` A
+report without this line is incomplete.
+
+**Read every hit.** If an automated check finds 20 possible problems, inspect all 20. If two are
+false alarms, that does not excuse reading the remaining 18.
+
+**Assert the correct value.** Do not only prove that one wrong value is absent. Work out what the
+correct value should be and verify that exact value. **A dash, NaN, undefined, null, blank statistic,
+blank amount or unexplained zero on screen is a fault until proven correct.**
+
+**No defaults that decide for the user.** If a choice affects the result, do not silently select it.
+A dropdown, radio group or similar input that saves a value nobody chose is a fault. It should start
+empty unless a genuine default is part of the requirement, and saving should be refused until the
+required choice is made.
+
+**Old evidence is not current evidence.** A claim from an earlier day is unchecked today until it is
+measured again. If it is carried forward without being checked, write
+`Not re-checked since <date>.`
+
+**Numbers come from evidence.** Numbers reported in testing must come from command output, the
+interface, the API, exported data, the database or another measured source. Do not type numbers from
+memory.
+
+**A fix invalidates old evidence.** If code changes after a pass, do not rely on the earlier result
+where that change could affect it. Run the relevant pass again. **Testing proves a specific build. It
+does not permanently prove the project.**
+
+### Defects
+
+When a defect is found:
+
+1. Record it immediately.
+2. Describe what was expected.
+3. Describe what actually happened.
+4. Fix it.
+5. Re-run the pass that found it.
+6. Re-run any other dimension the fix could have affected.
+
+**Do not close a defect merely because code was changed.** The behaviour must be observed again after
+the fix.
+
+### Repeated mistakes
+
+Keep a count in `MISTAKES.md` for each repeated kind of mistake. Record the type of mistake, what was
+claimed, what was actually true, and the current occurrence count.
+
+**Increase the count the moment the mistake repeats.** Do not wait until the end of the work.
+
+**On every third occurrence of the same kind of mistake, state it plainly in the reply and include:
+*I am fucked up.*** For the next three-occurrence threshold, add one *very*.
+
+- Occurrence 3: *This is the third occurrence of this mistake. I am fucked up.*
+- Occurrence 6: *This is the sixth occurrence of this mistake. I am very fucked up.*
+- Occurrence 9: *This is the ninth occurrence of this mistake. I am very very fucked up.*
+
+Continue the same pattern every three occurrences.
+
+**When a mistake type reaches three occurrences, also build an automated check** — a script,
+assertion, lint rule, test or hook — capable of catching that mistake. **Do not respond by promising
+to be more careful.**
+
+### Automated checks
+
+**Automation supports the ten passes. It does not replace them.** Both scripts and the hook ship as
+templates in Part 15.
+
+**`check-evidence.js`** blocks unsupported claims of completion. Node only. Edit `TARGETS` for each
+project to include its status, handoff and reporting files. It runs as a hook from
+`.claude/settings.json`.
+
+Before trusting it:
+
+1. Run `node check-evidence.js --self-test`.
+2. Run it against the real project files.
+3. Read every flag.
+4. Identify the false alarms.
+5. Tune `CLAIM`, `EVIDENCE` and `TARGETS`.
+6. Run it again.
+
+**Do not trust the checker merely because it runs without crashing.**
+
+**If the project's `package.json` sets `"type": "module"`**, Node reads every `.js` file as an ES
+module and both scripts crash on `require`. Keep the file names, so the hook still finds them, and
+replace the opening lines with imports:
+
+```js
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const ROOT = path.dirname(fileURLToPath(import.meta.url));      // check-evidence.js
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); // check-screens.js
+```
+
+and in `check-screens.js`, `import { chromium } from 'playwright';`.
+
+**`check-screens.js`** — *where the project has a UI* — opens every reachable screen in a real browser
+and reports page errors, console errors, failed requests, NaN and undefined printed as text, blank
+key figures, defaults nobody chose, and sideways overflow at 280px and 1280px.
+
+```
+npm i -D playwright
+npx playwright install chromium
+BASE_URL=http://localhost:3000/ node check-screens.js
+```
+
+Set `STAT_SELECTOR` to the project's key figures; without it, a blank figure goes unreported. The
+crawler only reaches what its account can reach, so where access matters, run it once per level with
+`STORAGE_STATE`.
+
+**Known findings.** Every entry in `check-screens-known.json` must carry the exact finding, the screen,
+the reason it is being ignored, and the date that reason was written — the script ignores an entry
+missing either. **Do not add something to the known list to make the checker green.** Someone must
+have inspected it first.
+
+### Prove the checks can fail
+
+Before relying on an automated check, prove it catches a real problem. On a copy or a temporary
+branch:
+
+1. Undo a known fix, or introduce a harmless version of a known failure.
+2. Run the checker.
+3. Confirm it detects the problem.
+4. Restore the correct code.
+5. Run the checker again.
+
+**A checker that has never demonstrated it can fail is not evidence.**
+
+### Completion
+
+Do not report the work complete until:
+
+- The test boundary has been recorded.
+- All ten dimensions have a recorded result.
+- Every **Found** field contains a measurement or an explicit reason it was not checked.
+- Every defect found has been fixed or explicitly left open.
+- Every fix has been re-tested.
+- Passes invalidated by later code changes have been run again.
+- Every automated flag has been read.
+- The report states what was not checked.
+
+**The final report describes what was measured.** Do not replace the evidence with a verdict such as
+*everything works*.
 
 ---
 
@@ -838,6 +1072,12 @@ project"*, and get a working project pack back — without being interviewed.
    identify the smallest one from the supported users, journeys, workflows, features and stories.
 8. **Create the local visual project interface** (Part 1) so the owner can see the project without
    reading Markdown. Derive it from the canonical files; never write project state back into it.
+9. **Install the checks** (Part 9, Part 15). Create `MISTAKES.md`, `check-evidence.js` and the
+   `.claude/settings.json` hook — merging into an existing settings file, never overwriting it. Edit
+   `TARGETS`, run `node check-evidence.js --self-test`, run it against the real files and read every
+   flag. Where the project has a UI, create `check-screens.js` and an empty
+   `check-screens-known.json` too. If `package.json` sets `"type": "module"`, convert both scripts'
+   opening lines to imports first (Part 9).
 
 Files may legitimately start with no entries, open questions, marked assumptions or minimal
 content. `CHANGELOG.md` may have none at all, and `RESEARCH.md` usually starts with an empty
@@ -2148,7 +2388,7 @@ records when that happened.
 **Record what the research does not establish.** Usually the most useful field, and the one that
 stops a partial finding being over-applied later.
 
-**Confidence is stated, not implied:** `HIGH` · `MODERATE` · `LOW`.
+**Confidence is stated, not implied:** `HIGH`, `MODERATE`, `LOW`.
 
 **Every finding records how long it stays true.** A specification rule holds until someone changes
 it; a finding about the world holds until the world moves. Statutory rates, thresholds, prices,
@@ -2182,7 +2422,7 @@ investigation.
 | ID | Title | Question | Origin | Status | Confidence | As of | Recheck | Resolves |
 |---|---|---|---|---|---|---|---|---|
 
-**Status:** `PLANNED` · `IN PROGRESS` · `FINDINGS` · `ACCEPTED` · `REJECTED` · `STALE` ·
+**Status:** `PLANNED`, `IN PROGRESS`, `FINDINGS`, `ACCEPTED`, `REJECTED`, `STALE`,
 `SUPERSEDED`
 
 `SUPERSEDED` means something replaced it. `STALE` means its `Recheck` has passed and nobody has
@@ -2639,7 +2879,7 @@ paid for repeatedly.
 **Do not claim something works merely because code exists.** Do not infer progress from the
 existence of files. Distinguish states where useful:
 
-`PROPOSED` · `AGREED` · `IN PROGRESS` · `BUILT` · `VERIFIED` · `BLOCKED`
+`PROPOSED`, `AGREED`, `IN PROGRESS`, `BUILT`, `VERIFIED`, `BLOCKED`
 
 `BUILT` and `VERIFIED` are different claims. Only use `VERIFIED` where there is evidence.
 
@@ -2975,8 +3215,8 @@ It should stay short and stable. Project changes normally change the project fil
 
 The project files are agent memory, not owner forms. The owner should never have to operate them.
 
-The owner: provides information · answers material questions · reviews the prototype · gives
-feedback · makes decisions when genuinely required.
+The owner: provides information, answers material questions, reviews the prototype, gives
+feedback, makes decisions when genuinely required.
 
 The owner should **never** be asked which file something belongs in, which ID to create, whether
 something is a spec rule or a feature, whether it is an open item, whether a decision or changelog
@@ -3115,7 +3355,7 @@ if not, record a `CONFLICT` and surface it. Do not rewrite files to make them lo
 automatically project truth.**
 
 Do not edit an input to agree with current understanding. Cite sources for consequential content
-(e.g. `INPUTS/2026-03-04-brief.pdf § 4.2`). Add new material with a dated filename.
+(e.g. `INPUTS/2026-03-04-brief.pdf section 4.2`). Add new material with a dated filename.
 
 
 ---
@@ -3293,16 +3533,504 @@ unresolved matter.
 
 ---
 
+## After building or changing anything
+
+**Run the ten passes** — define the test boundary, then one pass per dimension, recorded in
+`MISTAKES.md` with the pasted `date` output. They cannot be shortened, skipped or declared satisfied
+early; a dimension that genuinely cannot apply is recorded as `not run — <reason>`. Only the owner
+lifts this. The full procedure is in the starter's Part 9.
+
+**Report measurements, not verdicts, and every report says `Not checked: ...`.**
+
+**When a kind of mistake repeats, increase its count in `MISTAKES.md` immediately.** On every third
+occurrence, say so plainly with *I am fucked up*, adding one *very* for each further three, and build
+a check that can catch it.
+
+---
+
 ## Structure
 
-The canonical structure is the sixteen files above plus `INPUTS/`, `RESEARCH/` and `prototype/`. Do
-not add canonical files or directories, and do not split existing ones.
+The canonical structure is the seventeen files above, including `MISTAKES.md`, plus
+`check-evidence.js`, the `.claude/settings.json` hook, and — where the project has a UI —
+`check-screens.js` with `check-screens-known.json`, and the directories `INPUTS/`, `RESEARCH/` and
+`prototype/`. Do not add canonical files or directories, and do not split existing ones.
 
 If a file genuinely becomes too large or unnavigable, do not migrate it automatically. Explain the
 problem, why the current structure is insufficient, the smallest change that solves it, and how
 portability is preserved — then get the owner's agreement.
 
 === END TEMPLATE: CLAUDE.md ===
+---
+
+=== BEGIN TEMPLATE: MISTAKES.md ===
+
+# MISTAKES — the agent's own register
+
+## Purpose of this file
+
+The agent's repeated mistakes, counted, and the record of every set of ten passes (Part 9 of the
+starter).
+
+**It answers:** *What does the agent get wrong repeatedly, how often, and what did each set of passes
+actually measure?*
+
+## What belongs here
+
+- **One entry per kind of mistake**, with every occurrence dated: what was claimed, and what was
+  actually true. A first occurrence is recorded so a second has somewhere to go.
+- **Every set of ten passes**: the test boundary, the pasted `date` output, and a result for every
+  dimension.
+
+## What does not belong here
+
+- A defect in the product → `PROTOTYPE.md`, or `OPEN-ITEMS.md` if nothing is prototyped
+- An open question → `OPEN-ITEMS.md`
+- A decision → `DECISIONS.md`
+
+**This is not a place to be sorry in.** No apologies, no promises to be more careful. A count, and
+what happened.
+
+## When to update
+
+**Immediately when a mistake repeats** — before continuing the work, not in a summary afterwards.
+After each set of passes, before reporting the work.
+
+## Relationship to other files
+
+`PROTOTYPE.md` records what was wrong with the product. This records what was wrong with the agent.
+Where a finding there exists because of a mistake here, both name the other. `check-evidence.js` and
+`check-screens.js` exist because of the kinds recorded here.
+
+## The rule
+
+**On every third occurrence of the same kind, the agent says plainly: *I am fucked up.*** Each further
+three adds one *very*: six is *I am very fucked up*, nine *I am very very fucked up*.
+
+**At three occurrences, the agent also builds a check that can catch it**, and names it in the entry.
+Then it continues the work. The count carries across sessions because it is in this file.
+
+---
+
+## Mistakes
+
+*None recorded yet.*
+
+<!-- Shape of an entry:
+
+## M-001 — [The kind of mistake]
+
+**Count: 1.**
+
+| # | When | What was claimed | What was actually true |
+|---|---|---|---|
+
+**What it is.**
+
+**The check built for it.** None yet — built at the third occurrence.
+-->
+
+---
+
+## Ten passes
+
+*No sets recorded yet.*
+
+<!-- Shape of a set:
+
+### [What changed] — [pasted `date` output]
+
+**Test boundary**
+
+- Workflows:
+- Screens:
+- Access restrictions:
+- Values, records and calculations:
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | | |
+| 2 | Errors | | |
+| 3 | Links | | |
+| 4 | Workflow steps | | |
+| 5 | Writes | | |
+| 6 | The data it moves | | |
+| 7 | Reconciliation | | |
+| 8 | Access | | |
+| 9 | Width | | |
+| 10 | Look at it | | |
+
+**Defects found:**
+
+**Not checked:**
+-->
+
+=== END TEMPLATE: MISTAKES.md ===
+
+---
+
+=== BEGIN TEMPLATE: .claude/settings.json ===
+
+Runs `check-evidence.js` after every edit, so an unsupported claim is caught when it is written.
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/check-evidence.js\" --hook" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+If the project already has a `.claude/settings.json`, merge the hook into it. Do not overwrite the
+file.
+
+=== END TEMPLATE: .claude/settings.json ===
+
+---
+
+=== BEGIN TEMPLATE: check-screens-known.json ===
+
+*Where the project has a UI.* Starts empty. An entry is added only after someone has read the hit.
+
+```json
+{}
+```
+
+Shape of an entry — the key is the line `check-screens.js` printed, without `NEW`:
+
+```json
+{
+  "DEFAULT | /settings | currency = SGD": {
+    "reason": "The company invoices only in SGD, and FR-3.2 makes it the required default.",
+    "date": "YYYY-MM-DD"
+  }
+}
+```
+
+=== END TEMPLATE: check-screens-known.json ===
+
+---
+
+=== BEGIN TEMPLATE: check-evidence.js ===
+
+Node only. Place at the project root. Edit `TARGETS`, then prove it before trusting it (Part 9).
+
+````js
+#!/usr/bin/env node
+/* check-evidence.js — fail any claim that something was checked, unless the same
+   paragraph says when or how. Part of the ten passes (P-Starter Part 9).
+
+   In the files that say what is true now, a block claiming a check (verified,
+   tested, every step, works, renders, fits, no errors, passes) must carry its
+   evidence in the same block:
+     a time it was measured (08:37), "Evidence:", "measured", "tried", "clicked",
+     a check script's name, or an honest "not checked", "not run", "not tried".
+
+     UNBACKED  a claim with no evidence beside it
+     STALE     in a file marked stale, a claim whose newest date is before today,
+               unless it says "not re-checked since <date>"
+     FUTURE    a time on today's block that is later than the clock
+   Struck text (~~like this~~), code fences, goal sections and the file's own
+   self-describing preamble are not read.
+
+   Before trusting it:
+     1. node check-evidence.js --self-test
+     2. node check-evidence.js           against the real files
+     3. Read every flag. Name the false alarms. Tune CLAIM, EVIDENCE, TARGETS.
+     4. Run it again.
+
+   Run: node check-evidence.js            all targets
+        node check-evidence.js --hook     for a Claude Code hook (exit 2 on a problem)
+        node check-evidence.js --self-test */
+const fs = require('fs'), path = require('path');
+const ROOT = __dirname;
+
+/* EDIT FOR EACH PROJECT. The files that state what is true now, and any file
+   that reports results. `stale: true` means a claim dated before today counts
+   as unchecked. NEXT.md records where work stopped, so it is dated by nature. */
+const TARGETS = [
+  { file: 'STATUS.md', stale: true },
+  { file: 'NEXT.md',   stale: false },
+];
+
+const CLAIM    = /\b(verified|tested|every step|all steps|performable|walked|works|renders|fits|no errors?|passes|passed)\b/i;
+/* A checksum, or a commit in backticks, names where the result can be read. */
+const EVIDENCE = /Evidence:|\bmeasured\b|\btried\b|\bclicked\b|\bnot (checked|looked at|run|tried|re-checked)\b|\b\d{1,2}:\d{2}\b|check-[a-z-]+\.js|\bchecksum\b|\bmd5\b|\bsha-?\d+\b|`(?=[0-9a-f]*\d)[0-9a-f]{7,40}`/i;
+const NEGATED  = /\b(not|no|never|nothing|nobody|none|cannot|until|once)\b[^.;:]{0,30}$/i;
+/* A claim word right after a code name describes the code: "`Play.tsx` renders it". */
+const CODE_SUBJECT = /`[^`\n]+`\s*$/;
+/* A goal is not a result. */
+const GOAL_HEADING = /^#+\s*(Next|Expected|Goal|Plan)\b/i;
+/* The self-describing sections describe the file, not the project. */
+const PREAMBLE_HEADING = /^#+\s*(Purpose of this file|What belongs here|What does not belong here|Rules|When to update|Relationship to other files|When asked)\b/i;
+/* A dated log of what was done. Its entries are old by nature, so STALE does not
+   apply there; an entry with no evidence at all is still UNBACKED. */
+const HISTORY_HEADING = /^#+\s*(Recently Completed|Completed)\b/i;
+/* An intention, not a report: "should be re-verified", "to be tested". */
+const INTENT   = /(\bre-|\b(should|must|to|will|needs? to|would) be\s+)$/i;
+/* "passes" as the noun of the ten-pass rule is not a claim. */
+const NOUN_PASS = /(\bthe|\bten|\bthree|\bof|\bset of)\s+$/i;
+const MON = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+
+function now() {
+  const d = new Date();
+  return { date: d.toLocaleDateString('sv-SE'), hm: d.toTimeString().slice(0, 5) };
+}
+
+function datesIn(t) {
+  const out = [];
+  for (const m of t.matchAll(/\b(20\d\d)-(\d\d)-(\d\d)\b/g)) out.push(m[0]);
+  for (const m of t.matchAll(/\b(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* (20\d\d)\b/gi))
+    out.push(m[3] + '-' + String(MON[m[2].slice(0,3).toLowerCase()]).padStart(2,'0') + '-' + m[1].padStart(2,'0'));
+  return out.sort();
+}
+
+/* A block is a paragraph, a list item or a table row. */
+function blocks(text) {
+  const out = []; let cur = null, fence = false, skip = false, history = false;
+  const flush = () => { if (cur) out.push(cur); cur = null; };
+  text.split('\n').forEach((l, i) => {
+    if (/^\s*```/.test(l)) { fence = !fence; flush(); return; }
+    if (fence) return;
+    if (/^#/.test(l)) { flush(); skip = GOAL_HEADING.test(l) || PREAMBLE_HEADING.test(l); history = HISTORY_HEADING.test(l); return; }
+    if (!l.trim()) { flush(); return; }
+    if (skip) return;
+    if (/^\s*\|/.test(l)) { flush(); out.push({ line: i + 1, text: l, history }); return; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { flush(); cur = { line: i + 1, text: l, history }; return; }
+    if (cur) cur.text += ' ' + l.trim(); else cur = { line: i + 1, text: l, history };
+  });
+  flush();
+  return out;
+}
+
+function checkText(text, file, stale, t) {
+  const problems = [];
+  blocks(text).forEach(b => {
+    const live = b.text.replace(/~~[\s\S]*?~~/g, '');
+    let claim = null;
+    for (const m of live.matchAll(new RegExp(CLAIM.source, 'gi'))) {
+      const before = live.slice(0, m.index);
+      if (NEGATED.test(before) || INTENT.test(before) || CODE_SUBJECT.test(before)) continue;
+      if (/^passes$/i.test(m[0]) && NOUN_PASS.test(before)) continue;
+      claim = m[0]; break;
+    }
+    /* A date after today is a deadline the text names, not when it was checked. */
+    const dates = datesIn(live).filter(d => d <= t.date);
+    const newest = dates[dates.length - 1];
+    const say = (kind, why) => problems.push(`${kind.padEnd(8)} ${file}:${b.line}  ${why}\n         > ${live.trim().slice(0, 160)}`);
+
+    if (newest === t.date)
+      for (const m of live.matchAll(/\b(?:at|between|and)\s+(\d{2}):(\d{2})\b/g))
+        if (`${m[1]}:${m[2]}` > t.hm) say('FUTURE', `time ${m[1]}:${m[2]} is later than the clock, ${t.hm}`);
+
+    if (!claim) return;
+    if (!EVIDENCE.test(live)) return say('UNBACKED', `"${claim}" with no time, measurement or "not checked"`);
+    if (stale && !b.history && newest && newest < t.date && !/not re-checked since/i.test(live))
+      say('STALE', `"${claim}" last dated ${newest}; measure again or write "not re-checked since ${newest}"`);
+  });
+  return problems;
+}
+
+/* A check is only evidence if it fails on what it exists to catch. */
+function selfTest() {
+  const t = { date: '2026-09-13', hm: '12:00' };
+  const cases = [
+    ['- Every step is performable.', true],
+    ['- Measured at 11:40: every step performable.', false],
+    ['- Every step performable. Not checked at 280px.', false],
+    ['- Step 2 was not performable.', false],
+    ['- Measured 2026-09-12 at 10:00: it works.', true],
+    ['- Measured 2026-09-12 at 10:00: it works, not re-checked since 2026-09-12.', false],
+    ['- Measured 2026-09-13 at 13:30: it works.', true],
+    ['- The licence should be re-verified before shipping.', false],
+    ['- It needs to be tested at 280px.', false],
+    ['- Then running the passes over the slice.', false],
+    ['- The slice passes.', true],
+    ['- ~~Every step is performable.~~ Removed.', false],
+    /* tuned on the first installs, 2026-09-13 */
+    ['- Every run since has added output nobody has verified.', false],
+    ['- Copied in, verified identical by checksum.', false],
+    ['- Every question verified on 512 play-outs (`4c89cc1`).', false],
+    ['- 2026-09-12: the app renders offline (commit `804a911`).', true],
+    ['- `web/src/Play.tsx` renders it.', false],
+    ['- The page renders 25 records.', true],
+    /* a history section is dated by nature */
+    ['## Recently Completed\n\n- 2026-09-11: every question verified on 512 play-outs (`4c89cc1`).', false],
+    ['## Recently Completed\n\n- 2026-09-11: every question verified.', true],
+    ['## Verified\n\n- 2026-09-11: every question verified on 512 play-outs (`4c89cc1`).', true],
+  ];
+  let bad = 0;
+  cases.forEach(([line, fails]) => {
+    const got = checkText(line + '\n', 'test', true, t).length > 0;
+    if (got !== fails) { bad++; console.log('WRONG  expected ' + (fails ? 'a flag' : 'no flag') + ': ' + line); }
+  });
+  console.log(`${cases.length - bad} of ${cases.length} self-test lines judged right`);
+  return bad === 0;
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  if (args.includes('--self-test')) process.exit(selfTest() ? 0 : 1);
+  const hook = args.includes('--hook');
+  let targets = TARGETS;
+  if (hook) {
+    let j = {};
+    try { j = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch (e) {}
+    const fp = j.tool_input && j.tool_input.file_path;
+    if (fp) {
+      targets = TARGETS.filter(x => path.resolve(ROOT, x.file) === path.resolve(fp));
+      if (!targets.length) process.exit(0);
+    }
+  }
+  const t = now();
+  const problems = targets.flatMap(x => {
+    const f = path.join(ROOT, x.file);
+    return fs.existsSync(f) ? checkText(fs.readFileSync(f, 'utf8'), x.file, x.stale, t) : [];
+  });
+  const out = hook ? s => process.stderr.write(s + '\n') : console.log;
+  problems.forEach(p => out(p));
+  out(`${problems.length} unbacked, stale or future claims in ${targets.length} files, read at ${t.hm}`);
+  if (problems.length) process.exit(hook ? 2 : 1);
+}
+main();
+````
+
+=== END TEMPLATE: check-evidence.js ===
+
+---
+
+=== BEGIN TEMPLATE: check-screens.js ===
+
+*Where the project has a UI.* Place at the project root. Needs Playwright (Part 9).
+
+````js
+#!/usr/bin/env node
+/* check-screens.js — open every screen the links reach, in a real browser, and
+   read what it says. Part of the ten passes (P-Starter Part 9). Only for a
+   project with a UI.
+
+   On each screen it reports:
+     THROWS    a page error, or a failed navigation
+     CONSOLE   an error written to the browser console
+     REQUEST   a request that failed, or came back 400 or above
+     BROKEN    NaN, [object Object], undefined or null printed as text
+     DASH      a key figure that is only a dash or empty — set STAT_SELECTOR
+     DEFAULT   a form <select> that opens on a real value nobody chose
+     OVERFLOW  sideways scroll at 280px or 1280px
+
+   A hit fails the run until it is fixed, or read and added to
+   check-screens-known.json with the reason it stands and the date the reason
+   was written. An entry without both is ignored, so the hit fails again.
+   THROWS can never be marked known.
+
+   Setup:  npm i -D playwright
+           npx playwright install chromium
+   Run:    start the application, then
+           BASE_URL=http://localhost:3000/ node check-screens.js
+           ... --list      print every hit, known or not
+
+   STAT_SELECTOR   the CSS for the project's key figures. Without it, DASH finds
+                   nothing, and a blank figure goes unreported.
+   STORAGE_STATE   a Playwright storage state file for a signed-in account. The
+                   crawler only reaches what its account can reach: run it once
+                   per access level that matters.
+   MAX_PAGES       stop after this many screens, default 500.
+
+   Before trusting it, prove it can fail: on a copy, put back a known fault,
+   run it, confirm it is caught, restore, run again. */
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+
+const BASE = process.env.BASE_URL || 'http://localhost:3000/';
+const MAX = Number(process.env.MAX_PAGES || 500);
+const STAT_SELECTOR = process.env.STAT_SELECTOR || '[data-stat]';
+const KNOWN_FILE = path.join(__dirname, 'check-screens-known.json');
+
+/* One entry per page kind, not per record: /invoice/INV-123 becomes /invoice/*. */
+const shape = u => u.replace(BASE, '/').replace(/\/[^/?#]*\d[^/?#]*/g, '/*').replace(/\?.*$/, '');
+
+/* A known entry counts only if someone wrote down why, and when. */
+const validKnown = v => v && typeof v === 'object' && String(v.reason || '').trim()
+  && /^\d{4}-\d{2}-\d{2}$/.test(String(v.date || ''));
+
+(async () => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext(Object.assign({ viewport: { width: 1280, height: 800 } },
+    process.env.STORAGE_STATE ? { storageState: process.env.STORAGE_STATE } : {}));
+  const page = await context.newPage();
+  let events = [];
+  page.on('pageerror', e => events.push(['THROWS', e.message]));
+  page.on('console', m => { if (m.type() === 'error') events.push(['CONSOLE', m.text()]); });
+  page.on('requestfailed', r => events.push(['REQUEST', r.method() + ' ' + r.url() + ' ' + ((r.failure() || {}).errorText || '')]));
+  page.on('response', r => { if (r.status() >= 400) events.push(['REQUEST', r.status() + ' ' + r.url()]); });
+
+  const seen = new Set([BASE]), queue = [BASE], hits = [];
+  const add = (kind, url, key) => hits.push({ kind, url, key: `${kind} | ${shape(url)} | ${String(key).slice(0, 100)}` });
+
+  while (queue.length && seen.size <= MAX) {
+    const url = queue.shift();
+    events = [];
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(url, { waitUntil: 'networkidle' }).catch(e => events.push(['THROWS', 'navigation: ' + e.message]));
+    await page.waitForTimeout(150);
+
+    const r = await page.evaluate(sel => {
+      document.querySelectorAll('details').forEach(d => d.open = true);
+      const text = document.body ? document.body.innerText : '';
+      const broken = [...text.matchAll(/.{0,30}(\bNaN\b|\[object Object\]|\bundefined\b|\bnull\b).{0,20}/g)].map(m => m[0].trim());
+      const dashes = [...document.querySelectorAll(sel)].filter(e => /^[—–-]?$/.test(e.innerText.trim()))
+        .map(e => ((e.parentElement && e.parentElement.innerText) || '').trim().slice(0, 40));
+      const defaults = [...document.querySelectorAll('form select:not([multiple])')].map(s => {
+        const o = [...s.options];
+        if (!o.length || o.some(x => x.defaultSelected) || o[0].value === '') return null;
+        return (s.name || s.id || '(unnamed)') + ' = ' + o[0].text.trim();
+      }).filter(Boolean);
+      const links = [...document.querySelectorAll('a[href]')].map(a => a.href);
+      const wide = document.documentElement.scrollWidth > innerWidth + 1;
+      return { broken, dashes, defaults, links, wide };
+    }, STAT_SELECTOR).catch(e => { events.push(['THROWS', 'read: ' + e.message]); return { broken: [], dashes: [], defaults: [], links: [], wide: false }; });
+
+    events.forEach(([k, m]) => add(k, url, m));
+    r.broken.forEach(b => add('BROKEN', url, b));
+    r.dashes.forEach(d => add('DASH', url, d));
+    r.defaults.forEach(d => add('DEFAULT', url, d));
+    if (r.wide) add('OVERFLOW', url, '1280px');
+
+    await page.setViewportSize({ width: 280, height: 800 });
+    await page.waitForTimeout(100);
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1).catch(() => false))
+      add('OVERFLOW', url, '280px');
+
+    for (const l of r.links) {
+      const clean = l.replace(/#$/, '');
+      if (!clean.startsWith(BASE) || seen.has(clean)) continue;
+      seen.add(clean); queue.push(clean);
+    }
+  }
+  await browser.close();
+
+  let known = {};
+  try { known = JSON.parse(fs.readFileSync(KNOWN_FILE, 'utf8')); } catch (e) {}
+  const list = process.argv.includes('--list');
+  const keys = [...new Set(hits.map(h => h.key))].sort();
+  const isKnown = k => !k.startsWith('THROWS') && validKnown(known[k]);
+  const fresh = keys.filter(k => !isKnown(k));
+  const badKnown = Object.keys(known).filter(k => !validKnown(known[k]));
+  (list ? keys : fresh).forEach(k => console.log((isKnown(k) ? 'known ' : 'NEW   ') + k +
+    (isKnown(k) ? '  — ' + known[k].reason + ' (' + known[k].date + ')' : '')));
+  badKnown.forEach(k => console.log('IGNORED known entry without a reason and a date: ' + k));
+  console.log(`${seen.size} screens, ${fresh.length} unread hits, ${keys.length - fresh.length} read and kept`);
+  process.exit(fresh.length ? 1 : 0);
+})();
+````
+
+=== END TEMPLATE: check-screens.js ===
 
 ---
 
