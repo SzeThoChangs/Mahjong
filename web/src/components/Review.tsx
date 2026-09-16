@@ -30,6 +30,7 @@ import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
 import { rankDiscards, shardOf, shardFile, type Context, type PackIndex } from 'sg-mahjong-solver';
+import { loadConfig } from '@/lib/money';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
 import { cn } from '@/lib/utils';
@@ -97,20 +98,22 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
    * `nowild` - has no index, and is read whole as before.
    */
   const [quizQ, setQuizQ] = useState<QuizQ | null>(null);
+  // the minimum of the table the card's pack was played at, so the Coach's words match that table
+  const [quizMin, setQuizMin] = useState<number | null>(null);
   const [quizErr, setQuizErr] = useState<string | null>(null);
   useEffect(() => {
     if (!current?.pack) { setQuizQ(null); setQuizErr(null); return; }
     let live = true;
-    setQuizQ(null); setQuizErr(null);
+    setQuizQ(null); setQuizErr(null); setQuizMin(null);
     const ok = (r: Response) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))));
     const gone = () => { if (live) setQuizErr('that question is no longer in the pack'); };
     const found = (d: { questions: QuizQ[] }) => { if (!live) return; const x = d.questions.find((x) => x.id === current.qid); x ? setQuizQ(x) : gone(); };
     const failed = () => { if (live) setQuizErr('could not load the pack this came from'); };
     fetch(asset(`quiz/${current.pack}/index.json`)).then(ok).then(
-      (ix: PackIndex) => fetch(asset(`quiz/${current.pack}/${shardFile(shardOf(current.qid ?? '', ix.placement.modulo))}`))
+      (ix: PackIndex) => { if (live) setQuizMin(ix.table?.minimumTai ?? null); return fetch(asset(`quiz/${current.pack}/${shardFile(shardOf(current.qid ?? '', ix.placement.modulo))}`))
         // a shard the build does not carry (the single-file page keeps only the first few) is a question that is not here, not a dead network
         .then((r) => (r.status === 404 ? gone() : ok(r).then(found)))
-        .catch(failed),
+        .catch(failed); },
       () => fetch(asset(`quiz/${current.pack}.json`)).then(ok).then(found).catch(failed),
     );
     return () => { live = false; };
@@ -126,6 +129,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   /** the coach's ranking on a quiz position, for the explanation and the cause suggestion */
   const quizCoach = useMemo(() => {
     if (!quizQ) return null;
+    const minTai = quizMin ?? loadConfig().minTai;
     const melds: Meld[] = quizQ.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
     const visible: number[] = [];
     for (const d of quizQ.disc ?? []) visible.push(d[1]!);
@@ -133,11 +137,11 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     (quizQ.pb ?? []).forEach((bs, s2) => { if (s2 !== quizQ.seat) visible.push(...bs); });
     const ctx: Context = {
       seat: quizQ.dl !== undefined ? (quizQ.seat - quizQ.dl + 4) % 4 : quizQ.seat, prevailingWind: quizQ.w, bonus: quizQ.b,
-      playerTurns: quizQ.t, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
+      playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), visible,
       opponentMelds: (quizQ.pm ?? []).map((ms, s2) => (s2 === quizQ.seat ? -1 : ms.length)).filter((n) => n >= 0),
     };
     try { return { melds, ctx, ranking: rankDiscards(quizQ.h, melds, ctx) }; } catch { return null; }
-  }, [quizQ]);
+  }, [quizQ, quizMin]);
 
   /**
    * One shape for the screen, whichever way the card was rebuilt. `judge` is the whole point of
@@ -226,7 +230,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   ) : null;
 
   const switcher = (
-    <div className="flex gap-1.5 text-sm">
+    <div className="flex flex-wrap gap-1.5 text-sm">
       <Button size="sm" variant={view === 'due' ? 'default' : 'outline'}
         onClick={() => { setView('due'); closePlayed(); }}>Due now {due.length}</Button>
       <Button size="sm" variant={view === 'log' ? 'default' : 'outline'}
@@ -378,7 +382,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
             seat={pos.seat} dealer={pos.dealer} prevailingWind={pos.prevailingWind}
             playerTurns={pos.playerTurns} phase={(pos.phase || 'mid') as 'early' | 'mid' | 'late'}
             fan={fanInHand({ melds: pos.melds, bonus: pos.bonus, seat: (pos.seat - pos.dealer + 4) % 4, prevailingWind: pos.prevailingWind })}
-            minimumFan={CONFIG.minimum_fan} />
+            minimumFan={loadConfig().minTai} />
           <div>
             <p className="mb-2 text-sm font-medium">Which tile do you discard?</p>
             <div className="flex flex-wrap items-end gap-1">

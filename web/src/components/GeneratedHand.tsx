@@ -19,6 +19,7 @@
  * coherence: the coach commits to a target and plays toward it, while the model scores every
  * discard independently and can be locally right all the way to an incoherent hand.
  */
+import { loadConfig } from '@/lib/money';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fanInHand, type TileKind } from 'sg-mahjong-engine';
 import { suggestCause, CAUSES, causeLabel, type DiscardOption, type Verdict, type Cause } from 'sg-mahjong-solver';
@@ -123,7 +124,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
       // question below, because only you know whether you saw it and threw the other tile anyway.
       const sug = suggestCause(scenario.hand, scenario.melds, {
         bonus: scenario.bonus, seat: (scenario.seat - scenario.dealer + 4) % 4, prevailingWind: scenario.prevailingWind,
-        melds: scenario.melds, minimumFan: CONFIG.minimum_fan, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        melds: scenario.melds, minimumFan: loadConfig().minTai, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai),
       }, scenario.ranking.options, k, coachPick);
       setSuggestion(sug);
       setCauseChosen(null);
@@ -161,7 +162,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
         {/* context: the facts that decide this discard, right above the tiles */}
         <CardContent className="border-b pb-(--card-spacing)">
           <HandContext seat={scenario.seat} dealer={scenario.dealer} prevailingWind={scenario.prevailingWind}
-            playerTurns={scenario.playerTurns} phase={scenario.phase} fan={fan} minimumFan={CONFIG.minimum_fan}>
+            playerTurns={scenario.playerTurns} phase={scenario.phase} fan={fan} minimumFan={loadConfig().minTai}>
             <span className="ml-auto text-xs text-muted-foreground">a made-up hand · marked by the <J>Coach</J></span>
           </HandContext>
         </CardContent>

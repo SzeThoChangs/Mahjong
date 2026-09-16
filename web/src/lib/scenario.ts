@@ -2,6 +2,7 @@
  * Deals a quiz scenario by playing a real (simulated) game with baseline bots
  * and stopping at a genuine discard decision in the requested phase.
  */
+import { loadConfig } from './money';
 import {
   Wall, makeRng, playGame, IsolationBot, kindOf, makeRules,
   type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig, type RulesConfig,
@@ -127,7 +128,7 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
       ...publicMelds.flatMap((ms) => ms.flatMap((m) => m.tiles)),
       ...publicBonus.flat(),
     ];
-    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan, visible,
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), visible,
       opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0),
       opponents: view.players.flatMap((p2, s2) => (s2 === view.seat ? [] : [{
         label: WIND_NAME[(s2 - view.dealer + 4) % 4]!,
@@ -189,7 +190,7 @@ export function causeOf(sc: Scenario): Cause | null {
   if (sc.difficulty !== 'trap') return null;
   return suggestCause(sc.hand, sc.melds, {
     bonus: sc.bonus, seat: (sc.seat - sc.dealer + 4) % 4, prevailingWind: sc.prevailingWind, melds: sc.melds,
-    minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai),
   }, sc.ranking.options, sc.naivePick, sc.ranking.best.tile).suggested;
 }
 

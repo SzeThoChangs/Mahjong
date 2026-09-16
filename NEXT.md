@@ -105,14 +105,14 @@ them rather than build the fix they implied.
 
 ## Where We Stopped
 
-2026-09-16: everything Changs asked for today is pushed (`D-028`): hard only on by default, the
-0-joker min-1 pack first, the cause line after the answer, the seat details inside the question card,
-the status line removed, the green felt table, and the left seat name upright. Ten passes recorded in
-`MISTAKES.md`. Nothing is running.
+2026-09-16, 23:25: everything Changs asked for today is pushed (`D-028`, `D-029`): hard only by
+default, the 0-joker min-1 pack and Table setup default, the Coach reasoning at the table in play,
+the green table, the seat details in the question card, and the dealer badge under the wind on
+phones. Ten passes recorded in `MISTAKES.md`. Nothing is running.
 
 Uncommitted work from another session dated 2026-09-13 is still in the tree and was deliberately not
-pushed: the verification rules added to `CLAUDE.md` and `P-Starter.md`, `MISTAKES.md`, the two `check-*.js`
-scripts and `.claude/settings.json`, and a `STATUS.md` edit.
+pushed: the verification rules added to `CLAUDE.md` and `P-Starter.md`, the two `check-*.js` scripts
+and `.claude/settings.json`, and a `STATUS.md` edit. `MISTAKES.md` also holds this session's records.
 
 ## Recommended Next Action
 

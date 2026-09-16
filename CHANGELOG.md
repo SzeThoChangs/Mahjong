@@ -46,6 +46,17 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-16 — The Coach reasons at the table in play, and Table setup starts at 0 Jokers, min 1
+
+**Changed:** Table setup defaults to 0 Jokers and min 1. The Coach's reasoning uses the pack's own
+minimum on Train and Review, and the Table setup minimum elsewhere. The table-mismatch note under the
+pack buttons is gone. On phones the dealer badge sits under the wind in the table's corners. Review's
+top row wraps on narrow phones.
+
+**Why:** Changs found the Coach saying a min-1 hand still needed another Tai, and asked for the rest.
+
+**Impact:** `D-029`. `US-020` built. Ten passes recorded in `MISTAKES.md`.
+
 ### 2026-09-16 — Harder questions by default, and a green table
 
 **Changed:** Train has a "hard only" filter, on by default, and opens on the 0-joker min-1 pack. The

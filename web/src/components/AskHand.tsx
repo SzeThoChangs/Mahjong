@@ -10,6 +10,7 @@
  * anything to ask, and the header says how far off you are rather than leaving you guessing why
  * nothing has happened.
  */
+import { loadConfig } from '@/lib/money';
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -122,7 +123,8 @@ export default function AskHand() {
     // `seat` here is already a WIND - the player picks 東/南/西/北 directly - which is what
     // Context wants. Elsewhere it is derived as (seat - dealer + 4) % 4 from an absolute seat.
     seat, prevailingWind: round, bonus, playerTurns: turn,
-    minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+    // the table set in Table setup, not the fixed config, which says min 2 whatever the player plays at
+    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai),
     visible: seen, opponentMelds: oppMelds,
   }), [seat, round, bonus, turn, seen, oppMelds]);
 

@@ -24,7 +24,7 @@ import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
-import { CONFIG, JOKERS, PRACTISABLE } from '@/lib/scenario';
+import { CONFIG, PRACTISABLE } from '@/lib/scenario';
 import { recordMistake, challengeMistake, causeTally, readPractise, writePractise } from '@/lib/mistakes';
 import { recordPlay, challengePlay } from '@/lib/history';
 import { priceMix, loadConfig, type OutcomeMix } from '@/lib/money';
@@ -272,6 +272,14 @@ export default function Train() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const tally = useMemo(() => (causeTally() as { cause: Cause | 'unsorted'; n: number }[]).filter((t): t is { cause: Cause; n: number } => t.cause !== 'unsorted' && PRACTISABLE.includes(t.cause)), [pack]);
   // The coach (book heuristics) explains the position; the measured EVs above remain the authority.
+  /**
+   * The minimum the Coach reasons at: the table the pack on screen was played at, not the app's fixed
+   * config. The config says 2, so at a min-1 pack the Coach told the player a hand that could already
+   * win still needed another Tai (Changs, 2026-09-16). The play-out verdict was never affected; only
+   * the words beside it were. With no pack, the table set in Table setup.
+   */
+  const tableMin = packs.find((p) => p.id === pack)?.table?.minimumTai ?? loadConfig().minTai ?? CONFIG.minimum_fan;
+  const selfDrawMin = Math.min(CONFIG.self_draw_minimum_fan, tableMin);
   const coach = useMemo(() => {
     if (!q) return null;
     try {
@@ -284,7 +292,7 @@ export default function Train() {
       (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...bonus); });
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin,
         visible,
         opponentMelds: (q.pm ?? []).map((ms, s2) => (s2 === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
@@ -304,7 +312,7 @@ export default function Train() {
       };
       return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[], reasonForAction };
     } catch { return null; }
-  }, [q]);
+  }, [q, tableMin, selfDrawMin]);
 
   // What the learned models would do here. Grading stays on the measured EVs - those are the
   // authority in this tab - but the models are what the Train tab teaches, so showing their answer
@@ -319,7 +327,7 @@ export default function Train() {
       (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: CONFIG.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin,
         visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
       // The COACH, not the learned model. This block said "the learned model would..." while
@@ -339,7 +347,7 @@ export default function Train() {
       }
       return null;
     } catch { return null; }
-  }, [q]);
+  }, [q, tableMin, selfDrawMin]);
 
   const fmt = (x: number) => `${x < 0 ? '−' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}${unit === '$' ? '' : ''}`;
 
@@ -358,9 +366,9 @@ export default function Train() {
     const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
     return liveCalls(q.h, q.m.length, throws, {
       bonus: q.b, seat: (q.seat - (q.dl ?? 0) + 4) % 4, prevailingWind: q.w, melds,
-      minimumFan: CONFIG.minimum_fan, selfDrawMinimumFan: CONFIG.self_draw_minimum_fan,
+      minimumFan: tableMin, selfDrawMinimumFan: selfDrawMin,
     });
-  }, [q]);
+  }, [q, tableMin, selfDrawMin]);
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];
@@ -391,24 +399,6 @@ export default function Train() {
           <span className="ml-1.5 opacity-70">{p.questions.toLocaleString()}{p.money ? ' · $' : ''}</span>
         </Button>
       ))}
-      {/*
-        A pack is a record of one table. The coach's opinion beside each question is computed live
-        from this app's own table config, so a pack from a different table gets its reasoning from
-        the wrong game - the play-out verdict stays right, the explanation beside it does not.
-        Worth saying out loud rather than leaving the reader to notice.
-      */}
-      {(() => {
-        const t = packs.find((p) => p.id === pack)?.table;
-        if (!t) return null;
-        const mine = { wildcards: JOKERS, minimumTai: CONFIG.minimum_fan };
-        const same = t.wildcards === mine.wildcards && t.minimumTai === mine.minimumTai;
-        return (
-          <span className={cn('ml-2 text-xs', same ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
-            {t.wildcards} <J>Jokers</J> · {t.minimumTai} <J>Tai</J> minimum
-            {!same && <> — your table is set to {mine.wildcards} and {mine.minimumTai}, so the <J>Measured Best</J> answers hold but the <J>Coach</J>'s reasoning beside them is computed for your table, not this pack's</>}
-          </span>
-        );
-      })()}
       <span className="ml-auto" />
       {!noPack && (['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
       {!noPack && <Button size="sm" variant={hardOnly ? 'secondary' : 'ghost'} title="Leave out the questions a player who already plays gets without thinking" onClick={() => { setHardOnly((h) => !h); setPicked(null); }}>hard only</Button>}

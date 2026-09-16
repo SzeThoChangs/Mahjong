@@ -65,7 +65,7 @@ examples.
 | US-017 | A claim judge the whole-hand review can trust | F-017 | PROPOSED |
 | US-018 | Send my record to Changs with one press | F-018 | PROPOSED |
 | US-019 | Every pack question verified on fresh play-outs | F-016 | VERIFIED |
-| US-020 | The app knows which table I am playing | F-012 | IN PROGRESS |
+| US-020 | The app knows which table I am playing | F-012 | BUILT |
 
 ---
 
@@ -961,9 +961,10 @@ voice; ASSUMED to reflect his intent).
 
 - Table setup set to 0 Jokers, min 1: Play deals a no-Joker hand and the Challenge button rebuilds
   positions at the pack's table but prices them in this money (OBSERVED, works).
-- The same setting: the Train tab's note still says "your table is set to 4 and 2" because it reads
-  `data/table.config.json`, and the Coach's reasoning on Train is computed for 4 Jokers and min 2
-  (OBSERVED, the gap).
+- Fixed 2026-09-16 after Changs found it on a min-1 claim: the Coach's reasoning on Train said "1
+  more tai needed" on a hand that could already win, because it read the fixed config's min 2. It
+  now reasons at the pack's own table, and on made-up hands and Your hand at the Table setup
+  minimum. The note under the pack buttons was removed at his request (OBSERVED, `MISTAKES.md`).
 
 **Not this story:**
 

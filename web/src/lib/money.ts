@@ -35,7 +35,8 @@ export interface MoneyConfig {
 }
 
 export const PRESETS: MoneyConfig[] = [
-  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'shooter', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
+  // the default table: 0 Jokers, min 1 Tai, Changs's call on 2026-09-16 (was 4 Jokers, min 2)
+  { name: 'Flat 2/3/5/10/20 (your table)', payMode: 'shooter', ladder: { 1: 2, 2: 3, 3: 5, 4: 10, 5: 20 }, zm: 2, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 0 },
   { name: 'Doubling 2/4/8/16/32', payMode: 'shooter', ladder: { 1: 2, 2: 4, 3: 8, 4: 16, 5: 32 }, zm: 2, minTai: 2, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 2, kongExposed: 2, kongFed: 6, flowerBiteHidden: 4, flowerBiteOpen: 2, animalBiteHidden: 4, animalBiteOpen: 2, jokers: 4 },
   { name: 'Doubling 1/2/4/8/16', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 1, kongExposed: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
   { name: 'Flat 1/2/3/5/10, max 5', payMode: 'shooter', ladder: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 10 }, zm: 1, minTai: 1, maxTai: 5, selfDrawMinTai: 1, kongConcealed: 1, kongExposed: 1, kongFed: 3, flowerBiteHidden: 2, flowerBiteOpen: 1, animalBiteHidden: 2, animalBiteOpen: 1, jokers: 4 },
@@ -189,8 +190,29 @@ export function priceMix(mix: OutcomeMix, n: number, c: MoneyConfig): number {
  * screen in its file to read one setting.
  */
 const KEY = 'mahjong.money.config';
+/** set once the old 4-Joker min-2 default has been moved to the new one on this device */
+const MOVED = 'mahjong.money.default-0j-min1';
+
 export function loadConfig(): MoneyConfig {
-  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw) as MoneyConfig; } catch { /* ignore */ }
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const c = JSON.parse(raw) as MoneyConfig;
+      // Opening Table setup saves whatever it shows, so a phone that only ever looked at the old
+      // default (4 Jokers, min 2) has it stored without anyone choosing it. That moves to the new
+      // default ONCE. After that the stored table is respected, or somebody who sets 4 and 2 on
+      // purpose would have it switched back every time the app loaded.
+      if (localStorage.getItem(MOVED) !== '1') {
+        localStorage.setItem(MOVED, '1');
+        if (c.name === PRESETS[0]!.name && c.jokers === 4 && c.minTai === 2) {
+          const moved = { ...c, jokers: 0, minTai: 1 };
+          localStorage.setItem(KEY, JSON.stringify(moved));
+          return moved;
+        }
+      }
+      return c;
+    }
+  } catch { /* ignore */ }
   return PRESETS[0]!;
 }
 export const saveConfig = (c: MoneyConfig): void => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch { /* ignore */ } };

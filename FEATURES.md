@@ -588,14 +588,14 @@ preset; and the backup card (OBSERVED).
 
 **Dependencies:** `profile/money.json`, `reads/money.json`.
 
-**Status:** BUILT, with one gap. The Play tab and the Challenge button read the Joker count and
-minimum from here, but the Train tab's "your table" note and the Coach's reasoning on Train read the
-static `data/table.config.json` (OBSERVED, `Train.tsx` uses `JOKERS` and `CONFIG.minimum_fan` from
-`scenario.ts`; `Play.tsx` uses `money.jokers` and `money.minTai`). So the app is told which table it
-is on in one place and listens in some. `TABLE-VARIANTS.md` task 9 asks for the control and for
+**Status:** BUILT. Defaults to 0 Jokers and min 1 since 2026-09-16 (`D-029`). Play and the
+Challenge button read the Joker count and minimum from here. The Coach's reasoning on Train and on a
+reopened Review card reads the pack's own table, and on made-up hands and Your hand reads the minimum
+set here (OBSERVED). The Film room still reasons at the fixed config's min 2, which is the table its
+recorded runs were played at. `TABLE-VARIANTS.md` task 9 asks for the control and for
 labelled cards; the control exists, the labelling does not.
 
-**Open Items:** Whether Train should read the Table setup table (UNRESOLVED; nobody has asked).
+**Open Items:** None open about which table is read.
 
 ### Prototype / Demo
 

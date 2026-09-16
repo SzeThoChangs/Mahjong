@@ -148,9 +148,11 @@ function Shown({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
   );
 }
 
-function SeatName({ seat, className }: { seat: SeatPublic; className?: string }) {
+function SeatName({ seat, className, stacked }: { seat: SeatPublic; className?: string; stacked?: boolean }) {
+  // `stacked` puts the badges under the wind: the side seats' names sit in the table's top corners
+  // on a phone, where a badge beside the wind pushed the table wider (Changs, iPhone 12, 2026-09-16)
   return (
-    <div className={cn('flex items-center gap-1.5 text-xs whitespace-nowrap', className)}>
+    <div className={cn('flex text-xs whitespace-nowrap', stacked ? 'flex-col items-center gap-0.5' : 'items-center gap-1.5', className)}>
       <span className={cn('text-sm', seat.you ? 'font-semibold' : 'font-medium')}>{seat.wind}</span>
       {/* these sit on the green felt, where the page's muted grey would not read */}
       {seat.you && <span className="text-emerald-100/85">(you)</span>}
@@ -215,8 +217,8 @@ export function PublicTable({ seats, you, centre }: {
           {/* The seats along the sides are named down their edge, as they sit. On a phone that
               costs 28px a side that the piles need, so their names go in the top corners instead,
               which are empty anyway, each pulled towards its own seat. */}
-          {sz.phone && <div className="col-start-1 row-start-1 self-end justify-self-end"><SeatName seat={left} /></div>}
-          {sz.phone && <div className="col-start-3 row-start-1 self-end justify-self-start"><SeatName seat={right} /></div>}
+          {sz.phone && <div className="col-start-1 row-start-1 self-end justify-self-end"><SeatName seat={left} stacked /></div>}
+          {sz.phone && <div className="col-start-3 row-start-1 self-end justify-self-start"><SeatName seat={right} stacked /></div>}
 
           <div className="col-start-2 row-start-1 flex flex-col items-center gap-1.5">
             <SeatName seat={top} /><Shown seat={top} side="top" at={sz} />

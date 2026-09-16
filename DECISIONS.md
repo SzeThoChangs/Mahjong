@@ -77,6 +77,7 @@ practice but should not claim the owner said it.
 | D-026 | 2026-08-30 | No Rust or WASM port for now | ACTIVE |
 | D-027 | 2026-09-13 | The Play review never marks taking a win as a mistake | ACTIVE |
 | D-028 | 2026-09-16 | Train opens on hard questions at the 0-joker min-1 table, on a green felt table | ACTIVE |
+| D-029 | 2026-09-16 | Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play | ACTIVE |
 
 ---
 
@@ -960,3 +961,23 @@ assumption (`A-005`).
 pack buttons on first load, because the pack table and the set table differ. Recorded, not changed.
 
 **Related:** `A-005`, D-008, D-018, `MISTAKES.md`.
+
+---
+
+## D-029 — Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play
+
+**Date:** 2026-09-16 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+
+**What was decided:** Table setup starts at 0 Jokers and min 1. A phone that had stored the old
+default of 4 and 2 without anyone choosing it moves to 0 and 1 once; after that whatever is stored is
+kept. The note under the Train pack buttons about a table mismatch is removed. The Coach's reasoning
+uses the minimum of the table in play: the pack's own on Train and Review, the Table setup one on
+made-up hands and Your hand.
+
+**Why:** He plays at 0 Jokers, min 1, and found the Coach telling him a hand that could already win
+still needed another Tai. The reasoning came from the fixed config's min 2 whatever the pack was.
+
+**What it costs:** The move is once per device, so a phone that stored 4 and 2 on purpose before today
+is moved too. It can be set back and stays set.
+
+**Related:** D-028, `US-020`, `F-012`, `MISTAKES.md`.
