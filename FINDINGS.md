@@ -1986,6 +1986,50 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### Smarter play-out opponents leave throws alone and change one claim in eight (2026-09-17)
+
+Changs asked whether measuring with smarter bots would change the answers. The standing claim was
+that it barely would: on 2026-09-02 a stronger grader changed 2.4% of clear answers. That was
+measured on throws and generalised to everything.
+
+THE RUN. `datagen/src/coachgrade.ts` took 200 hard questions from the 0-Joker min-1 pack (the app's
+own "hard only" test), rebuilt each from the question alone, and judged its top three actions twice
+on the same hidden deals at 256 play-outs: simple `shanten` bots in all four chairs, then the Coach
+reading the no-Joker danger table. A changed answer counts only when the Coach arm's best beats the
+simple arm's best by more than two paired standard errors inside the Coach arm.
+
+    kind       n    simple bots agree with pack   Coach bots agree   clearly changed
+    discard   101          101 (100%)                 83 (82%)          2  (1%)
+    claim      89           84  (94%)                 64 (71%)         11 (12%)
+    self       10           10 (100%)                  6 (60%)          0
+    all       200          195  (97%)                153 (76%)         13  (6%)
+
+The simple arm agreeing with the pack 97% of the time is the control: the rebuild and the judge
+reproduce the pack. Of the 50 questions where the arms picked differently, 37 are inside two
+standard errors and read as noise.
+
+THROWS HOLD, CLAIMS DO NOT. Two throws in 101 changed, which matches the old 2.4%. Claims changed
+eleven times in 89. Five were a Pong the simple bots liked and the Coach bots would pass; five were
+a win on offer that the simple bots passed on and the Coach bots took (one of those was a Pong the
+pack preferred over the win). So the old claim was right about throws and wrong to stand for claims.
+
+THE WINS ARE THE SAME DEFECT AS BEFORE, AND THEY ARE IN THE PACKS. `D-027` stopped the Play review
+calling a taken win a mistake, because declining a cheap win was measured to lose money. The packs
+carry the same verdict: questions where a win is on offer and the measured best is something else.
+
+    pack           win offered   best is not the win   share of pack
+    coach              1,983            790               7.5%
+    min1               2,277          1,179              11.3%
+    min1-nowild          996            130               1.3%
+
+On Train those questions mark "Win" as the mistake. The re-check says that with the Coach in the
+play-outs the win comes out best on several of them, and the money test already said it is right.
+
+WHAT IT DOES NOT SETTLE. Which verdict is right on the five Pongs. Nothing here plays for money, and
+the Coach as an opponent is a different population, not a proven better one. Judging claims with
+Coach bots across a whole pack is affordable (about 18 seconds a question on this Mac), but whether
+it is more correct needs a paired money test on those positions, not a count of changed answers.
+
 ### The whole-hand judge prices a claim the same way it prices a throw, and is wrong about taking a win (2026-09-13)
 
 The entry that stood here from 2026-09-11 said the Play tab's judge under-prices a call because
