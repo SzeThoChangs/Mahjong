@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
 import { cn, sentences } from '@/lib/utils';
-import { rankDiscards, claimAdvice, type ClaimCandidate, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, claimAdvice, type ClaimCandidate, type Context } from 'sg-mahjong-solver';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 import { J } from '@/lib/jargon';
 import { CONFIG } from '@/lib/scenario';
@@ -124,7 +124,7 @@ export default function AskHand() {
     // Context wants. Elsewhere it is derived as (seat - dealer + 4) % 4 from an absolute seat.
     seat, prevailingWind: round, bonus, playerTurns: turn,
     // the table set in Table setup, not the fixed config, which says min 2 whatever the player plays at
-    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai),
+    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers),
     visible: seen, opponentMelds: oppMelds,
   }), [seat, round, bonus, turn, seen, oppMelds]);
 

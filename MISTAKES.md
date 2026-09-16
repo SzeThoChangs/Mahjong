@@ -84,6 +84,40 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### The Coach reads danger from the no-Joker table at 0 Jokers — Thu Sep 17 00:21:33 +08 2026
+
+Passes run on the prototype build served from the project root, plus solver checks run in Node on
+the exact functions the app calls. No code changed during them. Finished Thu Sep 17 00:23:37 +08 2026.
+
+**Test boundary**
+
+- Workflows: playing a whole hand in Play at 0 Jokers and at 4 Jokers; judging a Play decision;
+  answering Train positions on the 0-Joker and 4-Joker min-1 packs; Your hand; Review; Table setup's
+  Joker switch.
+- Screens: Play, Train, Review, Your hand, Table setup.
+- Access restrictions: none; the app has no accounts.
+- Values, records and calculations: the danger table the Coach reads at each Joker count; the Coach's
+  throw; `mahjong.money.config` jokers.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded at 1280px on Play: "at your table: 0 Jokers, 1 Tai minimum" | 0 |
+| 2 | Errors | Page error and unhandled-rejection listeners through every workflow below | 0 |
+| 3 | Links | Deal, Pass, Carry on, Skip to my turn, tile throws, Judge, Play another hand, Abandon in Play; the Table setup Joker box ticked and unticked; the 4-Joker min-1 pack button on Train | 0 |
+| 4 | Workflow steps | A 0-Joker hand in Play ran to its end (52 turns, won on a throw, 4 Tai) with the Coaches reading the no-Joker table, and one decision judged ("Compared 6 of 12 legal tiles: yours and the 5 the Coach liked best"). A 4-Joker hand ran to its end (44 turns, self-draw, 3 Tai). Train showed the Coach block on both packs; Your hand gave "Throw 1萬, or 9萬, equally good" on a built hand | 0 |
+| 5 | Writes | The Joker box saved jokers 4 when ticked and 0 when unticked, and Play's table line followed it | 0 |
+| 6 | The data it moves | In Node on the functions the app calls: `readsFor(0)` returned the no-Joker table and `readsFor(4)` the shipped one. The baked table held all 144 cells of the measured file, largest rounding difference 0.413%. A late fresh middle tile's deal-in chance read 0.0875 against 0.0173. The Coach's throw changed on 136 of 1,177 0-Joker pack discards (123 of 833 late) and on 0 of 931 4-Joker pack discards | 0 |
+| 7 | Reconciliation | Agreement with the measured best on 2,001 0-Joker discards: 60% before, 60% after; hard questions 43% before, 46% after | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train, Play (before and after a deal), Review, Your hand and Table setup at 280 and 390px, and 1280px from the play-throughs: page width within the screen on all 11 at phone widths | 0 |
+| 10 | Look at it | Screenshot of Play at 390px mid-hand at 0 Jokers: table, prompt and hand read correctly | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a money run on the baked table itself; the +0.215 chips a game was measured on the
+same table read from its JSON file, and the baked copy differs by rounding of at most 0.413%. The
+Film room, whose recorded runs are 4-Joker games and keep the shipped table. A real phone; dark mode.
+
 ### Your sets on the felt, empty felt kept for bare seats, and the question card reordered — Thu Sep 17 00:08:45 +08 2026
 
 Passes run on the prototype build served from the project root. Code changed once during them: the

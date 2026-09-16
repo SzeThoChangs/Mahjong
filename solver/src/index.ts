@@ -10,6 +10,8 @@ export * from './shapetag.js';
 export * from './copy.js';
 export * from './cause.js';
 export type { ReadsTables } from './reads.js';
+export { readsFor } from './reads.js';
+export { READS_NOWILD } from './reads-nowild.js';
 export * from './pack.js';
 export * from './rejudge.js';
 export * from './question.js';

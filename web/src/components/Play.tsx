@@ -36,7 +36,7 @@ import { loadConfig, COMBO_LABEL } from '@/lib/money';
 import { rulesForPack, judgePlay, PLAY_ROLLOUTS, type PlayVerdict } from '@/lib/rejudge';
 import { readPlays, recordHand, noteVerdict, type PlayedHand, type PlayDecision } from '@/lib/play';
 import { GameState, Wall, makeRng, kindOf, tableConfigOf, type Bot, type DecisionKind, type LegalAction, type RulesConfig, type Snapshot } from 'sg-mahjong-engine';
-import { CoachBot, encAction, rankDiscards, ctxOf, meldsOf } from 'sg-mahjong-solver';
+import { CoachBot, AltReadsCoachBot, READS_NOWILD, readsFor, encAction, rankDiscards, ctxOf, meldsOf } from 'sg-mahjong-solver';
 
 const WIND = ['東', '南', '西', '北'];
 const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground';
@@ -98,7 +98,7 @@ function compareFor(d: PlayDecision, rules: RulesConfig): string[] {
   try {
     const g = GameState.fromSnapshot(d.snap, tableConfigOf(rules), { rules });
     const v = g.view(d.seat, null);
-    liked = rankDiscards(v.hand.map(kindOf), meldsOf(v), ctxOf(v)).options.map((o) => `d:${o.tile}`);
+    liked = rankDiscards(v.hand.map(kindOf), meldsOf(v), { ...ctxOf(v), reads: readsFor(rules.jokers.count) }).options.map((o) => `d:${o.tile}`);
   } catch { liked = []; }
   const rest = [...liked.filter((a) => all.includes(a) && a !== chosen), ...all.filter((a) => a !== chosen && !liked.includes(a))];
   return [chosen, ...rest.slice(0, MAX_JUDGED - 1)];
@@ -167,7 +167,7 @@ export default function Play() {
     const dealer = Math.floor(Math.random() * 4);
     try {
       const g = GameState.deal(tableConfigOf(rules), wall, { dealer, prevailingWind: 0, rules });
-      live.current = { g, bots: [0, 1, 2, 3].map(() => new CoachBot()), rules, human: 0, id: `play:${seed}:${Date.now()}`, at: Date.now(), decisions: [], pending: null };
+      live.current = { g, bots: [0, 1, 2, 3].map(() => (rules.jokers.count === 0 ? new AltReadsCoachBot(READS_NOWILD) : new CoachBot())), rules, human: 0, id: `play:${seed}:${Date.now()}`, at: Date.now(), decisions: [], pending: null };
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); return; }
     setErr(null); setHand(null); handRef.current = null;
     settle();

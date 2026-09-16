@@ -78,6 +78,7 @@ practice but should not claim the owner said it.
 | D-027 | 2026-09-13 | The Play review never marks taking a win as a mistake | ACTIVE |
 | D-028 | 2026-09-16 | Train opens on hard questions at the 0-joker min-1 table, on a green felt table | ACTIVE |
 | D-029 | 2026-09-16 | Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play | ACTIVE |
+| D-030 | 2026-09-17 | At 0 Jokers the Coach reads danger from the table measured without Jokers | ACTIVE |
 
 ---
 
@@ -981,3 +982,24 @@ still needed another Tai. The reasoning came from the fixed config's min 2 whate
 is moved too. It can be set back and stays set.
 
 **Related:** D-028, `US-020`, `F-012`, `MISTAKES.md`.
+
+---
+
+## D-030 — At 0 Jokers the Coach reads danger from the table measured without Jokers
+
+**Date:** 2026-09-17 · **Decided by:** Changs (CONFIRMED), on the agent's measurement · **Status:** ACTIVE
+
+**What was decided:** `readsFor(jokers)` picks the danger table. At 0 Jokers it is `READS_NOWILD`,
+baked from `data/gen/reads-nowild/nowild.json`; at any other count it is the shipped `READS`. Every
+Coach in the app uses it: the three opponents in Play, the Coach's answer on Train, Review, Your hand
+and the made-up hand, and Play's choice of which throws to judge. The danger weight stays 40.
+
+**Why:** At a no-Joker table the four-Joker table under-reads danger. Swapping the table was worth
++0.215 +/- 0.051 chips a game over 32,000 paired deals, positive on 4 ranges of 4. Weight 80 was
+worth +0.257 +/- 0.076 on its own, but the two do the same job, making the Coach more afraid late, and
+switching both on would count that danger twice; the table has the larger and cleaner sample.
+
+**What it does not do:** Make the Coach agree with the bars more. On 2,001 0-Joker discards agreement
+stays at 60%. Changs chose it knowing that.
+
+**Related:** `R-002` (resolved), D-005, D-011, D-029, `FINDINGS.md`.

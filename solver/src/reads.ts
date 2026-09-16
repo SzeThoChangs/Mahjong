@@ -27,6 +27,17 @@ import { isHonour, isJoker, isSuited, isTerminal, suitOf, type TileKind } from '
  *  `Context.reads` carries it; everything defaults to READS, which is what the coach uses. */
 export interface ReadsTables { dangerSafe: Record<string, number>; danger: Record<string, number>; ready: Record<string, number>; dangerWall?: Record<string, number> }
 
+import { READS_NOWILD } from './reads-nowild.js';
+
+/**
+ * The reads table for a table with this many Jokers. A no-Joker table gets the table measured
+ * without Jokers, because the four-Joker one under-reads its danger by about half (see reads-nowild).
+ * Every other count keeps READS, which is the only thing that has been measured there.
+ */
+export function readsFor(jokers: number): ReadsTables {
+  return jokers === 0 ? READS_NOWILD : READS;
+}
+
 const bucket = (turn: number) => Math.max(0, Math.min(60, Math.round(turn / 10) * 10));
 const tileClass = (k: TileKind) => (isHonour(k) ? 'honour' : isTerminal(k) ? 'terminal' : 'simple');
 

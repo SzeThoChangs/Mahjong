@@ -46,6 +46,14 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-17 — The Coach reads no-Joker danger at a no-Joker table
+
+**Changed:** At 0 Jokers every Coach in the app reads danger from the table measured without Jokers.
+
+**Why:** Worth +0.215 chips a game at that table over 32,000 paired deals; Changs's table has no Jokers.
+
+**Impact:** `D-030`. `R-002` resolved. Ten passes recorded in `MISTAKES.md`.
+
 ### 2026-09-16 — Claims name their choices, and the pack buttons lose their count and "$"
 
 **Changed:** A claim question names the choices on offer, "Pong or pass?", "Chow or pass?", or all of

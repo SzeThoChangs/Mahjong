@@ -29,7 +29,7 @@ import { recordMistake, challengeMistake, causeTally, readPractise, writePractis
 import { recordPlay, challengePlay } from '@/lib/history';
 import { priceMix, loadConfig, type OutcomeMix } from '@/lib/money';
 import { challenge, challengeKind, canChallenge, rulesForPack, CHALLENGE_ROLLOUTS, type ChallengeOutcome } from '@/lib/rejudge';
-import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
 import { claimQuestion } from '@/lib/claimwords';
@@ -281,6 +281,8 @@ export default function Train() {
    */
   const tableMin = packs.find((p) => p.id === pack)?.table?.minimumTai ?? loadConfig().minTai ?? CONFIG.minimum_fan;
   const selfDrawMin = Math.min(CONFIG.self_draw_minimum_fan, tableMin);
+  // and the danger reads measured at that table's Joker count: a no-Joker table has its own (D-030)
+  const tableReads = readsFor(packs.find((p) => p.id === pack)?.table?.wildcards ?? loadConfig().jokers);
   const coach = useMemo(() => {
     if (!q) return null;
     try {
@@ -293,7 +295,7 @@ export default function Train() {
       (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...bonus); });
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,
         visible,
         opponentMelds: (q.pm ?? []).map((ms, s2) => (s2 === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
@@ -313,7 +315,7 @@ export default function Train() {
       };
       return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[], reasonForAction };
     } catch { return null; }
-  }, [q, tableMin, selfDrawMin]);
+  }, [q, tableMin, selfDrawMin, tableReads]);
 
   // What the learned models would do here. Grading stays on the measured EVs - those are the
   // authority in this tab - but the models are what the Train tab teaches, so showing their answer
@@ -328,7 +330,7 @@ export default function Train() {
       (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,
         visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
       // The COACH, not the learned model. This block said "the learned model would..." while
@@ -348,7 +350,7 @@ export default function Train() {
       }
       return null;
     } catch { return null; }
-  }, [q, tableMin, selfDrawMin]);
+  }, [q, tableMin, selfDrawMin, tableReads]);
 
   const fmt = (x: number) => `${x < 0 ? '−' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}${unit === '$' ? '' : ''}`;
 
@@ -369,7 +371,7 @@ export default function Train() {
       bonus: q.b, seat: (q.seat - (q.dl ?? 0) + 4) % 4, prevailingWind: q.w, melds,
       minimumFan: tableMin, selfDrawMinimumFan: selfDrawMin,
     });
-  }, [q, tableMin, selfDrawMin]);
+  }, [q, tableMin, selfDrawMin, tableReads]);
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];

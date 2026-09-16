@@ -71,7 +71,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | C-003 | CONFLICT | The framework describes two practice tabs with two judges; the app has one | OPEN | Changs |
 | DEP-001 | DEPENDENCY | GitHub Pages on the free tier needs the repository public, with the sources excluded | OPEN | Changs |
 | R-001 | RISK | The judge is measured wrong about taking a win; the cause is unknown | OPEN, narrowed | Agent |
-| R-002 | RISK | The coach uses the four-joker danger reads and weight at every table | OPEN | Agent |
+| R-002 | RISK | The coach uses the four-joker danger reads and weight at every table | RESOLVED | Agent |
 | R-003 | RISK | The no-joker pack cannot grow without more grading | OPEN | Agent |
 | R-004 | RISK | Positive measurements shrink on fresh deals | OPEN | Agent |
 | R-005 | RISK | The training record lives in one browser and is saved by hand | OPEN | Changs |
@@ -707,15 +707,15 @@ safety advice there is too brave.
 
 **Owner:** Agent.
 
-**Mitigation:** None built. The measurement says which reads table to use and roughly what weight;
+**Mitigation:** Built 2026-09-17 (`D-030`): at 0 Jokers every Coach in the app reads the no-Joker table. The measurement says which reads table to use and roughly what weight;
 the reverse transfer, no-joker reads at a four-joker table, costs nothing measurable, so if one
 table must serve both it is the no-joker one. Not on the plan; surfaced here for the owner.
 
 **Related:** D-005, D-011.
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**Resolution:**
+**Resolution:** 2026-09-17, `D-030`. The reads table is switched by Joker count; the weight stays 40, because doubling both would count the same danger twice.
 
 ---
 

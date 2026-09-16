@@ -7,7 +7,7 @@ import {
   Wall, makeRng, playGame, IsolationBot, kindOf, makeRules,
   type PlayerView, type TileInstance, type TileKind, type Meld, type TableConfig, type RulesConfig,
 } from 'sg-mahjong-engine';
-import { rankDiscards, suggestCause, type Ranking, type Context, type Cause } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, suggestCause, type Ranking, type Context, type Cause } from 'sg-mahjong-solver';
 import tableConfig from '../../../data/table.config.json';
 
 /** seat winds by ROLE (distance from the host), for naming an opponent in the advice */
@@ -128,7 +128,7 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
       ...publicMelds.flatMap((ms) => ms.flatMap((m) => m.tiles)),
       ...publicBonus.flat(),
     ];
-    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), visible,
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers), visible,
       opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0),
       opponents: view.players.flatMap((p2, s2) => (s2 === view.seat ? [] : [{
         label: WIND_NAME[(s2 - view.dealer + 4) % 4]!,

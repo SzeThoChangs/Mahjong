@@ -29,7 +29,7 @@ import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, cause
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
-import { rankDiscards, shardOf, shardFile, type Context, type PackIndex } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, shardOf, shardFile, type Context, type PackIndex } from 'sg-mahjong-solver';
 import { loadConfig } from '@/lib/money';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
@@ -100,17 +100,18 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
   const [quizQ, setQuizQ] = useState<QuizQ | null>(null);
   // the minimum of the table the card's pack was played at, so the Coach's words match that table
   const [quizMin, setQuizMin] = useState<number | null>(null);
+  const [quizJokers, setQuizJokers] = useState<number | null>(null);
   const [quizErr, setQuizErr] = useState<string | null>(null);
   useEffect(() => {
     if (!current?.pack) { setQuizQ(null); setQuizErr(null); return; }
     let live = true;
-    setQuizQ(null); setQuizErr(null); setQuizMin(null);
+    setQuizQ(null); setQuizErr(null); setQuizMin(null); setQuizJokers(null);
     const ok = (r: Response) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))));
     const gone = () => { if (live) setQuizErr('that question is no longer in the pack'); };
     const found = (d: { questions: QuizQ[] }) => { if (!live) return; const x = d.questions.find((x) => x.id === current.qid); x ? setQuizQ(x) : gone(); };
     const failed = () => { if (live) setQuizErr('could not load the pack this came from'); };
     fetch(asset(`quiz/${current.pack}/index.json`)).then(ok).then(
-      (ix: PackIndex) => { if (live) setQuizMin(ix.table?.minimumTai ?? null); return fetch(asset(`quiz/${current.pack}/${shardFile(shardOf(current.qid ?? '', ix.placement.modulo))}`))
+      (ix: PackIndex) => { if (live) { setQuizMin(ix.table?.minimumTai ?? null); setQuizJokers(ix.table?.wildcards ?? null); } return fetch(asset(`quiz/${current.pack}/${shardFile(shardOf(current.qid ?? '', ix.placement.modulo))}`))
         // a shard the build does not carry (the single-file page keeps only the first few) is a question that is not here, not a dead network
         .then((r) => (r.status === 404 ? gone() : ok(r).then(found)))
         .catch(failed); },
@@ -137,11 +138,11 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     (quizQ.pb ?? []).forEach((bs, s2) => { if (s2 !== quizQ.seat) visible.push(...bs); });
     const ctx: Context = {
       seat: quizQ.dl !== undefined ? (quizQ.seat - quizQ.dl + 4) % 4 : quizQ.seat, prevailingWind: quizQ.w, bonus: quizQ.b,
-      playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), visible,
+      playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), reads: readsFor(quizJokers ?? loadConfig().jokers), visible,
       opponentMelds: (quizQ.pm ?? []).map((ms, s2) => (s2 === quizQ.seat ? -1 : ms.length)).filter((n) => n >= 0),
     };
     try { return { melds, ctx, ranking: rankDiscards(quizQ.h, melds, ctx) }; } catch { return null; }
-  }, [quizQ, quizMin]);
+  }, [quizQ, quizMin, quizJokers]);
 
   /**
    * One shape for the screen, whichever way the card was rebuilt. `judge` is the whole point of
