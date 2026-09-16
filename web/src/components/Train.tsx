@@ -32,6 +32,7 @@ import { challenge, challengeKind, canChallenge, rulesForPack, CHALLENGE_ROLLOUT
 import { rankDiscards, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
+import { claimQuestion } from '@/lib/claimwords';
 import { asset } from '@/lib/asset';
 
 // The made-up hand is the fallback, not the tab, so its code arrives only on the day a pack has
@@ -396,7 +397,6 @@ export default function Train() {
         <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}
           className={p.id === pack ? '[&_em]:!text-current' : undefined}>
           {p.table ? <>{p.table.wildcards} <J>Jokers</J> · min {p.table.minimumTai} <J>Tai</J></> : p.id}
-          <span className="ml-1.5 opacity-70">{p.questions.toLocaleString()}{p.money ? ' · $' : ''}</span>
         </Button>
       ))}
       <span className="ml-auto" />
@@ -548,7 +548,7 @@ export default function Train() {
           <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
             fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2" />
           <CardTitle className="text-base">
-          {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
+          {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — </> : null}{jargon(claimQuestion(q.actions.map((x) => x.a)))}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle>
           {/* after the answer only: shown before it, the cause told you what kind of throw to look for */}
           {causeNote && picked !== null && <p className="text-xs text-muted-foreground">{causeNote}</p>}

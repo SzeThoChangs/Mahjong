@@ -15,6 +15,7 @@ import { rankDiscards, claimReasons, claimCandidateOf, type Context } from 'sg-m
 import { CONFIG } from '@/lib/scenario';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
+import { claimQuestion } from '@/lib/claimwords';
 import { asset } from '@/lib/asset';
 
 const WIND = ['東', '南', '西', '北'];
@@ -226,7 +227,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
       {/* decision detail */}
       <Card>
         <CardHeader className="py-3"><CardTitle className="text-sm">
-          {WIND[cur.p]} ({hand.bots[cur.p]}) — {cur.k === 'discard' ? 'which tile to discard?' : cur.k === 'claim' ? 'claim or pass?' : jargon('*Kong* or win?')}
+          {WIND[cur.p]} ({hand.bots[cur.p]}) — {cur.k === 'discard' ? 'which tile to discard?' : cur.k === 'claim' ? jargon(claimQuestion(cur.legal)) : jargon('*Kong* or win?')}
           <span className="ml-2 font-normal text-muted-foreground">chose: {actionText(cur.sel)}</span>
         </CardTitle></CardHeader>
         <CardContent className="space-y-2">

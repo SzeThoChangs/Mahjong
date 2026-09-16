@@ -84,6 +84,68 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### A claim names its choices: "Pong or pass?" instead of "claim or pass?" — Wed Sep 16 23:31:52 +08 2026
+
+Passes run on the prototype build served from the project root. No code changed during them.
+Finished Wed Sep 16 23:34:10 +08 2026.
+
+**Test boundary**
+
+- Workflows: a claim question on Train; a claim decision stepped to in the Film room; a claim offered
+  while playing a hand in Play.
+- Screens: Train, Film room, Play.
+- Access restrictions: none; the app has no accounts.
+- Values, records and calculations: the words in each claim question against the buttons or legal
+  actions actually offered.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded at 390px; a Train claim question rendered its title | 0 |
+| 2 | Errors | Page error listener through all three screens | 0 |
+| 3 | Links | The claim filter pressed with `clickOne`; Pass pressed on 20 Train questions and 3 Play offers; Film room next pressed through a hand; Abandon and All hands pressed | 0 |
+| 4 | Workflow steps | `claimQuestion` on 6 choice sets gave the expected words on 6 of 6, including three choices ("*Pong*, *Chow* or pass?") and a win with a Kong. Train: 20 claim titles, every one naming exactly the buttons offered, 0 still saying "claim or pass". Film room: 3 claim decisions titled "Chow or pass?", "Pong or pass?" and "Win or pass?", each matching its legal list. Play: 3 offers titled "Chow or pass?", each matching its buttons | 0 |
+| 5 | Writes | not run — nothing the change touches is saved | not run — no stored value involved |
+| 6 | The data it moves | not run — the change is words; which actions are offered was not changed | not run — no value moved |
+| 7 | Reconciliation | The words and the buttons compared on 26 claims across the three screens: 26 agreed | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train at 280, 320, 375, 390 and 1280px with a claim question: page width within the screen at all 5; at 280 the title wraps to two lines and ends at 248px | 0 |
+| 10 | Look at it | The title text read from the page: "北 discarded 白 — Pong or pass?". Screenshots could not be taken, because the browser pane was hidden and does not draw frames | not checked — no screenshot possible with the pane hidden |
+
+**Defects found:** none.
+
+**Not checked:** a screenshot of any of the three screens; a Pong or three-choice offer in Play,
+where only Chow offers came up in the time run; a real phone; dark mode.
+
+### The question count and "$" removed from the Train pack buttons — Wed Sep 16 23:29:23 +08 2026
+
+Passes run on the prototype build served from the project root. No code changed during them.
+Finished Wed Sep 16 23:30:11 +08 2026.
+
+**Test boundary**
+
+- Workflows: choosing a pack on Train; answering a position after choosing.
+- Screens: Train.
+- Access restrictions: none; the app has no accounts.
+- Values, records and calculations: the three pack button labels; which pack is selected.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded at 1280px. Labels read "4 Jokers · min 2 Tai", "4 Jokers · min 1 Tai", "0 Jokers · min 1 Tai" with no number or "$" after them; the 0-Joker pack selected | 0 |
+| 2 | Errors | Page error listener through the passes | 0 |
+| 3 | Links | Each of the 3 pack buttons pressed with `clickOne` on its exact label: each became the selected one and served a question | 0 |
+| 4 | Workflow steps | At 390px, answered the served position: the answer registered and Next position appeared | 0 |
+| 5 | Writes | not run — nothing the change touches is saved | not run — no stored value involved |
+| 6 | The data it moves | not run — the labels are text; which pack loads was checked in pass 3 | not run — no value moved |
+| 7 | Reconciliation | not run — the count that could have disagreed with the pack index is no longer shown | not run — nothing left to compare |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train at 280, 320, 375, 390 and 1280px: page width within the screen at all 5; 0 controls under 48px at 280 | 0 |
+| 10 | Look at it | Screenshots of Train at 1280 and 390px. Read the button row | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; dark mode. The middle dots inside the button labels remain; removing
+them across the app is still a separate job the owner has not asked for.
+
 ### The Table setup default, the Coach's minimum, and the dealer badge on phones — Wed Sep 16 23:06:34 +08 2026
 
 Passes run on the prototype build served from the project root. Code changed four times during the

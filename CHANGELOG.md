@@ -46,6 +46,16 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-16 — Claims name their choices, and the pack buttons lose their count and "$"
+
+**Changed:** A claim question names the choices on offer, "Pong or pass?", "Chow or pass?", or all of
+them when there are several, on Train, in the Film room and in Play. The pack buttons show only the
+table, without the question count and the "$".
+
+**Why:** Changs asked for both; he called the count and "$" pointless.
+
+**Impact:** Ten passes for each recorded in `MISTAKES.md`.
+
 ### 2026-09-16 — The Coach reasons at the table in play, and Table setup starts at 0 Jokers, min 1
 
 **Changed:** Table setup defaults to 0 Jokers and min 1. The Coach's reasoning uses the pack's own

@@ -31,6 +31,7 @@ import { PublicTable, type SeatPublic } from '@/components/PublicTable';
 import { tileLabel } from '@/lib/tiles';
 import { cn } from '@/lib/utils';
 import { J, jargon } from '@/lib/jargon';
+import { claimQuestion } from '@/lib/claimwords';
 import { loadConfig, COMBO_LABEL } from '@/lib/money';
 import { rulesForPack, judgePlay, PLAY_ROLLOUTS, type PlayVerdict } from '@/lib/rejudge';
 import { readPlays, recordHand, noteVerdict, type PlayedHand, type PlayDecision } from '@/lib/play';
@@ -275,7 +276,7 @@ export default function Play() {
       : p!.kind === 'discard' ? <>Your turn — tap a tile to throw it.</>
       : p!.kind === 'self' ? <>You drew <b>{tileLabel(kindOf(g.drawnInfo!.tile))}</b>. Win, <J>Kong</J>, or carry on?</>
       : offered?.rob ? <>{WIND[g.role(offered.from)]} declared a <J>Kong</J> on <b>{tileLabel(kindOf(offered.tile))}</b> — rob it, or pass?</>
-      : offered ? <>{WIND[g.role(offered.from)]} threw <b>{tileLabel(kindOf(offered.tile))}</b> — claim it, or pass?</> : null;
+      : offered ? <>{WIND[g.role(offered.from)]} threw <b>{tileLabel(kindOf(offered.tile))}</b> — {jargon(claimQuestion(p!.legal.map((l) => l.a)))}</> : null;
 
     return (
       <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
