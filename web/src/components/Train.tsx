@@ -23,7 +23,7 @@ import { Tile } from '@/components/Tile';
 import { PublicTable } from '@/components/PublicTable';
 import { HandContext } from '@/components/HandContext';
 import { tileLabel } from '@/lib/tiles';
-import { cn } from '@/lib/utils';
+import { cn, sentences } from '@/lib/utils';
 import { CONFIG, PRACTISABLE } from '@/lib/scenario';
 import { recordMistake, challengeMistake, causeTally, readPractise, writePractise } from '@/lib/mistakes';
 import { recordPlay, challengePlay } from '@/lib/history';
@@ -396,7 +396,7 @@ export default function Train() {
         // on the selected button's dark fill the jargon colours cannot be read, so its words take the button's own colour
         <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}
           className={p.id === pack ? '[&_em]:!text-current' : undefined}>
-          {p.table ? <>{p.table.wildcards} <J>Jokers</J> · min {p.table.minimumTai} <J>Tai</J></> : p.id}
+          {p.table ? <>{p.table.wildcards} <J>Jokers</J>, min {p.table.minimumTai} <J>Tai</J></> : p.id}
         </Button>
       ))}
       <span className="ml-auto" />
@@ -640,17 +640,17 @@ export default function Train() {
                   <div key={i} className="text-muted-foreground">{l.replace(/ → about [+-]?[\d.]+ chips\/game at turn \d+\./, '.')}</div>
                 ))}
                 {bestAction.a.startsWith('d:') && coach.reasonFor(Number(bestAction.a.slice(2))).length > 0 && (
-                  <div><span className="text-muted-foreground">Why {tileLabel(Number(bestAction.a.slice(2)))}:</span> {coach.reasonFor(Number(bestAction.a.slice(2))).join(' · ')}</div>
+                  <div><span className="text-muted-foreground">Why {tileLabel(Number(bestAction.a.slice(2)))}:</span> {sentences(coach.reasonFor(Number(bestAction.a.slice(2))))}</div>
                 )}
                 {picked !== null && picked !== bestAction.a && picked.startsWith('d:') && coach.reasonFor(Number(picked.slice(2))).length > 0 && (
-                  <div><span className="text-muted-foreground">Your {tileLabel(Number(picked.slice(2)))}:</span> {coach.reasonFor(Number(picked.slice(2))).join(' · ')}</div>
+                  <div><span className="text-muted-foreground">Your {tileLabel(Number(picked.slice(2)))}:</span> {sentences(coach.reasonFor(Number(picked.slice(2))))}</div>
                 )}
                 {/* the same for claims: what the best call buys, and what yours did instead */}
                 {q.k === 'claim' && coach.reasonForAction(bestAction.a).length > 0 && (
-                  <div><span className="text-muted-foreground">Why {actionText(bestAction.a).toLowerCase()}:</span> {coach.reasonForAction(bestAction.a).join(' · ')}</div>
+                  <div><span className="text-muted-foreground">Why {actionText(bestAction.a).toLowerCase()}:</span> {sentences(coach.reasonForAction(bestAction.a))}</div>
                 )}
                 {q.k === 'claim' && picked !== null && picked !== bestAction.a && coach.reasonForAction(picked).length > 0 && (
-                  <div><span className="text-muted-foreground">Your {actionText(picked).toLowerCase()}:</span> {coach.reasonForAction(picked).join(' · ')}</div>
+                  <div><span className="text-muted-foreground">Your {actionText(picked).toLowerCase()}:</span> {sentences(coach.reasonForAction(picked))}</div>
                 )}
               </div>
             )}
@@ -701,7 +701,7 @@ export default function Train() {
               {/* The one handle a person has on a position they dispute. Without it, "that verdict
                   was wrong" cannot be checked by anybody, because the id lives only in the hand log.
                   Quote pack and id and the position can be re-judged here at 2,048 play-outs. */}
-              <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground select-all">{pack} · {q.id}</span>
+              <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground select-all">{pack} / {q.id}</span>
               {/* The verdict rests on the same play-outs that admitted the question, so about one in
                   ten overstates. This judges the pick again on fresh dice, on this device, with no
                   server - see `lib/rejudge.ts`. Gone once it has answered: a second press would be
@@ -738,7 +738,7 @@ export default function Train() {
                       {/* fresh EVs count from this decision, not from the deal, so they sit at a
                           different level from the pack's; the gap is what to read */}
                       <div className="text-xs text-muted-foreground">
-                        {o.n} fresh play-outs each, {(o.ms / 1000).toFixed(1)}s: {o.actions.map((a) => `${actionText(a.a).toLowerCase()} ${fmt(a.ev)}`).join(' · ')}.
+                        {o.n} fresh play-outs each, {(o.ms / 1000).toFixed(1)}s: {o.actions.map((a) => `${actionText(a.a).toLowerCase()} ${fmt(a.ev)}`).join(', ')}.
                         {/* claims are in neither the log nor the record (see `choose`), so only a discard has entries to note */}
                         {!pickWasBest && (verdict === 'mistake' || verdict === 'blunder') && kind !== 'holds' && <> Moved to "too close to call" in the session tally{q.k === 'discard' ? ', and noted on the hand log and the mistake card' : ''}.</>}
                       </div>
@@ -758,7 +758,7 @@ export default function Train() {
         <Badge variant="outline" className="border-slate-400 text-slate-600 dark:text-slate-300">too close to call {score.unclear}</Badge>
         <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-300">mistake {score.mistake}</Badge>
         <Badge variant="outline" className="border-red-600 text-red-700 dark:text-red-300">blunder {score.blunder}</Badge>
-        <span>· given up {fmt(score.lost)} · streak {score.streak}</span>
+        <span>Given up {fmt(score.lost)}, streak {score.streak}</span>
         <button className="underline ml-auto" onClick={() => setScore({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 })}>reset</button>
       </div>
     </div>

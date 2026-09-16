@@ -84,6 +84,38 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### Middle dots removed from the app — Thu Sep 17 00:02:26 +08 2026
+
+Passes run on the prototype build served from the project root. No code changed during them.
+Finished Thu Sep 17 00:05:37 +08 2026.
+
+**Test boundary**
+
+- Workflows: answering a Train discard and reading the Coach's reasons; the Film room list, a hand,
+  and an evaluated decision; Spot; Tips; Review; playing a hand in Play and judging a decision; the
+  made-up hand; building a hand in Your hand; Table setup.
+- Screens: all eight tabs.
+- Access restrictions: none; the app has no accounts.
+- Values, records and calculations: every piece of text that used to be joined with a middle dot.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded at 1280px; every tab opened | 0 |
+| 2 | Errors | Page error listener across every screen and workflow below | 0 |
+| 3 | Links | 8 tabs opened by address; Film room hand opened, stepped with next, closed with All hands; Play Deal, Judge, Play another hand, Abandon; Your hand picker pressed 14 times | 0 |
+| 4 | Workflow steps | Train discard answered; a Play hand played to its end (61 turns, 21 decisions) and one decision judged; a 14-tile hand built in Your hand; a made-up hand dealt and answered | 0 |
+| 5 | Writes | not run — nothing the change touches is saved | not run — no stored value involved |
+| 6 | The data it moves | not run — the change is words and separators | not run — no value moved |
+| 7 | Reconciliation | not run — no two figures were changed that could disagree | not run — nothing to compare |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | All 8 tabs at 280, 390 and 1280px: page width within the screen on all 24 | 0 |
+| 10 | Look at it | Page text read on every screen: middle dots 0 on each, and 0 matches for ", ,", " .", ",." or doubled full stops. Built file: 0 middle dots. Lines read: "Seat 4, you are 東", "4 Jokers, min 2 Tai", "min1-nowild / 1782:23:59", "Given up $3.77, streak 0", "Why 6條: Single — needs 2 more, and neighbours do not help in a pong hand. One is already on the floor — safer to follow.", "東圈, dealer 東", "decision 1/17, 第1巡", "win 25%, in 6%", "Ting Pai, 11 tiles improve it, from 3 kinds", "1 judged, 1 mistake", "東 won, you −$16", "Breaks your only pair. Middle tile with neighbours — flexible.", "a made-up hand, marked by the Coach", "第11巡, late game", "Streak 0" | 0 |
+
+**Defects found:** none.
+
+**Not checked:** screenshots, because the browser pane was hidden; the Spot tally line, which only
+appears once a Spot session has causes recorded; dark mode.
+
 ### A claim names its choices: "Pong or pass?" instead of "claim or pass?" — Wed Sep 16 23:31:52 +08 2026
 
 Passes run on the prototype build served from the project root. No code changed during them.

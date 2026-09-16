@@ -10,7 +10,7 @@ function accepts(hand: number[], melds = 0) {
   }
   return { base, out };
 }
-// 1萬1萬 eyes · 2萬4萬 · 5筒7筒9筒 · 1條2條 · 白白 · 3萬 filler = 13
+// 1萬1萬 eyes, 2萬4萬, 5筒7筒9筒, 1條2條, 白白, 3萬 filler = 13
 const hand = [0,0,1,3,2, 13,15,17, 18,19, 33,33, 4];
 const r = accepts(hand);
 console.log('hand:', hand.map(NAME).join(' '));

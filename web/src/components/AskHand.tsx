@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { tileLabel } from '@/lib/tiles';
-import { cn } from '@/lib/utils';
+import { cn, sentences } from '@/lib/utils';
 import { rankDiscards, claimAdvice, type ClaimCandidate, type Context } from 'sg-mahjong-solver';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 import { J } from '@/lib/jargon';
@@ -306,7 +306,7 @@ export default function AskHand() {
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">{o.reasons.join(' · ')}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{sentences(o.reasons)}</div>
                       </div>
                     );
                   })}
@@ -329,7 +329,7 @@ export default function AskHand() {
               <Tile kind={answer.best.tile} size="lg" highlight />
               <div className="space-y-1">
                 <div><Badge variant="secondary">{answer.plan}</Badge></div>
-                <div className="text-muted-foreground">{answer.best.reasons.join(' · ')}</div>
+                <div className="text-muted-foreground">{sentences(answer.best.reasons)}</div>
               </div>
             </div>
             <Separator />
@@ -344,7 +344,7 @@ export default function AskHand() {
                     o.verdict === 'fine' ? 'text-emerald-700 dark:text-emerald-300' : o.verdict === 'mistake' ? 'text-amber-700 dark:text-amber-300' : 'text-red-700 dark:text-red-300')}>
                     {o.verdict === 'fine' ? 'also fine' : o.verdict}
                   </span>
-                  <span className="text-muted-foreground">{o.reasons.join(' · ')}</span>
+                  <span className="text-muted-foreground">{sentences(o.reasons)}</span>
                 </div>
               ))}
             </div>

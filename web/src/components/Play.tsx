@@ -284,7 +284,7 @@ export default function Play() {
           <CardContent className="pt-4 space-y-2 text-sm">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <span>You are <b>{WIND[g.role(human)]}</b>{g.dealer === human && ' (host)'}</span>
-              <span className="text-muted-foreground">turn <b className="text-foreground">{g.playerTurns}</b> · <J>Wall</J> <b className="text-foreground">{g.wall.remaining}</b></span>
+              <span className="text-muted-foreground">turn <b className="text-foreground">{g.playerTurns}</b>, <J>Wall</J> <b className="text-foreground">{g.wall.remaining}</b></span>
               {last && <span className="flex items-center gap-1 text-muted-foreground">last throw <Tile kind={kindOf(last.tile)} size="xxs" /> by {WIND[g.role(last.seat)]}</span>}
               <span className="text-muted-foreground">you: <b className="text-foreground">{fmt(me.chips)}</b></span>
               <span className="ml-auto flex gap-2">
@@ -325,7 +325,7 @@ export default function Play() {
                 )}
               </div>
             )}
-            <span className={cn(LABEL, 'block')}>In your hand — concealed{offered && mine && p!.kind === 'claim' ? <> · offered: {tileLabel(kindOf(offered.tile))}</> : ''}</span>
+            <span className={cn(LABEL, 'block')}>In your hand — concealed{offered && mine && p!.kind === 'claim' ? <>, offered: {tileLabel(kindOf(offered.tile))}</> : ''}</span>
             {/* every tile is a button only when the engine lists it as a legal throw: a wildcard
                 at a table that forbids throwing one has no click, and neither does anything
                 while it is not your turn */}
@@ -373,7 +373,7 @@ export default function Play() {
           <CardContent className="space-y-2 text-sm">
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {[0, 1, 2, 3].map((s) => <span key={s} className={cn(s === you && 'font-semibold')}>{name(s)}: {fmt(r.chips[s] ?? 0)}</span>)}
-              <span className="text-muted-foreground">· {r.playerTurns} turns · {hand.decisions.length} decisions of yours</span>
+              <span className="text-muted-foreground">{r.playerTurns} turns, {hand.decisions.length} decisions of yours</span>
             </div>
             <p className="text-muted-foreground">A hand's result is mostly luck. The review below is what to read.</p>
             {/*
@@ -390,7 +390,7 @@ export default function Play() {
                   {allRunning ? `Judging… ${judgedCount} of ${hand.decisions.length}` : `Judge all ${hand.decisions.length - judgedCount} unjudged`}
                 </Button>
               )}
-              {judgedCount > 0 && <span className="self-center text-xs text-muted-foreground">{judgedCount} judged · {mistakes} {mistakes === 1 ? 'mistake' : 'mistakes'}</span>}
+              {judgedCount > 0 && <span className="self-center text-xs text-muted-foreground">{judgedCount} judged, {mistakes} {mistakes === 1 ? 'mistake' : 'mistakes'}</span>}
             </div>
           </CardContent>
         </Card>
@@ -479,7 +479,7 @@ function DecisionRow({ d, verdict, progress, error, onJudge }: {
           <div className="text-xs text-muted-foreground">
             {v.n} play-outs each, {(v.ms / 1000).toFixed(1)}s. Compared {verdict.compared.judged} of {verdict.compared.legal} legal {d.kind === 'discard' ? 'tiles' : 'actions'}
             {verdict.compared.judged < verdict.compared.legal ? <>: yours and the {verdict.compared.judged - 1} the <J>Coach</J> liked best</> : ''}.
-            {' '}{v.actions.map((a) => `${textOf(a.a)} ${fmt(a.ev)}${a.a === chosen ? ' (you)' : ''}`).join(' · ')}.
+            {' '}{v.actions.map((a) => `${textOf(a.a)} ${fmt(a.ev)}${a.a === chosen ? ' (you)' : ''}`).join(', ')}.
           </div>
         </div>
       )}
@@ -500,7 +500,7 @@ function Earlier({ list, onOpen }: { list: PlayedHand[]; onOpen: (h: PlayedHand)
           return (
             <div key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
-              <span>{h.result.winner === null ? 'drawn' : h.result.winner === h.seat ? 'you won' : `${WIND[roleOf(h.result.winner, h.dealer)]} won`} · you {fmt(h.result.chips[h.seat] ?? 0)}</span>
+              <span>{h.result.winner === null ? 'drawn' : h.result.winner === h.seat ? 'you won' : `${WIND[roleOf(h.result.winner, h.dealer)]} won`}, you {fmt(h.result.chips[h.seat] ?? 0)}</span>
               <span className="text-xs text-muted-foreground">{judged} of {h.decisions.length} judged{judged ? `, ${mistakes} ${mistakes === 1 ? 'mistake' : 'mistakes'}` : ''}</span>
               <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onOpen(h)}>Review</Button>
             </div>

@@ -30,5 +30,5 @@ for (const count of [4, 0]) {
     if (res.winner !== null) wins++; else draws++;
     blocked += res.blockedWins.reduce((a, b) => a + b, 0);
   }
-  console.log(`Jokers ${count}: ${n} hands · chips net ${chips.toFixed(2)} · illegal ${illegal} · won ${wins} drawn ${draws} · mean turns ${(turns / n).toFixed(1)} · tiles accounted ${[...accounted].sort().join('/')} · blocked wins ${blocked}`);
+  console.log(`Jokers ${count}: ${n} hands, chips net ${chips.toFixed(2)}, illegal ${illegal}, won ${wins} drawn ${draws}, mean turns ${(turns / n).toFixed(1)}, tiles accounted ${[...accounted].sort().join('/')}, blocked wins ${blocked}`);
 }

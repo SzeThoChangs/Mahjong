@@ -47,7 +47,7 @@ export function HandContext({
         <span>You are <b>{WIND[role]}</b></span>
       ) : (
         <>
-          <span>Seat <b>{seat + 1}</b> · you are <b>{WIND[role]}</b></span>
+          <span>Seat <b>{seat + 1}</b>, you are <b>{WIND[role]}</b></span>
           <span className="text-muted-foreground">Host: seat <b className="text-foreground">{dealer + 1}</b>{dealer === seat ? ' (you)' : ''}</span>
         </>
       )}

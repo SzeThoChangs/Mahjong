@@ -34,7 +34,7 @@ import { HandContext } from '@/components/HandContext';
 import { makeScenario, makeScenarioFor, causeOf, teachingHand, CONFIG, type Difficulty, type Phase, type Scenario } from '@/lib/scenario';
 import { recordMistake, setCause } from '@/lib/mistakes';
 import { recordPlay } from '@/lib/history';
-import { cn } from '@/lib/utils';
+import { cn, sentences } from '@/lib/utils';
 import { J } from '@/lib/jargon';
 
 const WIND_NAME = ['東', '南', '西', '北'];
@@ -145,7 +145,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
         you={scenario.seat}
         centre={<div className="text-center leading-tight">
           <div className="text-lg font-semibold">{WIND_NAME[scenario.prevailingWind]}圈</div>
-          <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡 · {scenario.phase} game</div>
+          <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(scenario.playerTurns / 4))}巡, {scenario.phase} game</div>
         </div>}
         seats={[0, 1, 2, 3].map((s) => ({
           wind: WIND_NAME[(s - scenario.dealer + 4) % 4]!,
@@ -163,7 +163,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
         <CardContent className="border-b pb-(--card-spacing)">
           <HandContext seat={scenario.seat} dealer={scenario.dealer} prevailingWind={scenario.prevailingWind}
             playerTurns={scenario.playerTurns} phase={scenario.phase} fan={fan} minimumFan={loadConfig().minTai}>
-            <span className="ml-auto text-xs text-muted-foreground">a made-up hand · marked by the <J>Coach</J></span>
+            <span className="ml-auto text-xs text-muted-foreground">a made-up hand, marked by the <J>Coach</J></span>
           </HandContext>
         </CardContent>
         <CardContent className="@container">
@@ -275,7 +275,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
                     <Badge className={cn('w-24 justify-center', VERDICT_STYLE[o.verdict])}>{o.verdict === 'best' ? 'Best' : o.verdict === 'fine' ? 'Also fine' : o.verdict === 'mistake' ? 'Mistake' : 'Big mistake'}</Badge>
                     <span className="w-14 tabular-nums text-muted-foreground">{o.delta === 0 ? '—' : o.delta.toFixed(1)}</span>
                     {/* the solver guarantees at least one reason; never print the internal plan id at a player */}
-                    <span className="text-muted-foreground truncate">{o.reasons.join(' · ')}</span>
+                    <span className="text-muted-foreground truncate">{sentences(o.reasons)}</span>
                   </div>
                 ))}
               </div>
@@ -292,7 +292,7 @@ export default function GeneratedHand({ seed, cause, onNext }: { seed: number; c
         <Badge variant="outline">fine {score.fine}</Badge>
         <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-300">mistake {score.mistake}</Badge>
         <Badge variant="outline" className="border-red-600 text-red-700 dark:text-red-300">big mistake {score.blunder}</Badge>
-        <span>· streak {score.streak}</span>
+        <span>Streak {score.streak}</span>
         <button className="underline ml-auto" onClick={() => setScore({ best: 0, fine: 0, mistake: 0, blunder: 0, streak: 0 })}>reset</button>
       </div>
     </div>

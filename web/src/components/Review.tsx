@@ -202,7 +202,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
             <div className="flex flex-wrap gap-1.5">
               {tally.map((t) => (
                 <Badge key={t.cause} variant={t === tally[0] && t.cause !== 'unsorted' ? 'default' : 'outline'}>
-                  {t.cause === 'unsorted' ? 'not sorted yet' : causeLabel(t.cause)} · {t.n}
+                  {t.cause === 'unsorted' ? 'not sorted yet' : causeLabel(t.cause)} {t.n}
                 </Badge>
               ))}
             </div>
@@ -368,7 +368,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
             you={pos.seat}
             centre={<div className="text-center leading-tight">
               <div className="text-lg font-semibold">{WIND_NAME[pos.prevailingWind]}圈</div>
-              <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(pos.playerTurns / 4))}巡 · {pos.phase} game</div>
+              <div className="text-xs text-muted-foreground">第{Math.max(1, Math.ceil(pos.playerTurns / 4))}巡, {pos.phase} game</div>
             </div>}
             seats={[0, 1, 2, 3].map((s) => ({
               wind: WIND_NAME[(s - pos.dealer + 4) % 4]!,

@@ -318,7 +318,7 @@ export default function Spot() {
                 <div className="mt-2 text-xs text-muted-foreground">
                   <div className="font-medium text-foreground">Misses, by why</div>
                   {rows.map(([k, v]) => (
-                    <div key={k}>{k}: {(Object.entries(v ?? {}) as [SpotCause, number][]).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${spotCauseLabel(c)} ${n}`).join(' · ')}</div>
+                    <div key={k}>{k}: {(Object.entries(v ?? {}) as [SpotCause, number][]).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${spotCauseLabel(c)} ${n}`).join(', ')}</div>
                   ))}
                 </div>
               );

@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tile } from '@/components/Tile';
 import { PublicTable } from '@/components/PublicTable';
 import { tileLabel } from '@/lib/tiles';
-import { cn } from '@/lib/utils';
+import { cn, sentences } from '@/lib/utils';
 import { rankDiscards, claimReasons, claimCandidateOf, type Context } from 'sg-mahjong-solver';
 import { CONFIG } from '@/lib/scenario';
 import type { Meld } from 'sg-mahjong-engine';
@@ -68,7 +68,7 @@ export default function Replay() {
     <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="text-muted-foreground">Dataset</span>
-        {runs.map((r) => <Button key={r.id} size="sm" variant={r.id === run ? 'default' : 'outline'} onClick={() => setRun(r.id)}>{r.id} · {r.hands} hands{r.money ? ' · $' : ''}</Button>)}
+        {runs.map((r) => <Button key={r.id} size="sm" variant={r.id === run ? 'default' : 'outline'} onClick={() => setRun(r.id)}>{r.id}, {r.hands} hands</Button>)}
         <span className="ml-4 text-muted-foreground">Hand type</span>
         <select className="border rounded-md px-2 py-1 bg-background" value={combo} onChange={(e) => setCombo(e.target.value)}>{combos.map((c) => <option key={c}>{c}</option>)}</select>
         <label className="flex items-center gap-1.5"><input type="checkbox" checked={onlyEvals} onChange={(e) => setOnlyEvals(e.target.checked)} /> evaluated only</label>
@@ -80,7 +80,7 @@ export default function Replay() {
             {list.map((h) => (
               <button key={h.file} onClick={() => open(h.file)} className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent">
                 <span className="font-medium w-24">{h.winner === null ? 'Draw' : `${WIND[h.winner]} wins`}</span>
-                <span className="text-muted-foreground w-28 truncate">{jargon(`${h.combo}${h.fan !== null ? ` · ${h.fan} *Tai*` : ''}`)}</span>
+                <span className="text-muted-foreground w-28 truncate">{jargon(`${h.combo}${h.fan !== null ? `, ${h.fan} *Tai*` : ''}`)}</span>
                 <span className="text-muted-foreground">第{Math.max(1, Math.ceil(h.turns / 4))}巡</span>
                 <span className="ml-auto text-xs text-muted-foreground">{h.evals} evaluated</span>
               </button>
@@ -148,10 +148,10 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
         const chosen = cur.sel.startsWith('d:') ? Number(cur.sel.slice(2)) : null;
         const lines = [`Plan: ${r.plan}.`];
         const bestWhy = r.options.find((o) => o.tile === r.best.tile)?.reasons ?? [];
-        if (bestWhy.length) lines.push(`Coach would throw ${tileLabel(r.best.tile)} — ${bestWhy.join(' · ')}`);
+        if (bestWhy.length) lines.push(`Coach would throw ${tileLabel(r.best.tile)} — ${sentences(bestWhy)}`);
         if (chosen !== null && chosen !== r.best.tile) {
           const mine = r.options.find((o) => o.tile === chosen)?.reasons ?? [];
-          if (mine.length) lines.push(`It threw ${tileLabel(chosen)} — ${mine.join(' · ')}`);
+          if (mine.length) lines.push(`It threw ${tileLabel(chosen)} — ${sentences(mine)}`);
         }
         return { head: 'Why', lines };
       }
@@ -167,7 +167,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
           const c = claimCandidateOf(a, offered!);
           if (!c) return;
           const rs = claimReasons(c, cur.h, seatMelds, offered!, ctx);
-          if (rs.length) lines.push(`${label} — ${rs.join(' · ')}`);
+          if (rs.length) lines.push(`${label} — ${sentences(rs)}`);
         };
         if (cur.ev?.best && cur.ev.best !== cur.sel) say(cur.ev.best, `Best was ${actionText(cur.ev.best).toLowerCase()}`);
         say(cur.sel, `It chose ${actionText(cur.sel).toLowerCase()}`);
@@ -183,7 +183,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Button size="sm" variant="outline" onClick={onBack}>← All hands</Button>
         <span><b>{jargon(hand.winner === null ? 'Draw' : `${WIND[hand.winner]} wins ${hand.combo} (${hand.fan} *Tai*)${hand.selfDraw ? ' by *Zi Mo*' : hand.discarder !== null ? ` off ${WIND[hand.discarder]}` : ''}`)}</b></span>
-        <span className="text-muted-foreground">{WIND[hand.wind]}圈 · dealer {WIND[hand.dealer]}</span>
+        <span className="text-muted-foreground">{WIND[hand.wind]}圈, dealer {WIND[hand.dealer]}</span>
         <span className="ml-auto text-muted-foreground">{unit === '$' ? 'money' : 'chips'}: {hand.delta.map((d, s) => `${WIND[s]} ${fmt(d)}`).join('  ')}</span>
       </div>
 
@@ -193,7 +193,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
           <Button size="sm" variant="outline" onClick={() => setI(Math.max(0, i - 1))}>◀</Button>
           <input type="range" min={0} max={hand.decisions.length - 1} value={i} onChange={(e) => setI(Number(e.target.value))} className="flex-1" />
           <Button size="sm" variant="outline" onClick={() => setI(Math.min(hand.decisions.length - 1, i + 1))}>▶</Button>
-          <span className="text-xs text-muted-foreground w-44">decision {i + 1}/{hand.decisions.length} · 第{Math.max(1, Math.ceil(cur.t / 4))}巡</span>
+          <span className="text-xs text-muted-foreground w-44">decision {i + 1}/{hand.decisions.length}, 第{Math.max(1, Math.ceil(cur.t / 4))}巡</span>
         </div>
         {evalIdxs.length > 0 && (
           <div className="flex flex-wrap gap-1 text-xs items-center"><span className="text-muted-foreground mr-1">evaluated:</span>
@@ -231,7 +231,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
           <span className="ml-2 font-normal text-muted-foreground">chose: {actionText(cur.sel)}</span>
         </CardTitle></CardHeader>
         <CardContent className="space-y-2">
-          {!cur.ev && <div className="text-sm text-muted-foreground">Not evaluated. Legal: {cur.legal.map(actionText).join(' · ')}</div>}
+          {!cur.ev && <div className="text-sm text-muted-foreground">Not evaluated. Legal: {cur.legal.map(actionText).join(', ')}</div>}
           {cur.ev && <EvBars ev={cur.ev} sel={cur.sel} unit={unit} />}
           {why && why.lines.length > 0 && (
             <div className="space-y-1 border-t pt-2 text-xs">
@@ -280,7 +280,7 @@ function EvBars({ ev, sel, unit }: { ev: NonNullable<Row['ev']>; sel: string; un
               ) : null}
             </div>
             <span className="w-16 tabular-nums text-right">{fmt(a.ev)}</span>
-            <span className="w-24 text-muted-foreground">win {(a.win * 100).toFixed(0)}% · in {(a.dealin * 100).toFixed(0)}%</span>
+            <span className="w-24 text-muted-foreground">win {(a.win * 100).toFixed(0)}%, in {(a.dealin * 100).toFixed(0)}%</span>
             {isBest && <Badge className="bg-emerald-600 text-white">best</Badge>}
             {isSel && !isBest && <Badge className="bg-sky-600 text-white">chosen</Badge>}
           </div>

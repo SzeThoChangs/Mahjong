@@ -69,7 +69,7 @@ outer: for (const f of readdirSync(dir).filter((n) => /^decisions-w\d+\.jsonl\.g
 const wanted = new Set(spots.map((s) => `${s.g}:${s.h}`));
 const hands = new Map(loadHands(dir).filter((h) => wanted.has(`${h.g}:${h.h}`)).map((h) => [`${h.g}:${h.h}`, h]));
 
-console.log(`${spots.length} positions where a win was on offer and could be declined · ${rollouts} play-outs each · arms ${ARMS.join(', ')}\n`);
+console.log(`${spots.length} positions where a win was on offer and could be declined, ${rollouts} play-outs each, arms ${ARMS.join(', ')}\n`);
 const agg: Record<string, { n: number; win: number; alt: number; gap: number; winBest: number }> = {};
 for (const p of ARMS) agg[p] = { n: 0, win: 0, alt: 0, gap: 0, winBest: 0 };
 

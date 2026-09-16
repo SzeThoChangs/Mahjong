@@ -93,13 +93,13 @@ function TipCard({ t }: { t: Tip }) {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{jargon(x.label)}</span>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {jargon(x.shanten === 0 ? '*Ting Pai*' : `${x.shanten} from *Ting Pai*`)} ·{' '}
+                {jargon(x.shanten === 0 ? '*Ting Pai*' : `${x.shanten} from *Ting Pai*`)},{' '}
                 <b className={cn('text-foreground', t.variants.length > 1 && x.ukeire === best && 'text-emerald-700 dark:text-emerald-300')}>
                   {x.ukeire} tiles
                 </b>{' '}
 improve it, from {x.kinds} kinds
                 {/* only on cards whose claim is about width the shanten count cannot see */}
-                {x.upgrades !== undefined && <> · <b className="text-foreground">{x.upgrades}</b> widen it without bringing it closer</>}
+                {x.upgrades !== undefined && <>, <b className="text-foreground">{x.upgrades}</b> widen it without bringing it closer</>}
               </span>
             </div>
             <Hand blocks={x.blocks} focus={x.focus} />
