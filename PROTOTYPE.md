@@ -167,6 +167,18 @@ its own. When a feature is prototyped here on an assumption, add it to this tabl
 
 ---
 
+### Iteration 2, 2026-09-16: a "hard only" filter on the Train tab
+
+Changs said some quiz questions are too easy. The prototype adds a "hard only" button beside the
+all, discard and claim buttons. It leaves out questions whose answer is a win, questions decided by
+more than eight standard errors, and questions the recorded bot already got right (`A-005`). It is
+remembered per device and on by default, at Changs's request on 2026-09-16.
+
+Pushed to production on 2026-09-16 at his word, with the other changes in `D-028`. The ten passes
+are in `MISTAKES.md`.
+
+**Temporary assumption:** the definition of hard, `A-005`.
+
 ## What We Want to Learn
 
 **What needs validation:** Whether the Play loop feels like mahjong and whether its review is worth

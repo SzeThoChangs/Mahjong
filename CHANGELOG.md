@@ -46,6 +46,17 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-16 — Harder questions by default, and a green table
+
+**Changed:** Train has a "hard only" filter, on by default, and opens on the 0-joker min-1 pack. The
+cause line moved to after the answer, the seat and wind details moved into the question card, and a
+one-line status message was removed. The square table is green felt with a pale discard box, and the
+left seat's name is no longer upside down.
+
+**Why:** Changs said some questions were too easy and asked for each of the rest.
+
+**Impact:** `D-028`. `A-005` open on what counts as hard. Ten passes recorded in `MISTAKES.md`.
+
 ### 2026-09-13 — The claim judge measured, and the review stops second-guessing a win
 
 **Changed:** The Play tab's review no longer marks taking a win as a mistake; the verdict reads

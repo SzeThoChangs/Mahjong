@@ -59,6 +59,9 @@ type Size = { size: 'sm' | 'xxs'; tile: number; phone: boolean };
 const WIDE: Size = { size: 'sm', tile: 36, phone: false };
 const PHONE: Size = { size: 'xxs', tile: 22, phone: true };
 
+/** green baize, lighter where the lamp would be */
+const FELT = 'radial-gradient(ellipse at center, #2f8a55 0%, #1f6e42 55%, #16502f 100%)';
+
 type Side = 'bottom' | 'right' | 'top' | 'left';
 /** Every seat's tiles face THAT seat, as they would on a real table: the player opposite reads
  *  theirs upside down from where you sit, not the right way up. */
@@ -149,9 +152,10 @@ function SeatName({ seat, className }: { seat: SeatPublic; className?: string })
   return (
     <div className={cn('flex items-center gap-1.5 text-xs whitespace-nowrap', className)}>
       <span className={cn('text-sm', seat.you ? 'font-semibold' : 'font-medium')}>{seat.wind}</span>
-      {seat.you && <span className="text-muted-foreground">(you)</span>}
-      {seat.name && <span className="text-muted-foreground">{seat.name}</span>}
-      {seat.dealer && <span className="rounded border px-1 text-[10px] text-muted-foreground">dealer</span>}
+      {/* these sit on the green felt, where the page's muted grey would not read */}
+      {seat.you && <span className="text-emerald-100/85">(you)</span>}
+      {seat.name && <span className="text-emerald-100/85">{seat.name}</span>}
+      {seat.dealer && <span className="rounded border border-emerald-100/50 px-1 text-[10px] text-emerald-100/85">dealer</span>}
       {seat.acting && <span className="rounded bg-primary px-1.5 text-[10px] text-primary-foreground">acting</span>}
     </div>
   );
@@ -162,7 +166,7 @@ function Concealed({ seat, at }: { seat: SeatPublic; at: Size }) {
   if (!seat.hand?.length) return null;
   return (
     <div className="flex flex-col gap-1">
-      <span className={LABEL}>{seat.you ? 'Your hand' : `${seat.wind}'s hand`} — concealed</span>
+      <span className={cn(LABEL, 'text-emerald-100/85')}>{seat.you ? 'Your hand' : `${seat.wind}'s hand`} — concealed</span>
       <div className="flex flex-wrap items-end gap-0.5" style={{ maxWidth: 9 * (at.tile + 2) }}>
         {[...seat.hand].sort((a, b) => a - b).filter((k) => k !== seat.drawn).map((k, i) => <Tile key={i} kind={k} size={at.size} />)}
         {seat.drawn != null && <span className="ml-1.5"><Tile kind={seat.drawn} size={at.size} badge="drew" /></span>}
@@ -201,8 +205,12 @@ export function PublicTable({ seats, you, centre }: {
              flowers and sets, 11px between what a seat has shown and their pile - which here is
              5px of grid gap, the pile's 2px border and its 4px of padding. ---------- */}
         <div className="overflow-x-auto">
-          <div className={cn('grid w-max mx-auto rounded-2xl bg-muted/40', sz.phone ? 'gap-[5px] p-1' : 'gap-x-3 gap-y-2 p-3')}
-          style={{ gridTemplateColumns: 'auto auto auto', gridTemplateRows: 'auto auto auto' }}>
+          {/* The table is green felt and the discard pile sits on it in its own pale box, so the two
+              kinds of tile read apart at a glance: what a seat has shown lies on the felt, what it
+              has thrown lies in the box (Changs, 2026-09-16). The felt is the same in dark mode,
+              because a card table is green whatever the room's lights are doing. */}
+          <div className={cn('grid w-max mx-auto rounded-2xl text-emerald-50 shadow-[inset_0_0_28px_rgba(0,0,0,0.35)]', sz.phone ? 'gap-[5px] p-1' : 'gap-x-3 gap-y-2 p-3')}
+          style={{ gridTemplateColumns: 'auto auto auto', gridTemplateRows: 'auto auto auto', background: FELT }}>
 
           {/* The seats along the sides are named down their edge, as they sit. On a phone that
               costs 28px a side that the piles need, so their names go in the top corners instead,
@@ -215,14 +223,14 @@ export function PublicTable({ seats, you, centre }: {
           </div>
 
           <div className="col-start-1 row-start-2 flex items-center gap-2">
-            {!sz.phone && <SeatName seat={left} className="[writing-mode:vertical-rl] rotate-180" />}<Shown seat={left} side="left" at={sz} />
+            {!sz.phone && <SeatName seat={left} className="[writing-mode:vertical-rl]" />}<Shown seat={left} side="left" at={sz} />
           </div>
 
           {/* The middle: the discard pile, each seat's throws in front of that seat.
               The dashed box is the one line that separates thrown tiles from shown ones - two
               different kinds of information sitting a few millimetres apart - so it is drawn to be
               seen rather than hinted at. */}
-          <div className={cn('col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/45 bg-background/70', sz.phone ? 'p-1' : 'px-2 py-2')}
+          <div className={cn('col-start-2 row-start-2 grid w-max items-start justify-items-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/45 bg-background text-foreground', sz.phone ? 'p-1' : 'px-2 py-2')}
             style={{ gridTemplateColumns: sz.phone ? 'auto minmax(4.5rem,auto) auto' : 'auto minmax(6rem,auto) auto' }}>
             <div className="col-start-2 row-start-1"><Pool seat={top} side="top" at={sz} /></div>
             <div className="col-start-1 row-start-2"><Pool seat={left} side="left" at={sz} /></div>

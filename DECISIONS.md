@@ -76,6 +76,7 @@ practice but should not claim the owner said it.
 | D-025 | 2026-09-12 | `prototype/` is ACTIVE, is a snapshot of the current build, and new features are prototyped there first | ACTIVE |
 | D-026 | 2026-08-30 | No Rust or WASM port for now | ACTIVE |
 | D-027 | 2026-09-13 | The Play review never marks taking a win as a mistake | ACTIVE |
+| D-028 | 2026-09-16 | Train opens on hard questions at the 0-joker min-1 table, on a green felt table | ACTIVE |
 
 ---
 
@@ -937,3 +938,25 @@ was the fix the previous entry proposed - it is measured not to be the cause.
 containment of a defect, not a view about mahjong.
 
 **Related:** `R-001`, D-002, D-021, `FINDINGS.md`, `datagen/src/winprice.ts`, `datagen/src/declinewin.ts`.
+
+---
+
+## D-028 — Train opens on hard questions at the 0-joker min-1 table, on a green felt table
+
+**Date:** 2026-09-16 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+
+**What was decided:** On the Train tab, "hard only" is on unless a device turns it off, and the pack
+that opens first is 0 Jokers, min 1 Tai. The cause line ("the throw actually made here was") shows
+only after answering. The seat, wind and Tai details sit in the question card rather than a card of
+their own, and the "a real position" line is gone. The square table is green felt with the discard
+pile in its own pale box, and the left seat's name reads the right way up.
+
+**Why:** He said some questions were too easy, which measurement bore out: a tenth of each pack is
+answered "Win" and over a third are decided by more than eight standard errors. The rest are his
+calls on what he trains at and how the screen reads. The definition of "hard" is still an
+assumption (`A-005`).
+
+**What it costs:** A device whose Table setup is still 4 Jokers and min 2 now sees a warning under the
+pack buttons on first load, because the pack table and the set table differ. Recorded, not changed.
+
+**Related:** `A-005`, D-008, D-018, `MISTAKES.md`.

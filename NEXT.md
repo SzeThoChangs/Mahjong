@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-09-13 02:30
+2026-09-16
 
 ## Last Session / Work Package
 
@@ -105,26 +105,28 @@ them rather than build the fix they implied.
 
 ## Where We Stopped
 
-The work is committed and the deploy is green. Nothing is running.
+2026-09-16: everything Changs asked for today is pushed (`D-028`): hard only on by default, the
+0-joker min-1 pack first, the cause line after the answer, the seat details inside the question card,
+the status line removed, the green felt table, and the left seat name upright. Ten passes recorded in
+`MISTAKES.md`. Nothing is running.
+
+Uncommitted work from another session dated 2026-09-13 is still in the tree and was deliberately not
+pushed: the verification rules added to `CLAUDE.md` and `P-Starter.md`, `MISTAKES.md`, the two `check-*.js`
+scripts and `.claude/settings.json`, and a `STATUS.md` edit.
 
 ## Recommended Next Action
 
 ### Next
 
-The owner uses the app for a week and plays a few hands, then answers the questions under **Owner
-Input Required**.
+Changs uses the hard questions for a few days and says whether they are still too easy.
 
 ### Why
 
-Every remaining piece of work is aimed by something only he can say. The judge's remaining defect
-matters a lot if the Play tab turns out to be where he spends his time and very little if it does
-not, and a week of use is the cheapest way to find out which. The practice-hour question is
-upstream of the training plan, of the app, and of whether the framework draft is right, and it has
-been open since the two practice tabs merged.
+What counts as hard (`A-005`) came from the data. His use is the only test of it.
 
 ### Expected Outcome
 
-`Q-001` to `Q-004` answered, `C-003` closed, and a defensible order for the rest of Phase 7.
+`A-005` settled or redefined.
 
 ## After That
 

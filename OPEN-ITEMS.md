@@ -65,6 +65,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
 | A-004 | ASSUMPTION | Friends' testing needs no shared data for now | OPEN | Changs |
+| A-005 | ASSUMPTION | What makes a pack question hard enough for a player who already plays | OPEN | Changs |
 | C-001 | CONFLICT | The P-Starter lifecycle rule for `prototype/` against the owner's decision | RESOLVED | Changs |
 | C-002 | CONFLICT | The original plan says Vercel; the site is on GitHub Pages; `vercel.json` remains | RESOLVED | Agent |
 | C-003 | CONFLICT | The framework describes two practice tabs with two judges; the app has one | OPEN | Changs |
@@ -492,6 +493,33 @@ afternoon's work if their records turn out worth collecting after a fortnight.
 **Resolution:**
 
 ---
+
+## A-005 — What makes a pack question hard enough for a player who already plays
+
+**Type:** ASSUMPTION
+
+**Description:** Changs said on 2026-09-16 that some quiz questions are too easy. Measured the same
+day, a tenth of each pack has "Win" as the answer, over a third are decided by more than eight
+standard errors, and in the coach pack the recorded bot had already chosen the best on 80%. The
+prototype's "hard only" filter assumes a question is hard when none of those holds: the answer is
+not a win, the gap is eight standard errors or less, and the seat that played it chose something
+else. That leaves 1,360 of the coach pack, 2,978 of min-1 and 2,789 of the no-joker pack.
+
+**Why It Matters:** The definition decides what he practises. It was chosen from the data, not
+from what he found easy, and it has not been checked against him.
+
+**Owner:** Changs, by using the filter and saying whether what is left still feels easy.
+
+**Resolution Method:** His review of the prototype.
+
+**Related:** D-008, D-025, `PROTOTYPE.md`.
+
+**Status:** OPEN
+
+**Resolution:**
+
+---
+
 
 ## C-001 — The P-Starter lifecycle rule for `prototype/` against the owner's decision
 

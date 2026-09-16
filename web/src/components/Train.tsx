@@ -56,6 +56,28 @@ interface Action { a: string; ev: number; se?: number; win: number; dealin: numb
 // `c` = why the seat's own throw failed, read off the position when the pack was built, at the table
 // the hand was played on. Null where the seat threw the measured best, or where nothing separates
 // the two tiles; absent on packs built before 2026-09-10, which therefore never match a cause.
+/** the pack the Train tab opens on, when the index carries it */
+const DEFAULT_PACK = 'min1-nowild';
+
+/**
+ * Whether a pack question is worth the time of somebody who already plays.
+ *
+ * Every pack question clears two paired standard errors twice, which makes the verdicts honest and
+ * a lot of the questions obvious. Measured on 2026-09-16, a tenth of each pack has "Win" as the
+ * answer, over a third are decided by more than eight standard errors, and in the coach pack the
+ * recorded bot had already chosen the best on four in five. A question is hard when none of those
+ * is true: the answer is not a win, the best is not miles clear, and the seat that actually played
+ * it chose something else. That leaves 13% of the coach pack and 27% of the other two - still over
+ * a thousand questions each.
+ */
+function isHard(q: { best: string; sel: string; actions: { ev: number; se?: number }[] }): boolean {
+  if (q.best === 'win' || q.sel === q.best) return false;
+  const a = [...q.actions].sort((x, y) => y.ev - x.ev);
+  const se = a[1]?.se ?? 0;
+  if (a.length < 2 || !(se > 0)) return false;
+  return (a[0]!.ev - a[1]!.ev) / se <= 8;
+}
+
 interface Q { id: string; k: string; c?: string | null; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
 
@@ -129,6 +151,9 @@ export default function Train() {
   const [barren, setBarren] = useState<Set<number>>(() => new Set());
   const [picked, setPicked] = useState<string | null>(null);
   const [mode, setMode] = useState<'all' | 'discard' | 'claim'>('all');
+  // on unless this device has turned it off: Changs asked for hard questions to be the default (2026-09-16)
+  const [hardOnly, setHardOnly] = useState<boolean>(() => { try { return localStorage.getItem('mj.hard.v1') !== '0'; } catch { return true; } });
+  useEffect(() => { try { localStorage.setItem('mj.hard.v1', hardOnly ? '1' : '0'); } catch { /* private window */ } }, [hardOnly]);
   const [score, setScore] = useState({ best: 0, unclear: 0, fine: 0, mistake: 0, blunder: 0, lost: 0, streak: 0 });
   /**
    * The Challenge button's state: running with a count, or finished with an outcome or a reason
@@ -141,7 +166,9 @@ export default function Train() {
     fetch(asset('quiz/index.json')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d: { packs: PackIx[] }) => {
         setPacks(d.packs);
-        if (d.packs[0]) { setPack(d.packs[0].id); setPackState('ready'); } else setPackState('none');
+        // the 0-joker min-1 table first: Changs's default (2026-09-16); the list order is left alone
+        const first = d.packs.find((p) => p.id === DEFAULT_PACK) ?? d.packs[0];
+        if (first) { setPack(first.id); setPackState('ready'); } else setPackState('none');
       })
       .catch(() => { setPacks([]); setPackState('none'); });
   }, []);
@@ -188,13 +215,14 @@ export default function Train() {
   // screen says so.
   const causeApplies = causeFilter !== null && (mode !== 'claim' || noPack);
   /** whether one question fits the mode and the cause filter */
-  const fits = (qq: Q) => (mode === 'all' || (mode === 'discard' ? qq.k === 'discard' : qq.k !== 'discard')) && (!causeApplies || qq.c === causeFilter);
+  const fits = (qq: Q) => (mode === 'all' || (mode === 'discard' ? qq.k === 'discard' : qq.k !== 'discard')) && (!causeApplies || qq.c === causeFilter) && (!hardOnly || isHard(qq));
   /** whether a shard holds anything that fits, from its tallies alone - the index is enough to know */
   const canServe = (s: ShardIx) => {
     const ofKind = mode === 'all' ? s.n : mode === 'discard' ? (s.kinds.discard ?? 0) : s.n - (s.kinds.discard ?? 0);
     return ofKind > 0 && (!causeApplies || (s.causes[causeFilter!] ?? 0) > 0);
   };
-  const filterKey = `${mode}|${causeApplies ? causeFilter : ''}`;
+  // the index carries no count of hard questions, so a shard with none is found by loading it and marked barren
+  const filterKey = `${mode}|${causeApplies ? causeFilter : ''}|${hardOnly ? 'hard' : ''}`;
   useEffect(() => { setWalked(new Set()); setBarren(new Set()); }, [filterKey]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const eligible = useMemo(() => (ix ? ix.shards.map((_, i) => i).filter((i) => !barren.has(i) && canServe(ix.shards[i]!)) : []), [ix, barren, filterKey]);
@@ -356,7 +384,9 @@ export default function Train() {
           are the runs they were built from, which meant nothing to Changs on his phone; a pack built
           before the table field existed still falls back to its name. */}
       {packs.map((p) => (
-        <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}>
+        // on the selected button's dark fill the jargon colours cannot be read, so its words take the button's own colour
+        <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}
+          className={p.id === pack ? '[&_em]:!text-current' : undefined}>
           {p.table ? <>{p.table.wildcards} <J>Jokers</J> · min {p.table.minimumTai} <J>Tai</J></> : p.id}
           <span className="ml-1.5 opacity-70">{p.questions.toLocaleString()}{p.money ? ' · $' : ''}</span>
         </Button>
@@ -381,6 +411,7 @@ export default function Train() {
       })()}
       <span className="ml-auto" />
       {!noPack && (['all', 'discard', 'claim'] as const).map((m) => <Button key={m} size="sm" variant={mode === m ? 'secondary' : 'ghost'} onClick={() => { setMode(m); setPicked(null); }}>{m}</Button>)}
+      {!noPack && <Button size="sm" variant={hardOnly ? 'secondary' : 'ghost'} title="Leave out the questions a player who already plays gets without thinking" onClick={() => { setHardOnly((h) => !h); setPicked(null); }}>hard only</Button>}
       {/* the honest grader, aimed at whatever keeps going wrong; hidden in claim mode, where a cause has nothing to say */}
       {causeChoices.length > 0 && (mode !== 'claim' || noPack) && (
         <span className="flex flex-wrap items-center gap-1">
@@ -427,14 +458,6 @@ export default function Train() {
       </div>
     );
   }
-
-  const repriced = !!q?.actions?.some((a) => a.mix);
-  // q.n is the play-out BUDGET, not what each move got: successive halving stops rolling out an
-  // action once its running mean looks bad, so most moves are estimated on a quarter of it. Show
-  // the range that was actually spent rather than the ceiling.
-  const counts = q.actions.map((a) => a.n ?? q.n);
-  const [lowN, highN] = [Math.min(...counts), Math.max(...counts)];
-  const playoutRange = lowN === highN ? `${highN}` : `${lowN}–${highN}`;
 
   const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
   const bestAction = actions[0]!;
@@ -509,15 +532,6 @@ export default function Train() {
     <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
       {controls}
 
-      <Card>
-        <CardContent className="pt-4">
-          <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
-            fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2">
-            <span className="ml-auto text-xs text-muted-foreground">a real position · {playoutRange} play-outs per move{repriced ? ' · priced at your table' : ''}</span>
-          </HandContext>
-        </CardContent>
-      </Card>
-
       <PublicTable
         you={q.seat}
         centre={<div className="text-center leading-tight">
@@ -538,10 +552,16 @@ export default function Train() {
         }))} />
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">
+        {/* the seat, winds, turn and Tai belong with the question they bear on, in one card rather
+            than a card of their own above the table (Changs, 2026-09-16) */}
+        <CardHeader className="pb-2 space-y-3">
+          <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
+            fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2" />
+          <CardTitle className="text-base">
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — claim or pass?</> : 'Claim or pass?'}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle>
-          {causeNote && <p className="text-xs text-muted-foreground">{causeNote}</p>}
+          {/* after the answer only: shown before it, the cause told you what kind of throw to look for */}
+          {causeNote && picked !== null && <p className="text-xs text-muted-foreground">{causeNote}</p>}
         </CardHeader>
         <CardContent className="space-y-3 @container">
           {(q.m.length > 0 || q.b.length > 0) && (
