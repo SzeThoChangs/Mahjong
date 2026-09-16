@@ -128,7 +128,13 @@ function Pool({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
 function Shown({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
   const rot = ROT[side];
   const across = side === 'left' || side === 'right';
-  if (!seat.bonus.length && !seat.melds.length) return null;
+  // A seat with nothing shown keeps a line of empty felt one tile deep, so the ring is the same
+  // width on every side and an empty stretch reads as "nothing laid down" rather than as the table
+  // being smaller there (Changs, 2026-09-16). One tile deep is a tile's long edge.
+  const depth = Math.round(at.tile * (330 / 240));
+  if (!seat.bonus.length && !seat.melds.length) {
+    return <div aria-hidden style={across ? { width: depth } : { height: depth }} />;
+  }
   // one line however many sets there are: wrapping split a seat's sets across two columns/rows,
   // which read as belonging to different players
   const inside = at.phone ? 'gap-0' : 'gap-0.5';   // tiles in one set touch

@@ -84,6 +84,44 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### Your sets on the felt, empty felt kept for bare seats, and the question card reordered — Thu Sep 17 00:08:45 +08 2026
+
+Passes run on the prototype build served from the project root. Code changed once during them: the
+gap before the comma on the pack buttons (pass 10). The passes it could affect were run again.
+Finished Thu Sep 17 00:12:52 +08 2026.
+
+**Test boundary**
+
+- Workflows: answering Train positions; dealing and playing in Play; the pack buttons.
+- Screens: Train and Play, and Spot, Review and the Film room, which draw the same table.
+- Access restrictions: none; the app has no accounts.
+- Values, records and calculations: the space kept for a seat with nothing shown; which tiles sit at
+  your seat on the felt; the order of the question card.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded at 1280px; Train rendered with no "Your Bonus Tiles" or "Your Melds" in the card | 0 |
+| 2 | Errors | Page error listener through every workflow below | 0 |
+| 3 | Links | 3 pack buttons pressed with `clickOne` on exact labels, each became selected; Pass, Chow and tile answers and Next position on Train; Deal and Abandon six times in Play | 0 |
+| 4 | Workflow steps | Train card text in order: question at 22, "IN YOUR HAND" at 31, buttons, "Seat" at 66. Play offered "Pong or pass?" with Pong and Pass buttons | 0 |
+| 5 | Writes | not run — nothing the change touches is saved | not run — no stored value involved |
+| 6 | The data it moves | An empty seat reserved 50px at 1280 and 30px at 390; a turned tile's long edge measured 50px and 30px at those widths. Your seat on the felt held 0 to 13 tiles across 31 positions and deals, where it always held 0 before | 0 |
+| 7 | Reconciliation | not run — the tiles at your seat were not compared with the engine's own count, which the page does not expose | not checked — no second source on the page |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train, Play (before and after a deal), Spot, Review and Film room at 280, 390 and 1280px: page width within the screen on all 18 | 0 |
+| 10 | Look at it | Screenshots of Play and Train at 390px. Your flowers and sets sat below the pile on the felt; the Train card read question, hand, buttons, then "Seat 4, you are 東". The pack buttons read "4 Jokers , min 2 Tai" with a 4.0px gap before the comma | 1 |
+
+**Defects found:**
+
+1. Pass 10, fixed: a 4.0px gap sat between "Jokers" and its comma on the pack buttons, because the
+   button spaces its children and the word and the comma were separate children. Fixed by putting the
+   label in one span. Re-ran passes 1, 2, 3, 9 and 10 on Train: gap 0 on all three buttons, each still
+   selectable, 390 of 390 wide, screenshot read "4 Jokers, min 2 Tai".
+
+**Not checked:** Spot and the made-up hand, which still list your flowers and sets in the question
+card rather than on the felt; a real phone; dark mode. The table is still wider than its card at 390px
+on a late position, which is open as `Q-002`.
+
 ### Middle dots removed from the app — Thu Sep 17 00:02:26 +08 2026
 
 Passes run on the prototype build served from the project root. No code changed during them.

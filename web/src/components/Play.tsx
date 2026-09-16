@@ -267,8 +267,9 @@ export default function Play() {
     const last = g.discardLog[g.discardLog.length - 1];
     const seats: SeatPublic[] = [0, 1, 2, 3].map((s) => ({
       wind: WIND[g.role(s)]!, you: s === human, dealer: s === g.dealer, acting: p?.seat === s,
-      bonus: s === human ? [] : g.players[s]!.bonus.map(kindOf),
-      melds: s === human ? [] : g.players[s]!.melds.map((m) => ({ tiles: m.tiles, concealed: m.concealed })),
+      bonus: g.players[s]!.bonus.map(kindOf),
+      // your own flowers and sets lie on the felt at your seat, like everyone else's (Changs, 2026-09-16)
+      melds: g.players[s]!.melds.map((m) => ({ tiles: m.tiles, concealed: m.concealed })),
       discards: g.players[s]!.discards.map((t) => ({ kind: kindOf(t), claimed: false })),
     }));
     const mine = p?.seat === human;
@@ -305,26 +306,6 @@ export default function Play() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{prompt}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {(me.melds.length > 0 || me.bonus.length > 0) && (
-              <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-x-4 gap-y-2 pb-1 border-b">
-                {me.bonus.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className={LABEL}>Your <J>Bonus Tiles</J></span>
-                    <div className="flex flex-wrap items-end gap-0.5 sm:gap-1">{me.bonus.map((t) => <Tile key={t} kind={kindOf(t)} size="xs" />)}</div>
-                  </div>
-                )}
-                {me.melds.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className={LABEL}>Your <J>Melds</J></span>
-                    <div className="flex flex-wrap items-end gap-0.5 sm:gap-1">
-                      {me.melds.map((m, i) => (
-                        <span key={i} className="flex gap-0.5 mr-2 last:mr-0">{m.instances.map((t) => <Tile key={t} kind={kindOf(t)} size="xs" concealed={m.concealed} />)}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
             <span className={cn(LABEL, 'block')}>In your hand — concealed{offered && mine && p!.kind === 'claim' ? <>, offered: {tileLabel(kindOf(offered.tile))}</> : ''}</span>
             {/* every tile is a button only when the engine lists it as a legal throw: a wildcard
                 at a table that forbids throwing one has no click, and neither does anything

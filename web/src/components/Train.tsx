@@ -396,7 +396,8 @@ export default function Train() {
         // on the selected button's dark fill the jargon colours cannot be read, so its words take the button's own colour
         <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}
           className={p.id === pack ? '[&_em]:!text-current' : undefined}>
-          {p.table ? <>{p.table.wildcards} <J>Jokers</J>, min {p.table.minimumTai} <J>Tai</J></> : p.id}
+          {/* one span, so the button's flex gap does not open a space between a word and its comma */}
+          <span>{p.table ? <>{p.table.wildcards} <J>Jokers</J>, min {p.table.minimumTai} <J>Tai</J></> : p.id}</span>
         </Button>
       ))}
       <span className="ml-auto" />
@@ -532,21 +533,17 @@ export default function Train() {
         wind: WIND[q.dl !== undefined ? (s - q.dl + 4) % 4 : s]!,
         you: s === q.seat,
         dealer: s === q.dl,
-        // your own flowers and sets belong to the hand card below, where they are labelled "Your ...".
-        // Showing them here too printed them twice, from two sources that could disagree.
-        bonus: s === q.seat ? [] : (q.pb ?? [])[s] ?? [],
+        bonus: s === q.seat ? q.b : (q.pb ?? [])[s] ?? [],
         // a meld row is [type, concealed, ...tiles]
-        melds: s === q.seat ? [] : ((q.pm ?? [])[s] ?? []).map((m) => ({ tiles: m.slice(2), concealed: m[1] === 1 })),
+        melds: (s === q.seat ? q.m : (q.pm ?? [])[s] ?? []).map((m) => ({ tiles: m.slice(2), concealed: m[1] === 1 })),
         // [seat, kind, claimedBy] - claimedBy >= 0 means it left the floor into someone's set
         discards: (q.disc ?? []).filter((d) => d[0] === s).map((d) => ({ kind: d[1]!, claimed: d[2]! >= 0 })),
         }))} />
 
       <Card>
-        {/* the seat, winds, turn and Tai belong with the question they bear on, in one card rather
-            than a card of their own above the table (Changs, 2026-09-16) */}
-        <CardHeader className="pb-2 space-y-3">
-          <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
-            fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2" />
+        {/* Question first, then the hand, then the seat and wind details: the order Changs reads
+            them in (2026-09-16). Your own flowers and sets are on the felt with everyone else's. */}
+        <CardHeader className="pb-2">
           <CardTitle className="text-base">
           {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — </> : null}{jargon(claimQuestion(q.actions.map((x) => x.a)))}</> : 'Kong, or keep the hand as it is?'}
         </CardTitle>
@@ -554,27 +551,7 @@ export default function Train() {
           {causeNote && picked !== null && <p className="text-xs text-muted-foreground">{causeNote}</p>}
         </CardHeader>
         <CardContent className="space-y-3 @container">
-          {(q.m.length > 0 || q.b.length > 0) && (
-            <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-x-4 gap-y-2 pb-1 border-b">
-              {q.b.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <span className={LABEL}>Your <J>Bonus Tiles</J></span>
-                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">{q.b.map((k, i) => <Tile key={i} kind={k} size="md" fluid />)}</div>
-                </div>
-              )}
-              {q.m.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <span className={LABEL}>Your <J>Melds</J></span>
-                  <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 sm:gap-1">
-                    {q.m.map((m, i) => (
-                      <span key={i} className="flex gap-0.5 sm:gap-1 mr-2 last:mr-0">{m.slice(2).map((k, j) => <Tile key={j} kind={k} size="md" fluid concealed={m[1] === 1} />)}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {(q.m.length > 0 || q.b.length > 0) && <span className={cn(LABEL, 'block')}>In your hand — concealed</span>}
+          <span className={cn(LABEL, 'block')}>In your hand — concealed</span>
           {/* on a phone the tiles are fixed at 38px and wrap to two rows: see Tile's `fluid` */}
           <div className="flex flex-nowrap max-sm:flex-wrap items-end gap-0.5 gap-y-2 sm:gap-1.5">
             {handTiles.map((k, i) => (
@@ -600,6 +577,10 @@ export default function Train() {
               ))}
             </div>
           )}
+          <div className="border-t pt-3">
+            <HandContext seat={q.seat} dealer={q.dl} prevailingWind={q.w} playerTurns={q.t}
+              fan={q.fih} fanLabel="*Tai* in hand" className="gap-x-5 gap-y-2" />
+          </div>
         </CardContent>
       </Card>
 
