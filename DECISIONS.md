@@ -80,6 +80,7 @@ practice but should not claim the owner said it.
 | D-029 | 2026-09-16 | Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play | ACTIVE |
 | D-030 | 2026-09-17 | At 0 Jokers the Coach reads danger from the table measured without Jokers | ACTIVE |
 | D-031 | 2026-09-17 | The pack's Pong answers stand, and the Coach's calling bar stays at 0.4 | ACTIVE |
+| D-032 | 2026-09-17 | Win and claim answers are graded for strong opponents | ACTIVE |
 
 ---
 
@@ -1021,3 +1022,21 @@ passes the most lost 0.107 +/- 0.053 chips a game against the recorded players. 
 **What would reverse it:** A rule aimed at the late positions that flipped, winning a paired money test.
 
 **Related:** D-027, D-030, `R-001`, `PROTOTYPE.md`.
+
+---
+
+## D-032 — Win and claim answers are graded for strong opponents
+
+**Date:** 2026-09-17 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+
+**What was decided:** The answers the app teaches on whether to take a win, and on claims, are to be
+judged for a table of strong players, because that is the table Changs plays at.
+
+**Why:** Following the pack's judge on wins loses 0.22 to 0.33 chips a game against three Coaches and
+wins against loose players, at every table (`FINDINGS.md`). The right answer depends on the
+opponents, and he says his are strong.
+
+**How it is being carried out:** `PROTOTYPE.md`, "Is the judge right to decline wins?", steps 3 and 4.
+The stand-in for strong players is three Coaches (`A-006`).
+
+**Related:** D-027, D-031, `Q-012`, `A-006`, `R-001`.

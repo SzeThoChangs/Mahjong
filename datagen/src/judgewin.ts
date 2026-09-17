@@ -29,6 +29,14 @@ const run = arg('run', '../data/gen/run-min1-nowild');
 const from = Number(arg('from', '7730001'));
 const rollouts = Number(arg('rollouts', '256'));
 const seatsArg = arg('seats', '0,1,2,3').split(',').map(Number);
+/**
+ * `--judge coach` plays the judge's play-outs with the Coach in all four chairs (reading danger at
+ * the table's Joker count) instead of simple bots: the judge for a table of strong players.
+ * `--decisions claims` follows the judge at every claim decision with a real choice (win, Kong, Pong,
+ * Chow or pass) and at every win on a self-draw, not only at wins.
+ */
+const judgeKind = arg('judge', 'shanten');
+const decisions = arg('decisions', 'wins');
 
 const rules = rulesForDir(run);
 const cfg = tableConfigOf(rules);
@@ -51,12 +59,15 @@ function play(shuffle: number, g: number, seat: number, judged: boolean): number
   while (!game.finished && guard++ < 4000) {
     const p = game.pending();
     if (!p) { game.advance(); continue; }
-    if (judged && p.seat === seat && p.legal.some((l) => l.a === 'win') && p.legal.length > 1) {
+    const hasWin = p.legal.some((l) => l.a === 'win');
+    const ask = decisions === 'claims' ? (p.kind === 'claim' || hasWin) : hasWin;
+    if (judged && p.seat === seat && ask && p.legal.length > 1) {
       const t0 = Date.now();
-      const out = rejudge(game.snapshot(), rules, seat, p.legal, { rollouts, seed: 424242, key: `${shuffle}:${seat}:${k++}`, policy: 'shanten' });
+      const policy = judgeKind === 'coach' ? () => coach() : 'shanten' as const;
+      const out = rejudge(game.snapshot(), rules, seat, p.legal, { rollouts, seed: 424242, key: `${shuffle}:${seat}:${k++}`, policy });
       judgeMs += Date.now() - t0;
       const best = [...out].sort((a, b) => b.ev - a.ev)[0]!.a;
-      offers++; if (best !== 'win') declined++;
+      offers++; if (hasWin ? best !== 'win' : best === 'pass') declined++;
       const act: LegalAction = p.legal.find((l) => encAction(l) === best)!;
       game.apply(act);
       continue;
@@ -80,6 +91,6 @@ for (const seat of seatsArg) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / Math.max(1, diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`following the judge on wins, against the Coach that always wins; ${rules.jokers.count} Jokers, min ${rules.minimum_tai}; field ${fieldKind}; deals ${from}..${from + n - 1}; seats ${seatsArg.join(',')}`);
+console.log(`following the ${judgeKind} judge on ${decisions}, against the Coach; ${rules.jokers.count} Jokers, min ${rules.minimum_tai}; field ${fieldKind}; deals ${from}..${from + n - 1}; seats ${seatsArg.join(',')}`);
 console.log(`${diffs.length} paired deals. Win offers judged ${offers}, judge said decline ${declined} (${offers ? Math.round((100 * declined) / offers) : 0}%). Judge time ${(judgeMs / 1000).toFixed(0)}s of ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 console.log(`judge minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);

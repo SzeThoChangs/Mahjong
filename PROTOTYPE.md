@@ -322,6 +322,23 @@ wins blindly; the judge declines the ones worth declining against weak players.
 **What this changes about the job:** there is no single fix for step 3. What is correct at Changs's
 table depends on how his opponents play, which nothing here has measured.
 
+**Owner answer, 2026-09-17:** his opponents are strong (`Q-012`). So the target is a judge that is
+right against strong players. The Coach field is the project's stand-in for strong players; that is
+an assumption, not a measurement of real people (`A-006`).
+
+**Step 3, named before the run:** the same money test with the judge's play-outs played by the Coach
+(reading danger at the table's Joker count), following it on wins, against three Coaches.
+`judgewin.ts --judge coach --decisions wins --field coach`, 2,000 deals per seat, all four chairs.
+
+    table              deals
+    0 Jokers, min 1    7790001 to 7792000
+    4 Jokers, min 1    7800001 to 7802000
+    4 Jokers, min 2    7810001 to 7812000
+
+If the Coach-played judge does not lose to always taking the win against strong players, it is the
+judge for Changs's table on wins. Claims follow once their cost is measured: a smoke run following
+the Coach-played judge at every claim took more than ten minutes for twelve deals.
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on

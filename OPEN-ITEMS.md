@@ -61,12 +61,13 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
-| Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | OPEN | Changs |
+| Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | RESOLVED | Changs |
 | A-001 | ASSUMPTION | Training on play-out-graded decisive positions improves real play | OPEN | Changs |
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
 | A-004 | ASSUMPTION | Friends' testing needs no shared data for now | OPEN | Changs |
 | A-005 | ASSUMPTION | What makes a pack question hard enough for a player who already plays | OPEN | Changs |
+| A-006 | ASSUMPTION | Three Coaches are a fair stand-in for Changs's strong real opponents | OPEN | Agent |
 | C-001 | CONFLICT | The P-Starter lifecycle rule for `prototype/` against the owner's decision | RESOLVED | Changs |
 | C-002 | CONFLICT | The original plan says Vercel; the site is on GitHub Pages; `vercel.json` remains | RESOLVED | Agent |
 | C-003 | CONFLICT | The framework describes two practice tabs with two judges; the app has one | OPEN | Changs |
@@ -645,6 +646,27 @@ would publish the owner's books.
 
 ---
 
+## A-006 — Three Coaches are a fair stand-in for Changs's strong real opponents
+
+**Type:** ASSUMPTION
+
+**Description:** Changs describes his opponents as strong: they build proper hands, fold when a hand
+looks ready, and often win first. The project has no recording of real players, so "strong" is
+measured as a table of three Coaches. The Coach wins colour hands a third of the time and defends;
+whether real strong players are more or less punishing than that is not known.
+
+**Why It Matters:** Every win and claim answer graded for his table rests on it.
+
+**Owner:** Agent.
+
+**Resolution Method:** None available without recorded human games. Stated so it is not forgotten.
+
+**Status:** OPEN
+
+**Resolution:**
+
+---
+
 ## Q-012 — How do the opponents at Changs's real table play?
 
 **Type:** QUESTION
@@ -662,9 +684,9 @@ So which answer the app should teach depends on how his real opponents play.
 **Resolution Method:** His description of his table, and, if it is mixed or uncertain, grading those
 questions against a stated blend of both fields and marking them as table-dependent.
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**Resolution:**
+**Resolution:** 2026-09-17, Changs: his opponents are strong. Grade wins and claims for strong players (`D-032`).
 
 ---
 
