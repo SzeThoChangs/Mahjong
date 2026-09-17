@@ -339,6 +339,25 @@ If the Coach-played judge does not lose to always taking the win against strong 
 judge for Changs's table on wins. Claims follow once their cost is measured: a smoke run following
 the Coach-played judge at every claim took more than ten minutes for twelve deals.
 
+**Claim cost, measured 2026-09-17:** following the Coach-played judge at every claim took 1,115 seconds
+for 12 paired deals, 42 claim decisions at 26 seconds each, and it said pass on 57% of them. At that
+rate the named test is about 200 hours on one worker. The simple judge took 13 seconds for the same
+12 deals.
+
+**So claims go in the order the money allows.** First the question that is cheap and decides whether
+anything else is needed: do the pack's current claim answers, the simple judge's, lose money against
+strong players? `judgewin.ts --judge shanten --decisions claims --field coach`, 2,000 deals per seat,
+all four chairs, queued after step 3.
+
+    table              deals
+    0 Jokers, min 1    7820001 to 7822000
+    4 Jokers, min 1    7830001 to 7832000
+    4 Jokers, min 2    7840001 to 7842000
+
+If they do not lose against the Coach's own claim rule, the pack's claims are fit for a strong table
+and the 200-hour test is not needed to decide anything. If they lose, the claims are re-judged, and
+the cost of doing that properly is the next thing to solve.
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on
