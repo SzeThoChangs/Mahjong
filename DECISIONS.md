@@ -79,6 +79,7 @@ practice but should not claim the owner said it.
 | D-028 | 2026-09-16 | Train opens on hard questions at the 0-joker min-1 table, on a green felt table | ACTIVE |
 | D-029 | 2026-09-16 | Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play | ACTIVE |
 | D-030 | 2026-09-17 | At 0 Jokers the Coach reads danger from the table measured without Jokers | ACTIVE |
+| D-031 | 2026-09-17 | The pack's Pong answers stand, and the Coach's calling bar stays at 0.4 | ACTIVE |
 
 ---
 
@@ -1003,3 +1004,20 @@ switching both on would count that danger twice; the table has the larger and cl
 stays at 60%. Changs chose it knowing that.
 
 **Related:** `R-002` (resolved), D-005, D-011, D-029, `FINDINGS.md`.
+
+---
+
+## D-031 — The pack's Pong answers stand, and the Coach's calling bar stays at 0.4
+
+**Date:** 2026-09-17 · **Decided by:** Agent, on the money test Changs asked for · **Status:** ACTIVE
+
+**What was decided:** Nothing changes. The 0-Joker pack keeps its Pong answers, and the Coach keeps
+calling a claim when it improves the hand by more than 0.4 chips.
+
+**Why:** A judge with the Coach in the play-outs flipped 73 of 600 Pong answers to pass. Playing the
+Coach at bars that pass more Pongs never won money over 8,000 paired deals per arm, and the bar that
+passes the most lost 0.107 +/- 0.053 chips a game against the recorded players. `FINDINGS.md`.
+
+**What would reverse it:** A rule aimed at the late positions that flipped, winning a paired money test.
+
+**Related:** D-027, D-030, `R-001`, `PROTOTYPE.md`.

@@ -289,9 +289,28 @@ same Pong count, over 240 paired deals each.
   chairs, 8,000 paired deals each. Deals 7710001 to 7712000 against three Coaches, 7720001 to 7722000
   against the recorded personalities. A bar is called better only at more than two standard errors.
 
-**Status:** RUNNING
+**Status:** RUN, 2026-09-17, finished 02:43.
 
-**Findings:** None yet.
+**Findings:**
+
+1. **Stage one.** With the Coach in the play-outs, 73 of the 600 Pong answers clearly flip to pass
+   (12.2%), and 40 of those 73 are late in the hand, against 194 of 600 positions overall. The simple
+   bots still say Pong on 594 of 600, which is the control. Pong's value over passing falls from +3.35
+   to +2.11 on average, so the Coach bots like these Pongs less, not usually enough to pass.
+2. **Stage two.** Passing more Pongs never won money:
+
+       bar   against three Coaches      against the recorded players
+       0     -0.005 +/- 0.023           +0.043 +/- 0.029   (calls more)
+       1.5   -0.014 +/- 0.035           -0.040 +/- 0.038
+       3     -0.046 +/- 0.051           -0.107 +/- 0.053   (t = -2.0, calls fewest)
+
+   Nothing beats the shipped 0.4 by two standard errors. The bar that passes the most Pongs is the
+   only result past two standard errors, and it loses.
+3. **So the pack's Pong answers stand**, and the Coach-played judge's pass verdicts on them are not
+   borne out in money. The shipped bar of 0.4 stays.
+
+**What it does not establish:** Stage two tests a bar applied to every Pong, not the 73 flipped
+positions one by one. A rule that passes exactly those, late in the hand, was not played.
 
 
 ### The claim judge

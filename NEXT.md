@@ -105,14 +105,13 @@ them rather than build the fix they implied.
 
 ## Where We Stopped
 
-2026-09-16, 23:25: everything Changs asked for today is pushed (`D-028`, `D-029`): hard only by
-default, the 0-joker min-1 pack and Table setup default, the Coach reasoning at the table in play,
-the green table, the seat details in the question card, and the dealer badge under the wind on
-phones. Ten passes recorded in `MISTAKES.md`. Nothing is running.
+2026-09-17, 16:00: the Pong money test finished. Passing more Pongs never won money, so the pack's
+Pong answers stand and the Coach's calling bar stays at 0.4 (`D-031`). Earlier the same day: the
+Coach reads no-Joker danger at a no-Joker table (`D-030`), and a re-check showed smarter play-out
+opponents change 1% of throws and 12% of claims (`FINDINGS.md`). Nothing is running.
 
-Uncommitted work from another session dated 2026-09-13 is still in the tree and was deliberately not
-pushed: the verification rules added to `CLAUDE.md` and `P-Starter.md`, the two `check-*.js` scripts
-and `.claude/settings.json`, and a `STATUS.md` edit. `MISTAKES.md` also holds this session's records.
+Still open from that re-check, waiting on Changs: 790, 1,179 and 130 pack questions whose answer
+is to decline an offered win, which the money test says is wrong. Dropping them from Train is quick.
 
 ## Recommended Next Action
 

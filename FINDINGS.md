@@ -1986,6 +1986,38 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### Passing more Pongs does not win money, so the pack's Pong answers stand (2026-09-17)
+
+The entry below found that with the Coach in the play-outs some Pong answers flip to pass. Changs
+asked which actually wins. Named before the run in `PROTOTYPE.md`.
+
+STAGE ONE, 600 of the 2,193 0-Joker pack questions whose best is Pong, 256 play-outs, the same deals
+for both arms. Simple bots still say Pong on 594 (the control). The Coach bots clearly flip 73 to pass
+(12.2%), 40 of them from turn 36 on, against 194 of 600 positions that late. Pong's average value over
+passing falls from +3.35 to +2.11.
+
+STAGE TWO, `datagen/src/pongmoney.ts`. The Coach calls a claim when it improves the hand by more than
+0.4 chips, a bar never measured. One seat's no-Joker Coach held Pongs to a different bar, Chows left at
+0.4, 8,000 paired deals per arm in all four chairs, on a 0-Joker min-1 table. At a bar of 0.4 the
+harness returned exactly 0.000 against the shipped Coach on both fields before any result was read.
+
+    Pong bar   Pongs called (shipped 4,221 / 4,942)   three Coaches        recorded players
+    0          4,341 / 5,131                           -0.005 +/- 0.023     +0.043 +/- 0.029
+    1.5        3,897 / 4,485                           -0.014 +/- 0.035     -0.040 +/- 0.038
+    3          3,433 / 3,922                           -0.046 +/- 0.051     -0.107 +/- 0.053
+
+No bar beats 0.4 by two standard errors. The one result at two standard errors is the bar that passes
+the most Pongs, against the recorded players, and it loses a tenth of a chip a game. Calling more leans
+positive against those players and is flat against Coaches.
+
+CONCLUSION. The judge with the Coach in the play-outs is not the more correct one on Pongs. The pack's
+Pong answers stand and the bar stays at 0.4. This is the second time a verdict change produced by
+swapping who plays out the hand has failed the money test; the first was the win decision, where the
+money sided with taking the win.
+
+WHAT IT DOES NOT SETTLE. A bar is applied to every Pong. A rule aimed at exactly the late positions
+that flipped was not played.
+
 ### Smarter play-out opponents leave throws alone and change one claim in eight (2026-09-17)
 
 Changs asked whether measuring with smarter bots would change the answers. The standing claim was

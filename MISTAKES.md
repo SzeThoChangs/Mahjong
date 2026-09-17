@@ -84,6 +84,35 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### The Pong money test (experiment tools only, no app change) — Thu Sep 17 15:57:35 +08 2026
+
+The change was two measurement tools in `datagen/`, `coachgrade.ts --select pong` and `pongmoney.ts`.
+Nothing the app runs was changed.
+
+**Test boundary**
+
+- Workflows: none in the app.
+- Screens: none.
+- Access restrictions: none.
+- Values, records and calculations: the tools' outputs, and that they pair correctly.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | not run — no screen changed | not run — no app change |
+| 2 | Errors | The stage one output held 600 rows and 0 errors; all six stage two logs ended with a result line | 0 |
+| 3 | Links | not run — no screen changed | not run — no app change |
+| 4 | Workflow steps | Both stages ran to their end: `pongmoney.done` written at 02:43 | 0 |
+| 5 | Writes | not run — the tools write their own logs only | not run — no app data |
+| 6 | The data it moves | At a Pong bar of 0.4 the money harness returned +0.000 +/- 0.000 against the shipped Coach, with Pongs called 139 and 139 against Coaches and 143 and 143 against the recorded players, over 240 paired deals each | 0 |
+| 7 | Reconciliation | Stage one's simple-bot arm agreed with the pack on 594 of 600, which reconciles the rebuilt positions with the pack | 0 |
+| 8 | Access | not run — no access control exists | not run — no access control exists |
+| 9 | Width | not run — no screen changed | not run — no app change |
+| 10 | Look at it | Read all six stage two logs and the stage one summary; the table in `FINDINGS.md` was copied from those numbers | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a rule aimed at the flipped positions; Chow decisions.
+
 ### The Coach reads danger from the no-Joker table at 0 Jokers — Thu Sep 17 00:21:33 +08 2026
 
 Passes run on the prototype build served from the project root, plus solver checks run in Node on

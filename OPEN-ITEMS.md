@@ -681,6 +681,10 @@ thing that will settle *Pong* and *Chow*.
 
 **Related:** D-002, D-021, D-027, Q-001, `PLAN.md`, `PROTOTYPE.md`.
 
+**Update 2026-09-17:** The Pong half is answered for the no-Joker table. Swapping the play-out
+opponents for the Coach flips 12% of Pong answers to pass, and passing more Pongs never won money
+(`D-031`). Chow and the cause of the win defect remain open.
+
 **Status:** OPEN, narrowed
 
 **Resolution:**
