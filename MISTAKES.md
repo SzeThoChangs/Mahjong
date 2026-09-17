@@ -84,6 +84,27 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### The direct money test of the judge's win verdicts (experiment tool only, no app change) — Thu Sep 17 17:42:26 +08 2026
+
+The change was one measurement tool, `datagen/src/judgewin.ts`. Nothing the app runs changed.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | not run — no screen changed | not run — no app change |
+| 2 | Errors | All six logs ended with a result line; no deal reported unfinished | 0 |
+| 3 | Links | not run — no screen changed | not run — no app change |
+| 4 | Workflow steps | The chain wrote `judgewin.done`; six runs of 8,000 paired deals each | 0 |
+| 5 | Writes | not run — the tool writes its own logs only | not run — no app data |
+| 6 | The data it moves | With the judge forced to take every win, the hand-driven loop returned +0.000 +/- 0.000 against the Coach over 60 paired deals, 16 offers judged | 0 |
+| 7 | Reconciliation | Decline rates matched the earlier measurement at 4 Jokers (51% to 53% here, 23 of 50 earlier) | 0 |
+| 8 | Access | not run — no access control exists | not run — no access control exists |
+| 9 | Width | not run — no screen changed | not run — no app change |
+| 10 | Look at it | Read all six logs; the tables in `PROTOTYPE.md` and `FINDINGS.md` were copied from them | 0 |
+
+**Defects found:** none.
+
+**Not checked:** any population between the two fields; real players.
+
 ### The Pong money test (experiment tools only, no app change) — Thu Sep 17 15:57:35 +08 2026
 
 The change was two measurement tools in `datagen/`, `coachgrade.ts --select pong` and `pongmoney.ts`.

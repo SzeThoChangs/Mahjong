@@ -1986,6 +1986,40 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### Whether to take a win depends on who is at the table, and the judge only knows one table (2026-09-17)
+
+The direct test of the judge's win verdicts, named in `PROTOTYPE.md` before the run. `datagen/src/
+judgewin.ts`: one seat plays the Coach, except that at every win it may decline it runs `rejudge` on
+the real position exactly as the app does and follows the best action. Against it, the Coach, which
+takes every win. 8,000 paired deals per run, all four chairs. Self-check first: forced to take every
+win, the judged loop returned exactly 0.000 against the Coach.
+
+    table              field               offers judged   declined   judge minus Coach
+    0 Jokers, min 1    three Coaches           2,138          24%     -0.221 +/- 0.041  (t -5.4)
+    0 Jokers, min 1    recorded players        3,765          22%     +0.093 +/- 0.043  (t  2.2)
+    4 Jokers, min 1    three Coaches           3,120          51%     -0.327 +/- 0.072  (t -4.5)
+    4 Jokers, min 1    recorded players        5,485          53%     +0.683 +/- 0.087  (t  7.9)
+    4 Jokers, min 2    three Coaches           3,148          51%     -0.321 +/- 0.079  (t -4.1)
+    4 Jokers, min 2    recorded players        5,512          53%     +0.810 +/- 0.089  (t  9.1)
+
+THE FIELD DECIDES, AT EVERY TABLE. Against three Coaches, declining where the judge says to loses a
+fifth to a third of a chip a game. Against the recorded players, the same declines win, by up to
+eight tenths. The judge plays its hands out with simple bots that never defend and rarely win first,
+and the recorded players are close to that; a waiting hand facing them gets fed. Coaches win first
+and punish the wait.
+
+WHY THE EARLIER TESTS DISAGREED. D-027 rested on a Coach that declines every win under a fixed Tai bar,
+which lost on both fields. A bar declines cheap wins blindly. The judge declines only the ones it
+measures as worth declining, and against weak players it measures them right. And the 2026-09-13
+play-out swap moved the gap little because it looked at the average gap over fifty positions, not at
+money over whole games.
+
+WHAT IT MEANS. The pack answers that decline a win are not wrong, and not right: they are right for a
+table of weak players and wrong for a table of strong ones. The same is likely of other answers the
+earlier re-check found sensitive to who plays, which is claims far more than throws. What Changs's
+real opponents are like decides which answer he should be taught, and nothing in the project has
+measured real players.
+
 ### Passing more Pongs does not win money, so the pack's Pong answers stand (2026-09-17)
 
 The entry below found that with the Coach in the play-outs some Pong answers flip to pass. Changs

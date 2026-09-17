@@ -302,9 +302,25 @@ run, the judge at 256 play-outs, seed 424242.
 
 A result counts at more than two standard errors.
 
-**Status:** RUNNING (step 1)
+**Status:** Step 1 RUN, 2026-09-17, finished 17:41. Steps 2 to 4 wait on the result below.
 
-**Findings:** None yet.
+**Findings, step 1:**
+
+    table              against three Coaches               against the recorded players
+                       declined   judge minus Coach       declined   judge minus Coach
+    0 Jokers, min 1       24%     -0.221 +/- 0.041         22%     +0.093 +/- 0.043
+    4 Jokers, min 1       51%     -0.327 +/- 0.072         53%     +0.683 +/- 0.087
+    4 Jokers, min 2       51%     -0.321 +/- 0.079         53%     +0.810 +/- 0.089
+
+Every one of the six is past two standard errors, and the two fields point opposite ways at every
+table. Following the judge on wins loses a fifth to a third of a chip a game against Coaches and wins
+up to eight tenths against the recorded players. So the judge is neither right nor wrong about wins:
+it is right against players like the ones its play-outs use, and wrong against players who punish a
+hand that waits. The fixed-bar test behind D-027 lost on both fields, because a bar declines cheap
+wins blindly; the judge declines the ones worth declining against weak players.
+
+**What this changes about the job:** there is no single fix for step 3. What is correct at Changs's
+table depends on how his opponents play, which nothing here has measured.
 
 ### Should the Coach call Pong more or less at a no-Joker table?
 

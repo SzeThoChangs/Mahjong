@@ -61,6 +61,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
+| Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | OPEN | Changs |
 | A-001 | ASSUMPTION | Training on play-out-graded decisive positions improves real play | OPEN | Changs |
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
@@ -644,6 +645,29 @@ would publish the owner's books.
 
 ---
 
+## Q-012 — How do the opponents at Changs's real table play?
+
+**Type:** QUESTION
+
+**Description:** On whether to take an offered win, the measured best depends on the opponents.
+Following the judge wins money against weak, loose players and loses against strong ones who win
+first and punish a waiting hand, at every table measured (`FINDINGS.md`, 2026-09-17). Claims are
+likely the same: they changed answer far more often than throws when the play-out players changed.
+So which answer the app should teach depends on how his real opponents play.
+
+**Why It Matters:** It decides how the win and claim questions in all three packs are graded.
+
+**Owner:** Changs.
+
+**Resolution Method:** His description of his table, and, if it is mixed or uncertain, grading those
+questions against a stated blend of both fields and marking them as table-dependent.
+
+**Status:** OPEN
+
+**Resolution:**
+
+---
+
 ## R-001 — The whole-hand judge is wrong about taking a win, and the cause is unknown
 
 **Type:** RISK
@@ -684,6 +708,11 @@ thing that will settle *Pong* and *Chow*.
 **Update 2026-09-17:** The Pong half is answered for the no-Joker table. Swapping the play-out
 opponents for the Coach flips 12% of Pong answers to pass, and passing more Pongs never won money
 (`D-031`). Chow and the cause of the win defect remain open.
+
+**Update 2026-09-17, later:** The judge's own win verdicts were money-tested. Following them loses
+against three Coaches and wins against the recorded players, at all three tables, every result past
+two standard errors. The defect is not a bug with a single fix: the judge is right for weak opponents
+and wrong for strong ones. See `Q-012`.
 
 **Status:** OPEN, narrowed
 
