@@ -268,6 +268,44 @@ prototype tracks a live product by decision; see the Lifecycle state section.
 
 ## Targeted Experiments / Spikes
 
+### Is the judge right to decline wins? The direct money test, then the fix
+
+**Uncertainty addressed:** Over two thousand pack questions have a measured best that declines an
+offered win. D-027 stopped the Play review from marking a taken win wrong, on the evidence of a
+fixed-bar stand-in for the judge. Changs asked on 2026-09-17 for what is right rather than for the
+quick option of dropping those questions, so the judge itself is tested before anything is done.
+
+**The whole job, in order:**
+
+1. Test the judge's own win verdicts for money: a Coach that follows the judge whenever it may win
+   or decline, against the Coach that always wins, on paired deals.
+2. If the judge loses, find why. Three causes are already excluded (`R-001`); the next candidates are
+   what the declining seat's own play-out bot does afterwards, and whether the payoff counted for a
+   branch that continues is complete.
+3. Fix the judge, and show the fixed judge's win verdicts pass the same money test.
+4. Re-judge every win-offered question in all three packs with the fixed judge, rebuild the packs
+   with their verification pass, and ship. Only then does D-027's guard come out of the Play review.
+
+**What was built for step 1:** `datagen/src/judgewin.ts`. The judged seat plays the Coach, and at a
+win it may decline it runs `rejudge` on the real position exactly as the app does (256 play-outs,
+simple bots, hidden tiles re-dealt) and follows the best action. Self-check before any result: with
+the judge forced to take every win, the hand-driven loop returned exactly 0.000 against the Coach
+over 60 paired deals, so the loop plays the same games as the engine's own.
+
+**Named before the run (step 1):** 2,000 deals per seat in all four chairs, 8,000 paired deals per
+run, the judge at 256 play-outs, seed 424242.
+
+    table              run folder          against three Coaches     against the recorded players
+    0 Jokers, min 1    run-min1-nowild     7730001 to 7732000        7740001 to 7742000
+    4 Jokers, min 1    run-min1            7750001 to 7752000        7760001 to 7762000
+    4 Jokers, min 2    run-coach2          7770001 to 7772000        7780001 to 7782000
+
+A result counts at more than two standard errors.
+
+**Status:** RUNNING (step 1)
+
+**Findings:** None yet.
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on
