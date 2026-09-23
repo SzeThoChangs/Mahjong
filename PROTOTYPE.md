@@ -336,7 +336,19 @@ an assumption, not a measurement of real people (`A-006`).
     4 Jokers, min 2    7810001 to 7812000
 
 If the Coach-played judge does not lose to always taking the win against strong players, it is the
-judge for Changs's table on wins. Claims follow once their cost is measured: a smoke run following
+judge for Changs's table on wins.
+
+**Step 3 result, finished 2026-09-24 (the Coach-played judge is slow: 2 to 4 days of play-outs per
+run).** It loses by more than the simple judge does, at every table:
+
+    table              offers judged   declined   Coach-played judge minus Coach
+    0 Jokers, min 1        2,302          34%      -0.345 +/- 0.045  (t -7.7)
+    4 Jokers, min 1        3,447          59%      -0.425 +/- 0.089  (t -4.8)
+    4 Jokers, min 2        3,413          57%      -0.455 +/- 0.095  (t -4.8)
+
+So no judge this project has beats the plain rule at a strong table: **when you can win, win.** The
+simple judge loses 0.22 to 0.33 chips a game by declining, the Coach-played judge 0.35 to 0.46. Step 3
+is answered, and the answer is that the fix is not a better judge. Claims follow once their cost is measured: a smoke run following
 the Coach-played judge at every claim took more than ten minutes for twelve deals.
 
 **Claim cost, measured 2026-09-17:** following the Coach-played judge at every claim took 1,115 seconds

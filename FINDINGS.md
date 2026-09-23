@@ -1986,6 +1986,36 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### At a strong table the rule beats every judge we have: when you can win, win (2026-09-24)
+
+Changs said his opponents are strong, so the target became a judge that is right against strong
+players (`D-032`). The obvious candidate was the judge with the Coach in its play-outs. It was named
+and run: `judgewin.ts --judge coach --decisions wins --field coach`, 8,000 paired deals per table,
+all four chairs, the judge at 256 play-outs. It took two to four days of play-outs per table, because
+a Coach play-out costs about 120 times a simple one.
+
+    table              offers judged   declined   judge minus Coach
+    0 Jokers, min 1        2,302          34%      -0.345 +/- 0.045  (t -7.7)
+    4 Jokers, min 1        3,447          59%      -0.425 +/- 0.089  (t -4.8)
+    4 Jokers, min 2        3,413          57%      -0.455 +/- 0.095  (t -4.8)
+
+It loses more than the simple judge did (-0.221 to -0.327), and it declines more often. Putting
+stronger players inside the judge made its advice worse, not better.
+
+WHAT IS LEFT STANDING. Against strong opponents, taking every win beats every judge this project has
+built, by a fifth to a half a chip a game, at all three tables, on 48,000 paired deals in total. The
+right answer on Changs's table is a rule, not a measurement: when you can win, win. Against loose
+players the judge's declines do pay (`+0.093` to `+0.810`), which is why the packs carry them: the
+packs were graded on play-outs that behave like loose players.
+
+WHY A BETTER JUDGE DID NOT HELP. A play-out judge asks what happens if everybody keeps playing from
+here. Declining a win is a bet that the hand improves before somebody else finishes. Coaches in the
+play-outs make the opponents finish sooner, which should price the bet properly - and it did move the
+verdicts, 34% to 59% declines instead of 22% to 53% - but the direction was wrong: it declined more.
+The bet is priced against a continuation where the seat itself plays like a bot, and a bot holds a
+waiting hand the way no strong player would. Nothing short of a stronger player inside the play-outs
+fixes that, and a stronger player costs 120 times more per hand.
+
 ### Whether to take a win depends on who is at the table, and the judge only knows one table (2026-09-17)
 
 The direct test of the judge's win verdicts, named in `PROTOTYPE.md` before the run. `datagen/src/
