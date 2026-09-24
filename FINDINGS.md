@@ -1986,6 +1986,25 @@ reversed. When a mistake verdict does not hold, the hand log and the mistake car
 `challenged` note with the fresh gap and its error, and the session tally moves the answer to "too
 close to call". The card stays in the schedule: a coin flip is not proof the throw was right.
 
+### The claims are sound; the whole loss was the win decisions (2026-09-24)
+
+Following the simple judge at every claim decision loses against three Coaches: -0.137 +/- 0.140 at
+0 Jokers min 1, -0.240 +/- 0.143 at 4 Jokers min 1, -0.380 +/- 0.153 at 4 Jokers min 2. Those runs
+also let the judge decline wins, which is separately measured to cost 0.22 to 0.33 a game, so they
+could not say what Pong and Chow are worth.
+
+Run again with every win taken and the judge followed only where no win is on offer, 8,000 paired
+deals a table:
+
+    table              decisions judged   passed   judge minus Coach
+    0 Jokers, min 1        20,383          43%     +0.150 +/- 0.133  (t 1.1)
+    4 Jokers, min 1        14,464          41%     +0.102 +/- 0.122  (t 0.8)
+    4 Jokers, min 2        15,553          41%     +0.338 +/- 0.141  (t 2.4)
+
+Positive at all three, clear of two standard errors at one, and never negative. The pack's Pong and
+Chow answers are fit for a strong table, which is the same answer the Pong bar sweep gave from the
+other direction. Everything wrong with claims at a strong table was the win decision inside them.
+
 ### At a strong table the rule beats every judge we have: when you can win, win (2026-09-24)
 
 Changs said his opponents are strong, so the target became a judge that is right against strong

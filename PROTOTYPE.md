@@ -389,6 +389,20 @@ Chow or pass with no win on offer, and takes every win. Same fields, same sizes.
     4 Jokers, min 1    7860001 to 7862000
     4 Jokers, min 2    7870001 to 7872000
 
+**Result, 2026-09-24, and it clears the claims.** With every win taken, following the judge on Pong,
+Chow and pass is worth nothing to a third of a chip a game, and never loses:
+
+    table              decisions judged   passed   judge minus Coach
+    0 Jokers, min 1        20,383          43%     +0.150 +/- 0.133  (t 1.1)
+    4 Jokers, min 1        14,464          41%     +0.102 +/- 0.122  (t 0.8)
+    4 Jokers, min 2        15,553          41%     +0.338 +/- 0.141  (t 2.4)
+
+So the whole loss in the claims runs was the win decisions. The pack's Pong and Chow answers are fit
+for a strong table, which agrees with the Pong bar sweep that found nothing beats the shipped rule.
+
+**The job's answer.** One defect, not two: a win on offer must be taken, and everything else the packs
+teach stands. Step 4 is the fix.
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on
