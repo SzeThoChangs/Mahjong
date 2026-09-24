@@ -370,6 +370,25 @@ If they do not lose against the Coach's own claim rule, the pack's claims are fi
 and the 200-hour test is not needed to decide anything. If they lose, the claims are re-judged, and
 the cost of doing that properly is the next thing to solve.
 
+**Result, 2026-09-24.** Following the simple judge at every claim, against three Coaches:
+
+    table              decisions judged   passed   judge minus Coach
+    0 Jokers, min 1        23,043          42%     -0.137 +/- 0.140  (t -1.0)
+    4 Jokers, min 1        18,149          44%     -0.240 +/- 0.143  (t -1.7)
+    4 Jokers, min 2        19,142          43%     -0.380 +/- 0.153  (t -2.5)
+
+Only the third is past two standard errors. **But these runs carry the win defect**: `--decisions
+claims` also follows the judge when a win is on offer, and declining wins is already measured to cost
+0.22 to 0.33 a game at these tables. So this cannot say what Pong and Chow decisions alone are worth.
+
+**Named before the run, the separation:** `--decisions calls`, which follows the judge at every Pong,
+Chow or pass with no win on offer, and takes every win. Same fields, same sizes.
+
+    table              deals
+    0 Jokers, min 1    7850001 to 7852000
+    4 Jokers, min 1    7860001 to 7862000
+    4 Jokers, min 2    7870001 to 7872000
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on

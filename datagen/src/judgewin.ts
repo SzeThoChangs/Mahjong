@@ -33,7 +33,9 @@ const seatsArg = arg('seats', '0,1,2,3').split(',').map(Number);
  * `--judge coach` plays the judge's play-outs with the Coach in all four chairs (reading danger at
  * the table's Joker count) instead of simple bots: the judge for a table of strong players.
  * `--decisions claims` follows the judge at every claim decision with a real choice (win, Kong, Pong,
- * Chow or pass) and at every win on a self-draw, not only at wins.
+ * Chow or pass) and at every win on a self-draw, not only at wins. `--decisions calls` is the same
+ * but takes every win regardless, which separates the Pong and Chow decisions from the win defect
+ * those runs would otherwise carry.
  */
 const judgeKind = arg('judge', 'shanten');
 const decisions = arg('decisions', 'wins');
@@ -60,7 +62,9 @@ function play(shuffle: number, g: number, seat: number, judged: boolean): number
     const p = game.pending();
     if (!p) { game.advance(); continue; }
     const hasWin = p.legal.some((l) => l.a === 'win');
-    const ask = decisions === 'claims' ? (p.kind === 'claim' || hasWin) : hasWin;
+    const ask = decisions === 'claims' ? (p.kind === 'claim' || hasWin)
+      : decisions === 'calls' ? (p.kind === 'claim' && !hasWin)
+      : hasWin;
     if (judged && p.seat === seat && ask && p.legal.length > 1) {
       const t0 = Date.now();
       const policy = judgeKind === 'coach' ? () => coach() : 'shanten' as const;
