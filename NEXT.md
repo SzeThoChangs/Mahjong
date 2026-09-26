@@ -59,79 +59,80 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-09-16
+2026-09-26
 
 ## Last Session / Work Package
 
 ### What We Were Doing
 
-The claim judge (`R-001`) — the one item on the plan that needed nothing from the owner. The Play
-tab's review carried a warning that it could not be trusted on calls or on taking a win, and a
-stated reason. Both had been written from a single played hand, so the first job was to measure
-them rather than build the fix they implied.
+Step 4 of the win job: carrying the measured answer, "when you can win, win", into the product.
+Changs chose fixing the pack files over an app-side override ("Not shortcut"), so the builder marks
+these questions and stores the win as the answer.
 
 ### What Was Completed
 
-- The stated reason is measured and wrong. Putting the Coach in the other three chairs moves the
-  gap by -0.48 against a standard error of 0.35, and in the opposite direction to the prediction.
-- A second explanation is excluded too: replaying the hand's real hidden tiles instead of guessing
-  them moves the gap by +1.13 ± 1.15.
-- The judge is nonetheless wrong on this decision, shown by the project's own bar. A coach that
-  declines a win under two *Tai* loses 0.229 chips a game over 8,000 paired deals, and under three
-  *Tai*, 0.944, against three coaches and against the mixed field alike.
-- The review no longer marks taking a win as a mistake (`D-027`). It reads "Not judged" and says
-  why in a sentence; the session tally ignores it.
-- `FINDINGS.md`, `R-001`, `PROTOTYPE.md`, `DECISIONS.md`, `STATUS.md` and `CHANGELOG.md` updated to
-  what is measured. Two tools kept: `datagen/src/winprice.ts` and `datagen/src/declinewin.ts`.
+- `datagen/src/quizpack.ts` marks a question that offers a win with `rule: 'win'`, stores `best` as
+  the win, and keeps those questions through the verify pass, re-asserting the win after re-judging.
+- `solver/src/question.ts` carries the mark; `web/src/components/Train.tsx` teaches it: win is
+  "Best move", pass is "Mistake", nothing is charged to "Given up", the money bars and Challenge are
+  off, and a paragraph says why.
+- Proved on a 199-question test pack built from `run-min1-nowild`: 34 marked, all 34 answered win, 0
+  questions offering a win without the mark, 6 of the 34 ones the play-outs would have answered
+  differently, each served to the app by name and answered both ways. The test pack was deleted.
+- The ten passes run and recorded in `MISTAKES.md`. They found two defects, both fixed and
+  re-measured: a shard with nothing for the current filters spun for ever and blanked the Train
+  screen, and the Coach line claimed "the measurement" on questions the rule answers.
+- `D-033` recorded, `Q-013` opened (the Coach still declines some offered wins), `PROTOTYPE.md`
+  updated with step 4.
+- The middle dot, banned everywhere by the owner, removed from the five project files that still
+  carried it (34 of them). The app and the code were already clean.
 
 ### What Changed
 
-- `web/src/lib/rejudge.ts` gains a fourth verdict kind; `web/src/components/Play.tsx` renders it
-  and the warning above the review is rewritten.
-- No other app behaviour moved.
+- `datagen/src/quizpack.ts`, `solver/src/question.ts`, `web/src/components/Train.tsx`.
+- `MISTAKES.md`, `DECISIONS.md`, `OPEN-ITEMS.md`, `PROTOTYPE.md`, and the five files that held
+  middle dots.
 
 ### What Was Not Completed
 
-- **Why** the judge prefers declining is still unknown. Three explanations are excluded and none
-  replaces them.
-- *Pong* and *Chow* verdicts remain untested in either direction. The money test covers declining
-  a win, not calling a tile.
-
-### Files / Areas Changed
-
-- `web/src/lib/rejudge.ts`, `web/src/components/Play.tsx`.
-- `datagen/src/winprice.ts`, `datagen/src/declinewin.ts` (new).
-- `FINDINGS.md`, `OPEN-ITEMS.md`, `DECISIONS.md`, `PROTOTYPE.md`, `STATUS.md`, `CHANGELOG.md`.
+- **The three shipped packs have not been rebuilt with the mark**, so the site still serves the
+  play-outs' win answers. That is the next action.
+- The Coach itself still declines some offered wins (`Q-013`).
 
 ## Where We Stopped
 
-2026-09-17, 16:00: the Pong money test finished. Passing more Pongs never won money, so the pack's
-Pong answers stand and the Coach's calling bar stays at 0.4 (`D-031`). Earlier the same day: the
-Coach reads no-Joker danger at a no-Joker table (`D-030`), and a re-check showed smarter play-out
-opponents change 1% of throws and 12% of claims (`FINDINGS.md`). Nothing is running.
+2026-09-26, 20:00. `./check.sh` all green (four typechecks, 174 tests, web build). Nothing is broken
+and nothing is half-applied.
 
-Still open from that re-check, waiting on Changs: 790, 1,179 and 130 pack questions whose answer
-is to decline an offered win, which the money test says is wrong. Dropping them from Train is quick.
+**One job is running:** the strong-table pack chain, started 18:01 on 2026-09-26 in `data/gen`
+(`strong-pack-chain.sh`, log `data/gen/strong-pack-chain.log`). It generates 150,000 Coach-played
+hands at seed 902, grades them, then builds a pack. It reached the grading stage at 18:55 and takes
+about twelve hours in total. It holds about 2 GB, so do not start a second long build beside it.
 
 ## Recommended Next Action
 
 ### Next
 
-Changs uses the hard questions for a few days and says whether they are still too easy.
+Rebuild the three shipped packs with the win mark, verify them, and deploy.
 
 ### Why
 
-What counts as hard (`A-005`) came from the data. His use is the only test of it.
+The rule is in the builder and in the app, but the packs on the site were built before it, so a
+player still meets questions whose stored answer is to decline a win. Until the rebuild, the fix
+exists only in the code.
 
 ### Expected Outcome
 
-`A-005` settled or redefined.
+`coach`, `min1` and `min1-nowild` rebuilt, each carrying `rule: 'win'` on every question that offers
+a win, the counts of marked questions recorded, and the site serving them.
 
 ## After That
 
-1. Find why the judge prefers declining a win, now that three explanations are excluded.
-2. Run the same paired-money design on calling rather than winning, to settle *Pong* and *Chow*.
-3. Build the next piece of the game, if the week says the loop is worth it.
+1. Read the strong-table pack when its chain finishes, and record what it says.
+2. Decide `Q-013`: give the Coach the same rule and re-measure, or leave it and keep the note on
+   screen.
+3. Changs uses the hard questions for a few days and says whether they are still too easy
+   (`A-005`); rule questions are not hard by that definition, so hard only hides them.
 
 *Likely subsequent steps, not commitments. Reassess after the immediate action.*
 

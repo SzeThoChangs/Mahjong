@@ -515,7 +515,7 @@ claim judge first and the game second, and does not mention push-or-fold).
 verdict on trust.
 
 **Starting Situation:** A verdict on the Train tab that he thinks is wrong. This has happened: on
-`coach · 6310:4:31` he threw 1筒 and was charged $4.03; re-judged at 2,048 fresh play-outs the three
+`coach / 6310:4:31` he threw 1筒 and was charged $4.03; re-judged at 2,048 fresh play-outs the three
 top tiles were within 28 cents and the pack was wrong (CONFIRMED, `FINDINGS.md`, "The packs
 overstate their certainty").
 

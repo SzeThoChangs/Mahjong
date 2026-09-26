@@ -372,7 +372,7 @@ standard errors. The packs were rebuilt admitting 12,800 so that after the drop 
 ten thousand each. Every question id from the earlier packs survives, so no stored card is
 orphaned.
 
-**Context / Problem:** The owner threw 1筒 on question `coach · 6310:4:31` and was charged a $4.03
+**Context / Problem:** The owner threw 1筒 on question `coach / 6310:4:31` and was charged a $4.03
 big mistake; re-judged on 2,048 fresh play-outs the three tiles were within 28 cents. Picking the
 winner from a noisy sample picks some of its luck, and nothing in the pipeline had measured that.
 
@@ -920,7 +920,7 @@ truncated rollouts with a terminal value, which is a change of method rather tha
 
 ## D-027 — The Play review never marks taking a win as a mistake
 
-**Date:** 2026-09-13 · **Decided by:** Agent, on measurement · **Status:** ACTIVE
+**Date:** 2026-09-13. **Decided by:** Agent, on measurement. **Status:** ACTIVE
 
 **What was decided:** When a player declares a win and the play-outs prefer some other action, the
 Play tab's review shows "Not judged" and a sentence saying why, rather than "Mistake". The session
@@ -947,7 +947,7 @@ containment of a defect, not a view about mahjong.
 
 ## D-028 — Train opens on hard questions at the 0-joker min-1 table, on a green felt table
 
-**Date:** 2026-09-16 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+**Date:** 2026-09-16. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
 
 **What was decided:** On the Train tab, "hard only" is on unless a device turns it off, and the pack
 that opens first is 0 Jokers, min 1 Tai. The cause line ("the throw actually made here was") shows
@@ -969,7 +969,7 @@ pack buttons on first load, because the pack table and the set table differ. Rec
 
 ## D-029 — Table setup defaults to 0 Jokers, min 1, and the Coach reasons at the table actually in play
 
-**Date:** 2026-09-16 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+**Date:** 2026-09-16. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
 
 **What was decided:** Table setup starts at 0 Jokers and min 1. A phone that had stored the old
 default of 4 and 2 without anyone choosing it moves to 0 and 1 once; after that whatever is stored is
@@ -989,7 +989,7 @@ is moved too. It can be set back and stays set.
 
 ## D-030 — At 0 Jokers the Coach reads danger from the table measured without Jokers
 
-**Date:** 2026-09-17 · **Decided by:** Changs (CONFIRMED), on the agent's measurement · **Status:** ACTIVE
+**Date:** 2026-09-17. **Decided by:** Changs (CONFIRMED), on the agent's measurement. **Status:** ACTIVE
 
 **What was decided:** `readsFor(jokers)` picks the danger table. At 0 Jokers it is `READS_NOWILD`,
 baked from `data/gen/reads-nowild/nowild.json`; at any other count it is the shipped `READS`. Every
@@ -1010,7 +1010,7 @@ stays at 60%. Changs chose it knowing that.
 
 ## D-031 — The pack's Pong answers stand, and the Coach's calling bar stays at 0.4
 
-**Date:** 2026-09-17 · **Decided by:** Agent, on the money test Changs asked for · **Status:** ACTIVE
+**Date:** 2026-09-17. **Decided by:** Agent, on the money test Changs asked for. **Status:** ACTIVE
 
 **What was decided:** Nothing changes. The 0-Joker pack keeps its Pong answers, and the Coach keeps
 calling a claim when it improves the hand by more than 0.4 chips.
@@ -1027,7 +1027,7 @@ passes the most lost 0.107 +/- 0.053 chips a game against the recorded players. 
 
 ## D-032 — Win and claim answers are graded for strong opponents
 
-**Date:** 2026-09-17 · **Decided by:** Changs (CONFIRMED) · **Status:** ACTIVE
+**Date:** 2026-09-17. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
 
 **What was decided:** The answers the app teaches on whether to take a win, and on claims, are to be
 judged for a table of strong players, because that is the table Changs plays at.
@@ -1040,3 +1040,33 @@ opponents, and he says his are strong.
 The stand-in for strong players is three Coaches (`A-006`).
 
 **Related:** D-027, D-031, `Q-012`, `A-006`, `R-001`.
+
+---
+
+## D-033 — A win on offer is answered by a rule, written into the pack data
+
+**Date:** 2026-09-26. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
+
+**What was decided:** When a question offers a win, the answer is to take it. The rule is written into
+the pack files themselves: the builder marks the question `rule: 'win'` and stores `best` as the win,
+and the verify pass keeps that answer instead of the play-outs'. The app reads the mark and teaches
+the rule.
+
+**Why:** The play-outs decline a win in about a fifth of the questions that offer one, and the money
+test says they are wrong to: following them costs 0.22 to 0.46 chips a game against strong players
+over 48,000 paired deals, and no judge we have beats the plain rule at that table (D-032,
+`FINDINGS.md`). Changs asked for the cause to be fixed rather than the wrong answers hidden: offered
+"fix the pack files" against "leave the files wrong and override in the app", he answered
+"Not shortcut".
+
+**How it is being carried out:** `datagen/src/quizpack.ts` marks and answers these questions;
+`solver/src/question.ts` carries the mark; `web/src/components/Train.tsx` marks a win right and a
+pass a mistake, charges nothing to the "Given up" figure, leaves the money bars and Challenge off,
+and says in one paragraph why the bars are absent. The three shipped packs are rebuilt with the mark
+before this reaches the site.
+
+**What it does not settle:** the Coach still passes on some of these positions and says so on screen
+(`Q-013`). A rule question is not hard by the Train tab's definition, so hard only, which is the
+default, filters them out.
+
+**Related:** D-027, D-031, D-032, `Q-013`, `A-006`, `PROTOTYPE.md`, `FINDINGS.md`.

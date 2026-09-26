@@ -62,6 +62,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
 | Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | RESOLVED | Changs |
+| Q-013 | QUESTION | The Coach declines an offered win on some positions, and says so beside the rule that says to take it | OPEN | Changs |
 | A-001 | ASSUMPTION | Training on play-out-graded decisive positions improves real play | OPEN | Changs |
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
@@ -843,6 +844,34 @@ last save.
 remembers. No automatic backup exists and none is planned (D-016).
 
 **Related:** D-014, D-016, Q-010.
+
+**Status:** OPEN
+
+**Resolution:**
+
+---
+
+## Q-013 — The Coach still passes on some offered wins
+
+**Type:** QUESTION
+
+**Description:** With the win rule in place (`D-033`), a pack question that offers a win is answered
+"take it". The Coach box underneath reads the position separately, and on 3 of the 6 positions
+checked on 2026-09-26 it said it would pass. The screen names the disagreement and keeps the rule as
+the answer, so nothing teaches the wrong move, but the player is shown the Coach declining a win it
+should take.
+
+**Why It Matters:** The Coach is also the strong-player stand-in used for grading (`A-006`), one of
+the three seats in the money tests, and the opponent in the Play tab. If it declines wins there, the
+measurements that produced `D-032` and `D-033` were made with a field that plays this spot the way
+the money test says is wrong. It does not overturn those results, which compared judges against each
+other in the same field, but it is a change worth measuring on its own.
+
+**Owner:** Changs, on whether to spend the compute.
+
+**Resolution Method:** Give the Coach the same rule, then run the existing paired money test
+(`datagen/src/judgewin.ts`, `--field coach`) with the new Coach in all four chairs, and re-check that
+the pack grading does not move. A day of compute, roughly, against a job already queued.
 
 **Status:** OPEN
 

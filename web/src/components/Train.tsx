@@ -79,7 +79,7 @@ function isHard(q: { best: string; sel: string; actions: { ev: number; se?: numb
   return (a[0]!.ev - a[1]!.ev) / se <= 8;
 }
 
-interface Q { id: string; k: string; c?: string | null; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
+interface Q { id: string; k: string; c?: string | null; rule?: 'win'; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
 
 /** the tallies a shard entry carries, counted here for a pack built before packs were sharded */
@@ -249,7 +249,12 @@ export default function Train() {
     const done = new Set(walked);
     if (loaded) {
       done.add(loaded.shard);
-      if (!loaded.qs.some(fits) && canServe(ix.shards[loaded.shard]!)) { setBarren((b) => new Set(b).add(loaded.shard)); return; }
+      // Marking it again would build a new Set every run, which changes `eligible` and re-runs
+      // this effect for ever - a blank screen and a spinning tab. Mark it once, then fall through
+      // and walk on to another shard. (Found by the ten passes, 2026-09-26.)
+      if (!loaded.qs.some(fits) && canServe(ix.shards[loaded.shard]!) && !barren.has(loaded.shard)) {
+        setBarren((b) => new Set(b).add(loaded.shard)); return;
+      }
     }
     let pool = eligible.filter((i) => !done.has(i));
     if (!pool.length) { if (!eligible.length) return; pool = eligible; done.clear(); }
@@ -453,18 +458,25 @@ export default function Train() {
   }
 
   const pickedAction = picked === null ? null : actions.find((a) => a.a === picked) ?? null;
-  const bestAction = actions[0]!;
-  const regret = pickedAction ? bestAction.ev - pickedAction.ev : 0;
+  /**
+   * A question with a win on offer is answered by the rule, not by the bars: taking every win beats
+   * every judge this project has by a fifth to a half a chip a game against strong players, measured
+   * over 48,000 paired deals (FINDINGS, D-033). The play-outs say otherwise, so on these the bars are
+   * not shown and the answer is the win.
+   */
+  const ruleWin = q.rule === 'win' && q.actions.some((a) => a.a === 'win');
+  const bestAction = (ruleWin ? actions.find((a) => a.a === 'win') : undefined) ?? actions[0]!;
+  const regret = pickedAction && !ruleWin ? bestAction.ev - pickedAction.ev : 0;
   const pickedSe = pickedAction?.se ?? 0;
-  const verdict = pickedAction ? verdictOf(regret, unit, pickedSe) : null;
+  const verdict = !pickedAction ? null : ruleWin ? (picked === 'win' ? 'best' : 'mistake') : verdictOf(regret, unit, pickedSe);
 
   const choose = (a: string) => {
     if (picked !== null) return;
     setPicked(a);
     const act = actions.find((x) => x.a === a)!;
-    const v = verdictOf(bestAction.ev - act.ev, unit, act.se ?? 0);
+    const v = ruleWin ? (a === 'win' ? 'best' : 'mistake') : verdictOf(bestAction.ev - act.ev, unit, act.se ?? 0);
     const kept = v === 'best' || v === 'fine' || v === 'unclear';
-    setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (bestAction.ev - act.ev), streak: kept ? s.streak + 1 : 0 }));
+    setScore((s) => ({ ...s, [v]: s[v] + 1, lost: s.lost + (ruleWin ? 0 : bestAction.ev - act.ev), streak: kept ? s.streak + 1 : 0 }));
     // The log takes every discard answered here, right or wrong, so it can be opened again with the
     // reasoning shown. Claims are left out for the same reason they are left out of the record: the
     // screen that reopens a hand asks which tile, which is not the question a claim poses.
@@ -592,7 +604,10 @@ export default function Train() {
             <div className="flex flex-wrap items-center gap-3">
               <Badge className={cn('text-sm px-3 py-1', VERDICT_STYLE[verdict])}>{VERDICT_TEXT[verdict]}</Badge>
               <span className="text-sm">
-                {verdict === 'best' ? <>Measured best: worth <b>{fmt(pickedAction.ev)}</b> per hand.</>
+                {ruleWin ? (picked === 'win'
+                    ? <>Right. A win on offer is taken.</>
+                    : <>Take the win. Declining costs a fifth to a half a chip a game against strong players.</>)
+                  : verdict === 'best' ? <>Measured best: worth <b>{fmt(pickedAction.ev)}</b> per hand.</>
                   : <>Your {actionText(pickedAction.a).toLowerCase()} is worth <b>{fmt(pickedAction.ev)}</b>; best was {actionText(bestAction.a).toLowerCase()} at <b>{fmt(bestAction.ev)}</b> — you gave up <b>{fmt(regret)}</b>.</>}
                 {verdict === 'unclear' && pickedSe > 0 && <> These {q.n} play-outs resolve a gap of about <b>{fmt(pickedSe)}</b>, so this one is inside the noise — not a worse move, just an unmeasurable one.</>}
               </span>
@@ -607,7 +622,13 @@ export default function Train() {
                 {coachPick !== null && (
                   <div className="pb-1 mb-1 border-b">
                     <span className="text-muted-foreground">The <J>Coach</J> would</span> <b>{actionText(coachPick).toLowerCase()}</b>.
-                    {coachPick === bestAction.a
+                    {/* On a rule question the answer is the rule, not the play-outs, and there are
+                        no bars to send anyone to - so it must not claim the measurement either way. */}
+                    {ruleWin
+                      ? (coachPick === 'win'
+                        ? <span className="text-emerald-700 dark:text-emerald-300"> It takes the win too.</span>
+                        : <span className="text-amber-700 dark:text-amber-300"> The win is still the answer here.</span>)
+                      : coachPick === bestAction.a
                       ? <span className="text-emerald-700 dark:text-emerald-300"> Agrees with the measurement.</span>
                       : <span className="text-amber-700 dark:text-amber-300"> The measurement disagrees — trust the bars here.</span>}
                   </div>
@@ -658,7 +679,15 @@ export default function Train() {
                 })}
               </div>
             )}
-            {actions.map((a) => {
+            {ruleWin && (
+              <p className="text-sm text-muted-foreground">
+                The play-outs on this one rate passing higher, and they are wrong about it: they play the
+                hand on from here with a bot that holds a waiting hand the way no strong player would.
+                Followed, that costs 0.22 to 0.46 chips a game against strong players, measured over
+                48,000 paired deals. So the money bars are left off here.
+              </p>
+            )}
+            {!ruleWin && actions.map((a) => {
               const isBest = a.a === bestAction.a, isPick = a.a === picked;
               const min = Math.min(...actions.map((x) => x.ev), 0), max = Math.max(...actions.map((x) => x.ev), 0), span = Math.max(1e-6, max - min);
               return (
@@ -689,7 +718,7 @@ export default function Train() {
                   ten overstates. This judges the pick again on fresh dice, on this device, with no
                   server - see `lib/rejudge.ts`. Gone once it has answered: a second press would be
                   a second opinion on new dice, and the tally must not be moved twice. */}
-              {challengeState === null && actions.length > 1 && (
+              {challengeState === null && actions.length > 1 && !ruleWin && (
                 <Button variant="outline" onClick={runsChallenge}>Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs)</Button>
               )}
             </div>

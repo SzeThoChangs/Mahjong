@@ -46,6 +46,22 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-26 — A win on offer is answered by a rule, in the pack data
+
+**Changed:** The pack builder marks every question that offers a win with `rule: 'win'` and stores
+the win as the answer, keeping it through the verify pass. The Train screen marks taking the win
+right and passing a mistake, charges nothing to "Given up", and leaves the money bars and Challenge
+off, saying in a paragraph why.
+
+**Why:** Following the play-outs on these costs 0.22 to 0.46 chips a game against strong players over
+48,000 paired deals, and no judge this project has beats the plain rule at that table. Changs asked
+for the pack files to be fixed rather than overridden in the app.
+
+**Impact:** `D-033`. `Q-013` opened. Ten passes recorded in `MISTAKES.md`, with two defects found and
+fixed: a shard with nothing for the current filters spun for ever and blanked the Train screen, and
+the Coach line claimed "the measurement" on a question the rule answers. The three shipped packs are
+not rebuilt yet, so the site still carries the old win answers.
+
 ### 2026-09-17 — The Coach reads no-Joker danger at a no-Joker table
 
 **Changed:** At 0 Jokers every Coach in the app reads danger from the table measured without Jokers.

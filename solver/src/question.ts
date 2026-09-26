@@ -43,6 +43,9 @@ import { encAction } from './rejudge.js';
 export interface PackQuestion {
   /** decision kind */
   k: string;
+  /** `win`: a win was on offer, so the answer is the win by rule rather than by the play-outs
+   *  (FINDINGS, "At a strong table the rule beats every judge we have") */
+  rule?: 'win';
   seat: number;
   /** dealer */
   dl: number;

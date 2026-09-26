@@ -140,8 +140,8 @@ so that I know which of the four kinds of seeing is worst and whether to change 
   the look to 8s". Two of six: no offer.
 - Ten sorted misses, none about time, at 8 seconds: the box offers "Move the look to 5s". At 3
   seconds there is nothing shorter and no offer.
-- The score line reads "your own hand: 60% of 5 · what you are building: — · reading the table: 100%
-  of 2 · naming the shape: 0% of 1".
+- The score line reads "your own hand: 60% of 5, what you are building: —, reading the table: 100%
+  of 2, naming the shape: 0% of 1".
 
 **Not this story:**
 
@@ -187,7 +187,7 @@ so that I am graded by play-outs and still told why.
 **Examples:**
 
 - On the `coach` pack, question `6310:4:31`, throwing 1筒 when the pack's best is 9條 at $5.47
-  against $1.44 shows "Big mistake", "you gave up $4.03", and the id `coach · 6310:4:31` at the foot.
+  against $1.44 shows "Big mistake", "you gave up $4.03", and the id `coach / 6310:4:31` at the foot.
   (This is the position Changs disputed; see US-004.)
 - A regret of $0.20 on a position whose error bar is $0.30 shows "Too close to call" and the line
   about the play-outs resolving a gap of about $0.30.
@@ -235,7 +235,7 @@ so that a "big mistake" that was really a coin flip does not stand.
 
 **Examples:**
 
-- Throwing 1筒 on `coach · 6310:4:31`, charged $4.03, challenged: 9條 +3.92, 4筒 +3.78, 1筒 +3.64 at
+- Throwing 1筒 on `coach / 6310:4:31`, charged $4.03, challenged: 9條 +3.92, 4筒 +3.78, 1筒 +3.64 at
   2,048 play-outs on the Mac; on the phone at 512 the words are "Too close to call: the fresh gap is
   $0.28, inside the noise of ±…" and the tally's blunder count drops by one.
 - A pick that was the pack's best, challenged, compares against the runner-up and says "Holds: on
@@ -332,8 +332,8 @@ so that I know what to practise instead of practising in general.
 
 **Examples:**
 
-- Five cards sorted "Miscounted", two "Did not see it", three unsorted: badges "Miscounted · 5",
-  "not sorted yet · 3", "Did not see it · 2", and the line "The one that keeps coming up is
+- Five cards sorted "Miscounted", two "Did not see it", three unsorted: badges "Miscounted, 5",
+  "not sorted yet, 3", "Did not see it, 2", and the line "The one that keeps coming up is
   "Miscounted"".
 - Three play-out cards and one Coach card: "3 of these were judged by the play-outs and 1 by the
   coach".
@@ -423,8 +423,8 @@ so that I can understand a hand without being tested on it again.
 
 **Examples:**
 
-- An entry "ok · 5萬 · earlier today · play-outs" opens to "You threw 5萬, and that was right."
-- An entry "blunder · 1筒 not 9條 · yesterday · play-outs" opens to "You threw 1筒. The play-outs
+- An entry "ok, 5萬, earlier today, play-outs" opens to "You threw 5萬, and that was right."
+- An entry "blunder, 1筒 not 9條, yesterday, play-outs" opens to "You threw 1筒. The play-outs
   threw 9條." with "Why 9條" and "Why not 1筒" lines.
 
 **Not this story:**

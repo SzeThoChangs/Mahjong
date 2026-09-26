@@ -171,7 +171,21 @@ for (const f of readdirSync(dir).filter((x) => x.startsWith('hands-') && x.endsW
 // app to read (it works them out again from the hand, so the wording stays in one place) but for the
 // pack summary, which reports how many questions each tip can be taught on.
 // `c` is why the seat's own throw failed, where it did fail - see `causeOf` below.
-interface Q { tp: string[]; c: Cause | null; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+/**
+ * A win on offer is answered by a rule, not by the play-outs.
+ *
+ * Measured 2026-09-17 and 2026-09-24: following either judge and declining a win loses 0.22 to 0.46
+ * chips a game against strong players, at all three tables, over 48,000 paired deals; taking every
+ * win beats both. The play-outs say otherwise because the seat that declines is played out by a bot
+ * that holds a waiting hand the way no strong player would. Changs plays strong opponents (D-032), so
+ * these questions carry `rule: 'win'` and their answer is the win, whatever the play-outs measured.
+ * The app shows the reason and hides the money bars on them, because the bars disagree with the answer.
+ */
+function ruleOf(actions: string[]): { rule?: 'win' } {
+  return actions.includes('win') ? { rule: 'win' } : {};
+}
+
+interface Q { tp: string[]; c: Cause | null; rule?: 'win'; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -237,12 +251,12 @@ for (const [key, list] of byHand) {
     };
     const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws, view).map((c) => c.tip) : [];
     questions.push({
-      tp, c: causeOf(e, d, melds, view.seat),
+      tp, c: causeOf(e, d, melds, view.seat), ...ruleOf(e.actions.map((a) => a.a)),
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
       ...(e.k === 'claim' && last ? { ld: [last[0]!, last[1]!] as [number, number] } : {}),
-      bot: e.bot, spread: Number(ref.spread.toFixed(2)), best: e.best, sel: e.sel, n: e.n,
+      bot: e.bot, spread: Number(ref.spread.toFixed(2)), best: e.actions.some((a) => a.a === 'win') ? 'win' : e.best, sel: e.sel, n: e.n,
       actions: toActions(e, seVersion),
     });
   }
@@ -314,9 +328,12 @@ if (VERIFY > 0) {
       const rate = (Date.now() - t0) / done;
       process.stdout.write(`\r  verifying ${done}/${kept.length}  dropped ${dropped}  ~${Math.round(rate * (kept.length - done) / 60000)} min left`);
     }
-    if (!(sep > clear)) { dropped++; continue; }
+    // A question with a win on offer is answered by the rule, not by the gap, so it is kept whatever
+    // the fresh play-outs separate, and its answer is set back to the win below.
+    if (!(sep > clear) && !q.rule) { dropped++; continue; }
     if (fresh.best !== q.best) changed++;
     q.best = fresh.best; q.n = fresh.n; q.actions = toActions(fresh, SE_VERSION);
+    if (q.rule === 'win') q.best = 'win';
     survivors.push(q);
   }
   kept.length = 0; kept.push(...survivors); shuffle(kept);

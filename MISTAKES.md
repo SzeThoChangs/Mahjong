@@ -84,6 +84,63 @@ with it, scoped to the preset row.
 
 ## Ten passes
 
+### A win on offer is answered by rule, in the pack data and on the Train screen — Sat Sep 26 20:04:00 +08 2026
+
+Passes run against the dev server on port 5174, on the working tree. Two defects were found and
+fixed during the set, so the passes affected by each fix were run again on the fixed build; every
+result below is from the final build.
+
+The pack rule questions were served from a 199-question test pack built from `run-min1-nowild`
+(34 carried `rule: 'win'`, 6 of them ones whose play-outs preferred passing). For the six where the
+rule changes the answer, the shard was served through a patched `fetch` so each appeared once and by
+name. The test pack was deleted afterwards and `web/public/quiz/index.json` restored.
+
+**Test boundary**
+
+- Workflows: answering a Train question (discard, claim, self), choosing a pack, the mode and hard
+  only filters, Challenge, Next position, the whole-app navigation.
+- Screens: Train, and every screen reachable from it (Spot, Review, Tips, Your hand, Film room,
+  Play, Table setup).
+- Access restrictions: none exist.
+- Values, records and calculations: the stored `best` and `rule` in a pack question, the verdict, the
+  session tally and its "Given up" figure, the hand log `mj.history.v1`, the mistake record
+  `mj.mistakes.v1`, the pack index tallies against the shard files.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local storage, session storage, IndexedDB and caches cleared, reloaded at 1280px and 390px. Train opened on "0 Jokers, min 1 Tai" with `mj.hard.v1` = "1" and served a question. A rule question answered straight after the cold start read "Best move", "Right. A win on offer is taken.", 0 money bars, 0 matches for NaN or undefined | 0 |
+| 2 | Errors | `console.error` hooked from the first line of each run, plus the tab's own console and network log. 25 questions answered, 7 screens opened, every control on Train pressed: 0 errors, 0 failed requests | 1, fixed and re-measured 0 |
+| 3 | Links | The 4 pack buttons, all, discard, claim, hard only, reset, Next position, the 5 navigation tabs, and the 4 entries behind More (Your hand #ask, Film room #film, Play #play, Table setup #table) and its Close. Each rendered its own screen; Close removed the sheet; Train came back with a question | 0 |
+| 4 | Workflow steps | 6 rule questions answered, 3 Win and 3 Pass; 8 ordinary questions answered (discard, Pong, Chow). Refusals: a second answer after one is given was ignored, the tally and the verdict unchanged; Challenge is absent on a rule question; with hard only on, rule questions are filtered out and the made-up hand is served instead, saying so | 0 |
+| 5 | Writes | hard only stored "0" and "1" and survived a reload both ways. After 10 answered discards the hand log held 10 entries and the mistake record 7; both were still 10 and 7 after a reload | 0 |
+| 6 | The data it moves | In the test pack 34 of 199 questions carry `rule: 'win'`, all 34 have `best` = "win", all 34 offer a win action, and 0 questions offer a win without the flag. Answering a rule question wrong moved "Given up" by $0.00 (it stayed $0.00 across 5 rule answers, then $7.91 after one discard blunder and $7.91 after two further rule mistakes); the streak still reset to 0. Claims, and so rule questions, are not written to the hand log or the mistake record, which is how the tab already worked | 0 |
+| 7 | Reconciliation | Session tally after the walk read best 3, mistake 4, blunder 1, close 0, too close to call 0, Given up $7.91 — exactly the 8 answers given. The Review screen read "Hands you have played 10" and "not sorted yet 7" against 10 and 7 in local storage. Pack index tallies checked against the shard files in Node: ruletest 199 = 199 over 2 shards, min1-nowild 10,257 = 10,257 over 103 shards, 0 mismatches | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with a rule question answered at 280, 320, 375, 390 and 1280px. Page scroll width equalled the screen at all five (1265 of 1280 at desktop). Elements reaching past the right edge: 194 at 280px, all 194 inside a deliberate `overflow-x-auto` container (the pack strip and the felt); 0 outside one at any width | 0 |
+| 10 | Look at it | Screenshots of Train at 390px (question and verdict) and 1280px, read line by line. Lines read: "南 discarded 9萬 — Win, Chow or pass?", "Mistake", "Take the win. Declining costs a fifth to a half a chip a game against strong players.", "the pong bot chose win", "The Coach would pass. The win is still the answer here.", "Coach reads this as half-color.", "Why win: It wins the hand.", "The play-outs on this one rate passing higher, and they are wrong about it...", "ruletest / 2572:0:56" | 1, fixed |
+
+**Defects found:**
+
+1. Pass 2, fixed: a shard that loads with nothing in it for the current filters spun for ever and
+   left the Train screen blank. Expected: the walk moves on to another shard, or the made-up hand.
+   Actually: 888 "Maximum update depth exceeded" errors in six seconds and no content. The cause was
+   in `web/src/components/Train.tsx` — a shard already marked barren was marked again on every run,
+   and `new Set(b).add(...)` is a new object each time, so `eligible` changed identity and the effect
+   re-ran itself. Reachable in the field from a cached index with rebuilt shards, which is what the
+   pack rebuild will produce. Fixed by marking once. Re-measured with the same injected empty shard:
+   0 errors, and the screen falls back to the made-up hand with its explanation. Passes 1, 2, 3, 4,
+   5, 7, 9 and 10 were then run again on the fixed build.
+2. Pass 10, fixed: on a rule question the Coach line still read "Agrees with the measurement" or
+   "The measurement disagrees — trust the bars here". Both are untrue there: the answer comes from
+   the rule, not the play-outs, and there are no bars on the screen to trust. Fixed to "It takes the
+   win too" and "The win is still the answer here". Re-measured over the 6 rule questions: 3 of each
+   branch, 0 mentions of the measurement; on 6 ordinary questions from the shipped pack the original
+   wording is unchanged and the bars and Challenge are still there.
+
+**Not checked:** a real phone; dark mode; the Spot screen's own workflows; the three shipped packs
+with the rule baked in, because they have not been rebuilt yet — the rule questions above came from a
+test pack built from the same run; the Challenge button on a rule question beyond its absence.
+
 ### The direct money test of the judge's win verdicts (experiment tool only, no app change) — Thu Sep 17 17:42:26 +08 2026
 
 The change was one measurement tool, `datagen/src/judgewin.ts`. Nothing the app runs changed.
@@ -284,7 +341,7 @@ Finished Wed Sep 16 23:30:11 +08 2026.
 
 | Pass | Dimension | What was done | Found |
 |---|---|---|---|
-| 1 | Cold start | Storage and caches cleared, reloaded at 1280px. Labels read "4 Jokers · min 2 Tai", "4 Jokers · min 1 Tai", "0 Jokers · min 1 Tai" with no number or "$" after them; the 0-Joker pack selected | 0 |
+| 1 | Cold start | Storage and caches cleared, reloaded at 1280px. Labels read "4 Jokers, min 2 Tai", "4 Jokers, min 1 Tai", "0 Jokers, min 1 Tai" with no number or "$" after them; the 0-Joker pack selected | 0 |
 | 2 | Errors | Page error listener through the passes | 0 |
 | 3 | Links | Each of the 3 pack buttons pressed with `clickOne` on its exact label: each became the selected one and served a question | 0 |
 | 4 | Workflow steps | At 390px, answered the served position: the answer registered and Next position appeared | 0 |

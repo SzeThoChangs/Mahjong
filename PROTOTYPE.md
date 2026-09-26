@@ -434,6 +434,30 @@ for a strong table, which agrees with the Pong bar sweep that found nothing beat
 **The job's answer.** One defect, not two: a win on offer must be taken, and everything else the packs
 teach stands. Step 4 is the fix.
 
+**Step 4, done 2026-09-26: the rule is written into the pack data.** Changs was offered two ways to
+carry it: fix the pack files, or leave them wrong and override in the app. He answered "Not
+shortcut", so the builder does it (`D-033`).
+
+`datagen/src/quizpack.ts` marks any question that offers a win with `rule: 'win'`, stores `best` as
+the win, and the verify pass keeps rule questions even where the fresh play-outs fail the separation
+test and re-asserts the win after re-judging. `solver/src/question.ts` carries the mark.
+`web/src/components/Train.tsx` reads it: taking the win is "Best move", passing is "Mistake", the
+"Given up" figure is not charged, the money bars and the Challenge button are left off, and a
+paragraph says why the bars are absent.
+
+**Measured on a 199-question test pack built from `run-min1-nowild`** (deleted afterwards): 34
+questions carry the mark, all 34 store `best` = win, and 0 questions offer a win without it. On 6 of
+the 34 the play-outs preferred passing, which are the ones the rule changes; each was served to the
+app by name and answered both ways. The ten passes for this change are in `MISTAKES.md`, dated
+2026-09-26, with the two defects they found.
+
+**Still to do before this reaches the site:** the three shipped packs have to be rebuilt with the
+mark. Until then the rule questions exist only in the builder's output, and the packs on the site
+still carry the play-outs' win answers.
+
+**What it does not establish:** that the Coach agrees. On 3 of the 6 positions checked it said it
+would pass, and the screen says so beside the rule (`Q-013`).
+
 ### Should the Coach call Pong more or less at a no-Joker table?
 
 **Uncertainty addressed:** On 2026-09-17 a judge with the Coach in the play-outs said pass on

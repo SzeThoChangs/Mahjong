@@ -76,7 +76,7 @@ So the remaining routes, in the order they look worth trying:
 4. **Aim the product at what is measurable.** Claims (27% clear at 2 SE) and self-actions (72%) are
    resolvable today. Discards (4%) are not, and no near-term amount of compute makes them so.
 
-Web app tabs: **Train** (book-coach synthetic quiz) · **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`) · **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
+Web app tabs: **Train** (book-coach synthetic quiz), **Real quiz** (recorded positions graded by evaluator EVs; quiz packs via `datagen/src/quizpack.ts`), **Film room** (replay explorer with per-decision EV bars; exports via `datagen/src/export.ts`). Dev server pinned to port 5174.
 
 ### Accuracy against measured EVs does not predict winning (measured 2026-08-27)
 
@@ -1888,7 +1888,7 @@ weight has only ever been swept against coaches.
 
 ### The packs overstate their certainty by about a tenth, and one verdict Changs disputed was noise (2026-09-10)
 
-Changs threw 1筒 on `coach · 6310:4:31` and was charged a $4.03 "big mistake": 9條 at $5.47 against
+Changs threw 1筒 on `coach / 6310:4:31` and was charged a $4.03 "big mistake": 9條 at $5.47 against
 his $1.44, on 128 play-outs. The coach had thrown 1筒 too. Re-judged on this machine at 2,048 fresh
 play-outs: 9條 +3.92, 4筒 +3.78, 1筒 +3.64, all at a 25% win rate. The three tiles are within 28 cents
 of each other. He was right, and so was the coach; the pack was wrong on that position.

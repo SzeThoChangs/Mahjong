@@ -40,7 +40,7 @@ recorded in `DECISIONS.md` once made.
 
 ## Last Updated
 
-2026-09-16
+2026-09-26
 
 ## Current Phase
 
@@ -48,21 +48,26 @@ LIVE, and inside it Phase 6 of `PLAN.md` — *Use it*. See `PROJECT.md` for why 
 
 ## Current Focus
 
-Changs is using the app and sending what is wrong with it screen by screen. On 2026-09-16 that
-produced `D-028` and `D-029`: harder questions by default, his own table (0 Jokers, min 1) as the
-default everywhere, the Coach reasoning at the table in play, and a green table. The open question
-behind it is whether "hard only" is hard enough for him (`A-005`), which only his use can answer.
+Making the app teach what the money tests measured. The win job is answered: at a strong table a win
+on offer is taken, and no judge this project has beats that rule (`D-032`, `D-033`). The rule is now
+in the pack builder and on the Train screen; the three packs on the site were built before it and
+still carry the play-outs' win answers, so rebuilding them is the current job. Behind that, whether
+"hard only" is hard enough for him (`A-005`) still waits on his use.
 
 ## In Progress
 
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
+| Rebuilding the three shipped packs with the win mark | Agent | Not started, next |
+| The strong-table pack chain, 150,000 Coach-played hands at seed 902 | Agent | Running since 18:01 on 2026-09-26, grading since 18:55, about twelve hours |
 
-Nothing is running. The working tree is clean after the 2026-09-16 push.
+The strong-table chain holds about 2 GB, so nothing else long should run beside it.
 
 ## Recently Completed
 
+- 2026-09-26: a win on offer is answered by rule, written into the pack builder and taught on the Train screen (`D-033`); ten passes recorded in `MISTAKES.md`, two defects found and fixed; the banned middle dot removed from the five project files that still held it.
+- 2026-09-24: the claims cleared. With every win taken, following the judge on Pong, Chow and pass is worth +0.150, +0.102 and +0.338 chips a game at the three tables, and the Coach-played judge loses more on wins than the simple one (`PROTOTYPE.md`, `FINDINGS.md`).
 - 2026-09-16: hard only on by default, 0 Jokers and min 1 as the default pack and Table setup, the Coach's reasoning at the table in play, the green felt table, the seat details in the question card, and the dealer badge under the wind on phones (`f34d847`, `1b64f3f`); ten passes for each set recorded in `MISTAKES.md`.
 - 2026-09-12: the P-Starter project pack, the project interface and the prototype launchpads, committed as `1257e4e` and `62d55ec` and deployed green.
 - 2026-09-12: the Play tab, one whole hand against three coaches with every decision judgeable
