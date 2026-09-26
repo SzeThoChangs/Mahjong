@@ -116,36 +116,33 @@ little headroom, so nothing else long should run beside it.
 
 ### Next
 
-Put the rule onto the three packs the site serves. Two ways, and they differ in cost, not in what a
-player is told:
-
-1. **Mark the shipped shards in place** with the builder's own rule (any question whose actions hold
-   a win becomes `rule: 'win'` with `best` = win). Minutes, no play-outs, can run now beside the
-   chain. Fixes all 2,099 wrong answers and marks all 5,256.
-2. **Rebuild all three from the graded runs** with `quizpack.ts --verify 512`. The last full rebuild
-   of the three took 6h58m with nothing else running (`data/gen/topup/chain.log`, 2026-09-11), so it
-   has to wait for the chain, and would land around midday. It gives the same answers, and in
-   addition admits win questions that the old verify pass dropped for failing separation, which the
-   rule now keeps. How many that is has not been measured.
-
-The graded runs both need are intact: `evals-*.jsonl.gz` survive in `run-coach2`, `run-min1` and
-`run-min1-nowild`.
+Rebuild all three packs from the graded runs with `quizpack.ts --verify 512`, after the strong-table
+chain finishes. Changs asked for the built version, not the patched one: "What's the best way without
+shortcuts. I want a strong built".
 
 ### Why
 
-The rule is in the builder and on the screen, but a player still meets 2,099 questions whose stored
-answer is to decline a win. Option 1 ends that today; option 2 also grows the packs.
+It is the only route that produces the packs the builder would produce today. Marking the shipped
+shards in place would fix the same 2,099 answers in minutes, but it leaves out the win questions the
+old verify pass dropped for failing separation, which the rule now keeps, and it leaves the site
+carrying files no build step made.
+
+### How
+
+Wait for `data/gen/strong-pack.done`, then run the three in sequence, writing to a staging directory
+and not to `web/public/quiz` until all three are finished, the way `data/gen/topup/run.sh` did it on
+2026-09-11. That run took 6h58m for the three (2h11m, 2h16m, 2h31m). The graded runs it needs are
+intact: `evals-*.jsonl.gz` in `run-coach2`, `run-min1` and `run-min1-nowild`.
 
 ### Expected Outcome
 
-The three packs carry `rule: 'win'` on every question that offers a win, the ten passes are run
-against the real packs rather than a test pack, and the site is deployed.
+Three packs whose every win-offering question carries `rule: 'win'`, the count of marked and restored
+questions per pack recorded, the ten passes run against the real packs, and the site deployed.
 
 ## After That
 
 1. Read the strong-table pack when its chain finishes, and record what it says.
-2. Decide `Q-013`: give the Coach the same rule and re-measure, or leave it and keep the note on
-   screen.
+2. Read `A-005` once Changs has used the hard questions: whether "hard only" is hard enough.
 3. Changs uses the hard questions for a few days and says whether they are still too easy
    (`A-005`); rule questions are not hard by that definition, so hard only hides them.
 
