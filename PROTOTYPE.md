@@ -268,6 +268,37 @@ prototype tracks a live product by decision; see the Lifecycle state section.
 
 ## Targeted Experiments / Spikes
 
+### A pack of positions that arise at a strong table
+
+**Uncertainty addressed:** Every pack question so far comes from hands played by the weak personality
+bots. Changs's opponents are strong (`D-032`), and a strong table produces different positions: hands
+run differently, suits get collected, the floor looks different. Nothing in the project has graded
+positions that came from strong play at his own table.
+
+**Origin:** Changs asked for heavy work, 2026-09-26.
+
+**Why construction:** it cannot be read off anything. The run has to be played and graded.
+
+**What is built:** a new bot type `coachnowild`, the Coach reading the no-Joker danger table, so a
+no-Joker run is four players who read danger the way the app does at that table (`D-030`). Then the
+usual three stages at 0 Jokers, min 1: generate, grade, build the pack.
+
+**Named before the run:** 150,000 hands, seed 902, four `coachnowild` seats, into
+`data/gen/run-strong-nowild`. Graded at 4 decisions a hand, 128 play-outs, adaptive, policy shanten,
+seed 1. Pack built at `--max 12800 --mix decisive --verify 512`, which is what the shipped packs use.
+Smoke run first: 400 hands at 14 hands a second, 361 won, 39 drawn, mean 50.5 turns, and the manifest
+records 0 Jokers, min 1 and four `coachnowild` seats.
+
+**What it will and will not show:** the positions will be strong-table positions. The grading still
+plays out with simple bots, because a Coach play-out costs 120 times more, so the answers still mean
+"best if play continues loosely" for everything except wins, where the rule from `FINDINGS.md`
+applies. Claims and throws were measured to survive that (`+0.150` to `+0.338` on calls, 1% of throws
+changed), which is why this is worth building.
+
+**Status:** RUNNING
+
+**Findings:** None yet.
+
 ### Is the judge right to decline wins? The direct money test, then the fix
 
 **Uncertainty addressed:** Over two thousand pack questions have a measured best that declines an
