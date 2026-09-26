@@ -64,6 +64,41 @@ with that word, and trusting the click rather than looking at what was pressed.
 `clickOne(pattern, { within })` presses a control only when exactly one visible control matches, and
 otherwise throws, naming every match and the heading above it. The Table setup presses were re-run
 with it, scoped to the preset row.
+
+## M-002 — Changing what was described instead of opening the screen and looking
+
+**Count: 1.**
+
+| # | When | What was claimed | What was actually true |
+|---|---|---|---|
+| 1 | 2026-09-16 | Told the seat name 西 was upside down, changed the opposite seat's tile rotation and said it was fixed | The fault was `rotate-180` on the left seat's name at desktop width, which one look at the screen would have shown. Changs answered "did u even look at it?". The wrong change was reverted and the real one made in `f34d847` |
+
+**What it is.** Acting on the description of a fault rather than on the fault. The description says
+where it hurts; only the screen says what is broken.
+
+**The check built for it.** None yet, because it is not a thing a script can catch. The rule that
+replaces it: when the owner reports something on screen, open that screen at that width first, and
+name what was seen before changing anything.
+
+---
+
+## M-003 — Trusting `.click()` to press a control that listens for pointer events
+
+**Count: 1.**
+
+| # | When | What was claimed | What was actually true |
+|---|---|---|---|
+| 1 | 2026-09-26, 23:12 | A pass over the navigation called `.click()` on each of the 8 tabs and collected a result for each | At desktop width the tabs act on `pointerdown`, so not one press registered. The address stayed `#train` for all 8 and the page text was the same length every time, which is what gave it away |
+
+**What it is.** The element was the right one. The press was not a press. A synthetic `click` event
+carries no pointer sequence, and a control built on `pointerdown` ignores it, so the check reads the
+screen it was already on and calls it a result.
+
+**The check built for it.** Two rules, used for the rest of that set. Press with a full sequence -
+`pointerdown`, `mousedown`, `pointerup`, `mouseup`, `click` - and **assert the thing that should have
+changed** (the address, the served question id, the stored value), never merely that a screen
+rendered.
+
 ---
 
 <!-- Shape of an entry:
@@ -83,6 +118,59 @@ with it, scoped to the preset row.
 ---
 
 ## Ten passes
+
+### The Coach line shows the Coach that plays, and the shard walk stops cascading — Sat Sep 26 23:20:45 +08 2026
+
+Passes run against the dev server on port 5174, on the working tree, after the win-rule commit
+`f42068a`. Three defects were found and fixed inside the set; every result below is from the final
+build. Where a harness was needed it is named, and its artefacts are separated from the app's
+behaviour.
+
+**Test boundary**
+
+- Workflows: answering a Train question, the pack, mode and hard-only filters, the shard walk behind
+  them, navigation to every screen.
+- Screens: Train, and the seven screens reachable from its navigation.
+- Access restrictions: none exist.
+- Values, records and calculations: the Coach's pick shown beside a question, `mj.hard.v1`,
+  `mj.history.v1`, `mj.mistakes.v1`, and the pack question ids served.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local storage, session storage, caches and IndexedDB cleared, reloaded. Train opened on "0 Jokers, min 1 Tai" with `mj.hard.v1` = "1", served a question, 0 matches for NaN or undefined | 0 |
+| 2 | Errors | `console.error` hooked from the first line of every run. 10 questions answered across the three packs and the three modes, 8 screens opened, every Train control pressed: 0 errors. Separately, with all 103 shards of the 0-Joker pack made empty: 0 errors and the made-up hand shown | 1, fixed and re-measured 0 |
+| 3 | Links | The 3 pack buttons, all, discard, claim, hard only, reset, Next position, and all 8 navigation tabs. Each of the 8 set its own address (#train, #spot, #review, #tips, #ask, #film, #play, #table) and rendered. Pressing them needed a real pointer sequence; see `M-003` | 0 |
+| 4 | Workflow steps | 10 questions answered with hard only on, 2 in each mode and 2 in each pack. 5 claim questions that offer a win, served by id through a patched `fetch`, all answered Win | 0 |
+| 5 | Writes | `mj.hard.v1` written on each toggle (1 to 0 to 1) and read back after a reload; `mj.history.v1` 5 entries and `mj.mistakes.v1` 4 entries, identical before and after the reload | 0 |
+| 6 | The data it moves | In the 0-Joker pack, 595 claim questions offer a win. `claimRank`, which the Train screen was using, declines the win on 278 of them; `claimAdvice`, which the Coach bot plays, declines 0. Measured in Node over the shipped shards | 1, fixed |
+| 7 | Reconciliation | The five worked examples of that disagreement (2336:29:61, 4671:13:80, 4161:17:97, 4308:16:60, 3877:18:23) read "The Coach would pass" before the fix and "The Coach would win" after, which is what `claimAdvice` returns for each. 3877:18:23 still shows the amber disagreement line, correctly: its stored answer is pass and the pack has not been rebuilt with the rule | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with a claim question answered, at 280, 320, 375, 390 and 1280px. Page scroll width equalled the screen at all five. Elements past the right edge and outside a deliberate scroller: 1 at 280px before the fix, 0 at every width after | 1, fixed |
+| 10 | Look at it | Screenshots at 390px (table, question, verdict) and the verdict block read line by line: "西 discarded 2萬 — Pong or pass?", "Best move", "Measured best: worth $20.48 per hand.", "the aggressive bot chose pass", "The Coach would pong. Agrees with the measurement.", "Coach reads this as all-pong.", "Pong $20.48 win 81% best", "Pass $17.23 win 59%", "min1-nowild / 918:12:52", "Challenge the verdict (512 fresh play-outs)" | 0 |
+
+**Defects found:**
+
+1. Pass 6, fixed: the Train screen ran `claimRank` for claims, which is the learned softmax model,
+   while the Coach that plays takes a win before it ranks anything. Expected: the line says what the
+   Coach does. Actually: it declined the win on 278 of the 595 claim questions in the 0-Joker pack
+   that offer one, against 0 for the Coach. Fixed by taking the win first, as `CoachBot.chooseClaim`
+   does. This is the whole of `Q-013`, which is now about a display, not about the Coach.
+2. Pass 2, fixed: with many shards cached and empty for the current filters, each one was marked
+   through state separately, and a cached shard answers synchronously, so the walk nested more than
+   fifty updates and React stopped it. Fixed by skipping cached empty shards inside one run of the
+   effect, so only an uncached shard costs a round trip. Re-measured with all 103 shards empty: 0
+   errors, the made-up hand shown.
+3. Pass 9, fixed: at 280px the Challenge button is 305px wide and ran off the screen, where nothing
+   could scroll to it. Fixed by letting its row wrap and its label wrap; it is 216 by 48px at 280px
+   and back to one line at 1280px.
+
+**A harness artefact, not a defect:** the same walk logged 2 to 3 errors when the test harness
+answered every shard from `Promise.resolve`, because fifty replies then land in one microtask chain.
+Answering on a task boundary, as a network or service worker does, gave 0 errors in the same test.
+Said here because it would otherwise look like a fourth defect.
+
+**Not checked:** a real phone; dark mode; the Spot and Play workflows beyond opening them; the
+Coach line on a rule question in a shipped pack, because the packs have not been rebuilt yet.
 
 ### A win on offer is answered by rule, in the pack data and on the Train screen — Sat Sep 26 20:04:00 +08 2026
 

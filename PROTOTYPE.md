@@ -455,8 +455,12 @@ app by name and answered both ways. The ten passes for this change are in `MISTA
 mark. Until then the rule questions exist only in the builder's output, and the packs on the site
 still carry the play-outs' win answers.
 
-**What it does not establish:** that the Coach agrees. On 3 of the 6 positions checked it said it
-would pass, and the screen says so beside the rule (`Q-013`).
+**One thing that looked like a second defect was not.** On 3 of the 6 positions the screen said the
+Coach would pass. The Coach does not: `CoachBot.chooseClaim` takes a win before it asks
+`claimAdvice`, and over the 595 claim questions in the 0-Joker pack that offer a win it declines 0.
+The Train screen was running `claimRank`, the learned model, which declines 278 of the same 595. One
+line in the screen now takes the win first, as the bot does (`Q-013`). Nothing was measured with a
+win-declining field, so the results above stand unchanged.
 
 ### Should the Coach call Pong more or less at a no-Joker table?
 

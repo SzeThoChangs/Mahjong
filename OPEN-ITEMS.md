@@ -62,7 +62,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
 | Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | RESOLVED | Changs |
-| Q-013 | QUESTION | The Coach declines an offered win on some positions, and says so beside the rule that says to take it | OPEN | Changs |
+| Q-013 | QUESTION | The Coach declines an offered win on some positions, and says so beside the rule that says to take it | RESOLVED | Agent |
 | A-001 | ASSUMPTION | Training on play-out-graded decisive positions improves real play | OPEN | Changs |
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
@@ -856,23 +856,25 @@ remembers. No automatic backup exists and none is planned (D-016).
 **Type:** QUESTION
 
 **Description:** With the win rule in place (`D-033`), a pack question that offers a win is answered
-"take it". The Coach box underneath reads the position separately, and on 3 of the 6 positions
-checked on 2026-09-26 it said it would pass. The screen names the disagreement and keeps the rule as
-the answer, so nothing teaches the wrong move, but the player is shown the Coach declining a win it
-should take.
+"take it". The Coach box underneath read the position separately, and on 3 of the 6 positions checked
+on 2026-09-26 it said it would pass.
 
-**Why It Matters:** The Coach is also the strong-player stand-in used for grading (`A-006`), one of
-the three seats in the money tests, and the opponent in the Play tab. If it declines wins there, the
-measurements that produced `D-032` and `D-033` were made with a field that plays this spot the way
-the money test says is wrong. It does not overturn those results, which compared judges against each
-other in the same field, but it is a change worth measuring on its own.
+**Why It Mattered:** The Coach is the strong-player stand-in used for grading (`A-006`), one of the
+three seats in the money tests, and the opponent in the Play tab. Had it really declined wins, every
+one of those measurements would have been made by a field playing this spot the way the money test
+says is wrong.
 
-**Owner:** Changs, on whether to spend the compute.
+**Owner:** Agent.
 
-**Resolution Method:** Give the Coach the same rule, then run the existing paired money test
-(`datagen/src/judgewin.ts`, `--field coach`) with the new Coach in all four chairs, and re-check that
-the pack grading does not move. A day of compute, roughly, against a job already queued.
+**Resolution Method:** Run the two functions over every claim question in a shipped pack that offers
+a win, and compare.
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**Resolution:**
+**Resolution:** 2026-09-26. The Coach does not decline wins; the screen did. `CoachBot.chooseClaim`
+takes a win before it consults `claimAdvice`, and `claimAdvice` gives a win infinite gain, so the
+Coach that plays and the Coach that grades take every win. The Train screen was running `claimRank`,
+the learned softmax model, which is not the Coach: over the 595 claim questions in the 0-Joker pack
+that offer a win, `claimRank` declines 278 and `claimAdvice` declines 0. One line in
+`web/src/components/Train.tsx` now takes the win first, as the bot does. Nothing was measured with a
+win-declining field, so `D-032` and `D-033` are unaffected, and the day of compute is not needed.

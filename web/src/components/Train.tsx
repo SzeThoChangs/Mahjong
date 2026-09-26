@@ -247,23 +247,50 @@ export default function Train() {
     if (!ix || q) return;
     let live = true;
     const done = new Set(walked);
+    /**
+     * Shards found to hold nothing for these filters during THIS run.
+     *
+     * They are collected rather than written to state one at a time, because writing one re-runs
+     * this effect, and a shard already in the cache answers synchronously - so a pack whose shards
+     * are cached and empty for the current filters walked itself through a hundred nested state
+     * updates, which React stops at fifty with "Maximum update depth exceeded". The first fix
+     * stopped the endless version of that (a blank screen, 888 errors in six seconds); this one
+     * stops the cascade as well, by skipping cached empty shards inside one run. Only an uncached
+     * shard costs a round trip, because only that one has to wait for the network.
+     * (Both found by the ten passes, 2026-09-26.)
+     */
+    const emptied = new Set<number>();
     if (loaded) {
       done.add(loaded.shard);
-      // Marking it again would build a new Set every run, which changes `eligible` and re-runs
-      // this effect for ever - a blank screen and a spinning tab. Mark it once, then fall through
-      // and walk on to another shard. (Found by the ten passes, 2026-09-26.)
-      if (!loaded.qs.some(fits) && canServe(ix.shards[loaded.shard]!) && !barren.has(loaded.shard)) {
-        setBarren((b) => new Set(b).add(loaded.shard)); return;
-      }
+      if (!loaded.qs.some(fits) && canServe(ix.shards[loaded.shard]!) && !barren.has(loaded.shard)) emptied.add(loaded.shard);
     }
-    let pool = eligible.filter((i) => !done.has(i));
-    if (!pool.length) { if (!eligible.length) return; pool = eligible; done.clear(); }
-    const shard = pool[Math.floor(Math.random() * pool.length)]!;
-    done.add(shard);
+    const free = (i: number) => !barren.has(i) && !emptied.has(i);
+    /** the next shard worth loading: the first drawn at random that is uncached, or cached with something that fits */
+    const pick = (): { shard: number; qs: Q[] | null } | null => {
+      let pool = eligible.filter((i) => free(i) && !done.has(i));
+      if (!pool.length) {
+        pool = eligible.filter(free);
+        if (!pool.length) return null;
+        done.clear();
+      }
+      while (pool.length) {
+        const shard = pool[Math.floor(Math.random() * pool.length)]!;
+        done.add(shard);
+        const hit = shardCache.current.get(shard);
+        if (!hit) return { shard, qs: null };
+        if (hit.some(fits)) return { shard, qs: hit };
+        emptied.add(shard);
+        pool = pool.filter((i) => i !== shard);
+      }
+      return null;
+    };
+    const next = pick();
     setWalked(done);
+    if (emptied.size) setBarren((b) => { const n = new Set(b); for (const i of emptied) n.add(i); return n; });
+    if (!next) return;
+    const { shard } = next;
     const show = (qq: Q[]) => { if (live) { setLoaded({ shard, qs: qq, order: shuffled(qq.length) }); setPos(0); } };
-    const hit = shardCache.current.get(shard);
-    if (hit) { show(hit); return; }
+    if (next.qs) { show(next.qs); return; }
     fetch(asset(`quiz/${pack}/${ix.shards[shard]!.file}`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d: { questions: Q[] }) => { shardCache.current.set(shard, d.questions); show(d.questions); })
       // a shard that will not come - no signal, or a pack being rebuilt under us - is left out of
@@ -339,15 +366,23 @@ export default function Train() {
         visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
       // The COACH, not the learned model. This block said "the learned model would..." while
-      // running the model for discards and the coach's own `claimRank` for claims - one label over
-      // two different players. It is the coach in both now, which is also the honest comparison to
-      // draw here: the Train tab teaches the coach, so where the coach and the measurement disagree
-      // is worth seeing. The model was dropped from the app on 2026-09-02; it loses 0.544 chips a
-      // game and its accuracy is measured against a grader that cannot play a colour hand.
+      // running the model for discards and `claimRank` for claims - one label over two different
+      // players. `claimRank` is not the Coach either: the Coach bot takes a win first and then asks
+      // `claimAdvice`, so the win case below is handled the bot's way. The comparison is worth
+      // drawing because the Train tab teaches the Coach, and where the Coach and the measurement
+      // disagree is worth seeing. The model was dropped from the app on 2026-09-02; it loses 0.544
+      // chips a game and its accuracy is measured against a grader that cannot play a colour hand.
       if (q.k === 'discard' && q.h.length % 3 === 2) return `d:${rankDiscards(q.h, melds, ctx).best.tile}`;
       if (q.k === 'claim' && q.ld) {
         const offered = q.ld[1]!;
         const acts = q.actions.map((a) => a.a);
+        // A win is taken before anything is ranked, because that is what the Coach that PLAYS does:
+        // `CoachBot.chooseClaim` returns the win before it reaches `claimAdvice`, and `claimAdvice`
+        // gives a win infinite gain anyway. Ranking the win alongside the calls is a softmax over
+        // features that knows nothing about the hand ending, and it declined the win on 278 of the
+        // 595 claim questions in the 0-Joker pack that offer one, against 0 for the Coach itself
+        // (measured 2026-09-26). The screen was showing a player nobody plays.
+        if (acts.includes('win')) return 'win';
         const cands = acts.map((a) => claimCandidateOf(a, offered));
         if (cands.some((c) => c === null)) return null;
         const r = claimRank(cands.map((c) => c!), q.h, melds, offered, ctx);
@@ -708,7 +743,9 @@ export default function Train() {
                 </div>
               );
             })}
-            <div className="pt-2 flex items-center gap-2">
+            {/* wraps: at 280px the Challenge button is 305px wide and ran off the screen edge,
+                where nothing could scroll to it (found by the ten passes, 2026-09-26) */}
+            <div className="pt-2 flex flex-wrap items-center gap-2">
               <Button onClick={next}>Next position</Button>
               {/* The one handle a person has on a position they dispute. Without it, "that verdict
                   was wrong" cannot be checked by anybody, because the id lives only in the hand log.
@@ -719,7 +756,7 @@ export default function Train() {
                   server - see `lib/rejudge.ts`. Gone once it has answered: a second press would be
                   a second opinion on new dice, and the tally must not be moved twice. */}
               {challengeState === null && actions.length > 1 && !ruleWin && (
-                <Button variant="outline" onClick={runsChallenge}>Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs)</Button>
+                <Button variant="outline" onClick={runsChallenge} className="h-auto max-w-full whitespace-normal py-2 text-left">Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs)</Button>
               )}
             </div>
             {challengeState && (

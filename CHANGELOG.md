@@ -46,6 +46,19 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-26 — The Coach line on Train shows the Coach that actually plays
+
+**Changed:** For claim questions the Train screen took a win before ranking anything, as the Coach
+bot does. The action row and the Challenge label wrap, so the button no longer runs off a 280px
+screen. The shard walk skips cached empty shards inside one run instead of one state write each.
+
+**Why:** The screen ran `claimRank`, the learned model, and called it the Coach. Over the 595 claim
+questions in the 0-Joker pack that offer a win, that model declines 278; the Coach declines 0.
+
+**Impact:** `Q-013` resolved, and it was a display fault, not a fault in the Coach, so the money
+tests behind `D-032` and `D-033` are unaffected. Ten passes recorded in `MISTAKES.md` with three
+defects found and fixed. `M-002` and `M-003` added to the register.
+
 ### 2026-09-26 — A win on offer is answered by a rule, in the pack data
 
 **Changed:** The pack builder marks every question that offers a win with `rule: 'win'` and stores

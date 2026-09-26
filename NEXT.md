@@ -101,30 +101,45 @@ these questions and stores the win as the answer.
 
 ## Where We Stopped
 
-2026-09-26, 20:00. `./check.sh` all green (four typechecks, 174 tests, web build). Nothing is broken
-and nothing is half-applied.
+2026-09-26, 23:05. The win rule is committed and pushed (`f42068a`), `./check.sh` green. The site
+still serves packs built before the rule.
 
-**One job is running:** the strong-table pack chain, started 18:01 on 2026-09-26 in `data/gen`
-(`strong-pack-chain.sh`, log `data/gen/strong-pack-chain.log`). It generates 150,000 Coach-played
-hands at seed 902, grades them, then builds a pack. It reached the grading stage at 18:55 and takes
-about twelve hours in total. It holds about 2 GB, so do not start a second long build beside it.
+**Measured on the three packs now on the site:** 5,256 questions offer a win, and 2,099 of them
+answer something other than taking it (coach 790, min1 1,179, min1-nowild 130).
+
+**One job is running:** the strong-table pack chain (`data/gen/strong-pack-chain.sh`), started 18:01,
+grading since 18:55. At 23:05 it had graded 278,900 of the 600,000 decisions, about 1,116 a minute,
+so it should finish grading near 04:00 and then build its pack. It holds about 2 GB, and the Mac has
+little headroom, so nothing else long should run beside it.
 
 ## Recommended Next Action
 
 ### Next
 
-Rebuild the three shipped packs with the win mark, verify them, and deploy.
+Put the rule onto the three packs the site serves. Two ways, and they differ in cost, not in what a
+player is told:
+
+1. **Mark the shipped shards in place** with the builder's own rule (any question whose actions hold
+   a win becomes `rule: 'win'` with `best` = win). Minutes, no play-outs, can run now beside the
+   chain. Fixes all 2,099 wrong answers and marks all 5,256.
+2. **Rebuild all three from the graded runs** with `quizpack.ts --verify 512`. The last full rebuild
+   of the three took 6h58m with nothing else running (`data/gen/topup/chain.log`, 2026-09-11), so it
+   has to wait for the chain, and would land around midday. It gives the same answers, and in
+   addition admits win questions that the old verify pass dropped for failing separation, which the
+   rule now keeps. How many that is has not been measured.
+
+The graded runs both need are intact: `evals-*.jsonl.gz` survive in `run-coach2`, `run-min1` and
+`run-min1-nowild`.
 
 ### Why
 
-The rule is in the builder and in the app, but the packs on the site were built before it, so a
-player still meets questions whose stored answer is to decline a win. Until the rebuild, the fix
-exists only in the code.
+The rule is in the builder and on the screen, but a player still meets 2,099 questions whose stored
+answer is to decline a win. Option 1 ends that today; option 2 also grows the packs.
 
 ### Expected Outcome
 
-`coach`, `min1` and `min1-nowild` rebuilt, each carrying `rule: 'win'` on every question that offers
-a win, the counts of marked questions recorded, and the site serving them.
+The three packs carry `rule: 'win'` on every question that offers a win, the ten passes are run
+against the real packs rather than a test pack, and the site is deployed.
 
 ## After That
 

@@ -1065,8 +1065,9 @@ pass a mistake, charges nothing to the "Given up" figure, leaves the money bars 
 and says in one paragraph why the bars are absent. The three shipped packs are rebuilt with the mark
 before this reaches the site.
 
-**What it does not settle:** the Coach still passes on some of these positions and says so on screen
-(`Q-013`). A rule question is not hard by the Train tab's definition, so hard only, which is the
-default, filters them out.
+**What it does not settle:** a rule question is not hard by the Train tab's definition, so hard only,
+which is the default, filters them out. (The Coach was thought to disagree with the rule on some of
+these positions; it does not. That was the Train screen running a different function from the one the
+Coach plays, measured and fixed the same day, `Q-013`.)
 
 **Related:** D-027, D-031, D-032, `Q-013`, `A-006`, `PROTOTYPE.md`, `FINDINGS.md`.
