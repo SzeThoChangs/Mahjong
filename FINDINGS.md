@@ -36,8 +36,8 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   the same weights, and +0.482 +/- 0.160 over the old Coach with the rounded weights it carries.
 - **The learned claim model** on top of the shipped Coach: +0.171 +/- 0.131 and +0.212 +/- 0.133,
   first sample, inside the bar; a second sample decides on the pooled figure.
-- **The Chow bar** at 0.2 against the shipped 0.4: +0.006 +/- 0.021 over 8,000 paired deals, hands
-  won 1,920 against 1,916. It does not bind. 0.8 is running.
+- **The Chow bar** at 0.2 and 0.8 against the shipped 0.4: +0.006 +/- 0.021 and +0.044 +/- 0.034
+  over 8,000 paired deals each, hands won 1,920 and 1,926 against 1,916. It barely binds; 0.4 stays.
 - **The grades on colour-plan positions**: 287 pack questions at Changs's table judged twice at 256
   play-outs, shanten bots against the Coach in the play-outs: 2 answers changed past two standard
   errors, which is fewer than chance gives over 287 tests. The packs' colour-plan grades hold; the

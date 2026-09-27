@@ -106,36 +106,39 @@ review answering a win on offer by the rule both ways, friends' records and Send
 setup (`A-007`), a session on the Play tab, and the training plan brought up to date. Every one of
 these has its ten passes in `MISTAKES.md`.
 
-**Running on the Mac, in this order:**
+**Done since, 2026-09-28 04:40:** the shipped Coach checked against the measurement (identical
+decisions on 8,000 paired deals given the same weights; +0.482 +/- 0.160 over the old Coach with the
+rounded weights it carries); the colour-plan regrade (2 of 287 answers changed, chance's share, the
+packs' grades hold); the Chow bar swept (barely binds, 0.4 stays); the claim model's first sample
+(+0.171 and +0.212, inside the bar).
 
-1. The mirror check of the shipped integration: `policymoney.ts --pure` on B's own deals (7930001
-   to 7932000, three Coaches). Must read about −0.378, the mirror of B's first sample; anything else
-   says the shipped code is not the thing that was measured. `data/gen/coach2/mirror-pure-coach.log`.
-2. The learned claim model for money, both fields, deals 7950001 onward:
-   `data/gen/coach2/claims-*.log`.
-3. The colour-plan regrade of the 0-Joker pack, 287 questions judged twice at 256 play-outs:
-   `data/gen/coach2/regrade-colour-w*.jsonl`. After 74 of them: 0 answers changed past two standard
-   errors, 4 differ inside the noise.
-4. Queued behind 3: the strong-table pack regenerated with the new Coach, seed 903, about twelve
-   hours (`data/gen/strong2-pack-chain.sh`).
+**Running on the Mac:**
+
+1. The claim model's second sample, deals 7970001 onward, both fields:
+   `data/gen/coach2/claims2-*.log`. Pooled past two standard errors against three Coaches and not
+   negative against the recorded players, or the model stays out.
+2. The strong-table pack regenerated with the new Coach, seed 903, generating since 03:37, then
+   grading and the pack build, about twelve hours: `data/gen/strong2-pack-chain.log`.
 
 ## Recommended Next Action
 
 ### Next
 
-Read the three results as they land. The mirror check decides whether anything else is trusted: if
-it is not the mirror of B, stop and find out why before reading the others. Then record the claim
-model's figures against the gate, and the regrade's count of changed answers against the 287.
+Read the claim model's second sample against the gate on the pooled figure. If it clears, ship it
+the way B was shipped: inside the solver's own claim rule so the Coach that teaches and the Coach
+that plays are one, then the ten passes. If not, record it and leave the claim rule as it is. Then
+the strong pack when it lands: copy it in as the fourth pack, counts, ten passes.
 
 ### Why
 
-The shipped Coach is now the stand-in in every test, so a fault in the integration would poison
-every figure after it. The mirror check is the one measurement that catches that.
+They are the last two items of `D-034` that the Mac can settle; the sixth, the model choosing the
+plan on money, is only worth starting if the claim result says the learned models have money left
+in them.
 
 ### Expected Outcome
 
-Three recorded findings; the claim model shipped or set aside; the regrade either extended to the
-other two packs or closed with the finding that the grades on separable colour positions hold.
+The claim model shipped or set aside on 16,000 paired deals a field; the strong-table pack on the
+site played by the Coach that now plays.
 
 ## After That
 

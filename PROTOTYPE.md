@@ -353,7 +353,14 @@ three Coaches in the other chairs, deals 7960001 to 7962000, 2,000 a chair, at t
 table. A bar counts as better only past two standard errors, and then gets the recorded field and a
 fresh-deal confirmation before it ships, as B did. Output `data/gen/coach2/chow-*-coach.log`.
 
-**Status:** QUEUED behind the claim-model test, 2026-09-28.
+**Status:** RUN, 2026-09-28 03:23 to 04:39.
+
+**Findings:** a bar of 0.2 against the shipped 0.4: +0.006 +/- 0.021, hands won 1,920 against
+1,916; a bar of 0.8: +0.044 +/- 0.034, t 1.3, hands won 1,926 against 1,916. Neither past the
+bar, and the win mixes differ by a handful of hands in 8,000 deals, so the Chow bar barely binds at
+this table: the calls the Coach makes are the same at 0.2, 0.4 and 0.8. It stays at 0.4. With the
+Pong bar (`D-031`) and the danger weight swept before, the third item of `D-034` closes: the Coach's
+fixed numbers are not where money is.
 
 ### The grades on colour-hand positions, re-made with the Coach playing the play-outs
 
