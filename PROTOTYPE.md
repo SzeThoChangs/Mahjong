@@ -299,6 +299,66 @@ changed), which is why this is worth building.
 
 **Findings:** None yet.
 
+### Can anything beat the Coach for money at Changs's table?
+
+**Uncertainty addressed:** The Coach picks the measured best on 52.8% of decisive positions and
+36.1% early in a hand, and Changs asked what it would take to make it better. A learned discard
+policy already exists in the repo and was dropped from the app on 2026-09-02 because it lost 0.544
+chips a game, so the question is not whether a model can be more accurate. It is whether anything can
+take money off the Coach at his table.
+
+**Origin:** Changs, 2026-09-26, choosing this over three other week-sized jobs.
+
+**The gate, named before any work:** a candidate ships only if it wins in the paired money test at
+his table (0 Jokers, min 1) against three Coaches by more than two standard errors, and does not lose
+by more than two standard errors against the recorded personalities. Accuracy against the grader
+decides nothing; it is the measurement that produced the model that already lost.
+
+**What is already known, and is the thing most likely to waste the week:** the labels come from 128
+play-outs by bots that never collect a suit, while the Coach wins a colour hand about a third of the
+time. A decider fitted to those labels learns not to build colour hands. That is the standing
+explanation for the 2026-09-02 loss, and it is written into `solver/src/policy.weights.ts` and the
+Train tab's own comment. Any candidate has to be judged on money for this reason, not on regret.
+
+**Step 1, run 2026-09-26: where does the Coach actually lose?** `policyeval.ts --dir
+../data/gen/run-min1-nowild --hands 3000`, which scores four deciders on the same 9,731 evaluated
+discards by mean EV regret in chips per decision.
+
+    slice        n       Coach   old policy   bot that played   random
+    decisive    450      1.792      1.047          2.370         3.806
+    ambiguous  9,281     1.203      1.226          1.195         1.711
+    early      2,808     1.371      1.491          1.341         1.807
+    mid        3,272     1.244      1.431          1.342         2.038
+    late       3,651     1.111      0.816          1.096         1.601
+
+Top-1 against the measured best, same order: 49.6% and 66.4% on decisive, 20.0% and 20.7% on
+ambiguous.
+
+**What that says.** The old policy's advantage is entirely where the labels are clean: decisive
+positions, and late hands. On the 95% of positions that are ambiguous it is no better than the bot
+that played, and it is worse than the Coach early and mid, which is most of a hand. So the week's
+target is the early and middle game on ambiguous positions, and a candidate that only sharpens
+decisive positions will repeat 2026-09-02.
+
+**What it does not establish:** none of this is money. Regret per decision is measured against the
+same play-outs whose field cannot play a colour hand, so it inherits the bias described above. It is
+a map of where to look, not a verdict.
+
+**Next steps, in the order they will run:**
+
+1. Fit a candidate on all three runs rather than one, with the ambiguous positions carried by an
+   EV-weighted loss instead of being dropped for not clearing 2 SE.
+2. Add the features the current set lacks and the Coach uses: progress toward a colour or all-pong
+   hand, danger from the discards at the table's Joker count, and how much wall is left.
+3. Money-test each candidate against three Coaches and against the recorded field, paired, at his
+   table first.
+4. Whatever wins: ship it with the Coach's explanations intact, re-run the ten passes, and say
+   plainly where the two disagree.
+
+**Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
+the picks where they disagree. That is a design decision for Changs, and it is not needed until
+something actually wins money.
+
 ### Is the judge right to decline wins? The direct money test, then the fix
 
 **Uncertainty addressed:** Over two thousand pack questions have a measured best that declines an

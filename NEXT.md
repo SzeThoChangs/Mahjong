@@ -101,43 +101,40 @@ these questions and stores the win as the answer.
 
 ## Where We Stopped
 
-2026-09-26, 23:05. The win rule is committed and pushed (`f42068a`), `./check.sh` green. The site
-still serves packs built before the rule.
+2026-09-27, 15:05. Two jobs are queued on the Mac, one behind the other, and both write outside the
+repository until they are checked:
 
-**Measured on the three packs now on the site:** 5,256 questions offer a win, and 2,099 of them
-answer something other than taking it (coach 790, min1 1,179, min1-nowild 130).
+1. **The strong-table pack** (`data/gen/strong-pack-chain.sh`): grading finished at 04:01 and the
+   pack build has been verifying since; at 15:00 it was at 9,000 of 12,801 with 1,504 dropped and
+   about four hours left. It builds with the win rule, because the pack step started after `f42068a`.
+   Output `data/gen/strong-quiz/`, marker `data/gen/strong-pack.done`.
+2. **The three-pack rebuild** (`data/gen/rebuild-chain.sh`): waits for that marker, then rebuilds
+   `min1-nowild`, `min1` and `coach` from their graded runs with `--max 12800 --mix decisive
+   --verify 512`, into `data/gen/rebuild/quiz/`. About seven hours. Marker
+   `data/gen/rebuild/rebuild.done`, log `data/gen/rebuild/chain.log`.
 
-**One job is running:** the strong-table pack chain (`data/gen/strong-pack-chain.sh`), started 18:01,
-grading since 18:55. At 23:05 it had graded 278,900 of the 600,000 decisions, about 1,116 a minute,
-so it should finish grading near 04:00 and then build its pack. It holds about 2 GB, and the Mac has
-little headroom, so nothing else long should run beside it.
+Changs chose the built route over marking the shipped shards in place, and chose "a stronger Coach"
+as the week's big job (2026-09-27). Its plan and first measurement are in `PROTOTYPE.md`, "Can
+anything beat the Coach for money at Changs's table?".
 
 ## Recommended Next Action
 
 ### Next
 
-Rebuild all three packs from the graded runs with `quizpack.ts --verify 512`, after the strong-table
-chain finishes. Changs asked for the built version, not the patched one: "What's the best way without
-shortcuts. I want a strong built".
+When `rebuild.done` appears: read the three pack logs, count the `rule: 'win'` questions and the
+restored ones per pack, copy the packs into `web/public/quiz/` with a new `index.json`, run the ten
+passes against the real packs, deploy. Then start the Coach work proper: step 1 of the plan in
+`PROTOTYPE.md`, fitting on all three runs with an EV-weighted loss.
 
 ### Why
 
-It is the only route that produces the packs the builder would produce today. Marking the shipped
-shards in place would fix the same 2,099 answers in minutes, but it leaves out the win questions the
-old verify pass dropped for failing separation, which the rule now keeps, and it leaves the site
-carrying files no build step made.
-
-### How
-
-Wait for `data/gen/strong-pack.done`, then run the three in sequence, writing to a staging directory
-and not to `web/public/quiz` until all three are finished, the way `data/gen/topup/run.sh` did it on
-2026-09-11. That run took 6h58m for the three (2h11m, 2h16m, 2h31m). The graded runs it needs are
-intact: `evals-*.jsonl.gz` in `run-coach2`, `run-min1` and `run-min1-nowild`.
+The rebuild is what puts the win rule on the site. The Coach work needs the Mac for its money
+tests, so it starts once the rebuild has it free; its analysis and code can be written before that.
 
 ### Expected Outcome
 
-Three packs whose every win-offering question carries `rule: 'win'`, the count of marked and restored
-questions per pack recorded, the ten passes run against the real packs, and the site deployed.
+Three packs on the site carrying the rule; the first Coach candidate fitted and queued for the paired
+money test at his table.
 
 ## After That
 
