@@ -64,7 +64,7 @@ Nothing is running on the Mac.
 
 ## Recently Completed
 
-- 2026-09-27: the three packs rebuilt with the win rule and put on the site (10,547, 10,528 and 10,291 questions; every win-offering question marked); the strong-table pack built, 10,652 questions, not on the site; ten passes in `MISTAKES.md`.
+- 2026-09-27: the three packs rebuilt with the win rule and put on the site (10,547, 10,528 and 10,291 questions; every win-offering question marked); the strong-table pack built, 10,652 questions, and on the site as a fourth pack; ten passes in `MISTAKES.md`.
 - 2026-09-26: a win on offer is answered by rule, written into the pack builder and taught on the Train screen (`D-033`); ten passes recorded in `MISTAKES.md`, two defects found and fixed; the banned middle dot removed from the five project files that still held it.
 - 2026-09-24: the claims cleared. With every win taken, following the judge on Pong, Chow and pass is worth +0.150, +0.102 and +0.338 chips a game at the three tables, and the Coach-played judge loses more on wins than the simple one (`PROTOTYPE.md`, `FINDINGS.md`).
 - 2026-09-16: hard only on by default, 0 Jokers and min 1 as the default pack and Table setup, the Coach's reasoning at the table in play, the green felt table, the seat details in the question card, and the dealer badge under the wind on phones (`f34d847`, `1b64f3f`); ten passes for each set recorded in `MISTAKES.md`.

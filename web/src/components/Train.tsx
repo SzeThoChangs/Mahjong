@@ -46,7 +46,9 @@ const LABEL = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreg
 /** `table` is absent on packs built before 2026-09-06, when nothing recorded which table a pack came from. */
 interface PackTable { wildcards: number; minimumTai: number }
 /** `shards` is how many shard files a pack is cut into; absent on a pack that is still one file. */
-interface PackIx { id: string; money: boolean; unit: string; questions: number; table?: PackTable; shards?: number }
+/** `players` says who played the hands the pack was cut from: absent for the weak personality bots,
+ *  "strong" for a table of four Coaches (PROTOTYPE.md, "A pack of positions that arise at a strong table"). */
+interface PackIx { id: string; money: boolean; unit: string; questions: number; table?: PackTable; shards?: number; players?: 'strong' }
 /** the slice of a pack's own `index.json` this tab reads - see `pack.ts` in the solver for the whole of it */
 interface Ix { run: string | null; unit: string; questions: number; shards: ShardIx[] }
 // `se` = paired standard error of (best.ev - this.ev): how far apart two moves must sit before
@@ -439,7 +441,7 @@ export default function Train() {
         <Button key={p.id} size="sm" variant={p.id === pack ? 'default' : 'outline'} onClick={() => setPack(p.id)}
           className={p.id === pack ? '[&_em]:!text-current' : undefined}>
           {/* one span, so the button's flex gap does not open a space between a word and its comma */}
-          <span>{p.table ? <>{p.table.wildcards} <J>Jokers</J>, min {p.table.minimumTai} <J>Tai</J></> : p.id}</span>
+          <span>{p.table ? <>{p.table.wildcards} <J>Jokers</J>, min {p.table.minimumTai} <J>Tai</J>{p.players === 'strong' && <>, strong table</>}</> : p.id}</span>
         </Button>
       ))}
       <span className="ml-auto" />

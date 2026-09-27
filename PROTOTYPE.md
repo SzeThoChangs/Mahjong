@@ -313,8 +313,10 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
 3. **Phase mix:** pack early 8%, mid 32%, late 60%, against the run's 32%, 40%, 28%. The shipped
    0-Joker pack is 11%, 32%, 57%, so a decisive question at this table is a late one whoever plays.
 4. **Not measured yet:** whether these positions differ from the weak-bot packs in any way a player
-   would notice, and whether Changs finds them harder. It is not on the site; putting it there is a
-   separate step after the three-pack rebuild.
+   would notice, and whether Changs finds them harder. Changs asked for it on the site on
+   2026-09-27 ("Add it"); it is the fourth pack, labelled "0 Jokers, min 1 Tai, strong table", and
+   the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
+   default pack is still the weak-bot 0-Joker one.
 
 ### Can anything beat the Coach for money at Changs's table?
 
@@ -382,6 +384,31 @@ before any result: with arm B playing the Coach's own discards it returned exact
 paired deals, 43 hands won by each arm, 0.22 seconds a paired deal against three Coaches, so 8,000
 paired deals is about half an hour. The trainer waits for the Mac: it loads a whole run's hands, and
 the pack builds hold the machine until the rebuild finishes.
+
+**Step 1, run 2026-09-27, 23:29 to 23:43 (candidate A):** `policyfit.ts` on the three runs, 150,000
+decisions from each, one tanh layer of 16, the regret loss, 40 epochs. 442,474 training decisions;
+held out the 7,528 discard questions of the three rebuilt packs, which are by construction the
+positions the play-outs could separate. Peak 2.8 GB, no swapping. Mean regret in chips a decision,
+final epoch, the Coach scored on the same positions:
+
+    slice                 n     candidate A   Coach
+    all               7,528       1.201       1.398
+    early               534       2.352       1.920
+    mid               2,930       1.424       1.000
+    late              4,064       0.889       1.617
+    0 Jokers, min 1   3,398       0.913       1.648
+    4 Jokers, min 1   2,309       1.283       1.354
+    4 Jokers, min 2   1,821       1.634       0.988
+
+The loss moved from 1.111 to 1.083 over 40 epochs and the held-out figure wandered between 1.110 and
+1.212 from epoch 10 on, so the features are the limit, not the epochs. The same shape as the old
+policy: far better late, worse early and mid, and worse at the 4-Joker min-2 table than the Coach by
+a wide margin. Carrying the ambiguous positions did not change that. At Changs's own table it is
+ahead on every phase except early, which is the smallest slice.
+
+**What it does not establish:** money, and anything about the ambiguous majority: the held-out set
+is pack questions, which are the separable ones. The money test at his table is running, deals
+7900001 to 7902000, both fields, `data/gen/coach2/money-a-*.log`.
 
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until

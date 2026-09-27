@@ -102,8 +102,8 @@ these questions and stores the win as the answer.
 ## Where We Stopped
 
 2026-09-27, 23:30. The three packs rebuilt with the win rule are on the site (pushed with the ten
-passes recorded in `MISTAKES.md`). The strong-table pack is built at `data/gen/strong-quiz/` and
-recorded in `PROTOTYPE.md`; it is not on the site. Nothing is running on the Mac.
+passes recorded in `MISTAKES.md`). The strong-table pack is on the site as a fourth pack, at Changs's
+word, and recorded in `PROTOTYPE.md`. Nothing is running on the Mac.
 
 The Coach work has its plan and first measurement in `PROTOTYPE.md`, its trainer
 (`datagen/src/policyfit.ts`) and its money gate (`datagen/src/policymoney.ts`, self-check exactly
@@ -130,7 +130,7 @@ money figures with standard errors. Nothing ships on this run whatever it says; 
 
 ## After That
 
-1. Put the strong-table pack on the site as a fourth pack, if Changs wants it there.
+1. Ask Changs, after a few days on it, whether the strong-table pack feels different.
 2. Read `A-005` once Changs has used the hard questions: whether "hard only" is hard enough.
 3. Changs uses the hard questions for a few days and says whether they are still too easy
    (`A-005`); rule questions are not hard by that definition, so hard only hides them.

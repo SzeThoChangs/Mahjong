@@ -386,7 +386,9 @@ const shards = buckets.map((qs, i) => {
   writeFileSync(join(packDir, shardFile(i)), JSON.stringify({ questions: qs }));
   return { file: shardFile(i), n: qs.length, kinds, causes };
 });
-const packIx: PackIndex = { run: dir.split('/').pop()!, money, unit: money ? '$' : 'chips', table, questions: kept.length, placement: { by: 'fnv1a32', modulo }, shards };
+// `--players strong` marks a pack cut from Coach-played hands; the app shows it on the pack button
+const players = arg('players', '') === 'strong' ? ('strong' as const) : undefined;
+const packIx: PackIndex = { run: dir.split('/').pop()!, money, unit: money ? '$' : 'chips', table, questions: kept.length, placement: { by: 'fnv1a32', modulo }, shards, ...(players ? { players } : {}) };
 writeFileSync(join(packDir, 'index.json'), JSON.stringify(packIx));
 const labelled = kept.filter((q) => q.c).length;
 const perCause = new Map<string, number>();

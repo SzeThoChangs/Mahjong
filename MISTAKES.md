@@ -119,6 +119,40 @@ rendered.
 
 ## Ten passes
 
+### The strong-table pack on the site as a fourth pack — Sun Sep 27 23:48:10 +08 2026
+
+Passes run against the dev server on port 5174, the pack copied from `data/gen/strong-quiz/` into
+`web/public/quiz/strong-nowild/` and listed in the top index with `players: 'strong'`. The money test
+of candidate A was running on the Mac at the same time; it is single-threaded and did not touch the
+site.
+
+**Test boundary**
+
+- Workflows: choosing a pack on Train, answering questions from the new pack.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack list and its labels, the new pack's index against its
+  shards, the default pack.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded. Four pack buttons: "4 Jokers, min 2 Tai", "4 Jokers, min 1 Tai", "0 Jokers, min 1 Tai", "0 Jokers, min 1 Tai, strong table". The default was still the weak-bot 0-Joker pack, `mj.hard.v1` = "1", a question on screen | 0 |
+| 2 | Errors | `console.error` hooked from the first line; pack selected, 5 questions answered, two widths | 0 |
+| 3 | Links | The strong-table button, pressed once: exactly one control matched, and the questions that followed carried the id prefix `strong-nowild /` | 0 |
+| 4 | Workflow steps | 5 questions answered from the new pack with hard only on (5:22:27, 1572:3:35, 2955:11:26, 1090:11:72, 6473:5:40): 2 best, 3 big mistakes, Next position served the next each time | 0 |
+| 5 | Writes | not run — the change stores nothing new; the pack choice is not persisted, which is how the tab already worked | not run — nothing stored |
+| 6 | The data it moves | The new pack's index against its shard files: 10,652 in 107 shards, counted in Node on 2026-09-27 15:56 (see the previous set); 1,198 questions offer a win and all 1,198 carry the rule | 0 |
+| 7 | Reconciliation | The top index lists 10,547, 10,528, 10,291 and 10,652, the same numbers as the four per-pack indexes | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train at 280 and 390px with the new pack selected: page scroll width equal to the screen at both, 0 elements past the right edge outside a scroller. The longer button wraps to two lines at 280px, 231 by 48px | 0 |
+| 10 | Look at it | Screenshot at 390px, read: the four labels above, the strong-table button selected in dark green with its words readable, "hard only" pressed, a 南圈 第9巡 position with three seats showing exposed sets, "Which tile do you discard?". The right seat's "dealer" badge is cut at the felt's edge on this late position, which `Q-002` already records | 0 |
+
+**Defects found:** none new. The clipped badge is `Q-002`, open since 2026-09-16.
+
+**Not checked:** a real phone; 320, 375 and 1280px on this change (the only change to the layout is
+one longer button label, measured at 280 and 390); the Spot, Review and Play screens, which do not
+read the pack list.
+
 ### The three packs rebuilt with the win rule, on the site — Sun Sep 27 23:27:47 +08 2026
 
 Passes run against the dev server on port 5174 serving the rebuilt packs from `web/public/quiz`, no

@@ -52,7 +52,8 @@ says exactly what changed in the files and the code.
 verify: 10,547, 10,528 and 10,291 questions, every one that offers a win marked `rule: 'win'` (2,030,
 2,332 and 1,030). A self-draw win question is now headed "Win, or play on?" with the choice "Play on"
 instead of "No kong". The builder counts rule overrides apart from play-out changes. A fourth pack of
-positions from Coach-played hands at the 0-Joker table is built (10,652 questions) but not on the site.
+positions from Coach-played hands at the 0-Joker table is built (10,652 questions) and, at Changs's
+word, on the site as "0 Jokers, min 1 Tai, strong table"; the pack index carries who played the hands.
 
 **Why:** The rule was in the builder and on the screen since 2026-09-26, but the packs on the site
 were built before it and still answered "decline" on 2,099 questions.

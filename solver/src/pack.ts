@@ -59,4 +59,6 @@ export interface PackIndex {
   /** how question ids were assigned to shards; `modulo` is what `shardOf` must be called with */
   placement: { by: 'fnv1a32'; modulo: number };
   shards: ShardIx[];
+  /** who played the hands: absent for the personality bots, 'strong' for four Coaches (PROTOTYPE.md) */
+  players?: 'strong';
 }
