@@ -17,7 +17,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
-import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, type PolicyWeights } from 'sg-mahjong-solver';
+import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, claimRank, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
+import type { ClaimOption } from 'sg-mahjong-engine';
 import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
 import { fnv1a } from './records.js';
 import { rulesForDir } from './tablerules.js';
@@ -29,13 +30,15 @@ const from = Number(arg('from', '7900001'));
 const self = process.argv.includes('--self');
 /** `--hybrid`: the Coach keeps the tile whenever its plan is a colour hand or the thirteen; the fit picks otherwise */
 const hybrid = process.argv.includes('--hybrid');
+/** `--claims`: the Coach as shipped, except that Pong, Chow, Kong or pass comes from the learned claim model */
+const claims = process.argv.includes('--claims');
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath) throw new Error('give --weights <json> or --self');
+if (!self && !weightsPath && !claims) throw new Error('give --weights <json>, --claims or --self');
 const weights: PolicyWeights | null = self ? null : (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights);
 
 /** The shipped Coach for this table, except that the discard comes from the fitted weights. */
@@ -65,6 +68,33 @@ class HybridBot extends AltReadsCoachBot {
     if (plan === 'half_color' || plan === 'thirteen') return v.hand.find((t) => kindOf(t) === r.best.tile)!;
     const m = policyRankWith(hand, melds, ctx, this.ws);
     return v.hand.find((t) => kindOf(t) === m.best) ?? v.hand.find((t) => kindOf(t) === r.best.tile)!;
+  }
+}
+
+/**
+ * The learned claim model, played for money at this table for the first time.
+ *
+ * `solver/src/claim.weights.ts` was fitted to 86.1% held-out accuracy and `ClaimBot` exists to play
+ * it, but ClaimBot reads the table through the four-Joker danger table whatever the table is, so at
+ * 0 Jokers it would be a handicapped Coach with a model on top. This is the same decision on the
+ * shipped no-Joker Coach: a win is taken first, as every bot here does, then the model ranks pass
+ * against the calls on offer. Discards stay the Coach's, so the result is the claim model alone.
+ */
+class LearnedClaimBot extends AltReadsCoachBot {
+  constructor() { super(reads); }
+  override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
+    const win = options.find((o) => o.kind === 'win'); if (win) return win;
+    const offered = kindOf(v.lastDiscard!.tile);
+    const ctx = this.ctx(v), melds = meldsOf(v), hand = v.hand.map(kindOf);
+    const cands: (ClaimCandidate & { opt: ClaimOption | null })[] = [{ kind: 'pass', used: [], opt: null }];
+    for (const o of options) {
+      if (o.kind !== 'pong' && o.kind !== 'chow' && o.kind !== 'kong3') continue;
+      cands.push({ kind: o.kind, used: (o.tiles ?? []).map(kindOf), opt: o });
+    }
+    if (cands.length === 1) return null;
+    const r = claimRank(cands.map((c) => ({ kind: c.kind, used: c.used })), hand, melds, offered, ctx);
+    const picked = cands.find((c) => c.kind === r.best.kind && c.used.join() === r.best.used.join());
+    return picked?.opt ?? null;
   }
 }
 
@@ -107,7 +137,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
-    const b = play(() => (weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
+    const b = play(() => (claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -117,7 +147,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${self ? 'self-check' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {

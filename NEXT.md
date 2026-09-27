@@ -136,10 +136,26 @@ money directly.
 
 ## After That
 
-1. Ask Changs, after a few days on it, whether the strong-table pack feels different.
-2. Read `A-005` once Changs has used the hard questions: whether "hard only" is hard enough.
-3. Changs uses the hard questions for a few days and says whether they are still too easy
-   (`A-005`); rule questions are not hard by that definition, so hard only hides them.
+Changs said on 2026-09-28: "Do all that, don't stop." The programme, in the order it was given,
+every candidate gated on the paired money test at his table:
+
+1. **Candidate B** (running its confirmation): if the second sample holds, ship it inside
+   `rankDiscards` so every screen, the Play opponents and the grading stand-in are one Coach; ten
+   passes; `D-034`.
+2. **The learned claim model for money** (`policymoney.ts --claims`, queued behind B on deals
+   7950001 onward, both fields): the second model in the repo, never played for money.
+3. **The Coach's knobs on money:** the open cost (0.4), the danger weight (40) at the 0-Joker table,
+   and how ready a colour hand must look before the plan commits. One setting is thirty minutes a
+   field; sweep each around its current value.
+4. **The grades themselves:** re-grade, with the Coach playing the play-outs, the decisions where the
+   fit and the Coach disagree and the Coach's plan is a colour hand. Days of the Mac. Then refit
+   (candidate C) and money-test.
+5. **Regenerate the strong-table pack with the stronger Coach**, twelve hours, after B ships.
+6. **The model choosing the plan, trained on money.** Last, and only if 4 leaves money on the table.
+
+Outside the Coach, run on model time while the Mac is busy: the training plan, the whole-game
+session in the app (prototype first), and a way for records to leave a phone. Each gets its own
+entry in `PROTOTYPE.md` or the definition files before it is built.
 
 *Likely subsequent steps, not commitments. Reassess after the immediate action.*
 
