@@ -142,6 +142,9 @@ function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
   return [0, 1, 2, 3].map((s) => {
     if (s === tested) return make();
     if (fieldKind === 'coach') return new AltReadsCoachBot(reads);
+    // `--field pure`: three Coaches as they were before 2026-09-28, which is the field every figure
+    // up to candidate B was measured in; with `--pure` on B's own deals it must return B's mirror exactly
+    if (fieldKind === 'pure') return new PureCoachBot();
     const pick = fnv1a(`field:${shuffle}:${s}`) % BOT_TYPES.length;
     return makeBot(BOT_TYPES[pick]!, makeRng(fnv1a(`seed:${shuffle}:${s}`)), DEFAULT_RANDOMNESS);
   });

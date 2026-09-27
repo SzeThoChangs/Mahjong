@@ -576,6 +576,15 @@ clears the gate on both fields, twice. It ships as the Coach's discard rule: ins
 so the Coach that teaches, the Coach that plays the Play tab's opponents, and the Coach that stands
 in for strong players in every future money test are one player (`D-035`).
 
+**The shipped integration, checked against the measurement, 2026-09-28 02:42 to 03:10.** With B
+inside `rankDiscards`, `policymoney.ts --pure` plays the Coach as it was in arm B against the
+shipped Coach in arm A, on B's own deals (7930001 to 7932000). First run, the other three chairs
+holding the new Coach: −0.416 +/- 0.151, t −2.8, hands won 1,927 against 1,531; arm A's chips
+exactly 0, as four identical players must give. That is B's sign and size in a field of Bs, not the
+exact mirror, because the field is not the one B was measured in. The exact check, three old
+Coaches in the other chairs (`--field pure`), is running; it must return −0.378 +/- 0.162 with the
+hands-won counts of B's first sample swapped, or the shipped code is not the bot that was measured.
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.
