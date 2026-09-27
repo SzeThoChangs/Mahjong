@@ -119,6 +119,52 @@ rendered.
 
 ## Ten passes
 
+### Candidate B inside the Coach, the Play review's win rule both ways, and friends' records — Mon Sep 28 02:50:53 +08 2026
+
+Three app changes in one set, because they were built together while the money runs held the Mac:
+the fitted discard policy inside `rankDiscards` (`D-035`), the Play review answering a win on offer
+by the rule in both directions, and the "Send my record" and "Friends' records" additions to Table
+setup (`A-007`). The Play passes ran on the built app served statically on port 5175, because a
+source edit hot-reloads the dev server and wiped a hand in progress twice; the Table setup passes
+ran on the dev server on port 5174. Two defects found inside the set, both fixed and re-measured.
+
+**Test boundary**
+
+- Workflows: answering on Train; the Coach's line and plan text on Train, Review and Your hand; a
+  whole hand on Play, its review and its earlier-hands list; export, send, restore and a friend's
+  record on Table setup.
+- Screens: Train, Review, Your hand, Play, Table setup.
+- Access restrictions: none exist.
+- Values, records and calculations: which tile the Coach names and why; the Play verdict on a
+  taken and on a declined win and the two tallies that count them; `mj.friends.v1`; the player's
+  own record staying untouched by a friend's file.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage cleared on both servers, reloaded on #table and on #play. Table setup showed the four record buttons and the Friends' records card; Play showed Deal | 0 |
+| 2 | Errors | `console.error` hooked on every run: 12 Train discards, Review and Your hand opened, 6 whole hands on Play with two judged decisions, every Table setup action below | 0 |
+| 3 | Links | Save my record, Send my record, Restore from a file, Add a friend's record, Remove; Deal, Skip to my turn, Judge, Play another hand; the Train filters. Each did what it names | 0 |
+| 4 | Workflow steps | Send on a desktop browser fell back to the download and said so. Add a friend's record refused with no name (button disabled) and with a file that is not JSON ("Not added — that file is not JSON."), and read a good file in as "Wei: 4 hands played, 3 mistakes". Play: a win declined at a claim window read "Mistake — Take the win. Declining costs a fifth to a half a chip a game against strong players, whatever the play-outs say about Pong." with the bars "Pong $6.72, win $6, pass $1.45 (you)"; a self-drawn win taken read "Best — Right. A win on offer is taken; the play-outs are not asked." | 1, fixed |
+| 5 | Writes | `mj.friends.v1` held Wei after a reload, byte for byte; Remove emptied it. The player's own `mj.mistakes.v1` stayed null after the friend's file was read in. The Play hand log kept both judged verdicts across a reload | 0 |
+| 6 | The data it moves | The friends row read Wei, 4, 3 (2 sorted), 12, Miscounted, 20/09/2026, from a file holding 4 hands, 3 mistakes with 2 sorted under miscounted, and 12 Spot answers. On Train the plan line "the fitted policy throws ..." appeared on 2 of 12 discards, which is the fitted Coach overriding its own numbers inside a cheap plan | 0 |
+| 7 | Reconciliation | The finished-hand tally read "2 judged, 1 mistake" after the declined win was judged, and the earlier-hands list for the same hand read "2 of 19 judged, 0 mistakes" — the two disagreed (defect 2). After the fix, "2 of 19 judged, 1 mistake" on the same stored hand | 1, fixed |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Table setup at 280px with the friends row present: page width equal to the screen, 14 elements past the edge before the fix (the friends table), 2 after, both the pre-existing "Doubling to 10 tai" preset buttons, 8px over. At 390px with no row: 0. Play's review at the pane's own width: read in the screenshot | 1, fixed |
+| 10 | Look at it | Screenshot of the Play review after a taken win: "turn 38 After the draw: Win", the green "Best", "Right. A win on offer is taken; the play-outs are not asked.", "256 play-outs each, 0.1s. Compared 2 of 2 legal actions. win $21 (you), carry on $13.69.", and the earlier-hands list with its dates and counts | 0 |
+
+**Defects found:**
+
+1. Pass 9, fixed: the friends table was 462px wide at 280px and was cut off, not scrollable. Fixed
+   by putting it in a scrolling container like the money table. Re-measured: 0 elements of that
+   card past the edge.
+2. Pass 7, fixed: the earlier-hands list counted only `mistake`, so a declined win judged a mistake
+   by the rule showed as "0 mistakes" beside a tally that said 1. Fixed to count `winDeclined`
+   too. Re-measured on the same stored hand after a rebuild: "2 of 19 judged, 1 mistake".
+
+**Not checked:** a real phone, and the share sheet itself, which no desktop browser offers; dark
+mode; 320 and 375px; the friends row at 390px, which lives on the other server's storage; the
+Spot and Film room screens; the Coach's line on a rule question of a shipped pack.
+
 ### The strong-table pack on the site as a fourth pack — Sun Sep 27 23:48:10 +08 2026
 
 Passes run against the dev server on port 5174, the pack copied from `data/gen/strong-quiz/` into

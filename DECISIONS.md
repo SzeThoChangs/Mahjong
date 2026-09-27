@@ -1093,3 +1093,30 @@ again on fresh deals; every app change gets its ten passes; the plan in `PLAN.md
 reviewed rather than won (`D-021`).
 
 **Related:** D-021, D-032, D-033, `A-007`, `NEXT.md`.
+
+---
+
+## D-035 — The fitted discard policy plays inside the Coach's cheap plans
+
+**Date:** 2026-09-28. **Decided by:** Agent, on the money gate Changs set; confirmed by his "do all that". **Status:** ACTIVE
+
+**What was decided:** The Coach's own numbers choose the plan. On a half-colour or thirteen-orphans
+plan the Coach's tile is thrown; on every other plan the tile comes from a policy fitted to
+442,474 graded discards from the three runs (`solver/src/policy.weights.ts`). It lives inside
+`rankDiscards`, so the Coach that explains a position, the Coach that plays the Play tab's
+opponents, and the Coach that stands in for strong players in every money test are one player.
+`rankDiscards(..., { fitted: false })` is the Coach as it was.
+
+**Why:** Measured at Changs's table, two samples of 8,000 paired deals each field: +0.386 +/- 0.114
+chips a game against three Coaches and +0.759 +/- 0.105 against the recorded players. The policy
+choosing the plan as well (candidate A) gave up colour hands and lost against the recorded players,
+because the grades it learned from come from play-outs that never build one.
+
+**What it changes for measurements:** every money figure from this date is against the new Coach.
+Figures before it stand as measured against the old one, which `fitted: false` reproduces. The
+strong-player stand-in (`A-006`) is now this Coach.
+
+**What it does not change:** the Coach's chips, reasons and explanations; only which tile it lands
+on inside a cheap plan, and the plan line says when that happened.
+
+**Related:** D-032, D-033, D-034, `A-006`, `PROTOTYPE.md`.

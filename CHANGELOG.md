@@ -46,6 +46,20 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-28 — The fitted discard policy inside the Coach, the Play review's win rule, friends' records
+
+**Changed:** Inside every cheap plan the Coach's tile now comes from a policy fitted to 442,474
+graded discards; on a colour or thirteen-orphans plan the Coach's own tile stands (`D-035`). The Play
+review answers a win on offer by the rule both ways. Table setup gains "Send my record" (the phone's
+share sheet) and a Friends' records card that reads a sent file in under a name, kept apart from
+your own record (`A-007`). The training plan is brought up to date.
+
+**Why:** Measured at Changs's table over two samples a field: +0.386 chips a game against three
+Coaches and +0.759 against the recorded players. The review had let a declined win be called best.
+Nothing left a phone before.
+
+**Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
+
 ### 2026-09-27 — The three packs rebuilt with the win rule, and the strong-table pack built
 
 **Changed:** `coach`, `min1` and `min1-nowild` rebuilt from their graded runs with the 512-play-out

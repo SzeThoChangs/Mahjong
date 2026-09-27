@@ -76,12 +76,37 @@ export type RestoreResult =
   | { ok: true; was: Summary; now: Summary; error?: undefined }
   | { ok: false; error: string; was?: undefined; now?: undefined };
 
-export function restoreBackup(text: string): RestoreResult {
+/** Read a file's text as a backup, or say why it is not one. Shared with a friend's record (`friends.ts`). */
+export function parseBackup(text: string): { ok: true; backup: Backup; error?: undefined } | { ok: false; error: string; backup?: undefined } {
   let parsed: unknown;
   try { parsed = JSON.parse(text); } catch { return { ok: false, error: 'that file is not JSON' }; }
   const b = parsed as Backup;
   if (!b || typeof b !== 'object' || b.app !== 'which-tile' || !b.data) return { ok: false, error: 'that is not a Which tile? export' };
   if (b.version !== 1) return { ok: false, error: `that file is version ${String(b.version)} and this app reads version 1` };
+  return { ok: true, backup: b };
+}
+
+/**
+ * Hand the record to the phone's share sheet, so it can go to Changs by WhatsApp, AirDrop or mail
+ * without leaving the app's own storage story: nothing is sent anywhere by the app itself. Where
+ * the browser cannot share a file (most desktops), it falls back to the download above. Returns
+ * which happened, so the screen can say.
+ */
+export async function shareBackup(): Promise<{ how: 'shared' | 'downloaded' | 'cancelled'; mistakes: number }> {
+  const b = readBackup();
+  const file = new File([JSON.stringify(b, null, 1)], `which-tile-${b.savedAt.slice(0, 10)}.json`, { type: 'application/json' });
+  const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
+  if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare({ files: [file] })) {
+    try { await nav.share({ files: [file], title: 'My Which tile? record' }); return { how: 'shared', mistakes: summarise(b).mistakes }; }
+    catch { return { how: 'cancelled', mistakes: summarise(b).mistakes }; }   // the person closed the sheet
+  }
+  return { how: 'downloaded', mistakes: downloadBackup().mistakes };
+}
+
+export function restoreBackup(text: string): RestoreResult {
+  const p = parseBackup(text);
+  if (!p.ok) return { ok: false, error: p.error };
+  const b = p.backup;
   const was = summarise(readBackup());
   try {
     for (const k of KEYS) {

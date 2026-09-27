@@ -5,6 +5,8 @@ import {
 import { handValue, fanRoutes, valueOfTargetAt, type Context, type TargetEval } from './targets.js';
 import { allPongBreakdown, rule4213, rule5313, rule961, type HandInput } from './evaluators.js';
 import { dealInChance, threatScale, maxReadyChance, walled, suitWatch } from './reads.js';
+import { policyRankWith } from './policy.js';
+import { POLICY } from './policy.weights.js';
 
 export type Verdict = 'best' | 'fine' | 'mistake' | 'blunder';
 export interface DiscardOption {
@@ -201,7 +203,7 @@ function legalWait(h: HandInput, ctx: Context, gone: number[]): number | null {
  * is no reason to stop building a hand that is nearly there, and a hopeless hand costs nothing to
  * keep building while nobody is close.
  */
-export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean; wall?: boolean; valueDanger?: boolean } = {}): Ranking {
+export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context, cfg: { fold?: boolean | { ready: number; shanten: number }; legalWait?: boolean; wall?: boolean; valueDanger?: boolean; fitted?: boolean } = {}): Ranking {
   const threatFold = typeof cfg.fold === 'object' ? cfg.fold : null;
   // OFF by default: scale the cost of a deal-in by what the table can see the opponents are worth
   const shot = cfg.valueDanger ? shotScale(ctx) : 1;
@@ -280,10 +282,41 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   // what the throw hands the table, priced in the same chips as what it does for the hand
   for (const o of opts) { o.risk = dealInChips(o.tile, ctx, gone, accounted, shot); o.chips -= o.risk; }
   opts.sort((a, b) => b.chips - a.chips);
+  /**
+   * The fitted policy chooses the tile inside the Coach's cheap plans (candidate B, 2026-09-28).
+   *
+   * The Coach's own numbers pick the plan: whatever throw they rate best names the target. On a
+   * half-colour or thirteen-orphans plan that throw stands. On any other plan the tile comes from
+   * the policy fitted to a million graded discards, played through `policyRankWith` on the same
+   * hand, melds and table. Measured as a bot in the Play tab's own chairs: +0.386 +/- 0.114 chips a
+   * game against three Coaches and +0.759 +/- 0.105 against the recorded players, pooled over two
+   * samples each at the 0-Joker min-1 table (PROTOTYPE.md, "Can anything beat the Coach for money
+   * at Changs's table?"). The policy on its own, choosing the plan too, gave up colour hands and
+   * lost against the recorded players, which is why the plan stays the Coach's.
+   *
+   * The Coach's chips, reasons and explanations stay what they were; only the order changes, and
+   * the plan line says so. `fitted: false` is the Coach as it was, which every money figure before
+   * this date was measured against.
+   */
+  let fittedNote: string | null = null;
+  if (cfg.fitted !== false && opts.length > 1) {
+    const planOfCoach = opts[0]!.target.id;
+    if (planOfCoach !== 'half_color' && planOfCoach !== 'thirteen') {
+      let pick: TileKind | null = null;
+      try { pick = policyRankWith(concealed, melds, ctx, POLICY).best; } catch { pick = null; }
+      const i = pick === null ? -1 : opts.findIndex((o) => o.tile === pick);
+      if (i > 0) {
+        const [chosen] = opts.splice(i, 1);
+        opts.unshift(chosen!);
+        fittedNote = `The Coach's own numbers liked ${kindName(opts[1]!.tile)} by ${fmt(opts[1]!.chips - chosen!.chips)}; inside a ${TARGET_NAME[planOfCoach] ?? planOfCoach} plan the fitted policy throws ${kindName(chosen!.tile)}, and it was measured to win more.`;
+      }
+    }
+  }
   const top = opts[0]!;
   const watch = suitWatch(ctx.opponents);
   for (const o of opts) {
     o.delta = o.chips - top.chips;
+    // a tile the Coach's numbers rate above the fitted pick is not a mistake; it is the Coach's own view
     o.verdict = o === top ? 'best' : o.delta > -0.75 ? 'fine' : o.delta > -2.5 ? 'mistake' : 'blunder';
     o.reasons = reasonsFor(o.tile, concealed, melds, ctx, top.target, unseenOf(concealed, melds, gone));
     const safety = safetyReason(o.tile, ctx, gone, accounted);
@@ -299,6 +332,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
   const plan = `${label}${where}`;
   const detail: string[] = [];
   detail.push(`${label}${where}: ${t.id === 'all_pong' ? 'breakdown' : 'score'} ${t.value} → about ${fmt(t.chips)} chips/game at turn ${ctx.playerTurns}.`);
+  if (fittedNote) detail.push(fittedNote);
   if (pureSuit) detail.push('Scored with the Half-Color method (the book treats Full-Color as Half-Color without honours); the payout is higher.');
   if (t.note) detail.push(`Note: ${t.note}.`);
   const hvAll = handValue({ concealed: (() => { const r = [...concealed]; r.splice(r.indexOf(top.tile), 1); return r; })(), melds }, ctx).all;

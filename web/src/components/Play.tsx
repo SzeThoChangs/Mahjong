@@ -346,7 +346,7 @@ export default function Play() {
       ? <>Nobody won — the hand was drawn.</>
       : <>{name(r.winner)} won {r.selfDraw ? 'by self-draw' : r.discarder !== null ? <>on {name(r.discarder).toLowerCase() === 'you' ? 'your' : `${name(r.discarder)}'s`} throw</> : ''}{r.fan !== null && <>, <b>{r.fan} <J>Tai</J></b></>}{combo && <> — {jargon(combo)}</>}.</>;
     const judgedCount = Object.keys(verdicts).length;
-    const mistakes = Object.values(verdicts).filter((x) => x.v.kind === 'mistake').length;
+    const mistakes = Object.values(verdicts).filter((x) => x.v.kind === 'mistake' || x.v.kind === 'winDeclined').length;
     return (
       <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
         <Card>
@@ -359,11 +359,12 @@ export default function Play() {
             <p className="text-muted-foreground">A hand's result is mostly luck. The review below is what to read.</p>
             {/*
               The play-out bots never fold and rarely win first, so a hand still waiting looks worth
-              more to them than one cashed for a small win. That makes the judge unreliable on the
-              decision to take a win or make a call, and it says so rather than being believed.
-              FINDINGS carries the measurement; the fix is a stronger rollout policy for claims.
+              more to them than one cashed for a small win. Measured for money (D-032, D-033): on a
+              win on offer the rule answers instead of the play-outs, and on Pong and Chow the
+              play-outs' verdicts hold against strong players. Until 2026-09-28 this paragraph said
+              calls were unchecked and a taken win was simply not marked; both were out of date.
             */}
-            <p className="text-muted-foreground">Trust it on throws. It does not mark taking a win against you, because on that one decision it is measured to be wrong. On <J>Pong</J> and <J>Chow</J> it has not been checked either way.</p>
+            <p className="text-muted-foreground">Trust it on throws, <J>Pong</J> and <J>Chow</J>, which were measured for money against strong players. A win on offer is not judged by the play-outs at all: taking it is right and declining it is a mistake, by the rule the Train tab uses.</p>
             <div className="flex flex-wrap gap-2 pt-1">
               <Button onClick={deal}>Play another hand</Button>
               {judgedCount < hand.decisions.length && (
@@ -422,15 +423,16 @@ function DecisionRow({ d, verdict, progress, error, onJudge }: {
   const ringOnDrawn = drawn !== null && chosenKind === drawn;
   const ringAt = chosenKind === null || ringOnDrawn ? -1 : shown.indexOf(chosenKind);
   const v = verdict?.v;
-  const style = v?.kind === 'best' ? 'bg-emerald-600 text-white' : v?.kind === 'mistake' ? 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50' : 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-50';
-  const badge = v?.kind === 'best' ? 'Best' : v?.kind === 'mistake' ? 'Mistake' : v?.kind === 'winTaken' ? 'Not judged' : 'Too close to call';
+  const style = v?.kind === 'best' || v?.kind === 'winTaken' ? 'bg-emerald-600 text-white' : v?.kind === 'mistake' || v?.kind === 'winDeclined' ? 'bg-amber-200 text-amber-950 dark:bg-amber-800 dark:text-amber-50' : 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-50';
+  const badge = v?.kind === 'best' || v?.kind === 'winTaken' ? 'Best' : v?.kind === 'mistake' || v?.kind === 'winDeclined' ? 'Mistake' : 'Too close to call';
   const x = v ? fmt(Math.abs(v.gap)) : '', y = v ? fmt(v.se) : '', ref = v ? textOf(v.reference) : '';
   const mineTop = v ? v.actions[0]?.a === chosen : false;
   const words = !v ? null
     : v.actions.length < 2 ? <>Nothing else was legal, so there was nothing to compare.</>
     : v.kind === 'best' ? <>Nothing compared came close: the runner-up, {ref}, is {x} behind (about ±{y}).</>
     : v.kind === 'mistake' ? <>{ref[0]!.toUpperCase() + ref.slice(1)} was worth <b>{x}</b> more (about ±{y}).</>
-    : v.kind === 'winTaken' ? <>The play-outs preferred {ref} by {x}, and that is the one thing this judge is known to get wrong: a player who declines cheap wins loses money. Taking a win is not marked against you.</>
+    : v.kind === 'winTaken' ? <>Right. A win on offer is taken; the play-outs are not asked.</>
+    : v.kind === 'winDeclined' ? <>Take the win. Declining costs a fifth to a half a chip a game against strong players, whatever the play-outs say about {ref}.</>
     : mineTop ? <>Yours came top, but {ref} is within the noise — {x} apart, about ±{y}.</>
     : <>{ref[0]!.toUpperCase() + ref.slice(1)} measured {x} better, inside the noise of ±{y} — not a worse move, an unmeasurable one.</>;
 
@@ -477,7 +479,7 @@ function Earlier({ list, onOpen }: { list: PlayedHand[]; onOpen: (h: PlayedHand)
       <CardContent className="space-y-1 text-sm">
         {list.map((h) => {
           const judged = h.decisions.filter((d) => d.verdict).length;
-          const mistakes = h.decisions.filter((d) => d.verdict?.kind === 'mistake').length;
+          const mistakes = h.decisions.filter((d) => d.verdict?.kind === 'mistake' || d.verdict?.kind === 'winDeclined').length;
           return (
             <div key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="text-muted-foreground">{new Date(h.at).toLocaleString()}</span>

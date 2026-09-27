@@ -4,7 +4,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { downloadBackup, restoreBackup } from '@/lib/backup';
+import { downloadBackup, restoreBackup, shareBackup } from '@/lib/backup';
+import { readFriends, addFriend, removeFriend, type Friend } from '@/lib/friends';
 import { jargon, J } from '@/lib/jargon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,29 @@ export default function TableSetup() {
     });
   };
 
+  /**
+   * Sending: the same file, handed to the phone's share sheet so it can reach Changs. Friends: the
+   * files that reached him, read in under a name, kept apart from his own record (`A-007`).
+   */
+  const doShare = () => {
+    void shareBackup().then((r) => setBackupNote(
+      r.how === 'shared' ? `Sent: ${r.mistakes} mistake${r.mistakes === 1 ? '' : 's'} and your drill scores, as a file.`
+        : r.how === 'downloaded' ? `This browser cannot share a file, so it was saved instead: send the file yourself.`
+        : 'Not sent.'));
+  };
+  const [friends, setFriends] = useState<Friend[]>(readFriends);
+  const [friendName, setFriendName] = useState('');
+  const [friendNote, setFriendNote] = useState<string | null>(null);
+  const friendInput = useRef<HTMLInputElement | null>(null);
+  const doAddFriend = (f: File) => {
+    void f.text().then((text) => {
+      const r = addFriend(friendName, text);
+      if (r.ok) { setFriends(readFriends()); setFriendName(''); setFriendNote(`Added ${r.friend.name}: ${r.friend.played} hands played, ${r.friend.mistakes} mistakes.`); }
+      else setFriendNote(`Not added — ${r.error}.`);
+    });
+  };
+  const when = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(); };
+
   const [cfg, setCfg] = useState<MoneyConfig>(loadConfig);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [compare, setCompare] = useState<string>(PRESETS[1]!.name);
@@ -64,6 +88,7 @@ export default function TableSetup() {
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={doExport}>Save my record to a file</Button>
+            <Button size="sm" variant="outline" onClick={doShare}>Send my record</Button>
             <Button size="sm" variant="outline" onClick={() => fileInput.current?.click()}>Restore from a file</Button>
             <input ref={fileInput} type="file" accept="application/json,.json" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) doRestore(f); e.target.value = ''; }} />
@@ -72,8 +97,47 @@ export default function TableSetup() {
           <p className="text-xs text-muted-foreground">
             Restoring replaces what is here rather than merging it, because two copies of the same card can sit
             at different points in the schedule and guessing which to keep would corrupt the one thing the
-            reviews depend on.
+            reviews depend on. Sending hands the same file to your phone's share sheet; the app itself sends
+            nothing anywhere.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* the files friends sent, read in under a name and kept apart from the record above (A-007) */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Friends' records</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="text-muted-foreground">
+            When a friend presses "Send my record" and the file reaches you, read it in here under their name. It is kept
+            apart from your own record and never mixed into it.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input value={friendName} onChange={(e) => setFriendName(e.target.value)} placeholder="Friend's name"
+              className="rounded border bg-background px-2 py-1 w-40" aria-label="Friend's name" />
+            <Button size="sm" variant="outline" disabled={!friendName.trim()} onClick={() => friendInput.current?.click()}>Add a friend's record</Button>
+            <input ref={friendInput} type="file" accept="application/json,.json" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) doAddFriend(f); e.target.value = ''; }} />
+          </div>
+          {friendNote && <p className="text-foreground">{friendNote}</p>}
+          {friends.length > 0 && (
+            // seven columns do not fit a 280px phone; the table scrolls inside its card like the money table does
+            <div className="overflow-x-auto"><table className="w-full text-sm">
+              <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1 pr-2">Name</th><th className="py-1 pr-2">Hands</th><th className="py-1 pr-2">Mistakes</th><th className="py-1 pr-2">Spot</th><th className="py-1 pr-2">Keeps coming up</th><th className="py-1 pr-2">File from</th><th></th></tr></thead>
+              <tbody>
+                {friends.map((f) => (
+                  <tr key={f.name} className="border-t">
+                    <td className="py-1 pr-2 font-medium">{f.name}</td>
+                    <td className="py-1 pr-2 tabular-nums">{f.played}</td>
+                    <td className="py-1 pr-2 tabular-nums">{f.mistakes} ({f.sorted} sorted)</td>
+                    <td className="py-1 pr-2 tabular-nums">{f.spotAnswered}</td>
+                    <td className="py-1 pr-2">{f.leadingCause ?? 'nothing sorted yet'}</td>
+                    <td className="py-1 pr-2">{when(f.savedAt)}</td>
+                    <td className="py-1"><Button size="sm" variant="ghost" onClick={() => { removeFriend(f.name); setFriends(readFriends()); }}>Remove</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+          )}
         </CardContent>
       </Card>
 

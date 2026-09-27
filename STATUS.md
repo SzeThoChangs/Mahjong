@@ -58,12 +58,13 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| A stronger Coach, gated on the paired money test (`PROTOTYPE.md`) | Agent | Tools written and self-checked; first fit not run |
+| The week's programme (`D-034`): claim model for money, the Coach's knobs, the grades themselves | Agent | Candidate B shipped; the claim test and the mirror check running |
 
 Nothing is running on the Mac.
 
 ## Recently Completed
 
+- 2026-09-28: candidate B, the fitted discard policy inside the Coach's cheap plans, clears the money gate twice on both fields and ships (`D-035`); the Play review answers a win on offer by the rule both ways; friends' records and Send my record on Table setup (`A-007`); the training plan brought up to date.
 - 2026-09-27: the three packs rebuilt with the win rule and put on the site (10,547, 10,528 and 10,291 questions; every win-offering question marked); the strong-table pack built, 10,652 questions, and on the site as a fourth pack; ten passes in `MISTAKES.md`.
 - 2026-09-26: a win on offer is answered by rule, written into the pack builder and taught on the Train screen (`D-033`); ten passes recorded in `MISTAKES.md`, two defects found and fixed; the banned middle dot removed from the five project files that still held it.
 - 2026-09-24: the claims cleared. With every win taken, following the judge on Pong, Chow and pass is worth +0.150, +0.102 and +0.338 chips a game at the three tables, and the Coach-played judge loses more on wins than the simple one (`PROTOTYPE.md`, `FINDINGS.md`).

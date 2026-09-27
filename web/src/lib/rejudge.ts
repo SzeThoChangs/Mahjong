@@ -131,9 +131,9 @@ export const PLAY_ROLLOUTS = 256;
 /** What the judge said about one decision made at the table, in the Challenge button's language. */
 export interface PlayVerdict {
   /** best: yours came top and clear of the runner-up. close: inside the noise either way.
-   *  mistake: another action was clear of yours. winTaken: you declared a win and the play-outs
-   *  preferred carrying on, which is the one verdict this judge is measured to get wrong. */
-  kind: 'best' | 'close' | 'mistake' | 'winTaken';
+   *  mistake: another action was clear of yours. winTaken and winDeclined: a win was on offer, and
+   *  the rule decides, not the play-outs (D-033): taking it is right, declining it is a mistake. */
+  kind: 'best' | 'close' | 'mistake' | 'winTaken' | 'winDeclined';
   /** the action the pick was measured against: the best of the rest when the pick came top,
    *  the best otherwise */
   reference: string;
@@ -167,17 +167,14 @@ export async function judgePlay(snap: Snapshot, rules: RulesConfig, seat: number
   const clear = Math.abs(gap) > 2 * se;
   let kind: PlayVerdict['kind'] = !clear ? 'close' : gap > 0 ? 'mistake' : 'best';
   /**
-   * Taking a win is never called a mistake here, because on this one decision the judge is
-   * measured to be wrong. On fifty recorded positions where a win could be declined it preferred
-   * carrying on about half the time, and that preference is not an artefact: swapping the rollout
-   * opponents for the Coach did not move it, and neither did replaying the hand's real hidden
-   * tiles instead of guessing them. What settled it was money. A coach that declines a win under
-   * two Tai loses 0.23 chips a game over 8,000 paired deals, and under three Tai, 0.94 - the
-   * effect grows with the threshold, which is what a real one does. FINDINGS carries all three
-   * measurements. Until the cause is found, the honest thing is to say nothing rather than teach
-   * the opposite of what wins.
+   * A win on offer is answered by the rule, not by the play-outs (D-033). On this one decision the
+   * judge is measured to be wrong for a strong table: following it costs 0.22 to 0.46 chips a game
+   * against three Coaches over 48,000 paired deals, and no judge this project has beats "when you
+   * can win, win" (FINDINGS, PROTOTYPE.md). Until 2026-09-28 this only stopped a taken win being
+   * marked wrong (D-027) and let a declined one be called best, which taught the opposite of what
+   * the Train tab teaches. Now the rule answers both ways, the same as Train.
    */
-  if (kind === 'mistake' && pick === 'win') kind = 'winTaken';
+  if (compare.includes('win')) kind = pick === 'win' ? 'winTaken' : 'winDeclined';
   return { kind, reference: ref.a, gap, se, n: PLAY_ROLLOUTS, ms: m.ms, actions };
 }
 

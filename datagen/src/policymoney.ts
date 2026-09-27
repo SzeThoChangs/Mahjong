@@ -32,14 +32,22 @@ const self = process.argv.includes('--self');
 const hybrid = process.argv.includes('--hybrid');
 /** `--claims`: the Coach as shipped, except that Pong, Chow, Kong or pass comes from the learned claim model */
 const claims = process.argv.includes('--claims');
+/**
+ * `--pure`: arm B is the Coach as it was before 2026-09-28, its own numbers choosing the tile on
+ * every plan (`rankDiscards` with `fitted: false`). Arm A is always the Coach as shipped, which
+ * from that date carries candidate B inside `rankDiscards`, so `--pure` on the deals B was measured
+ * on must return the mirror of B's figure: the check that the shipped integration is the thing
+ * that was measured.
+ */
+const pure = process.argv.includes('--pure');
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath && !claims) throw new Error('give --weights <json>, --claims or --self');
-const weights: PolicyWeights | null = self ? null : (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights);
+if (!self && !weightsPath && !claims && !pure) throw new Error('give --weights <json>, --claims, --pure or --self');
+const weights: PolicyWeights | null = weightsPath ? (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights) : null;
 
 /** The shipped Coach for this table, except that the discard comes from the fitted weights. */
 class FittedDiscardBot extends AltReadsCoachBot {
@@ -98,6 +106,15 @@ class LearnedClaimBot extends AltReadsCoachBot {
   }
 }
 
+/** The Coach with the fitted policy switched off: what every money figure before 2026-09-28 was measured against. */
+class PureCoachBot extends AltReadsCoachBot {
+  constructor() { super(reads); }
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { fitted: false });
+    return v.hand.find((t) => kindOf(t) === r.best.tile)!;
+  }
+}
+
 function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
   return [0, 1, 2, 3].map((s) => {
     if (s === tested) return make();
@@ -137,7 +154,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
-    const b = play(() => (claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
+    const b = play(() => (pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -147,7 +164,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${self ? 'self-check' : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {
