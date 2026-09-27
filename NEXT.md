@@ -107,28 +107,32 @@ one. Candidate A of the Coach work (`data/gen/coach2/policy-a.json`) is fitted a
 next 8,000, flat against the recorded players. By the rule set before the run it is not ahead. Both
 samples agree on one thing: it wins a quarter more hands for little money.
 
-**Running:** `data/gen/coach2/mix-a-chain.sh`, the same test on deals 7920001 to 7922000 with the
-win-mix tally, both fields, about 35 minutes. Log `data/gen/coach2/mix-a-*.log`.
+**Running:** `data/gen/coach2/money-b-chain.sh`, candidate B (the hybrid: the fit chooses only
+inside the Coach's cheap plans, `--hybrid`), deals 7930001 to 7932000, both fields, about 35
+minutes from 01:23. Log `data/gen/coach2/money-b-*.log`.
 
 ## Recommended Next Action
 
 ### Next
 
-Read the win mix: which combinations and fan sizes the fitted arm wins with against the Coach's, and
-what it loses to. Then step 2 of the plan: the features the current set lacks (colour and all-pong
-progress, danger at the table's Joker count, wall left), fitted the same way and money-tested the
-same way, deals 7930001 onward.
+Read candidate B's two money figures and its win mix against the same gate. If it clears against
+three Coaches past two standard errors and does not lose against the recorded players, run it again
+on fresh deals (7940001 onward) before believing it, as with A.
 
 ### Why
 
-Candidate A's shape, more cheap hands and no more money, is what the fitted tables did in 2026-09-13's
-field test, and the reason then was that the features do not see a colour hand being built. The mix
-says whether that is the reason again before a feature is written.
+The win mix of candidate A (PROTOTYPE.md, 2026-09-28) showed the gain came from cheap plans and the
+loss from abandoned colour hands, which is the grading play-outs' bias and not something a feature
+can fix. The hybrid keeps the Coach's plan and lets the fit choose within it, which is the direct
+test of that reading. Step 2 as first written, more features, is set aside until the label question
+is settled.
 
 ### Expected Outcome
 
-A named list of features for candidate B with the mix evidence beside each, then candidate B's fit
-and its two money samples.
+Either a candidate that keeps A's gain against Coaches without A's loss against loose players, or the
+finding that the gain and the loss are the same thing, which sends the work at the labels
+themselves: grading a targeted subset with Coach-played play-outs, or fitting a few parameters on
+money directly.
 
 ## After That
 
