@@ -17,7 +17,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
-import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, claimRank, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
+import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, claimRank, claimAdvice, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
 import type { ClaimOption } from 'sg-mahjong-engine';
 import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
 import { fnv1a } from './records.js';
@@ -40,13 +40,19 @@ const claims = process.argv.includes('--claims');
  * that was measured.
  */
 const pure = process.argv.includes('--pure');
+/**
+ * `--chow <cost>`: the Coach as shipped, except that a Chow must improve the hand by this much before
+ * it is called, instead of the shipped 0.4 chips (`OPEN_COST`). Pongs keep 0.4. The Pong bar was
+ * swept on 2026-09-17 and nothing beat 0.4; the Chow bar has never been measured.
+ */
+const chowCost = process.argv.includes('--chow') ? Number(arg('chow', '0.4')) : null;
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath && !claims && !pure) throw new Error('give --weights <json>, --claims, --pure or --self');
+if (!self && !weightsPath && !claims && !pure && chowCost === null) throw new Error('give --weights <json>, --claims, --pure, --chow <cost> or --self');
 const weights: PolicyWeights | null = weightsPath ? (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights) : null;
 
 /** The shipped Coach for this table, except that the discard comes from the fitted weights. */
@@ -115,6 +121,23 @@ class PureCoachBot extends AltReadsCoachBot {
   }
 }
 
+/** The shipped Coach with a different bar for Chows only; the same shape as the Pong sweep's bot. */
+class ChowThresholdBot extends AltReadsCoachBot {
+  constructor(private readonly cost: number) { super(reads); }
+  override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
+    const win = options.find((o) => o.kind === 'win'); if (win) return win;
+    const kong = options.find((o) => o.kind === 'kong3'); if (kong) return kong;
+    const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow');
+    if (!usable.length) return null;
+    const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow', used: (o.tiles ?? []).map(kindOf) }));
+    const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), this.ctx(v));
+    const call = adv.options.find((o) => o.candidate.kind !== 'pass' && o.gain > (o.candidate.kind === 'chow' ? this.cost : 0.4));
+    if (!call) return null;
+    const i = cands.findIndex((c) => c.kind === call.candidate.kind && c.used.join() === call.candidate.used.join());
+    return usable[i] ?? null;
+  }
+}
+
 function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
   return [0, 1, 2, 3].map((s) => {
     if (s === tested) return make();
@@ -154,7 +177,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
-    const b = play(() => (pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
+    const b = play(() => (chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -164,7 +187,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${self ? 'self-check' : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {

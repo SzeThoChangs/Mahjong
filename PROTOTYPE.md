@@ -318,6 +318,19 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+### The Coach's Chow bar, swept for money
+
+**Uncertainty addressed:** The Coach calls a claim when it improves the hand by more than 0.4 chips
+(`OPEN_COST`), a number nobody measured when it was set. The Pong bar was swept on 2026-09-17 and
+nothing beat 0.4 (`D-031`); the Chow bar has not been. Third item of `D-034`, the one knob left.
+
+**Named before the run:** `policymoney.ts --chow 0.2` and `--chow 0.8` against the shipped Coach,
+three Coaches in the other chairs, deals 7960001 to 7962000, 2,000 a chair, at the 0-Joker min-1
+table. A bar counts as better only past two standard errors, and then gets the recorded field and a
+fresh-deal confirmation before it ships, as B did. Output `data/gen/coach2/chow-*-coach.log`.
+
+**Status:** QUEUED behind the claim-model test, 2026-09-28.
+
 ### The grades on colour-hand positions, re-made with the Coach playing the play-outs
 
 **Uncertainty addressed:** Every pack answer is the measured best when the rest of the hand is
