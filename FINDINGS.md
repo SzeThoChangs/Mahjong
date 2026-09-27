@@ -18,6 +18,31 @@ reproduces at -0.544, -0.420 and -0.404 across three shuffles - but any per-seat
 BREAKDOWN from before that date should be re-checked on a second seed before it is trusted. One
 already failed that test; see the seat asymmetry.
 
+# 2026-09-28 — The Coach work: what beat the Coach for money, and what did not
+
+Every figure is chips a game, paired deals, the tested seat rotated through all four chairs at the
+0-Joker min-1 table, reported as the candidate minus the shipped Coach. Full detail, the win mixes
+and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for money at Changs's table?".
+
+- **Candidate A**, a policy fitted on 442,474 graded discards choosing every tile: +0.406, +0.120
+  and +0.128 (each +/- 0.18) against three Coaches over three samples, pooled +0.218 +/- 0.106;
+  −0.067 and −0.202 against the recorded players. Not ahead. It won a quarter more hands for a chip
+  and a half less each: four times the chicken wins, a fifth of the half-colour wins. The grades it
+  learned from come from play-outs that never build a colour hand.
+- **Candidate B**, the same policy choosing only inside the Coach's cheap plans: +0.378 +/- 0.162
+  and +0.393 +/- 0.159 against three Coaches (pooled +0.386 +/- 0.114), +0.767 +/- 0.147 and
+  +0.750 +/- 0.150 against the recorded players (pooled +0.759 +/- 0.105). Shipped (`D-035`). The
+  shipped code was checked against the measurement: identical decisions on 8,000 paired deals given
+  the same weights, and +0.482 +/- 0.160 over the old Coach with the rounded weights it carries.
+- **The learned claim model** on top of the shipped Coach: +0.171 +/- 0.131 and +0.212 +/- 0.133,
+  first sample, inside the bar; a second sample decides on the pooled figure.
+- **The Chow bar** at 0.2 against the shipped 0.4: +0.006 +/- 0.021 over 8,000 paired deals, hands
+  won 1,920 against 1,916. It does not bind. 0.8 is running.
+- **The grades on colour-plan positions**: 287 pack questions at Changs's table judged twice at 256
+  play-outs, shanten bots against the Coach in the play-outs: 2 answers changed past two standard
+  errors, which is fewer than chance gives over 287 tests. The packs' colour-plan grades hold; the
+  bias lives in the ambiguous positions a pack never holds and in the choice of plan.
+
 # Status — 2026-08-25 (data-generation programme)
 
 The trainer plan above still stands; the project also now carries the three-layer data programme.
