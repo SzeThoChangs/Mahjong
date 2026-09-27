@@ -377,7 +377,24 @@ test the Pong stage used. Output `data/gen/coach2/regrade-colour-w*.jsonl`. If t
 material, the follow-up is a pack whose colour-plan questions carry the Coach-played grade, marked
 as such, then the other two packs.
 
-**Status:** RUNNING from 2026-09-28, three workers.
+**Status:** RUN, 2026-09-28 02:55 to 03:27, three workers, 19.9 seconds a question.
+
+**Findings:** all 287 judged, 0 errors. **2 answers changed past two standard errors** (0.7%), 20
+more differ inside the noise, and the pack's stored answer matched the fresh shanten best on 284 of
+287, so the verify pass holds. At a two-standard-error bar over 287 tests about six false alarms are
+expected, and two were seen, so the Coach-played play-outs agree with the shanten ones on these
+positions. The two that moved: `1795:13:87` (turn 73, 5萬 over the pack's 4筒 by 0.68 +/- 0.32) and
+`910:22:70` (turn 58, 8條 over the pack's 北 by 2.17 +/- 1.02).
+
+**What this establishes:** the grades the app teaches on colour-plan positions at Changs's table
+hold. The bias candidate A measured is not in the pack's separable answers; it is in the ambiguous
+majority and in the choice of plan, which is where a fit learns and where a pack question never
+goes. So the grades job closes here for the packs: re-grading the other two packs' colour positions
+would cost days to confirm the same thing at tables he plays less. For fitting, the bias stands, and
+candidate B's design, the Coach's plan with the fit inside it, is the answer to it.
+
+**What it does not establish:** the ambiguous positions, which no pack holds and this did not judge;
+the two changed answers are not corrected in the pack, because two of 287 is what chance gives.
 
 ### A session on the Play tab: hands in a row, the dealer moving, money carried across
 
