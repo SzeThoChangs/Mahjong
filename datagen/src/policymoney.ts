@@ -126,6 +126,18 @@ class PureCoachBot extends AltReadsCoachBot {
     const r = rankDiscards(v.hand.map(kindOf), meldsOf(v), this.ctx(v), { fitted: false });
     return v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
+  /** the claim rule as it was too, since D-036: a Kong on sight, otherwise the best call over OPEN_COST */
+  override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
+    const win = options.find((o) => o.kind === 'win'); if (win) return win;
+    const kong = options.find((o) => o.kind === 'kong3'); if (kong) return kong;
+    const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow');
+    if (!usable.length) return null;
+    const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow', used: (o.tiles ?? []).map(kindOf) }));
+    const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), this.ctx(v), { fitted: false });
+    if (adv.best.kind === 'pass') return null;
+    const i = cands.findIndex((c) => c.kind === adv.best.kind && c.used.join() === adv.best.used.join());
+    return usable[i] ?? null;
+  }
 }
 
 /** The shipped Coach with a different bar for Chows only; the same shape as the Pong sweep's bot. */

@@ -369,6 +369,10 @@ Kong before asking is replaced by the model ranking the Kong with the rest, beca
 was measured (`D-036`). The identity check follows: the harness's own claim bot against the shipped
 Coach must return exactly 0.000.
 
+**Identity check, 05:49 to 06:55, deals 7950001 to 7952000: exactly +0.000, hands won 2,248
+against 2,248, chips 6,360 against 6,360.** The shipped `claimAdvice` and the harness's own claim
+bot make the same call on every one of 8,000 paired deals.
+
 **What it changes on screen, counted 2026-09-28:** over the 4,644 claim questions of the 0-Joker
 pack that do not offer a win, the model and the Coach's own numbers make a different call on 1,336
 (28.8%). Where they differ, Your hand says so under the call, and the Train line "The Coach would
