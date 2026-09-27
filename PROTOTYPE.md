@@ -406,9 +406,30 @@ policy: far better late, worse early and mid, and worse at the 4-Joker min-2 tab
 a wide margin. Carrying the ambiguous positions did not change that. At Changs's own table it is
 ahead on every phase except early, which is the smallest slice.
 
-**What it does not establish:** money, and anything about the ambiguous majority: the held-out set
-is pack questions, which are the separable ones. The money test at his table is running, deals
-7900001 to 7902000, both fields, `data/gen/coach2/money-a-*.log`.
+**What it does not establish:** anything about the ambiguous majority: the held-out set is pack
+questions, which are the separable ones. Money is below.
+
+**Step 3 for candidate A, run 2026-09-27 23:44 to 2026-09-28 00:15:** `policymoney.ts 2000
+--weights policy-a.json`, deals 7900001 to 7902000, all four chairs, 8,000 paired deals a field, at
+the 0-Joker min-1 table. Arm A the shipped Coach, arm B the same Coach with its discards from the
+fit; claims, kongs and wins identical.
+
+    field                fitted minus Coach          hands won (Coach, fitted)   chips (Coach, fitted)
+    three Coaches        +0.406 +/- 0.181  (t 2.2)      1,812   2,378               0    3,246
+    recorded players     -0.067 +/- 0.173  (t -0.4)     3,192   4,014          46,277   45,745
+
+Against three Coaches it clears the gate, by a little: +0.406 a game, t 2.2. Against the recorded
+players it is flat in money while winning a quarter more hands, so the extra hands are cheaper ones
+and something is given up when it loses. That is the shape the fitted tables had in 2026-09-13's
+field test (`fieldtest.ts`): faster cheap hands, which pay against Coaches and not against loose
+players. Changs's table is strong (`A-006`), so the first row is the one that decides.
+
+**Named before the run, the confirmation:** the same test on fresh deals, 7910001 to 7912000,
+three Coaches. A t of 2.2 on one sample is inside the range this project has watched shrink on
+re-run (`R-004`); the candidate counts as ahead only if the second sample is also past two standard
+errors, and the two are then pooled. Also to measure before anything ships: what the fitted arm
+wins with (the hand types and their sizes), because "more hands, less money" against the loose field
+says the win mix moved.
 
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
