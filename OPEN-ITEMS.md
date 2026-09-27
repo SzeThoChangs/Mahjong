@@ -69,6 +69,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | A-004 | ASSUMPTION | Friends' testing needs no shared data for now | OPEN | Changs |
 | A-005 | ASSUMPTION | What makes a pack question hard enough for a player who already plays | OPEN | Changs |
 | A-006 | ASSUMPTION | Three Coaches are a fair stand-in for Changs's strong real opponents | OPEN | Agent |
+| A-007 | ASSUMPTION | A record leaves a phone as a file the player sends, and Changs reads it in as a friend's record; no server | OPEN | Changs |
 | C-001 | CONFLICT | The P-Starter lifecycle rule for `prototype/` against the owner's decision | RESOLVED | Changs |
 | C-002 | CONFLICT | The original plan says Vercel; the site is on GitHub Pages; `vercel.json` remains | RESOLVED | Agent |
 | C-003 | CONFLICT | The framework describes two practice tabs with two judges; the app has one | OPEN | Changs |
@@ -878,3 +879,34 @@ the learned softmax model, which is not the Coach: over the 595 claim questions 
 that offer a win, `claimRank` declines 278 and `claimAdvice` declines 0. One line in
 `web/src/components/Train.tsx` now takes the win first, as the bot does. Nothing was measured with a
 win-declining field, so `D-032` and `D-033` are unaffected, and the day of compute is not needed.
+
+---
+
+## A-007 — A record leaves a phone as a file, and Changs reads it in as a friend's
+
+**Type:** ASSUMPTION
+
+**Description:** Changs asked on 2026-09-27 whether his friends had used the app and found that
+nothing leaves a phone. On 2026-09-28 he asked for "a way for records to leave a phone" as part of
+"do all that". The cheapest shape that needs no server, no account and no privacy decision on his
+friends' behalf: a "Send my record" button that hands the same backup file the Export button writes
+to the phone's share sheet (WhatsApp, AirDrop, mail), and on Changs's side an "Add a friend's
+record" button on Table setup that reads such a file under a name he types, keeps it apart from his
+own record, and a Friends view that lists each one: hands played, mistakes, the leading cause, when
+the file was made. Nothing is merged into his own record and nothing is sent anywhere by the app.
+
+**Why It Matters:** It is the whole of "friends' usage" for now, and it decides whether a server is
+ever needed (`D-016`, `A-004`).
+
+**What Happens If Wrong:** If friends do not send files, the button is dead weight and the next
+step is a posted record, which needs somewhere to post to.
+
+**Owner:** Changs.
+
+**Source:** Changs, 2026-09-27 and 2026-09-28.
+
+**Related:** A-004, D-016.
+
+**Status:** OPEN
+
+**Resolution:**

@@ -1071,3 +1071,25 @@ these positions; it does not. That was the Train screen running a different func
 Coach plays, measured and fixed the same day, `Q-013`.)
 
 **Related:** D-027, D-031, D-032, `Q-013`, `A-006`, `PROTOTYPE.md`, `FINDINGS.md`.
+
+---
+
+## D-034 — The rest of the week's programme is built without waiting, each piece gated as before
+
+**Date:** 2026-09-28. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
+
+**What was decided:** Asked "what else can we do", the agent listed, in order: the learned claim
+model tested for money; the Coach's fixed numbers tuned on money; the grades themselves re-made with
+the Coach playing the play-outs for the decisions where that matters; the model choosing the plan,
+trained on money, last; the strong-table pack regenerated with whatever Coach wins; and, outside the
+Coach, the whole-game session, the training plan brought up to date, and a way for records to leave
+a phone. Changs answered "Do all that, don't stop."
+
+**Why:** He has the week and wants it spent. The order was given with costs, cheapest first, and the
+gate on every Coach candidate stays the paired money test at his table.
+
+**What it does not change:** nothing ships on accuracy; a candidate that clears the gate once is run
+again on fresh deals; every app change gets its ten passes; the plan in `PLAN.md` that the game is
+reviewed rather than won (`D-021`).
+
+**Related:** D-021, D-032, D-033, `A-007`, `NEXT.md`.

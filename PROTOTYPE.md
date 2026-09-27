@@ -318,6 +318,28 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+### A session on the Play tab: hands in a row, the dealer moving, money carried across
+
+**Uncertainty addressed:** The Play tab plays one hand and reviews it. `PLAN.md` Phase 7 names the
+rest of the game, sessions, rotation and a running score, and holds it until the review can be
+trusted on calls and wins (`D-021`). Calls were measured sound and wins are answered by rule
+(`D-032`, `D-033`), so that hold is lifted, and Changs asked for it on 2026-09-28 (`D-034`).
+
+**What the prototype has to teach:** whether a session, rather than a hand, is what he would open
+daily; whether the dealer staying on after a win and the prevailing wind turning are understood
+from the screen without a rule sheet; whether a session summary that ranks the decisions by what
+they cost, rather than by whether the hand was won, is read as the point of the session. The
+result of a hand is mostly luck, so the summary must never lead with money won.
+
+**What is built first, and deliberately not:** hands in a row at the table set in Table setup, the
+dealer keeping the deal after a win or a draw and passing it otherwise, the prevailing wind turning
+after four passes, chips carried across hands, every hand's decisions kept for review as now, and
+a session summary. Not built: a leaderboard, a bankroll across sessions, or any score kept between
+days; those wait on whether a session is used at all.
+
+**Status:** PROPOSED, 2026-09-28. Built after the Play review's win verdict follows the rule both
+ways, which it did not until the same day.
+
 ### Can anything beat the Coach for money at Changs's table?
 
 **Uncertainty addressed:** The Coach picks the measured best on 52.8% of decisive positions and
