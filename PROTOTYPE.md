@@ -295,9 +295,26 @@ plays out with simple bots, because a Coach play-out costs 120 times more, so th
 applies. Claims and throws were measured to survive that (`+0.150` to `+0.338` on calls, 1% of throws
 changed), which is why this is worth building.
 
-**Status:** RUNNING
+**Status:** RUN. Generated 18:01 to 18:55 on 2026-09-26 (150,000 hands, 9,059,955 decisions, 46
+hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 errors), pack built
+04:01 to 15:55 on 2026-09-27, of which the verify pass was 709 minutes.
 
-**Findings:** None yet.
+**Findings:**
+
+1. **The pack:** 10,652 questions in 107 shards at `data/gen/strong-quiz/strong-nowild/`: 5,673
+   discards, 4,280 claims, 699 self decisions. 1,198 offer a win and all 1,198 carry `rule: 'win'`,
+   the first pack built with `D-033`; on 165 of them the play-outs preferred passing.
+2. **Verify:** 12,801 admitted, 2,139 dropped for failing separation on 512 fresh play-outs (16.7%,
+   against 18.0%, 18.2% and 19.9% for the three shipped packs), 0 could not be replayed. "Best changed
+   on 203" against 31 to 44 for the shipped packs: the counter runs before the win rule is re-applied,
+   so up to 165 of the 203 are rule questions whose fresh play-outs preferred passing, leaving about
+   38, in line with the others. The counter should report rule questions apart; left alone until the
+   rebuild finishes, so all four packs come from one builder.
+3. **Phase mix:** pack early 8%, mid 32%, late 60%, against the run's 32%, 40%, 28%. The shipped
+   0-Joker pack is 11%, 32%, 57%, so a decisive question at this table is a late one whoever plays.
+4. **Not measured yet:** whether these positions differ from the weak-bot packs in any way a player
+   would notice, and whether Changs finds them harder. It is not on the site; putting it there is a
+   separate step after the three-pack rebuild.
 
 ### Can anything beat the Coach for money at Changs's table?
 
