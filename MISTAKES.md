@@ -119,6 +119,48 @@ rendered.
 
 ## Ten passes
 
+### The three packs rebuilt with the win rule, on the site — Sun Sep 27 23:27:47 +08 2026
+
+Passes run against the dev server on port 5174 serving the rebuilt packs from `web/public/quiz`, no
+test pack and no patched `fetch`: every question below came from a real shard. One defect was found
+and fixed inside the set; the passes it could affect were run again on the fixed build.
+
+**Test boundary**
+
+- Workflows: answering a Train question of every kind (discard, claim, self), the pack, mode and
+  hard-only filters, the hand log and the mistake record, the Review screen's counts.
+- Screens: Train, Review.
+- Access restrictions: none exist.
+- Values, records and calculations: the rule mark and `best` on every rebuilt question, the pack
+  index tallies against the shard files, the session tally, `mj.history.v1`, `mj.mistakes.v1`.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage, caches and IndexedDB cleared, reloaded. Train opened on "0 Jokers, min 1 Tai" with `mj.hard.v1` = "1", served a question, 0 matches for NaN or undefined | 0 |
+| 2 | Errors | `console.error` hooked from the first line of every run; 3 walks totalling about 40 answered questions across the modes, the Review screen, and 3 reloads | 0 |
+| 3 | Links | discard, claim, hard only, Next position and the Review tab, pressed with a full pointer sequence (`M-003`); each changed the address or the question. The pack buttons and the rest of the navigation were checked in the 2026-09-26 sets and the code behind them did not change | 0 |
+| 4 | Workflow steps | 6 rule questions answered from the real 0-Joker pack, 3 taken and 3 declined, including one self-draw win declined: each Win read "Best move" and "Right. A win on offer is taken.", each decline "Mistake" and "Take the win...", 0 money bars, the paragraph shown, no Challenge button, the streak reset to 0 on each decline. A plain Kong question still read "Kong, or keep the hand as it is?" over "Kong" and "No kong" | 1, fixed |
+| 5 | Writes | 3 discards answered (2 big mistakes, 1 best): `mj.history.v1` 3 entries and `mj.mistakes.v1` 2 entries, still 3 and 2 after a reload, "Given up $5.94" | 0 |
+| 6 | The data it moves | Every question that offers a win in the three packs carries `rule: 'win'`: 2,030 of 2,030, 2,332 of 2,332, 1,030 of 1,030, counted in Node over the shard files. On 814, 1,217 and 153 the play-outs preferred passing and the rule overrode them. Before the rebuild the same packs answered "decline" on 790, 1,179 and 130. "Given up" moved by $0.00 across all 6 rule declines | 0 |
+| 7 | Reconciliation | Index tallies against shard files: 10,547, 10,528 and 10,291, 0 mismatched shards in 315. Session tally after the walks read best 59, mistake 6, blunder 0, Given up $0.00: six mistakes and no money means all six were rule declines, which is what was answered. Review read "Hands you have played 3" and "not sorted yet 2" against 3 and 2 in storage | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with a rule question answered at 280, 390 and 1280px: page scroll width equal to the screen at all three (1265 of 1280 at desktop), 0 elements past the right edge outside a deliberate scroller | 0 |
+| 10 | Look at it | Screenshot of the verdict block at 390px, read line by line: "Mistake", "Take the win. Declining costs a fifth to a half a chip a game against strong players.", "the pong bot chose win", "The Coach would win. It takes the win too.", "Coach reads this as all-pong.", the paragraph, "min1-nowild / 2241:0:48", "best 59", "mistake 6", "Given up $0.00, streak 0" | 0 |
+
+**Defects found:**
+
+1. Pass 4, fixed: a self-draw question with a win on offer was headed "Kong, or keep the hand as it
+   is?" over the choices "Win" and "No kong". Expected: the question names the choices. Fixed with a
+   heading built from the actions ("Win, or play on?", or "Win, Kong, or keep the hand as it is?")
+   and "Play on" for the decline when a win is offered. Re-measured on 5479:31:59: "Win, or play on?"
+   over "Win" and "Play on", declining read "Mistake" and "Take the win..."; a plain Kong question
+   still read "Kong, or keep the hand as it is?" over "Kong" and "No kong". Passes 2, 4, 9 and 10 run
+   again after it.
+
+**Not checked:** a real phone; dark mode; 320 and 375px, which were measured on 2026-09-26 on the
+same layout with no change since; Spot, Play, Film room and Table setup, which the change does not
+touch; the `coach` and `min1` packs in the browser, which were counted in Node but not walked.
+
 ### The Coach line shows the Coach that plays, and the shard walk stops cascading — Sat Sep 26 23:20:45 +08 2026
 
 Passes run against the dev server on port 5174, on the working tree, after the win-rule commit

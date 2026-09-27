@@ -499,7 +499,16 @@ export default function Train() {
    * over 48,000 paired deals (FINDINGS, D-033). The play-outs say otherwise, so on these the bars are
    * not shown and the answer is the win.
    */
-  const ruleWin = q.rule === 'win' && q.actions.some((a) => a.a === 'win');
+  const offersWin = q.actions.some((a) => a.a === 'win');
+  const ruleWin = q.rule === 'win' && offersWin;
+  /**
+   * "proceed" is the engine's word for not declaring; with a Kong on offer it is "No kong", with a
+   * win on offer it is playing on. The self-draw win questions the rule brought in read "Kong, or
+   * keep the hand as it is?" over the choices "Win" and "No kong" (ten passes, 2026-09-27).
+   */
+  const label = (a: string) => (a === 'proceed' && offersWin ? 'Play on' : actionText(a));
+  const offersKong = q.actions.some((a) => /^kong/.test(a.a));
+  const selfHeading = offersWin ? (offersKong ? 'Win, Kong, or keep the hand as it is?' : 'Win, or play on?') : 'Kong, or keep the hand as it is?';
   const bestAction = (ruleWin ? actions.find((a) => a.a === 'win') : undefined) ?? actions[0]!;
   const regret = pickedAction && !ruleWin ? bestAction.ev - pickedAction.ev : 0;
   const pickedSe = pickedAction?.se ?? 0;
@@ -594,7 +603,7 @@ export default function Train() {
             them in (2026-09-16). Your own flowers and sets are on the felt with everyone else's. */}
         <CardHeader className="pb-2">
           <CardTitle className="text-base">
-          {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — </> : null}{jargon(claimQuestion(q.actions.map((x) => x.a)))}</> : 'Kong, or keep the hand as it is?'}
+          {q.k === 'discard' ? 'Which tile do you discard?' : q.k === 'claim' ? <>{q.ld ? <>{WIND[q.ld[0]]} discarded <b>{tileLabel(q.ld[1]!)}</b> — </> : null}{jargon(claimQuestion(q.actions.map((x) => x.a)))}</> : selfHeading}
         </CardTitle>
           {/* after the answer only: shown before it, the cause told you what kind of throw to look for */}
           {causeNote && picked !== null && <p className="text-xs text-muted-foreground">{causeNote}</p>}
@@ -621,7 +630,7 @@ export default function Train() {
             <div className="flex flex-wrap gap-2">
               {q.actions.map((a) => (
                 <Button key={a.a} variant="outline" disabled={picked !== null} onClick={() => choose(a.a)} className="gap-1">
-                  {actionText(a.a)} {a.a.startsWith('chow') && kindsOf(a.a).map((k, i) => <Tile key={i} kind={k} size="sm" />)}
+                  {label(a.a)} {a.a.startsWith('chow') && kindsOf(a.a).map((k, i) => <Tile key={i} kind={k} size="sm" />)}
                 </Button>
               ))}
             </div>
@@ -643,10 +652,10 @@ export default function Train() {
                     ? <>Right. A win on offer is taken.</>
                     : <>Take the win. Declining costs a fifth to a half a chip a game against strong players.</>)
                   : verdict === 'best' ? <>Measured best: worth <b>{fmt(pickedAction.ev)}</b> per hand.</>
-                  : <>Your {actionText(pickedAction.a).toLowerCase()} is worth <b>{fmt(pickedAction.ev)}</b>; best was {actionText(bestAction.a).toLowerCase()} at <b>{fmt(bestAction.ev)}</b> — you gave up <b>{fmt(regret)}</b>.</>}
+                  : <>Your {label(pickedAction.a).toLowerCase()} is worth <b>{fmt(pickedAction.ev)}</b>; best was {label(bestAction.a).toLowerCase()} at <b>{fmt(bestAction.ev)}</b> — you gave up <b>{fmt(regret)}</b>.</>}
                 {verdict === 'unclear' && pickedSe > 0 && <> These {q.n} play-outs resolve a gap of about <b>{fmt(pickedSe)}</b>, so this one is inside the noise — not a worse move, just an unmeasurable one.</>}
               </span>
-              <span className="ml-auto text-xs text-muted-foreground">the {q.bot} bot chose {actionText(q.sel).toLowerCase()}</span>
+              <span className="ml-auto text-xs text-muted-foreground">the {q.bot} bot chose {label(q.sel).toLowerCase()}</span>
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
@@ -656,7 +665,7 @@ export default function Train() {
                     so this is the place the coach's disagreements with the measurement show up. */}
                 {coachPick !== null && (
                   <div className="pb-1 mb-1 border-b">
-                    <span className="text-muted-foreground">The <J>Coach</J> would</span> <b>{actionText(coachPick).toLowerCase()}</b>.
+                    <span className="text-muted-foreground">The <J>Coach</J> would</span> <b>{label(coachPick).toLowerCase()}</b>.
                     {/* On a rule question the answer is the rule, not the play-outs, and there are
                         no bars to send anyone to - so it must not claim the measurement either way. */}
                     {ruleWin
@@ -686,10 +695,10 @@ export default function Train() {
                 )}
                 {/* the same for claims: what the best call buys, and what yours did instead */}
                 {q.k === 'claim' && coach.reasonForAction(bestAction.a).length > 0 && (
-                  <div><span className="text-muted-foreground">Why {actionText(bestAction.a).toLowerCase()}:</span> {sentences(coach.reasonForAction(bestAction.a))}</div>
+                  <div><span className="text-muted-foreground">Why {label(bestAction.a).toLowerCase()}:</span> {sentences(coach.reasonForAction(bestAction.a))}</div>
                 )}
                 {q.k === 'claim' && picked !== null && picked !== bestAction.a && coach.reasonForAction(picked).length > 0 && (
-                  <div><span className="text-muted-foreground">Your {actionText(picked).toLowerCase()}:</span> {sentences(coach.reasonForAction(picked))}</div>
+                  <div><span className="text-muted-foreground">Your {label(picked).toLowerCase()}:</span> {sentences(coach.reasonForAction(picked))}</div>
                 )}
               </div>
             )}
@@ -727,7 +736,7 @@ export default function Train() {
               const min = Math.min(...actions.map((x) => x.ev), 0), max = Math.max(...actions.map((x) => x.ev), 0), span = Math.max(1e-6, max - min);
               return (
                 <div key={a.a} className="flex items-center gap-2 text-xs">
-                  <span className="w-24 shrink-0 flex items-center gap-1">{a.a.startsWith('d:') ? <Tile kind={Number(a.a.slice(2))} size="sm" /> : <span className="font-medium">{actionText(a.a)}</span>}</span>
+                  <span className="w-24 shrink-0 flex items-center gap-1">{a.a.startsWith('d:') ? <Tile kind={Number(a.a.slice(2))} size="sm" /> : <span className="font-medium">{label(a.a)}</span>}</span>
                   <div className="flex-1 h-4 rounded bg-secondary relative overflow-hidden">
                     <div className={cn('absolute inset-y-0 rounded', isBest ? 'bg-emerald-500' : isPick ? 'bg-sky-500' : 'bg-muted-foreground/40')}
                       style={{ left: `${((Math.min(0, a.ev) - min) / span) * 100}%`, width: `${(Math.abs(a.ev) / span) * 100}%` }} />
@@ -772,7 +781,7 @@ export default function Train() {
                   const o = challengeState.outcome;
                   const pickWasBest = picked === bestAction.a;
                   const kind = challengeKind(o.gap, o.se, pickWasBest);
-                  const mine = actionText(picked).toLowerCase(), ref = actionText(o.reference).toLowerCase();
+                  const mine = label(picked).toLowerCase(), ref = label(o.reference).toLowerCase();
                   const x = fmt(Math.abs(o.gap)), y = fmt(o.se);
                   const words = !pickWasBest
                     ? kind === 'holds' ? <><b>Holds:</b> on fresh play-outs your {mine} is still {x} worse than {ref} (about ±{y}).</>
@@ -787,7 +796,7 @@ export default function Train() {
                       {/* fresh EVs count from this decision, not from the deal, so they sit at a
                           different level from the pack's; the gap is what to read */}
                       <div className="text-xs text-muted-foreground">
-                        {o.n} fresh play-outs each, {(o.ms / 1000).toFixed(1)}s: {o.actions.map((a) => `${actionText(a.a).toLowerCase()} ${fmt(a.ev)}`).join(', ')}.
+                        {o.n} fresh play-outs each, {(o.ms / 1000).toFixed(1)}s: {o.actions.map((a) => `${label(a.a).toLowerCase()} ${fmt(a.ev)}`).join(', ')}.
                         {/* claims are in neither the log nor the record (see `choose`), so only a discard has entries to note */}
                         {!pickWasBest && (verdict === 'mistake' || verdict === 'blunder') && kind !== 'holds' && <> Moved to "too close to call" in the session tally{q.k === 'discard' ? ', and noted on the hand log and the mistake card' : ''}.</>}
                       </div>

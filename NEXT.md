@@ -101,47 +101,36 @@ these questions and stores the win as the answer.
 
 ## Where We Stopped
 
-2026-09-27, 15:05. Two jobs are queued on the Mac, one behind the other, and both write outside the
-repository until they are checked:
+2026-09-27, 23:30. The three packs rebuilt with the win rule are on the site (pushed with the ten
+passes recorded in `MISTAKES.md`). The strong-table pack is built at `data/gen/strong-quiz/` and
+recorded in `PROTOTYPE.md`; it is not on the site. Nothing is running on the Mac.
 
-1. **The strong-table pack** (`data/gen/strong-pack-chain.sh`): grading finished at 04:01 and the
-   pack build has been verifying since; at 15:00 it was at 9,000 of 12,801 with 1,504 dropped and
-   about four hours left. It builds with the win rule, because the pack step started after `f42068a`.
-   Output `data/gen/strong-quiz/`, marker `data/gen/strong-pack.done`.
-2. **The three-pack rebuild** (`data/gen/rebuild-chain.sh`): waits for that marker, then rebuilds
-   `min1-nowild`, `min1` and `coach` from their graded runs with `--max 12800 --mix decisive
-   --verify 512`, into `data/gen/rebuild/quiz/`. About seven hours. Marker
-   `data/gen/rebuild/rebuild.done`, log `data/gen/rebuild/chain.log`.
-
-Changs chose the built route over marking the shipped shards in place, and chose "a stronger Coach"
-as the week's big job (2026-09-27). Its plan and first measurement are in `PROTOTYPE.md`, "Can
-anything beat the Coach for money at Changs's table?".
+The Coach work has its plan and first measurement in `PROTOTYPE.md`, its trainer
+(`datagen/src/policyfit.ts`) and its money gate (`datagen/src/policymoney.ts`, self-check exactly
+0.000). Neither has been run on data.
 
 ## Recommended Next Action
 
 ### Next
 
-When `rebuild.done` appears: read the three pack logs, count the `rule: 'win'` questions and the
-restored ones per pack, copy the packs into `web/public/quiz/` with a new `index.json`, run the ten
-passes against the real packs, deploy. Then start the Coach work proper: step 1 of the plan in
-`PROTOTYPE.md`. The trainer (`datagen/src/policyfit.ts`) and the money harness
-(`datagen/src/policymoney.ts`, self-check 0.000) are written and typecheck; neither has been run on
-data. First run: `policyfit.ts` on the three runs with `--maxPerDir 150000`, then `policymoney.ts
-2000 --weights <out> --field coach` and again `--field pool`.
+The first fit: `policyfit.ts` on the three runs with `--maxPerDir 150000`, held out against the three
+packs, then `policymoney.ts 2000 --weights <out> --field coach` and `--field pool` at the 0-Joker
+table. Name the deal range before running (7900001 onward is reserved for this).
 
 ### Why
 
-The rebuild is what puts the win rule on the site. The Coach work needs the Mac for its money
-tests, so it starts once the rebuild has it free; its analysis and code can be written before that.
+It is step 1 of the plan Changs chose, and the Mac is free. The result decides whether the
+regret-weighted loss alone moves the early and middle game, or whether the features (step 2) are
+needed first.
 
 ### Expected Outcome
 
-Three packs on the site carrying the rule; the first Coach candidate fitted and queued for the paired
-money test at his table.
+A held-out table of mean regret by phase for the fit and the Coach on the same positions, and two
+money figures with standard errors. Nothing ships on this run whatever it says; it says where to go.
 
 ## After That
 
-1. Read the strong-table pack when its chain finishes, and record what it says.
+1. Put the strong-table pack on the site as a fourth pack, if Changs wants it there.
 2. Read `A-005` once Changs has used the hard questions: whether "hard only" is hard enough.
 3. Changs uses the hard questions for a few days and says whether they are still too easy
    (`A-005`); rule questions are not hard by that definition, so hard only hides them.

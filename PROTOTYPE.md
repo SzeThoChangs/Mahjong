@@ -539,9 +539,24 @@ the 34 the play-outs preferred passing, which are the ones the rule changes; eac
 app by name and answered both ways. The ten passes for this change are in `MISTAKES.md`, dated
 2026-09-26, with the two defects they found.
 
-**Still to do before this reaches the site:** the three shipped packs have to be rebuilt with the
-mark. Until then the rule questions exist only in the builder's output, and the packs on the site
-still carry the play-outs' win answers.
+**The three packs rebuilt, 2026-09-27**, from their graded runs at `--max 12800 --mix decisive
+--verify 512`, one after another on the Mac (`data/gen/rebuild-chain.sh`, 16:02 to 23:09, 143, 132
+and 146 minutes of verify):
+
+    pack          questions   offer a win   marked   play-outs preferred otherwise   dropped at verify
+    coach           10,547       2,030       2,030              814                   2,247 of 12,800
+    min1            10,528       2,332       2,332            1,217                   2,266 of 12,801
+    min1-nowild     10,291       1,030       1,030              153                   2,502 of 12,800
+
+Every question that offers a win carries the mark, in all three, and 0 shard tallies disagree with
+their files. Before the rebuild the same packs answered "decline" on 790, 1,179 and 130; those are
+inside the fourth column, which is larger because the fresh 512 play-outs preferred passing on more
+of them than the original 128 had. The builder's "best changed on" line counted those in (197, 1,246
+and 846 against 31 to 44 a fortnight earlier); it now counts rule overrides apart.
+
+The packs are on the site. The ten passes against them are in `MISTAKES.md`, 2026-09-27, and found
+one thing the test pack had not: a self-draw win question was headed "Kong, or keep the hand as it
+is?" over the choices "Win" and "No kong". It now reads "Win, or play on?" over "Win" and "Play on".
 
 **One thing that looked like a second defect was not.** On 3 of the 6 positions the screen said the
 Coach would pass. The Coach does not: `CoachBot.chooseClaim` takes a win before it asks

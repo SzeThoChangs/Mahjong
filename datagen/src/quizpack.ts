@@ -312,7 +312,7 @@ if (VERIFY > 0) {
   const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts: VERIFY, mode: 'sampled', policy: 'shanten',
     seed: 424242 + VERIFY, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: false, coupled: true };
   const survivors: Q[] = [];
-  let dropped = 0, changed = 0, unreplayable = 0, done = 0;
+  let dropped = 0, changed = 0, ruleOverrode = 0, unreplayable = 0, done = 0;
   const t0 = Date.now();
   for (const q of kept) {
     const [g, h, d] = q.id.split(':').map(Number);
@@ -331,13 +331,17 @@ if (VERIFY > 0) {
     // A question with a win on offer is answered by the rule, not by the gap, so it is kept whatever
     // the fresh play-outs separate, and its answer is set back to the win below.
     if (!(sep > clear) && !q.rule) { dropped++; continue; }
-    if (fresh.best !== q.best) changed++;
+    // "changed" is about the play-outs, so a rule question is counted apart: its answer is the win
+    // whatever they say. Counting it in made the 2026-09-27 rebuild read "changed on 1,246" against
+    // 31 for the same pack a fortnight earlier, when all but about 30 were rule questions.
+    if (q.rule === 'win') { if (fresh.best !== 'win') ruleOverrode++; }
+    else if (fresh.best !== q.best) changed++;
     q.best = fresh.best; q.n = fresh.n; q.actions = toActions(fresh, SE_VERSION);
     if (q.rule === 'win') q.best = 'win';
     survivors.push(q);
   }
   kept.length = 0; kept.push(...survivors); shuffle(kept);
-  console.log(`\n  verified at ${VERIFY} fresh play-outs each: kept ${survivors.length}, dropped ${dropped} (${(100 * dropped / Math.max(1, done)).toFixed(1)}% did not hold at ${clear} SE), best changed on ${changed}, ${unreplayable} could not replay, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+  console.log(`\n  verified at ${VERIFY} fresh play-outs each: kept ${survivors.length}, dropped ${dropped} (${(100 * dropped / Math.max(1, done)).toFixed(1)}% did not hold at ${clear} SE), best changed on ${changed}, the win rule overrode the play-outs on ${ruleOverrode}, ${unreplayable} could not replay, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
 }
 
 const tagged = kept.filter((q) => q.tp.length).length;

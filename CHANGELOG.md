@@ -46,6 +46,20 @@ says exactly what changed in the files and the code.
 
 ## Changes
 
+### 2026-09-27 — The three packs rebuilt with the win rule, and the strong-table pack built
+
+**Changed:** `coach`, `min1` and `min1-nowild` rebuilt from their graded runs with the 512-play-out
+verify: 10,547, 10,528 and 10,291 questions, every one that offers a win marked `rule: 'win'` (2,030,
+2,332 and 1,030). A self-draw win question is now headed "Win, or play on?" with the choice "Play on"
+instead of "No kong". The builder counts rule overrides apart from play-out changes. A fourth pack of
+positions from Coach-played hands at the 0-Joker table is built (10,652 questions) but not on the site.
+
+**Why:** The rule was in the builder and on the screen since 2026-09-26, but the packs on the site
+were built before it and still answered "decline" on 2,099 questions.
+
+**Impact:** `D-033` carried out. Ten passes in `MISTAKES.md`. Strong-table pack findings in
+`PROTOTYPE.md`.
+
 ### 2026-09-26 — The Coach line on Train shows the Coach that actually plays
 
 **Changed:** For claim questions the Train screen took a win before ranking anything, as the Coach

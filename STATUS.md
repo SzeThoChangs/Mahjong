@@ -40,7 +40,7 @@ recorded in `DECISIONS.md` once made.
 
 ## Last Updated
 
-2026-09-26
+2026-09-27
 
 ## Current Phase
 
@@ -48,10 +48,9 @@ LIVE, and inside it Phase 6 of `PLAN.md` — *Use it*. See `PROJECT.md` for why 
 
 ## Current Focus
 
-Making the app teach what the money tests measured. The win job is answered: at a strong table a win
-on offer is taken, and no judge this project has beats that rule (`D-032`, `D-033`). The rule is now
-in the pack builder and on the Train screen; the three packs on the site were built before it and
-still carry the play-outs' win answers, so rebuilding them is the current job. Behind that, whether
+The week's job, chosen by Changs on 2026-09-27: a Coach that takes money off the shipped one at his
+table, gated on the paired money test rather than on accuracy (`PROTOTYPE.md`, "Can anything beat the
+Coach for money at Changs's table?"). The win job is finished and on the site (`D-033`). Whether
 "hard only" is hard enough for him (`A-005`) still waits on his use.
 
 ## In Progress
@@ -59,13 +58,13 @@ still carry the play-outs' win answers, so rebuilding them is the current job. B
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| Rebuilding the three shipped packs with the win mark | Agent | Not started, next |
-| The strong-table pack chain, 150,000 Coach-played hands at seed 902 | Agent | Running since 18:01 on 2026-09-26, grading since 18:55, about twelve hours |
+| A stronger Coach, gated on the paired money test (`PROTOTYPE.md`) | Agent | Tools written and self-checked; first fit not run |
 
-The strong-table chain holds about 2 GB, so nothing else long should run beside it.
+Nothing is running on the Mac.
 
 ## Recently Completed
 
+- 2026-09-27: the three packs rebuilt with the win rule and put on the site (10,547, 10,528 and 10,291 questions; every win-offering question marked); the strong-table pack built, 10,652 questions, not on the site; ten passes in `MISTAKES.md`.
 - 2026-09-26: a win on offer is answered by rule, written into the pack builder and taught on the Train screen (`D-033`); ten passes recorded in `MISTAKES.md`, two defects found and fixed; the banned middle dot removed from the five project files that still held it.
 - 2026-09-24: the claims cleared. With every win taken, following the judge on Pong, Chow and pass is worth +0.150, +0.102 and +0.338 chips a game at the three tables, and the Coach-played judge loses more on wins than the simple one (`PROTOTYPE.md`, `FINDINGS.md`).
 - 2026-09-16: hard only on by default, 0 Jokers and min 1 as the default pack and Table setup, the Coach's reasoning at the table in play, the green felt table, the seat details in the question card, and the dealer badge under the wind on phones (`f34d847`, `1b64f3f`); ten passes for each set recorded in `MISTAKES.md`.
