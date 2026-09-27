@@ -55,6 +55,25 @@ function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
 }
 
 const diffs: number[] = []; let chipsA = 0, chipsB = 0, winsA = 0, winsB = 0;
+/**
+ * What each arm wins with and loses to, for the tested seat. "More hands, less money" against the
+ * loose field (2026-09-28) says the mix of wins moved, and this is the cheapest way to see how:
+ * wins by the hand's combination and its fan, self-draws, and the two kinds of loss - paying for a
+ * deal-in, or paying a self-draw or someone else's deal-in.
+ */
+interface Mix { wins: Record<string, number>; fan: Record<number, number>; selfDraw: number; winChips: number; dealIns: number; dealInChips: number; otherLoss: number; otherChips: number; draws: number }
+const mixOf = (): Mix => ({ wins: {}, fan: {}, selfDraw: 0, winChips: 0, dealIns: 0, dealInChips: 0, otherLoss: 0, otherChips: 0, draws: 0 });
+const mixA = mixOf(), mixB = mixOf();
+const tally = (m: Mix, seat: number, out: { winner: number | null; selfDraw: boolean; discarder: number | null; score: { fan: number; combination: string } | null; chipsDelta: number[] }) => {
+  const chips = out.chipsDelta[seat]!;
+  if (out.winner === null) { m.draws++; return; }
+  if (out.winner === seat) {
+    const c = out.score?.combination ?? '?'; m.wins[c] = (m.wins[c] ?? 0) + 1;
+    const f = out.score?.fan ?? -1; m.fan[f] = (m.fan[f] ?? 0) + 1;
+    if (out.selfDraw) m.selfDraw++; m.winChips += chips; return;
+  }
+  if (out.discarder === seat) { m.dealIns++; m.dealInChips += chips; } else { m.otherLoss++; m.otherChips += chips; }
+};
 const started = Date.now();
 for (let seat = 0; seat < 4; seat++) {
   for (let g = 0; g < n; g++) {
@@ -62,10 +81,11 @@ for (let seat = 0; seat < 4; seat++) {
     const play = (make: () => Bot) => {
       const wall = shuffleWall(shuffle, cfg.unplayable_tiles, rules.jokers.count);
       const out = playGame(field(shuffle, seat, make), cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
-      return { chips: out.chipsDelta[seat]!, won: out.winner === seat };
+      return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
     const b = play(() => (weights ? new FittedDiscardBot(weights) : new AltReadsCoachBot(reads)));
+    tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
   }
@@ -77,3 +97,11 @@ const se = sd / Math.sqrt(diffs.length);
 console.log(`\n${self ? 'self-check' : weightsPath} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
+const show = (name: string, m: Mix) => {
+  const wins = Object.values(m.wins).reduce((x, y) => x + y, 0);
+  const combos = Object.entries(m.wins).sort((x, y) => y[1] - x[1]).map(([c, n]) => `${c} ${n}`).join(', ');
+  const fans = Object.entries(m.fan).sort((x, y) => Number(x[0]) - Number(y[0])).map(([f, n]) => `${f}:${n}`).join(' ');
+  console.log(`${name.padEnd(7)} wins ${wins} (${m.selfDraw} self-drawn, ${(m.winChips / Math.max(1, wins)).toFixed(2)} chips each)  by fan ${fans}  [${combos}]`);
+  console.log(`        deal-ins ${m.dealIns} (${(m.dealInChips / Math.max(1, m.dealIns)).toFixed(2)} chips each), other losses ${m.otherLoss} (${(m.otherChips / Math.max(1, m.otherLoss)).toFixed(2)} each), drawn ${m.draws}`);
+};
+show('Coach', mixA); show('fitted', mixB);
