@@ -512,6 +512,17 @@ different things, and the plan gate separates them.
 B counts as ahead only if the second sample against three Coaches is also past two standard errors;
 the recorded-field figure is confirmed the same way because it is cheap (four minutes).
 
+**Confirmation against three Coaches, 2026-09-28 02:00 to 02:28, deals 7940001 to 7942000:**
++0.393 +/- 0.159, t 2.5, hands won 1,818 against 2,109. Pooled with the first sample, 16,000
+paired deals: +0.386 +/- 0.114, t 3.4. **Candidate B is ahead by the rule set before the run.** The
+first sample did not shrink on fresh deals, which is the difference from A.
+
+**Confirmation against the recorded players, 02:28 to 02:36, the same deals:** +0.750 +/- 0.150,
+t 5.0, hands won 3,179 against 3,784. Pooled with the first sample: +0.759 +/- 0.105, t 7.2. So B
+clears the gate on both fields, twice. It ships as the Coach's discard rule: inside `rankDiscards`,
+so the Coach that teaches, the Coach that plays the Play tab's opponents, and the Coach that stands
+in for strong players in every future money test are one player (`D-035`).
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.
