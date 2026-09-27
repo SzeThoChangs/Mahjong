@@ -60,6 +60,18 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-28 — A session on the Play tab
+
+**Changed:** Hands in a row at your table: the dealer keeps the deal after a win or a draw and passes
+it otherwise, the wind turns after four passes, chips carry across, and "End the session" opens a
+summary that leads with the judged decisions costliest first. A reload keeps the session; a new day
+does not.
+
+**Why:** `PLAN.md` Phase 7, held until the review could be trusted on calls and wins; both were
+measured, and Changs asked for the rest of the game (`D-034`).
+
+**Impact:** Ten passes in `MISTAKES.md`. Whether a session is what he opens daily is his to say.
+
 ### 2026-09-27 — The three packs rebuilt with the win rule, and the strong-table pack built
 
 **Changed:** `coach`, `min1` and `min1-nowild` rebuilt from their graded runs with the 512-play-out

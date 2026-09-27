@@ -119,6 +119,45 @@ rendered.
 
 ## Ten passes
 
+### A session on the Play tab: hands in a row, the dealer moving, chips carried — Mon Sep 28 03:02:33 +08 2026
+
+Passes run on the built app served statically on port 5175, the hands played by a script that
+chooses the Coach's tile and takes any win, so a hand takes seconds. One defect found inside the
+set and fixed; the passes it touched were run again on the rebuilt app.
+
+**Test boundary**
+
+- Workflows: Deal, the hand, the review's Next hand and End the session, the summary, Start a new
+  session, a reload mid-session.
+- Screens: Play (table, review, summary, nothing dealt).
+- Access restrictions: none exist.
+- Values, records and calculations: the dealer after each hand, the prevailing wind after four
+  passes, the session chips, the hands won and fed counts, `mj.session.v1` in sessionStorage.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Session storage cleared, reloaded on #play: "Deal" and no session line. Reloaded with a stored session: "A session is in progress: 3 hands played, you $0. Next: 東圈, you are 南." with Next hand and End the session | 0 |
+| 2 | Errors | `console.error` hooked on every run: 6 hands played through the session, one decision judged, the summary opened, a new session started | 0 |
+| 3 | Links | Deal, Next hand (twice), End the session, Back, Start a new session, the summary's judged-decision link; each led where it says | 0 |
+| 4 | Workflow steps | Hand 1 (dealer 1, 東圈, 西 self-drew) passed the deal to 2; hand 2 (南 won on my throw) passed it to 3; the strips read "hand 1, 東圈, session $0" and "hand 2, 東圈, session −$7"; the review lines "Session: hand 2, you −$13 so far. Next: 東圈, you are 南." A stored session at three passes followed by a fourth non-dealer win read "Next: 南圈, you are 東 and you deal" | 0 |
+| 5 | Writes | `mj.session.v1` after hand 1 held dealer 2, passes 1, chips [−7, −7, 1, 13]; still there after a reload; after the fourth pass dealer 0, passes 4, prevailingWind 1; Start a new session removed it | 0 |
+| 6 | The data it moves | Chips carried: −$7 then −$13 for me across two hands, the stored total equal to the sum of the two hands' deltas; the dealer moved 1, 2, 3 on three non-dealer wins and the wind turned only on the fourth pass | 0 |
+| 7 | Reconciliation | The strip, the review line and the stored session agreed on the hand number, the wind and my chips at every step. The summary's "fed 2" disagreed with the two hands, one of which was a self-draw nobody fed (defect 1); after the fix the count reads the discarder | 1, fixed |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | The review with the session line and buttons at 280 and 390px: page width equal to the screen, 0 elements past the edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of the review: the session line ending "東 and you deal.", the buttons Next hand, End the session, Judge all 14 unjudged, and the decision rows with their drawn tile marked. The summary read: "Session: 2 hands", "You won 0 of 2, fed 2", "26 decisions, 1 judged, 0 mistakes", "chips: you −$13, 東 −$1, 南 $1, 西 $13", "Nothing judged was a mistake." | 0 |
+
+**Defects found:**
+
+1. Pass 7, fixed: "fed" counted every hand I paid for, including a self-draw. Expected: only hands
+   my own throw gave away. Fixed by keeping the discarder on each session hand and counting on it.
+   Rebuilt and re-measured on the stored three-pass session: 0 errors, the wind turn and the summary
+   unchanged otherwise.
+
+**Not checked:** a real phone; dark mode; 320, 375 and 1280px on the session screens (the only new
+layout is one line of text and two buttons, measured at 280 and 390); a session across a day, which
+by design is not kept; the summary's costly list with more than one judged mistake.
+
 ### Candidate B inside the Coach, the Play review's win rule both ways, and friends' records — Mon Sep 28 02:50:53 +08 2026
 
 Three app changes in one set, because they were built together while the money runs held the Mac:

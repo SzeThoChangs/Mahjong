@@ -361,8 +361,24 @@ after four passes, chips carried across hands, every hand's decisions kept for r
 a session summary. Not built: a leaderboard, a bankroll across sessions, or any score kept between
 days; those wait on whether a session is used at all.
 
-**Status:** PROPOSED, 2026-09-28. Built after the Play review's win verdict follows the rule both
-ways, which it did not until the same day.
+**Status:** BUILT, 2026-09-28, in `web/src/components/Play.tsx`. A session starts with the first
+Deal and lives in the browser's sessionStorage, so a reload keeps it and a new tab or a new day does
+not. The strip above the table reads "hand 4, 東圈, session $0"; the review after a hand says where
+the session stands and who deals next; "End the session" opens the summary, which leads with the
+judged decisions costliest first and puts the money after them; "Start a new session" clears it.
+
+**Measured on the built app, 2026-09-28:** four hands played through it by a script choosing the
+Coach's tile. After a non-dealer win the deal passed and the seat names on screen followed
+(dealer 1 to 2 to 3, "you are 西" then "you are 南"); chips carried across (−$7 after hand 1, −$13
+after hand 2, matching the stored session); a reload mid-session showed "A session is in progress:
+1 hand played". A stored session at three passes followed by a fourth non-dealer win turned the wind:
+"Next: 南圈, you are 東 and you deal", stored `passes 4, prevailingWind 1, dealer 0`. The summary read
+"You won 0 of 2, fed 2" before the fed count was corrected to count only hands your own throw gave
+away, and the corrected build was re-measured on the same stored session. The ten passes are in
+`MISTAKES.md`.
+
+**What it does not establish:** whether Changs opens a session rather than a hand, and whether the
+summary's ordering is read as the point. Both are his to say after a week.
 
 ### Can anything beat the Coach for money at Changs's table?
 

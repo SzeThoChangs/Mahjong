@@ -106,6 +106,32 @@ function compareFor(d: PlayDecision, rules: RulesConfig): string[] {
 
 const roleOf = (seat: number, dealer: number) => (seat - dealer + 4) % 4;
 
+/**
+ * A session: hands in a row at one table, the dealer moving the way it does at a real table, chips
+ * carried across. The dealer keeps the deal after a win or a draw and passes it to the right
+ * otherwise; when every seat has held it once the prevailing wind turns. It lives in
+ * sessionStorage, so a reload mid-session keeps it and a new day does not: PROTOTYPE.md, "A session
+ * on the Play tab", deliberately keeps no score between days until a session is seen to be used.
+ */
+interface SessionHand { id: string; at: number; dealer: number; prevailingWind: number; winner: number | null; discarder: number | null; chips: number[]; decisions: number }
+interface Session { id: string; startedAt: number; firstDealer: number; dealer: number; prevailingWind: number; passes: number; chips: number[]; hands: SessionHand[] }
+const SESSION_KEY = 'mj.session.v1';
+const loadSession = (): Session | null => { try { const raw = sessionStorage.getItem(SESSION_KEY); return raw ? (JSON.parse(raw) as Session) : null; } catch { return null; } };
+const saveSession = (s: Session | null): void => { try { if (s) sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); else sessionStorage.removeItem(SESSION_KEY); } catch { /* private window */ } };
+const newSession = (): Session => {
+  const dealer = Math.floor(Math.random() * 4);
+  return { id: `session:${Date.now()}`, startedAt: Date.now(), firstDealer: dealer, dealer, prevailingWind: 0, passes: 0, chips: [0, 0, 0, 0], hands: [] };
+};
+/** the session after a hand: chips added, the deal kept or passed, the wind turned after four passes */
+function afterHand(s: Session, h: SessionHand): Session {
+  const chips = s.chips.map((c, i) => c + (h.chips[i] ?? 0));
+  const keeps = h.winner === null || h.winner === s.dealer;
+  const dealer = keeps ? s.dealer : (s.dealer + 1) % 4;
+  const passes = keeps ? s.passes : s.passes + 1;
+  const prevailingWind = keeps ? s.prevailingWind : (passes % 4 === 0 ? (s.prevailingWind + 1) % 4 : s.prevailingWind);
+  return { ...s, chips, dealer, passes, prevailingWind, hands: [...s.hands, h] };
+}
+
 export default function Play() {
   const live = useRef<Live | null>(null);
   /** bumped after every engine step so the screen redraws from the engine's state */
@@ -124,6 +150,11 @@ export default function Play() {
   const money = useMemo(() => loadConfig(), []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const earlier = useMemo(() => readPlays(), [hand, tick]);
+  const [session, setSessionState] = useState<Session | null>(loadSession);
+  const sessionRef = useRef<Session | null>(session);
+  const setSession = (s: Session | null) => { sessionRef.current = s; saveSession(s); setSessionState(s); };
+  /** the session summary is on screen */
+  const [summary, setSummary] = useState(false);
 
   /** Bring the engine to the next decision. If it is the human's, capture the position before
    *  anything is shown; if the hand is over, close it out. */
@@ -141,6 +172,8 @@ export default function Play() {
         };
         recordHand(finished);
         live.current = null;
+        const s = sessionRef.current;
+        if (s) setSession(afterHand(s, { id: finished.id, at: finished.at, dealer: finished.dealer, prevailingWind: finished.prevailingWind, winner: r.winner, discarder: r.discarder, chips: r.chipsDelta, decisions: L.decisions.length }));
         open(finished);
         return;
       }
@@ -164,9 +197,13 @@ export default function Play() {
     const rules = rulesForPack({ wildcards: money.jokers, minimumTai: money.minTai }, '$', money);
     const seed = Math.floor(Math.random() * 1e9);
     const wall = new Wall(makeRng(seed), rules.unplayable_tiles, rules.jokers.count);
-    const dealer = Math.floor(Math.random() * 4);
+    // the session says who deals and which wind prevails; the first hand of one starts it
+    const s = sessionRef.current ?? newSession();
+    if (!sessionRef.current) setSession(s);
+    setSummary(false);
+    const dealer = s.dealer, prevailingWind = s.prevailingWind;
     try {
-      const g = GameState.deal(tableConfigOf(rules), wall, { dealer, prevailingWind: 0, rules });
+      const g = GameState.deal(tableConfigOf(rules), wall, { dealer, prevailingWind, rules });
       live.current = { g, bots: [0, 1, 2, 3].map(() => (rules.jokers.count === 0 ? new AltReadsCoachBot(READS_NOWILD) : new CoachBot())), rules, human: 0, id: `play:${seed}:${Date.now()}`, at: Date.now(), decisions: [], pending: null };
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); return; }
     setErr(null); setHand(null); handRef.current = null;
@@ -284,6 +321,7 @@ export default function Play() {
         <Card>
           <CardContent className="pt-4 space-y-2 text-sm">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {session && <span className="text-muted-foreground">hand <b className="text-foreground">{session.hands.length + 1}</b>, {WIND[g.prevailingWind]}圈, session <b className="text-foreground">{fmt(session.chips[human] ?? 0)}</b></span>}
               <span>You are <b>{WIND[g.role(human)]}</b>{g.dealer === human && ' (host)'}</span>
               <span className="text-muted-foreground">turn <b className="text-foreground">{g.playerTurns}</b>, <J>Wall</J> <b className="text-foreground">{g.wall.remaining}</b></span>
               {last && <span className="flex items-center gap-1 text-muted-foreground">last throw <Tile kind={kindOf(last.tile)} size="xxs" /> by {WIND[g.role(last.seat)]}</span>}
@@ -337,6 +375,50 @@ export default function Play() {
     );
   }
 
+  // ------------------------------------------------------------------ the session summary
+  if (summary && session) {
+    const you = 0;
+    const won = session.hands.filter((h) => h.winner === you).length;
+    // fed: your throw won it for somebody; paying for a self-draw is not feeding
+    const fed = session.hands.filter((h) => h.winner !== null && h.winner !== you && h.discarder === you).length;
+    // the judged decisions of the session's hands, costliest first: the point of the session is these, not the money
+    const played = readPlays().filter((h) => session.hands.some((x) => x.id === h.id));
+    const judged = played.flatMap((h) => h.decisions.map((d, i) => ({ h, i, d })).filter((x) => x.d.verdict));
+    const costly = judged
+      .map((x) => ({ ...x, cost: x.d.verdict!.kind === 'mistake' || x.d.verdict!.kind === 'winDeclined' ? Math.abs(x.d.verdict!.gap) : 0 }))
+      .filter((x) => x.cost > 0).sort((a, b) => b.cost - a.cost).slice(0, 5);
+    const totalDecisions = session.hands.reduce((a, h) => a + h.decisions, 0);
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-5 space-y-4">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Session: {session.hands.length} {session.hands.length === 1 ? 'hand' : 'hands'}</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p className="text-muted-foreground">Money over a few hands is mostly luck. What the session says about your play is the list of judged decisions, costliest first.</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <span>You won <b>{won}</b> of {session.hands.length}, fed <b>{fed}</b></span>
+              <span>{totalDecisions} decisions, {judged.length} judged, {judged.filter((x) => x.d.verdict!.kind === 'mistake' || x.d.verdict!.kind === 'winDeclined').length} mistakes</span>
+              <span className="text-muted-foreground">chips: {[0, 1, 2, 3].map((s) => `${s === you ? 'you' : WIND[roleOf(s, session.firstDealer)]} ${fmt(session.chips[s] ?? 0)}`).join(', ')}</span>
+            </div>
+            {costly.length > 0 ? (
+              <ul className="space-y-1">
+                {costly.map((x) => (
+                  <li key={`${x.h.id}:${x.i}`}>
+                    <button className="underline" onClick={() => { setSummary(false); open(x.h); }}>hand {session.hands.findIndex((h) => h.id === x.h.id) + 1}, turn {x.d.turn}</button>: {textOf(encAction(x.d.chosen))}, {x.d.verdict!.kind === 'winDeclined' ? 'a win declined' : <>worth <b>{fmt(x.cost)}</b> less than {textOf(x.d.verdict!.reference)}</>}
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-muted-foreground">{judged.length ? 'Nothing judged was a mistake.' : 'Nothing judged yet. Open a hand below and judge its decisions; the costly ones will be listed here.'}</p>}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button onClick={() => { setSession(null); setSummary(false); setHand(null); handRef.current = null; }}>Start a new session</Button>
+              <Button variant="outline" onClick={() => setSummary(false)}>Back</Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Earlier list={played} onOpen={(h) => { setSummary(false); open(h); }} />
+      </div>
+    );
+  }
+
   // ------------------------------------------------------------------ the review, after the hand
   if (hand) {
     const r = hand.result, you = hand.seat;
@@ -365,8 +447,12 @@ export default function Play() {
               calls were unchecked and a taken win was simply not marked; both were out of date.
             */}
             <p className="text-muted-foreground">Trust it on throws, <J>Pong</J> and <J>Chow</J>, which were measured for money against strong players. A win on offer is not judged by the play-outs at all: taking it is right and declining it is a mistake, by the rule the Train tab uses.</p>
+            {session && session.hands.some((x) => x.id === hand.id) && (
+              <p className="text-muted-foreground">Session: hand {session.hands.findIndex((x) => x.id === hand.id) + 1}, you {fmt(session.chips[you] ?? 0)} so far. Next: {WIND[session.prevailingWind]}圈, you are {WIND[roleOf(you, session.dealer)]}{session.dealer === you ? ' and you deal' : ''}.</p>
+            )}
             <div className="flex flex-wrap gap-2 pt-1">
-              <Button onClick={deal}>Play another hand</Button>
+              <Button onClick={deal}>{session && session.hands.some((x) => x.id === hand.id) ? 'Next hand' : 'Play another hand'}</Button>
+              {session && session.hands.length > 0 && <Button variant="outline" onClick={() => setSummary(true)}>End the session</Button>}
               {judgedCount < hand.decisions.length && (
                 <Button variant="outline" disabled={allRunning} onClick={judgeAll}>
                   {allRunning ? `Judging… ${judgedCount} of ${hand.decisions.length}` : `Judge all ${hand.decisions.length - judgedCount} unjudged`}
@@ -396,7 +482,11 @@ export default function Play() {
           <p>One hand against three <J>Coaches</J>, at your table: {money.jokers} <J>Jokers</J>, {money.minTai} <J>Tai</J> minimum, {money.name}.</p>
           <p className="text-muted-foreground">A hand's result is mostly luck. What is worth reading is the review afterwards, where every decision you made can be judged by play-outs against the <J>Measured Best</J>.</p>
           {err && <p className="text-destructive">The engine stopped: {err}</p>}
-          <Button onClick={deal}>Deal</Button>
+          {session && session.hands.length > 0 && <p className="text-muted-foreground">A session is in progress: {session.hands.length} {session.hands.length === 1 ? 'hand' : 'hands'} played, you {fmt(session.chips[0] ?? 0)}. Next: {WIND[session.prevailingWind]}圈, you are {WIND[roleOf(0, session.dealer)]}{session.dealer === 0 ? ' and you deal' : ''}.</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={deal}>{session && session.hands.length > 0 ? 'Next hand' : 'Deal'}</Button>
+            {session && session.hands.length > 0 && <Button variant="outline" onClick={() => setSummary(true)}>End the session</Button>}
+          </div>
         </CardContent>
       </Card>
       <Earlier list={earlier} onOpen={open} />
