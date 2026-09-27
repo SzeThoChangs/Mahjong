@@ -318,6 +318,30 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+### The grades on colour-hand positions, re-made with the Coach playing the play-outs
+
+**Uncertainty addressed:** Every pack answer is the measured best when the rest of the hand is
+played by `shanten` bots, which never collect a suit. On 2026-09-28 a policy fitted to those grades
+gave up colour hands and lost money, which measured the bias. The question is how many of the
+answers the app teaches on colour-hand positions are wrong because of it, and what they should be.
+
+**Origin:** the fourth item of `D-034`, scoped to where the bias was measured to live.
+
+**Counted before the run, 2026-09-28:** discard questions whose plan, by the Coach's own numbers, is
+a half-colour hand: 287 of 4,001 in the 0-Joker pack (7.2%), 637 of 3,303 in `min1` (19.3%), 1,780
+of 4,739 in `coach` (37.6%). The fitted policy changes the Coach's tile on 1,410, 638 and 515 of the
+same discards (35.2%, 19.3%, 10.9%).
+
+**Named before the run:** `coachgrade.ts --select colour`, the 0-Joker pack first, all 287, the
+pack's top three actions judged twice on the same hidden deals at 256 play-outs: once by shanten
+bots, once with the Coach in all four chairs. An answer counts as changed when the Coach arm's best
+beats the shanten arm's best by more than two paired standard errors inside the Coach arm, the same
+test the Pong stage used. Output `data/gen/coach2/regrade-colour-w*.jsonl`. If the changed share is
+material, the follow-up is a pack whose colour-plan questions carry the Coach-played grade, marked
+as such, then the other two packs.
+
+**Status:** RUNNING from 2026-09-28, three workers.
+
 ### A session on the Play tab: hands in a row, the dealer moving, money carried across
 
 **Uncertainty addressed:** The Play tab plays one hand and reviews it. `PLAN.md` Phase 7 names the

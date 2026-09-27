@@ -16,7 +16,8 @@
  */
 import { readdirSync, readFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, fnv1a, type PackQuestion } from 'sg-mahjong-solver';
+import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, fnv1a, rankDiscards, type PackQuestion, type Context } from 'sg-mahjong-solver';
+import type { Meld } from 'sg-mahjong-engine';
 import { rulesForDir } from './tablerules.js';
 
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
@@ -39,8 +40,26 @@ const all: Q[] = [];
  * pack's best is a Pong, and judges only that Pong against passing - the positions the money test
  * asks about.
  */
+/**
+ * `--select colour` takes every discard question where the Coach's own numbers (the fitted policy
+ * off) name a half-colour plan. Those are the positions the shanten play-outs are measured to
+ * misjudge - a policy fitted to their grades gave up colour hands and lost money (PROTOTYPE.md,
+ * 2026-09-28) - so they are where a Coach-played grade is worth its cost.
+ */
 const select = arg('select', 'hard');
-const picked = (q: Q) => (select === 'pong' ? q.k === 'claim' && q.best.startsWith('pong') && q.actions.some((a) => a.a === 'pass') : hard(q));
+const ixTable = JSON.parse(readFileSync(join(`../web/public/quiz/${pack}`, 'index.json'), 'utf8')) as { table: { wildcards: number; minimumTai: number } };
+const onColourPlan = (q: Q & { h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; seat: number; dl?: number; w: number; b: number[]; t: number }): boolean => {
+  if (q.k !== 'discard' || q.h.length % 3 !== 2) return false;
+  const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
+  const visible: number[] = [];
+  for (const d of q.disc ?? []) visible.push(d[1]!);
+  (q.pm ?? []).forEach((ms, seat) => { if (seat !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
+  const ctx: Context = { seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
+    minimumFan: ixTable.table.minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(ixTable.table.wildcards), visible,
+    opponentMelds: (q.pm ?? []).map((ms, seat) => (seat === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };
+  try { return rankDiscards(q.h, melds, ctx, { fitted: false }).best.target.id === 'half_color'; } catch { return false; }
+};
+const picked = (q: Q) => (select === 'pong' ? q.k === 'claim' && q.best.startsWith('pong') && q.actions.some((a) => a.a === 'pass') : select === 'colour' ? onColourPlan(q as never) : hard(q));
 for (const f of readdirSync(dir).filter((x) => /^\d+\.json$/.test(x)).sort())
   for (const q of (JSON.parse(readFileSync(join(dir, f), 'utf8')) as { questions: Q[] }).questions) if (picked(q)) all.push(q);
 // a fixed, spread-out sample: order by a hash of the id, take the first N, then this worker's share
