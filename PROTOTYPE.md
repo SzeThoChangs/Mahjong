@@ -437,8 +437,42 @@ says the win mix moved.
 sample is not past two standard errors, and the pooled figure sits on the bar. The first sample's
 +0.406 shrank by more than half on fresh deals, which is `R-004` happening again. What held on both
 samples is the shape: a quarter more hands won for little money, so the fit wins cheaper hands. The
-win-mix tally added to `policymoney.ts` (self-check identical on both arms) runs next on deals
-7920001 onward, both fields, to say which hands moved; that is what the next candidate is aimed at.
+win-mix tally added to `policymoney.ts` (self-check identical on both arms) ran on deals 7920001 to
+7922000, both fields.
+
+**The win mix, 2026-09-28 00:48 to 01:20.** Three Coaches, third sample: +0.128 +/- 0.183, t 0.7.
+Pooled over the three samples, 24,000 paired deals: +0.218 +/- 0.106, t 2.1. Recorded players:
+-0.202 +/- 0.176, t -1.1; pooled over two, -0.135 +/- 0.123. What the tested seat won with, three
+Coaches:
+
+                          Coach              candidate A
+    hands won         1,808 at 15.64        2,325 at 13.58 chips each
+    chicken             335                 1,488
+    chou ping hu        944                   587
+    half-colour         290                    59
+    full colour          25                     6
+    all-pong             85                    99
+    wins by fan       1: 390  4+: 471       1: 816  4+: 338
+    deal-ins          1,293 at -12.23       1,370 at -12.99
+    drawn hands         768                   594
+
+Against the recorded players the same, larger: chicken 520 against 2,595, half-colour 511 against 79.
+
+**What this establishes.** Candidate A takes its extra hands by giving up colour hands for chicken
+hands: four times the chicken wins, a fifth of the half-colour wins, and a chip and a half less per
+win. At a strong table that is worth about a fifth of a chip a game and no more, and against loose
+players it costs money. This is the label bias the plan named before any fitting: the play-outs
+that grade every decision are played by bots that never collect a suit, so a fit to those grades
+learns that a suit is not worth collecting. It is now measured, on 24,000 paired deals, rather than
+argued. Step 2 as written, more features, is aimed at the wrong thing: a feature that sees a colour
+hand being built cannot outweigh a label that says to abandon it.
+
+**Named before the run, candidate B (the hybrid):** the Coach's own plan decides when the model is
+allowed to pick. When `rankDiscards` says the best plan is a half-colour hand or the thirteen, the
+Coach's tile is thrown; on every other plan the fit's tile is. If the gain against Coaches came from
+the cheap plans and the loss against loose players from the abandoned colour hands, this keeps the
+first and drops the second, and it stays explainable: the Coach's plan is the Coach's, and the model
+only chooses within it. Deals 7930001 to 7932000, both fields, the same gate.
 
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until

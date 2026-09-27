@@ -17,7 +17,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
-import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, readsFor, type PolicyWeights } from 'sg-mahjong-solver';
+import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, type PolicyWeights } from 'sg-mahjong-solver';
 import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
 import { fnv1a } from './records.js';
 import { rulesForDir } from './tablerules.js';
@@ -27,6 +27,8 @@ const n = Number(process.argv[2] ?? 2000);
 const fieldKind = arg('field', 'coach');
 const from = Number(arg('from', '7900001'));
 const self = process.argv.includes('--self');
+/** `--hybrid`: the Coach keeps the tile whenever its plan is a colour hand or the thirteen; the fit picks otherwise */
+const hybrid = process.argv.includes('--hybrid');
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
@@ -42,6 +44,27 @@ class FittedDiscardBot extends AltReadsCoachBot {
   override chooseDiscard(v: PlayerView): TileInstance {
     const r = policyRankWith(v.hand.map(kindOf), meldsOf(v), this.ctx(v), this.ws);
     return v.hand.find((t) => kindOf(t) === r.best) ?? super.chooseDiscard(v);
+  }
+}
+
+/**
+ * Candidate B: the fit is allowed to choose only inside the Coach's cheap plans.
+ *
+ * Candidate A won a quarter more hands and made almost nothing from them because it swapped
+ * colour hands for chicken hands (the win mix, PROTOTYPE.md). The grades it was fitted to come
+ * from play-outs that never collect a suit, so no feature can teach it otherwise. Here the Coach's
+ * own plan decides: on a half-colour or thirteen-orphans plan the Coach's tile goes, on any other
+ * plan the fit's. What the app explains stays the Coach's plan either way.
+ */
+class HybridBot extends AltReadsCoachBot {
+  constructor(private readonly ws: PolicyWeights) { super(reads); }
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const hand = v.hand.map(kindOf), melds = meldsOf(v), ctx = this.ctx(v);
+    const r = rankDiscards(hand, melds, ctx);
+    const plan = r.best.target.id;
+    if (plan === 'half_color' || plan === 'thirteen') return v.hand.find((t) => kindOf(t) === r.best.tile)!;
+    const m = policyRankWith(hand, melds, ctx, this.ws);
+    return v.hand.find((t) => kindOf(t) === m.best) ?? v.hand.find((t) => kindOf(t) === r.best.tile)!;
   }
 }
 
@@ -84,7 +107,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
-    const b = play(() => (weights ? new FittedDiscardBot(weights) : new AltReadsCoachBot(reads)));
+    const b = play(() => (weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -94,7 +117,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : weightsPath} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${self ? 'self-check' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {
