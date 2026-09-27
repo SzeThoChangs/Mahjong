@@ -1,8 +1,10 @@
 # Framework — Singapore Mahjong
 
 This is the plan. It says what to practise, in what order, on which days, and how to work out what
-is going wrong so it can be fixed. It is built on the nine ideas in `CLAUDE.md`, and on about two
-weeks of measurement written up in `FINDINGS.md` beside this file.
+is going wrong so it can be fixed. It is built on the nine ideas in `CLAUDE.md`, and on about four
+weeks of measurement written up in `FINDINGS.md` beside this file. It was brought up to date on
+2026-09-28, after the app's two practice tabs became one and after the answers on winning were
+measured for money.
 
 One thing makes this plan different from the chess one. For chess we took the patterns from books
 and trusted them. Here we measured them. The playbook holds 103 rules taken from a tactics book and
@@ -24,18 +26,20 @@ itself. Both now say what they mean.
 
 ## The table this is for
 
-Singapore mahjong, minimum 2 *Tai*, capped at 5, *Zi Mo* allowed at 1. Four *Jokers*.
+Singapore mahjong. Changs's own table has no *Jokers* and a 1 *Tai* minimum, capped at 5, and since
+2026-09-16 that is the table the app opens on (`D-029`). The app also carries two tables he plays
+at less: four *Jokers* with a 2 *Tai* minimum, and four *Jokers* with a 1 *Tai* minimum. Each has
+its own question pack, measured at that table, so an answer on screen is priced for the table it
+came from.
 
-Both of those last two are rules Changs also plays without, and it matters more than it sounds.
-Everything measured in this project — every card, every table, every number below — was measured at
-four *Jokers* and a 2 *Tai* minimum. Taking the *Jokers* out, on the same deals with the same
+The table matters more than it sounds. Taking the *Jokers* out, on the same deals with the same
 players, makes hands run 54 *Turns* instead of 40, drawn hands 19% instead of 0.6%, and a late throw
-about twice as likely to complete somebody. So at a no-*Joker* table the shape advice should still
-hold, being arithmetic about tiles, while the advice about timing, danger and what a hand is worth
-is measured at the wrong table. `TABLE-VARIANTS.md` is the plan for fixing that. The shooter
-pays the whole bill on a discard win. *Flowers* and *Animals* pay immediately, and here they pay double.
-The full house rules are in `data/table.config.json`, and everything below assumes them —
-several of the measured answers change if the minimum changes.
+about twice as likely to complete somebody. The shape advice holds at every table, being arithmetic
+about tiles. The danger reads do not, and the *Coach* now reads danger from a table measured
+without *Jokers* when it is at one, which was worth 0.215 chips a game there over 32,000 paired
+deals (`D-030`, 2026-09-17). The shooter pays the whole bill on a discard win. *Flowers* and
+*Animals* pay immediately, and here they pay double. The full house rules are in
+`data/table.config.json` and `TABLE-VARIANTS.md`.
 
 ## What the skill is made of
 
@@ -99,7 +103,11 @@ large. Calling beats passing 72% of the time with no condition at all. A call th
 *Ting Pai* is best 88% of the time and one that costs it a step is best 6%. From a hand already
 *Ting Pai*, call only when it leaves you on more live tiles, which is best 78% of the time, and pass
 when it does not, where calling is best 27%. Whether an opponent looks dangerous changes none of
-this, and neither does how late it is. Remember that at this table a *Chow* comes only from the seat
+this, and neither does how late it is. And one rule stands above the rest of calling at a table of
+strong players: when you can win, win. Declining an offered win to play for a bigger hand was
+measured over 48,000 paired deals and costs between a fifth and a half of a chip a game against
+three *Coaches*, and no judge this project has beats the plain rule (`D-032`, `D-033`, 2026-09-26).
+The app answers every question that offers a win with that rule. Remember that at this table a *Chow* comes only from the seat
 on your left and play runs to your right, so calling advice from Japanese material points at the
 wrong seat.
 
@@ -137,8 +145,8 @@ apart by watching. You win about one hand in four. Nothing you can see in a sing
 whether you played it well.
 
 So this plan never judges a decision by its result. It judges against a *Measured Best*: every
-position in the app's quiz packs has had each legal action played out 128 times, and the best is the
-one with the highest average. That is the only honest grading available, and it comes with three
+position in the app's quiz packs has had each legal action played out 128 times, then checked again
+on 512 fresh play-outs before it was allowed in, and the best is the one with the highest average. That is the only honest grading available, and it comes with three
 caveats worth keeping in mind. The play-outs are finished by a fast bot rather than by good players,
 so an option whose value depends on playing a colour hand well is undervalued. The best is the best
 action in the whole position, so it prices danger and value together and a card about shape is being
@@ -150,16 +158,15 @@ The practical rule that follows: never say "that worked". Say "that was the *Mea
 was not", and when it was not, find out why.
 
 One thing about the app follows from the same rule and you should know it before you trust a score.
-The two practice tabs are graded by different judges. The Real quiz grades against those play-outs.
-The Train tab grades against the *Coach*, which explains its reasoning in words — the reason it is
-worth practising against — but which picks the *Measured Best* only 52.8% of the time on positions
-where the play-outs genuinely separate an answer, and 36.1% early in the hand. On its worst
-combination, an early hand headed for the cheap win, it is right 7.6% of the time, which is worse
-than guessing.
+Since 2026-09-10 there is one practice tab, Train, and every question on it is a real recorded
+position graded by those play-outs. The *Coach* explains the position in words underneath, which is
+the reason it is worth reading, but the verdict is the play-outs', and where the *Coach* would have
+thrown something else the screen says so. On the 7,528 pack positions held out on 2026-09-27 the
+*Coach* picked the *Measured Best* 71.2% of the time: 64.8% early in a hand, 81.2% in the middle
+and 64.8% late.
 
-So treat the Train tab as a place to practise REASONS and the Real quiz as the place that says
-whether you are right. Where the two disagree, the play-outs win. And do not take a Train verdict on
-an early hand very seriously, because that is exactly where its judge is weakest.
+So read the *Coach* for the REASONS and take the verdict from the bars. Where the two disagree, the
+play-outs win, except on a win on offer, where the rule above wins over both.
 
 ## The five components, and where they live
 
@@ -178,18 +185,20 @@ which opponent had the most sets face up, or which shape the position was about.
 question, because those four are different skills and one of them is usually much worse than the
 others.
 
-Working it out is the Train tab. A hand, no hints, and one question: which tile do you throw. It
-grades against the *Coach* and explains the answer in plain words.
+Working it out and mixed practice are both the Train tab, and the difference is the filter. A
+question is a real recorded position, graded by play-out, with no label saying what it is about and
+no promise that anything special is happening, which is the component most training material skips
+and the one that carries over into play. With "hard only" on, which is how the tab opens, only the
+positions where a real player went wrong by a clear margin are served; with it off, every position
+in the pack is. There are four packs: one for each of the three tables, cut from hands played by
+weak bots, and a fourth at Changs's table cut from hands where all four seats were the *Coach*, so
+the positions are the ones a strong table produces. Whether those feel different has not been
+measured; that is his to say.
 
-Mixed practice is the Real quiz. These are positions from real recorded games, graded by play-out,
-with no label saying what the position is about and no promise that anything special is happening.
-This is the component most training material skips and the one that carries over into play.
-
-The mistake record is the Review tab, and it is fed from both practice tabs. A card from the Real
-quiz was judged by the play-outs and is a sure mistake. A card from the Train tab was judged by the
-*Coach*, which is right about half the time on positions like that, so it is worth meeting again but
-is not proof you were wrong. Each card says which judge it came from and the diagnosis counts them
-separately. Every mistake comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
+The mistake record is the Review tab. A card from Train was judged by the play-outs and is a sure
+mistake. A card from a made-up hand, which the app deals only when a pack has nothing left for the
+filters, was judged by the *Coach* and is worth meeting again but is not proof you were wrong. Each
+card says which judge it came from and the diagnosis counts them separately. Every mistake comes back after a day, then three days, a week, two weeks and a month. It asks rather than reminds — the hand comes back with nothing
 attached, not your old answer and not the *Coach's*, because recognising an answer feels almost
 exactly like knowing it. Getting one wrong sends it back to the start.
 
@@ -287,23 +296,28 @@ move: sort your misses, and once enough of them are about running out of time it
 the look, and once none of them are it offers to shorten it. Take the offer rather than guessing,
 because the same score at a shorter look is progress and the same score at the same look is not.
 
-The fourth stage is working it out, on the Train tab. Start with the hand types you have just read
-about. When you throw a tile, say why before you tap, because the reason is the thing being trained
-and the tile is only evidence of it.
+The fourth stage is working it out, on the Train tab with "hard only" off and the discard filter on.
+Start with the hand types you have just read about. When you throw a tile, say why before you tap,
+because the reason is the thing being trained and the tile is only evidence of it, and read the
+*Coach's* reasons afterwards against the bars.
 
-The fifth stage is mixed practice, on the Real quiz. No labels, real positions, everything you know
-competing to be the thing you remember. It can also be aimed: once your record has a leading *Cause*,
-the quiz will serve only positions where the throw actually made failed for that reason, which puts
-the honest grader behind the practice rather than behind a shuffled deck. Use that when a *Cause* has
-been at the top for a while, and use the unfiltered deck the rest of the time — the whole point of
-mixed practice is that nothing tells you what the position is about. Expect to be worse here than on the Train tab, and expect
-that gap to be the honest measure of how much of this you can actually use.
+The fifth stage is mixed practice, on the same tab with "hard only" on and the filter on "all". No
+labels, real positions, throws and calls and wins together, everything you know competing to be
+the thing you remember. It can also be aimed: once your record has a leading *Cause*, the tab will
+serve only positions where the throw actually made failed for that reason, which puts the honest
+grader behind the practice rather than behind a shuffled deck. Use that when a *Cause* has been at
+the top for a while, and use the unfiltered deck the rest of the time, because the whole point of
+mixed practice is that nothing tells you what the position is about. Once the weak-bot pack feels
+familiar, switch to the strong-table pack.
 
 The sixth stage is reading. The read cards, plus the Film room, which replays real hands so you can
 watch what a seat's discards said about it before the hand ended.
 
 The seventh stage is pushing and folding, which is last because it needs everything before it: you
-cannot decide whether to push without knowing what your hand is worth and what theirs is.
+cannot decide whether to push without knowing what your hand is worth and what theirs is. The Play
+tab is for this stage: one whole hand against three *Coaches* at your table, and afterwards every
+decision you made can be judged by the same play-outs, one at a time. A hand's result is mostly
+luck, so the tab is built to be reviewed rather than won.
 
 Throughout all seven, the mistake record runs. It is not a stage. It is the thing that makes the
 stages stick.
@@ -319,14 +333,16 @@ chess is where you learn to run this system in a game that tells you the truth.
 
 Spend the hour like this. Five minutes on the Review tab, clearing whatever is due. Do this first,
 while you are fresh, because it is the highest-value thing in the hour and the easiest to skip.
-Then ten minutes on the Spot drill. Then twenty-five minutes on the Train tab, and if the Review tab
-has named a leading *Cause*, spend that time on hands where that *Cause* bites. Then fifteen minutes on
-the Real quiz, which is the one that transfers. Then five minutes with one card from the Tips page:
+Then ten minutes on the Spot drill. Then twenty-five minutes on the Train tab with "hard only" on,
+and if the Review tab has named a leading *Cause*, spend that time on hands where that *Cause*
+bites. Then fifteen minutes on the strong-table pack, or one hand on the Play tab with its review,
+which are the two that look most like the table you sit at. Then five minutes with one card from the
+Tips page:
 read it, close it, and explain it out loud in plain words. Where the sentence falls apart is the
 thing you do not yet understand, and that is the fourth idea working.
 
 Two rules about the hour. If the review queue is long, let it eat the Spot and Tips time rather than
-the Train and Real quiz time, because meeting an old mistake again beats meeting a new one. And stop
+the Train time, because meeting an old mistake again beats meeting a new one. And stop
 at the hour. Practice at the edge of your ability is exhausting, and the hours past the point of
 tiredness turn into entertainment that feels like work.
 
@@ -340,12 +356,11 @@ Not by how it feels. That is the ninth idea, and it is the one that catches ever
 that feel smooth store the least. If a session felt fluent you probably practised something you had
 already learnt.
 
-The honest signals are these. Your Real quiz score should rise, and that one is worth more than the
-rest put together, because the Real quiz is real positions judged by play-outs rather than by
-opinion. Do not read the gap between your Train score and your Real quiz score as a measure of
-transfer: the two tabs are graded by different judges that agree about half the time, so most of
-that gap is theirs and not yours. The leading *Cause* in your mistake record should change over time, because a *Cause* that stays at the top
-for a month means the practice is not aimed at it. Reviews should come back right more often at the
+The honest signals are these. Your Train score with "hard only" on should rise, and that one is
+worth more than the rest put together, because it is real positions judged by play-outs rather than
+by opinion, on exactly the positions where a real player went wrong. The leading *Cause* in your
+mistake record should change over time, because a *Cause* that stays at the top for a month means the
+practice is not aimed at it. Reviews should come back right more often at the
 longer intervals rather than at the short ones. And on the Spot drill, the same accuracy at a
 shorter look is real progress in a way that the same accuracy at the same look is not.
 
@@ -370,11 +385,14 @@ guess, chosen so that the two components that transfer get more than half the ti
 The claim that spotting is a separate skill from solving is borrowed from the chess framework and
 has not been tested here, though the Spot tab keeps the per-question scores that would test it.
 
-The biggest known weakness of the app is the one above: the tab you will spend most of the hour on
-is graded by the *Coach*, and the *Coach* is right about half the time on *Decisive* positions. It is
-still far better than the simulator bots and miles better than random, and it is the only thing here
-that can tell you WHY. But the honest ordering is that the Real quiz judges and the Train tab
-teaches, and the record hears from both, marked.
+The biggest known weakness of the app is in the grader itself. The play-outs that price every
+answer are finished by simple bots that never collect a suit, so a position whose value depends on
+playing a colour hand well is undervalued by them. That was argued from 2026-09-13 and measured on
+2026-09-28: a policy fitted to those grades learned to give up colour hands for cheap ones, and won
+a quarter more hands for less money. On a throw or a call it costs little, because those were
+measured to hold against strong players, and on a win on offer the rule replaces the grader. On a
+colour hand in the making, read the *Coach's* plan and trust it over the bars. The honest ordering
+is that the play-outs judge, the *Coach* explains, and the record hears from both, marked.
 
 And one caution about the *Coach* that grades you. It was tuned against opponents like itself, and
 when we sat it at a table of weaker bots one of its improvements reversed. Its advice on shape is
@@ -388,11 +406,14 @@ human has been measured against any of it, and that is the real gap.
 
 ## Running the app
 
-From this folder, `pnpm install` then `pnpm dev`, and it is at `http://localhost:5173`. Everything it
-remembers is in your browser and nowhere else, so save it: the Table setup tab has a button that
-writes your whole record to a file and another that puts it back. Do that at the end of the first
-week and then whenever you remember. A mistake record is worth most in its third and fourth week,
-which is exactly when losing it would cost the most.
+It is at `https://szethochangs.github.io/Mahjong/`, and from this folder `pnpm install` then
+`pnpm dev` runs it at `http://localhost:5173`. Everything it remembers is in your browser and
+nowhere else. Two things follow. On an iPhone, add it to the home screen: Safari deletes a
+website's stored data after seven days without a visit, and an app on the home screen is kept
+(WebKit, 2020). And save it: the Table setup tab has a button that writes your whole record to a
+file and another that puts it back. Do that at the end of the first week and then whenever you
+remember. A mistake record is worth most in its third and fourth week, which is exactly when losing
+it would cost the most.
 
 ## Sources
 
@@ -412,6 +433,10 @@ PokerNews piece, https://www.pokernews.com/strategy/jared-tendler-in-defense-of-
 Chiba, D. (2016). Riichi Book 1. https://riichi.wiki/Riichi_Book_1, with the book itself at
 https://f.hubspotusercontent-eu1.net/hubfs/26591288/Mahjong%20documents/Riichi/RiichiBook1.pdf — the
 five-block method, used for the shape group and for the pair rule that does not transfer here.
+
+WebKit (2020). Full Third-Party Cookie Blocking and More.
+https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/ — script-writable storage is
+deleted after seven days of no interaction with the site; used for the home-screen advice.
 
 tenpaiman (2012). Basic Defense Techniques in Mahjong. https://osamuko.com/basic-defense-techniques-in-mahjong/
 — *Genbutsu* and *Suji*, and the note that both apply against open hands with no *Riichi* declared;
