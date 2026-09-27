@@ -431,6 +431,15 @@ errors, and the two are then pooled. Also to measure before anything ships: what
 wins with (the hand types and their sizes), because "more hands, less money" against the loose field
 says the win mix moved.
 
+**Confirmation, run 2026-09-28 00:20 to 00:47, deals 7910001 to 7912000, three Coaches:** +0.120
++/- 0.185, t 0.7, hands won 1,807 against 2,301. Pooled with the first sample, 16,000 paired deals:
++0.263 +/- 0.129, t 2.0. **Candidate A is not ahead** by the rule set before the run: the second
+sample is not past two standard errors, and the pooled figure sits on the bar. The first sample's
++0.406 shrank by more than half on fresh deals, which is `R-004` happening again. What held on both
+samples is the shape: a quarter more hands won for little money, so the fit wins cheaper hands. The
+win-mix tally added to `policymoney.ts` (self-check identical on both arms) runs next on deals
+7920001 onward, both fields, to say which hands moved; that is what the next candidate is aimed at.
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.

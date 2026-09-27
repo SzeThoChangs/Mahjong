@@ -101,32 +101,34 @@ these questions and stores the win as the answer.
 
 ## Where We Stopped
 
-2026-09-27, 23:30. The three packs rebuilt with the win rule are on the site (pushed with the ten
-passes recorded in `MISTAKES.md`). The strong-table pack is on the site as a fourth pack, at Changs's
-word, and recorded in `PROTOTYPE.md`. Nothing is running on the Mac.
+2026-09-28, 00:50. The site serves four packs, the three rebuilt with the win rule and the strong-table
+one. Candidate A of the Coach work (`data/gen/coach2/policy-a.json`) is fitted and money-tested:
++0.406 +/- 0.181 on the first 8,000 paired deals against three Coaches, +0.120 +/- 0.185 on the
+next 8,000, flat against the recorded players. By the rule set before the run it is not ahead. Both
+samples agree on one thing: it wins a quarter more hands for little money.
 
-The Coach work has its plan and first measurement in `PROTOTYPE.md`, its trainer
-(`datagen/src/policyfit.ts`) and its money gate (`datagen/src/policymoney.ts`, self-check exactly
-0.000). Neither has been run on data.
+**Running:** `data/gen/coach2/mix-a-chain.sh`, the same test on deals 7920001 to 7922000 with the
+win-mix tally, both fields, about 35 minutes. Log `data/gen/coach2/mix-a-*.log`.
 
 ## Recommended Next Action
 
 ### Next
 
-The first fit: `policyfit.ts` on the three runs with `--maxPerDir 150000`, held out against the three
-packs, then `policymoney.ts 2000 --weights <out> --field coach` and `--field pool` at the 0-Joker
-table. Name the deal range before running (7900001 onward is reserved for this).
+Read the win mix: which combinations and fan sizes the fitted arm wins with against the Coach's, and
+what it loses to. Then step 2 of the plan: the features the current set lacks (colour and all-pong
+progress, danger at the table's Joker count, wall left), fitted the same way and money-tested the
+same way, deals 7930001 onward.
 
 ### Why
 
-It is step 1 of the plan Changs chose, and the Mac is free. The result decides whether the
-regret-weighted loss alone moves the early and middle game, or whether the features (step 2) are
-needed first.
+Candidate A's shape, more cheap hands and no more money, is what the fitted tables did in 2026-09-13's
+field test, and the reason then was that the features do not see a colour hand being built. The mix
+says whether that is the reason again before a feature is written.
 
 ### Expected Outcome
 
-A held-out table of mean regret by phase for the fit and the Coach on the same positions, and two
-money figures with standard errors. Nothing ships on this run whatever it says; it says where to go.
+A named list of features for candidate B with the mix evidence beside each, then candidate B's fit
+and its two money samples.
 
 ## After That
 
