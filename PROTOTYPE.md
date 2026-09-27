@@ -474,6 +474,22 @@ the cheap plans and the loss against loose players from the abandoned colour han
 first and drops the second, and it stays explainable: the Coach's plan is the Coach's, and the model
 only chooses within it. Deals 7930001 to 7932000, both fields, the same gate.
 
+**Candidate B, first sample, 2026-09-28 01:23 to 01:59.** The tested seat's Coach keeps the tile on
+a half-colour or thirteen plan and the fit picks on every other plan (`policymoney.ts --hybrid`):
+
+    field                B minus Coach              hands won         chips each     half-colour wins   chicken wins
+    three Coaches        +0.378 +/- 0.162  (t 2.3)  1,800   2,110    16.24  15.34      284   326          294  1,046
+    recorded players     +0.767 +/- 0.147  (t 5.2)  3,118   3,711    16.73  15.87      500   564          479  1,837
+
+Both past two standard errors, and the mix is the one the reading predicted: the colour hands are
+kept (326 against A's 59 at the same table) and the cheap wins still come. The deal-in count and
+cost barely move (1,221 at -12.42 against 1,343 at -12.39). So A's gain and A's loss were two
+different things, and the plan gate separates them.
+
+**Named before the run, the confirmation:** the same test on deals 7940001 to 7942000, both fields.
+B counts as ahead only if the second sample against three Coaches is also past two standard errors;
+the recorded-field figure is confirmed the same way because it is cheap (four minutes).
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.
