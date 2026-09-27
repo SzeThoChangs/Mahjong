@@ -124,7 +124,10 @@ anything beat the Coach for money at Changs's table?".
 When `rebuild.done` appears: read the three pack logs, count the `rule: 'win'` questions and the
 restored ones per pack, copy the packs into `web/public/quiz/` with a new `index.json`, run the ten
 passes against the real packs, deploy. Then start the Coach work proper: step 1 of the plan in
-`PROTOTYPE.md`, fitting on all three runs with an EV-weighted loss.
+`PROTOTYPE.md`. The trainer (`datagen/src/policyfit.ts`) and the money harness
+(`datagen/src/policymoney.ts`, self-check 0.000) are written and typecheck; neither has been run on
+data. First run: `policyfit.ts` on the three runs with `--maxPerDir 150000`, then `policymoney.ts
+2000 --weights <out> --field coach` and again `--field pool`.
 
 ### Why
 

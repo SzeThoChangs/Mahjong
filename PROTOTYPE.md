@@ -355,6 +355,17 @@ a map of where to look, not a verdict.
 4. Whatever wins: ship it with the Coach's explanations intact, re-run the ten passes, and say
    plainly where the two disagree.
 
+**Built for steps 1 and 3, 2026-09-27, not yet run on data:** `datagen/src/policyfit.ts`, which
+fits on every evaluated discard across several runs with the expected-regret loss, holds out the
+packs' own questions, and scores the Coach on the same held-out positions; and
+`datagen/src/policymoney.ts`, the paired money test of a fitted policy against the shipped Coach,
+same seat through four chairs, either field. `solver/src/policy.ts` gained `policyRankWith` so a
+candidate can be played from a JSON file before anything is baked in. Self-check of the harness
+before any result: with arm B playing the Coach's own discards it returned exactly +0.000 over 200
+paired deals, 43 hands won by each arm, 0.22 seconds a paired deal against three Coaches, so 8,000
+paired deals is about half an hour. The trainer waits for the Mac: it loads a whole run's hands, and
+the pack builds hold the machine until the rebuild finishes.
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.

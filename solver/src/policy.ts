@@ -52,10 +52,11 @@ export function policyFeatures(f: DiscardFeatures, role: number, prevailingWind:
   ];
 }
 
-type Weights = {
+export type PolicyWeights = {
   hidden: number; mu: readonly number[]; sd: readonly number[];
   w?: readonly number[]; W1?: readonly (readonly number[])[]; b1?: readonly number[]; w2?: readonly number[];
 };
+type Weights = PolicyWeights;
 
 export function policyScore(raw: number[], p: Weights = POLICY as Weights): number {
   const x = raw.map((v, j) => (v - p.mu[j]!) / p.sd[j]!);
@@ -79,6 +80,15 @@ export interface PolicyRanking { best: TileKind; options: PolicyOption[] }
  * whose copies are all face-up is not coming back.
  */
 export function policyRank(concealed: TileKind[], melds: Meld[], ctx: Context): PolicyRanking {
+  return policyRankWith(concealed, melds, ctx, POLICY as Weights);
+}
+
+/**
+ * The same ranking under weights handed in, so a candidate fitted by `datagen/src/policyfit.ts` can
+ * be played in the money harness before anything is baked into `policy.weights.ts`. The shipped
+ * weights are only the default; the feature vector is the same either way.
+ */
+export function policyRankWith(concealed: TileKind[], melds: Meld[], ctx: Context, weights: Weights): PolicyRanking {
   const unseen = unseenCounts({
     hand: concealed,
     allMelds: melds.flatMap((m) => m.tiles),      // own melds; the other seats' arrive via `visible`
@@ -86,7 +96,7 @@ export function policyRank(concealed: TileKind[], melds: Meld[], ctx: Context): 
   });
   const feats = discardFeatures(concealed, melds, unseen);
   const table = policyTable(ctx);
-  const scores = feats.map((f) => policyScore(policyFeatures(f, ctx.seat, ctx.prevailingWind, ctx.playerTurns, table)));
+  const scores = feats.map((f) => policyScore(policyFeatures(f, ctx.seat, ctx.prevailingWind, ctx.playerTurns, table), weights));
   const mx = Math.max(...scores);
   const ex = scores.map((s) => Math.exp(s - mx));
   const sum = ex.reduce((a, b) => a + b, 0);
