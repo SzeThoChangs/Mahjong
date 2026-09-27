@@ -318,6 +318,30 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+### The learned claim model, played for money
+
+**Uncertainty addressed:** `solver/src/claim.weights.ts` decides Pong, Chow, Kong or pass with
+86.1% held-out accuracy and had never been played for money in a full game. Second item of `D-034`.
+
+**Named before the run:** `policymoney.ts --claims`, the shipped Coach (with candidate B inside)
+in arm A, the same Coach with the model deciding claims in arm B, deals 7950001 to 7952000, 2,000 a
+chair, both fields, at the 0-Joker min-1 table. The gate as always: past two standard errors against
+three Coaches and no loss against the recorded players.
+
+**First sample, 2026-09-28 02:42 to 03:23:**
+
+    field                model minus Coach            hands won        chicken wins   deal-ins
+    three Coaches        +0.171 +/- 0.131  (t 1.3)   1,921   2,113    980   1,252    1,372  1,402
+    recorded players     +0.212 +/- 0.133  (t 1.6)   3,779   4,077  1,901   2,490      526    500
+
+Positive both ways, neither past the bar. It calls more and wins more cheap hands, without the
+colour-hand cost A showed (half-colour 252 against 242, 557 against 516).
+
+**Named before the run, the second sample:** the same test on deals 7970001 to 7972000, both
+fields, queued behind the Chow sweep. The decision is on the pooled figure over 16,000 paired deals
+a field: past two standard errors against three Coaches and not negative against the recorded
+players, or the model stays out.
+
 ### The Coach's Chow bar, swept for money
 
 **Uncertainty addressed:** The Coach calls a claim when it improves the hand by more than 0.4 chips
