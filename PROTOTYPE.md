@@ -638,6 +638,14 @@ weights against the shipped Coach. If the integration is the bot that was measur
 weights, the result is exactly 0.000 with identical hands won, like the self-check. Anything else is
 a difference in the code, to be found.
 
+**Identity check, 03:51 to 04:32: exactly +0.000, hands won 2,137 against 2,137, chips 3,859
+against 3,859.** The shipped `rankDiscards` and the harness's HybridBot make the same decision on
+every one of 8,000 paired deals when they hold the same weights. So the whole of the −0.482 against
+−0.378 gap is the rounding of the weights to six decimals, which flips near-ties, and the figure
+that belongs to the shipped Coach is the mirror's: **+0.482 +/- 0.160 over the old Coach on B's
+deals in the old field**, alongside B's own +0.378 +/- 0.162 and +0.393 +/- 0.159 unrounded. The
+rounded weights stay: they measure no worse, and a fit that lives on a sixth decimal is not a fit.
+
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
 something actually wins money.
