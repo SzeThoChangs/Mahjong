@@ -623,8 +623,20 @@ shipped Coach in arm A, on B's own deals (7930001 to 7932000). First run, the ot
 holding the new Coach: −0.416 +/- 0.151, t −2.8, hands won 1,927 against 1,531; arm A's chips
 exactly 0, as four identical players must give. That is B's sign and size in a field of Bs, not the
 exact mirror, because the field is not the one B was measured in. The exact check, three old
-Coaches in the other chairs (`--field pure`), is running; it must return −0.378 +/- 0.162 with the
-hands-won counts of B's first sample swapped, or the shipped code is not the bot that was measured.
+Coaches in the other chairs (`--field pure`), ran 03:13 to 03:48: **−0.482 +/- 0.160, t −3.0, hands
+won 2,137 against 1,786.** Not the exact mirror: B's first sample on the same deals was +0.378 +/-
+0.162 with 1,800 against 2,110. The same direction and a size 0.10 apart on a standard error of
+0.23 for the difference, so the shipped Coach is measured to beat the old one by at least as much
+as B did; but decision for decision it is not the same bot as the one measured, and the difference
+has to be named, not waved at. The one thing that differs by construction: B played from
+`policy-a.json` at full precision and the shipped `policy.weights.ts` carries the same weights
+rounded to six decimals, which can flip a near-tie, and one flipped tile changes the rest of a hand.
+
+**Named before the run, the identity check:** `policymoney.ts --weights solver/src/policy.weights.json
+--hybrid --field pure` on the same deals, which plays the harness's own HybridBot with the rounded
+weights against the shipped Coach. If the integration is the bot that was measured, given the same
+weights, the result is exactly 0.000 with identical hands won, like the self-check. Anything else is
+a difference in the code, to be found.
 
 **Open with it:** if a model wins, the Train tab can no longer say "Why 6條" in the Coach's words for
 the picks where they disagree. That is a design decision for Changs, and it is not needed until
