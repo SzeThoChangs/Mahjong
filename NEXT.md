@@ -101,49 +101,50 @@ these questions and stores the win as the answer.
 
 ## Where We Stopped
 
-2026-09-28, 00:50. The site serves four packs, the three rebuilt with the win rule and the strong-table
-one. Candidate A of the Coach work (`data/gen/coach2/policy-a.json`) is fitted and money-tested:
-+0.406 +/- 0.181 on the first 8,000 paired deals against three Coaches, +0.120 +/- 0.185 on the
-next 8,000, flat against the recorded players. By the rule set before the run it is not ahead. Both
-samples agree on one thing: it wins a quarter more hands for little money.
+2026-09-28, 03:05. Pushed and deploying (`aafa056`): candidate B inside the Coach (`D-035`), the Play
+review answering a win on offer by the rule both ways, friends' records and Send my record on Table
+setup (`A-007`), a session on the Play tab, and the training plan brought up to date. Every one of
+these has its ten passes in `MISTAKES.md`.
 
-**Running:** `data/gen/coach2/money-b-chain.sh`, candidate B (the hybrid: the fit chooses only
-inside the Coach's cheap plans, `--hybrid`), deals 7930001 to 7932000, both fields, about 35
-minutes from 01:23. Log `data/gen/coach2/money-b-*.log`.
+**Running on the Mac, in this order:**
+
+1. The mirror check of the shipped integration: `policymoney.ts --pure` on B's own deals (7930001
+   to 7932000, three Coaches). Must read about −0.378, the mirror of B's first sample; anything else
+   says the shipped code is not the thing that was measured. `data/gen/coach2/mirror-pure-coach.log`.
+2. The learned claim model for money, both fields, deals 7950001 onward:
+   `data/gen/coach2/claims-*.log`.
+3. The colour-plan regrade of the 0-Joker pack, 287 questions judged twice at 256 play-outs:
+   `data/gen/coach2/regrade-colour-w*.jsonl`. After 74 of them: 0 answers changed past two standard
+   errors, 4 differ inside the noise.
+4. Queued behind 3: the strong-table pack regenerated with the new Coach, seed 903, about twelve
+   hours (`data/gen/strong2-pack-chain.sh`).
 
 ## Recommended Next Action
 
 ### Next
 
-Read candidate B's two money figures and its win mix against the same gate. If it clears against
-three Coaches past two standard errors and does not lose against the recorded players, run it again
-on fresh deals (7940001 onward) before believing it, as with A.
+Read the three results as they land. The mirror check decides whether anything else is trusted: if
+it is not the mirror of B, stop and find out why before reading the others. Then record the claim
+model's figures against the gate, and the regrade's count of changed answers against the 287.
 
 ### Why
 
-The win mix of candidate A (PROTOTYPE.md, 2026-09-28) showed the gain came from cheap plans and the
-loss from abandoned colour hands, which is the grading play-outs' bias and not something a feature
-can fix. The hybrid keeps the Coach's plan and lets the fit choose within it, which is the direct
-test of that reading. Step 2 as first written, more features, is set aside until the label question
-is settled.
+The shipped Coach is now the stand-in in every test, so a fault in the integration would poison
+every figure after it. The mirror check is the one measurement that catches that.
 
 ### Expected Outcome
 
-Either a candidate that keeps A's gain against Coaches without A's loss against loose players, or the
-finding that the gain and the loss are the same thing, which sends the work at the labels
-themselves: grading a targeted subset with Coach-played play-outs, or fitting a few parameters on
-money directly.
+Three recorded findings; the claim model shipped or set aside; the regrade either extended to the
+other two packs or closed with the finding that the grades on separable colour positions hold.
 
 ## After That
 
 Changs said on 2026-09-28: "Do all that, don't stop." The programme, in the order it was given,
 every candidate gated on the paired money test at his table:
 
-1. **Candidate B** (running its confirmation): if the second sample holds, ship it inside
-   `rankDiscards` so every screen, the Play opponents and the grading stand-in are one Coach; ten
-   passes; `D-034`.
-2. **The learned claim model for money** (`policymoney.ts --claims`, queued behind B on deals
-   7950001 onward, both fields): the second model in the repo, never played for money.
+1. **Candidate B**: done, `D-035`.
+2. **The learned claim model for money** (`policymoney.ts --claims`, running on deals 7950001
+   onward, both fields): the second model in the repo, never played for money.
 3. **The Coach's knobs on money:** the open cost (0.4), the danger weight (40) at the 0-Joker table,
    and how ready a colour hand must look before the plan commits. One setting is thirty minutes a
    field; sweep each around its current value.
