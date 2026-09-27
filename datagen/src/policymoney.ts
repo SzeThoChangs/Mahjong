@@ -17,7 +17,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
-import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, rankDiscards, readsFor, claimRank, claimAdvice, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
+import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, policyRank, rankDiscards, readsFor, claimRank, claimAdvice, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
 import type { ClaimOption } from 'sg-mahjong-engine';
 import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
 import { fnv1a } from './records.js';
@@ -46,13 +46,20 @@ const pure = process.argv.includes('--pure');
  * swept on 2026-09-17 and nothing beat 0.4; the Chow bar has never been measured.
  */
 const chowCost = process.argv.includes('--chow') ? Number(arg('chow', '0.4')) : null;
+/**
+ * `--colour-below <chips>`: the shipped Coach, except that on a half-colour plan the Coach's own
+ * numbers rate below this many chips a game, the fitted policy chooses the tile as it does on cheap
+ * plans. The sixth item of D-034 in its cheapest form: one number, swept for money, that moves the
+ * line between "the Coach keeps the plan" and "the fit chooses" instead of a model choosing plans.
+ */
+const colourBelow = process.argv.includes('--colour-below') ? Number(arg('colour-below', '0')) : null;
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath && !claims && !pure && chowCost === null) throw new Error('give --weights <json>, --claims, --pure, --chow <cost> or --self');
+if (!self && !weightsPath && !claims && !pure && chowCost === null && colourBelow === null) throw new Error('give --weights <json>, --claims, --pure, --chow <cost>, --colour-below <chips> or --self');
 const weights: PolicyWeights | null = weightsPath ? (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights) : null;
 
 /** The shipped Coach for this table, except that the discard comes from the fitted weights. */
@@ -138,6 +145,21 @@ class ChowThresholdBot extends AltReadsCoachBot {
   }
 }
 
+/** The shipped Coach with the fit allowed onto weak colour plans: the Coach's own plan, then the fit's
+ *  tile whenever the plan is cheap or its colour target is worth less than `below` chips. */
+class ColourBelowBot extends AltReadsCoachBot {
+  constructor(private readonly below: number) { super(reads); }
+  override chooseDiscard(v: PlayerView): TileInstance {
+    const hand = v.hand.map(kindOf), melds = meldsOf(v), ctx = this.ctx(v);
+    const r = rankDiscards(hand, melds, ctx, { fitted: false });
+    const t = r.best.target;
+    const coachKeeps = (t.id === 'half_color' && t.chips >= this.below) || t.id === 'thirteen';
+    if (coachKeeps) return v.hand.find((x) => kindOf(x) === r.best.tile)!;
+    const m = policyRank(hand, melds, ctx);   // the shipped weights
+    return v.hand.find((x) => kindOf(x) === m.best) ?? v.hand.find((x) => kindOf(x) === r.best.tile)!;
+  }
+}
+
 function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
   return [0, 1, 2, 3].map((s) => {
     if (s === tested) return make();
@@ -180,7 +202,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => new AltReadsCoachBot(reads));
-    const b = play(() => (chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
+    const b = play(() => (colourBelow !== null ? new ColourBelowBot(colourBelow) : chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -190,7 +212,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${self ? 'self-check' : colourBelow !== null ? `the fit allowed onto colour plans worth under ${colourBelow} chips` : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {

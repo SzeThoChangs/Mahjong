@@ -318,6 +318,21 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+### Letting the fit choose on a weak colour plan
+
+**Uncertainty addressed:** Candidate B draws the line at the plan: on any half-colour plan the
+Coach's own tile stands, on any other the fit chooses. That line was set by hand. The sixth item of
+`D-034`, a model choosing the plan on money, is a week of its own; the cheapest form of it is one
+number swept for money: the fit is allowed onto a half-colour plan whose colour target the Coach's
+own numbers rate below so many chips a game, and keeps off the ones rated above.
+
+**Named before the run:** `policymoney.ts --colour-below 2`, `4` and `8` against the shipped Coach,
+three Coaches in the other chairs, deals 7980001 to 7982000, 2,000 a chair. A setting counts as
+better only past two standard errors, then gets the recorded field and a fresh-deal confirmation
+before it ships, as B did. Output `data/gen/coach2/colour-*-coach.log`.
+
+**Status:** QUEUED behind the claim model's identity check, 2026-09-28.
+
 ### The learned claim model, played for money
 
 **Uncertainty addressed:** `solver/src/claim.weights.ts` decides Pong, Chow, Kong or pass with
