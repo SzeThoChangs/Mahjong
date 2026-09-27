@@ -259,7 +259,16 @@ export interface ClaimAdvice { best: ClaimCandidate; options: ClaimAdviceOption[
  * by `OPEN_COST` before it is worth taking.
  */
 export const OPEN_COST = 0.4;
-export function claimAdvice(candidates: ClaimCandidate[], concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): ClaimAdvice {
+/**
+ * Since 2026-09-28 the call itself comes from the fitted claim model (`claimRank`), and the gains
+ * and reasons below are the Coach's explanation of the choices rather than what decides. Measured as
+ * a bot in the Play tab's own chairs at the 0-Joker min-1 table, two samples of 8,000 paired deals a
+ * field: +0.249 +/- 0.092 chips a game against three Coaches and +0.218 +/- 0.094 against the
+ * recorded players (PROTOTYPE.md, "The learned claim model, played for money", D-036). A Kong is
+ * ranked with the rest instead of taken on sight, because that is what was measured. `fitted: false`
+ * is the rule as it was: a Kong on sight, otherwise the best call if it clears OPEN_COST.
+ */
+export function claimAdvice(candidates: ClaimCandidate[], concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context, opts: { fitted?: boolean } = {}): ClaimAdvice {
   const win = candidates.find((c) => c.kind === 'win');
   if (win) return { best: win, options: [{ candidate: win, gain: Infinity, reasons: ['it wins the hand'] }] };
   const kong = candidates.find((c) => c.kind === 'kong3');
@@ -277,7 +286,12 @@ export function claimAdvice(candidates: ClaimCandidate[], concealed: TileKind[],
     out.push({ candidate: c, gain, reasons });
   }
   out.sort((a, b) => b.gain - a.gain);
-  // the coach takes a kong whenever it is offered, and otherwise only calls if it clears OPEN_COST
+  if (opts.fitted !== false && candidates.length > 1) {
+    const r = claimRank(candidates, concealed, melds, offered, ctx);
+    const best = candidates.find((c) => c.kind === r.best.kind && c.used.join() === r.best.used.join()) ?? r.best;
+    return { best, options: out };
+  }
+  // the coach as it was: a kong whenever it is offered, and otherwise a call only if it clears OPEN_COST
   const top = out[0];
   const best = kong ?? (top && top.candidate.kind !== 'pass' && top.gain > OPEN_COST ? top.candidate : { kind: 'pass' as const, used: [] });
   return { best, options: out };

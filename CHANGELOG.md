@@ -60,6 +60,19 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-28 — The fitted claim model decides the call
+
+**Changed:** After a win is taken, Pong, Chow, Kong or pass comes from the fitted claim model,
+inside `claimAdvice`, so the Coach that plays and the advice on Your hand are one; the Coach's
+gains and reasons stay as the explanation and Your hand says when they would have gone the other
+way. A Kong is ranked with the rest instead of taken on sight.
+
+**Why:** Two samples of 8,000 paired deals a field at Changs's table: pooled +0.249 +/- 0.092 chips a
+game against three Coaches and +0.218 +/- 0.094 against the recorded players (`D-036`).
+
+**Impact:** The Coach's call changes on 28.8% of the 0-Joker pack's claim questions. Every money
+figure from this date is against the Coach with both models inside it. Ten passes in `MISTAKES.md`.
+
 ### 2026-09-28 — A session on the Play tab
 
 **Changed:** Hands in a row at your table: the dealer keeps the deal after a win or a draw and passes

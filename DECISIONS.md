@@ -1120,3 +1120,27 @@ strong-player stand-in (`A-006`) is now this Coach.
 on inside a cheap plan, and the plan line says when that happened.
 
 **Related:** D-032, D-033, D-034, `A-006`, `PROTOTYPE.md`.
+
+---
+
+## D-036 — The fitted claim model decides Pong, Chow, Kong or pass
+
+**Date:** 2026-09-28. **Decided by:** Agent, on the money gate Changs set (`D-034`). **Status:** ACTIVE
+
+**What was decided:** After a win is taken, the call comes from the claim model fitted in
+`solver/src/claim.weights.ts`, ranking pass, Pong, Chow and Kong together. It lives inside
+`claimAdvice`, so the Coach that plays and the advice on Your hand are one; the gains and reasons
+the Coach computed stay as the explanation, and the screen says when they would have gone the other
+way. A Kong is no longer taken on sight; the model ranks it with the rest, because that is what was
+measured. `claimAdvice(..., { fitted: false })` is the rule as it was.
+
+**Why:** Two samples of 8,000 paired deals a field at Changs's table, on top of the Coach that
+already carries `D-035`: +0.171 and +0.327 against three Coaches, pooled +0.249 +/- 0.092 (t 2.7);
++0.212 and +0.224 against the recorded players, pooled +0.218 +/- 0.094. Past the bar on the first
+and positive on the second, the gate as named before the run.
+
+**What it changes for measurements:** every money figure from this date is against the Coach with
+both models inside it. The identity check against the harness's own claim bot is recorded in
+`PROTOTYPE.md`.
+
+**Related:** D-031, D-034, D-035, `PROTOTYPE.md`.

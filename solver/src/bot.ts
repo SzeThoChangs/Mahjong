@@ -48,13 +48,13 @@ export class CoachBot implements Bot {
   chooseSelfAction(_v: PlayerView, options: SelfAction[]): SelfAction | null {
     return options.find((o) => o.kind === 'win') ?? options.find((o) => o.kind === 'kong4') ?? options.find((o) => o.kind === 'kong1') ?? null;
   }
-  /** The rule itself lives in `claimAdvice` so the app can show exactly what the bot plays. */
+  /** The rule itself lives in `claimAdvice` so the app can show exactly what the bot plays. A win is
+   *  taken first; a Kong is ranked with the calls by the fitted model since 2026-09-28 (D-036). */
   chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
     const win = options.find((o) => o.kind === 'win'); if (win) return win;
-    const kong = options.find((o) => o.kind === 'kong3'); if (kong) return kong;
-    const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow');
+    const usable = options.filter((o) => o.kind === 'pong' || o.kind === 'chow' || o.kind === 'kong3');
     if (!usable.length) return null;
-    const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow', used: (o.tiles ?? []).map(kindOf) }));
+    const cands: ClaimCandidate[] = usable.map((o) => ({ kind: o.kind as 'pong' | 'chow' | 'kong3', used: (o.tiles ?? []).map(kindOf) }));
     const adv = claimAdvice([{ kind: 'pass', used: [] }, ...cands], v.hand.map(kindOf), meldsOf(v), kindOf(v.lastDiscard!.tile), this.ctx(v));
     if (adv.best.kind === 'pass') return null;
     const i = cands.findIndex((c) => c.kind === adv.best.kind && c.used.join() === adv.best.used.join());

@@ -323,6 +323,8 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
 **Uncertainty addressed:** `solver/src/claim.weights.ts` decides Pong, Chow, Kong or pass with
 86.1% held-out accuracy and had never been played for money in a full game. Second item of `D-034`.
 
+**Status:** SHIPPED, 2026-09-28 (`D-036`); the ten passes are in `MISTAKES.md`.
+
 **Named before the run:** `policymoney.ts --claims`, the shipped Coach (with candidate B inside)
 in arm A, the same Coach with the model deciding claims in arm B, deals 7950001 to 7952000, 2,000 a
 chair, both fields, at the 0-Joker min-1 table. The gate as always: past two standard errors against
@@ -341,6 +343,21 @@ colour-hand cost A showed (half-colour 252 against 242, 557 against 516).
 fields, queued behind the Chow sweep. The decision is on the pooled figure over 16,000 paired deals
 a field: past two standard errors against three Coaches and not negative against the recorded
 players, or the model stays out.
+
+**Second sample, 04:40 to 05:18, deals 7970001 to 7972000:** +0.327 +/- 0.130 (t 2.5) against three
+Coaches, hands won 1,919 against 2,077; +0.224 +/- 0.133 (t 1.7) against the recorded players.
+**Pooled: +0.249 +/- 0.092 (t 2.7) against three Coaches and +0.218 +/- 0.094 (t 2.3) against the
+recorded players.** Past the bar on the first and positive on the second, so the claim model ships,
+the way B did: inside `claimAdvice`, so the Coach that explains a call on Your hand and the Coach
+that plays are one, with `fitted: false` giving the rule as it was. The Coach's rule of taking a
+Kong before asking is replaced by the model ranking the Kong with the rest, because that is what
+was measured (`D-036`). The identity check follows: the harness's own claim bot against the shipped
+Coach must return exactly 0.000.
+
+**What it changes on screen, counted 2026-09-28:** over the 4,644 claim questions of the 0-Joker
+pack that do not offer a win, the model and the Coach's own numbers make a different call on 1,336
+(28.8%). Where they differ, Your hand says so under the call, and the Train line "The Coach would
+..." now follows the model.
 
 ### The Coach's Chow bar, swept for money
 

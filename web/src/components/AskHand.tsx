@@ -267,7 +267,8 @@ export default function AskHand() {
           <CardHeader className="pb-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle className="text-base">Someone threw a tile</CardTitle>
-              <div className="flex items-center gap-2 text-sm">
+              {/* wraps: the two source buttons ran 63px past a 280px screen (ten passes, 2026-09-28) */}
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Button size="sm" variant={fromLeft ? 'secondary' : 'ghost'} onClick={() => setFromLeft(true)}>from 上家 (before you)</Button>
                 <Button size="sm" variant={!fromLeft ? 'secondary' : 'ghost'} onClick={() => setFromLeft(false)}>from anyone else</Button>
               </div>
@@ -290,6 +291,18 @@ export default function AskHand() {
                 <div className="text-base font-medium">
                   {claim.best.kind === 'pass' ? 'Pass.' : `Take it — ${claim.best.kind === 'chow' ? 'chow' : claim.best.kind === 'pong' ? 'pong' : 'kong'}.`}
                 </div>
+                {/* the call is the fitted claim model's (D-036); the gains below are the Coach's own numbers, and
+                    when they would have gone the other way the screen says so rather than letting the two sit apart */}
+                {(() => {
+                  const top = claim.options[0];
+                  const byNumbers = top && top.candidate.kind !== 'pass' && top.gain > 0.4 ? top.candidate : { kind: 'pass' as const, used: [] as TileKind[] };
+                  const same = byNumbers.kind === claim.best.kind && byNumbers.used.join() === claim.best.used.join();
+                  return same ? null : (
+                    <div className="text-xs text-muted-foreground">
+                      The fitted claim model says so; the <J>Coach</J>'s own numbers would {byNumbers.kind === 'pass' ? 'pass' : `${byNumbers.kind}`}. The model was measured to win more: +0.25 chips a game against strong players over 16,000 paired deals.
+                    </div>
+                  );
+                })()}
                 <div className="space-y-2">
                   {claim.options.map((o, i) => {
                     const isBest = o.candidate.kind === claim.best.kind && o.candidate.used.join() === claim.best.used.join();

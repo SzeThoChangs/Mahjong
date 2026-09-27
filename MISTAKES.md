@@ -119,6 +119,47 @@ rendered.
 
 ## Ten passes
 
+### The fitted claim model inside the Coach's claim rule — Mon Sep 28 06:03:11 +08 2026
+
+Passes run on the built app served statically on port 5175 while the strong-table grader held the
+Mac (load average about 100, so every screen was slow and the Train walk was cut short). The change
+is one function: `claimAdvice` now returns the model's call and keeps the Coach's gains and reasons
+as the explanation; `CoachBot` ranks a Kong with the rest instead of taking it on sight; Your hand
+says when the model and the Coach's numbers differ.
+
+**Test boundary**
+
+- Workflows: a claim question on Train; a call on Your hand with a Pong or a Chow on offer, from the
+  left and from elsewhere; the Coach's opponents in Play, which call through the same function.
+- Screens: Train, Your hand.
+- Access restrictions: none exist.
+- Values, records and calculations: the call the Coach names; the note when it differs from the
+  Coach's own numbers; `claimAdvice` with `fitted: false` giving the old rule.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Reloaded on #train with storage kept from the session passes, then #ask; both rendered, Your hand with its 46 tile pickers | 0 |
+| 2 | Errors | `console.error` hooked on every run: 2 Train claim questions, 4 hands built on Your hand with 5 calls read, 2 widths | 0 |
+| 3 | Links | claim filter, Next position, clear, thrown tile, remove, from 上家, from anyone else: each did what it names | 0 |
+| 4 | Workflow steps | Your hand, a 2萬 pair with 2萬 thrown: "Pass." with the Coach's gains −3.4 and −3.0. 3條4條 with 5條 thrown from the left: "Pass."; from anyone else: no Chow offered, "You cannot claim it". Pack position 3088:16:24 with 發 thrown: "Take it — pong." Pack position 2843:23:8 with 5萬 thrown from the left: "Pass." and the note "The fitted claim model says so; the Coach's own numbers would chow." Train: 2 claim questions answered, the Coach line present on both ("would chow", "would pass") | 0 |
+| 5 | Writes | not run — the change stores nothing | not run — nothing stored |
+| 6 | The data it moves | Over the 4,644 claim questions of the 0-Joker pack that offer no win, the model and the Coach's numbers differ on 1,336 (28.8%), counted in Node with both flags of `claimAdvice` on the same positions. On Your hand the note appeared exactly on the position where they differed and not on the three where they agreed | 0 |
+| 7 | Reconciliation | The harness's own claim bot against the shipped Coach on 8,000 paired deals must be exactly 0.000: running, `data/gen/coach2/identity-claims.log`, result recorded in `PROTOTYPE.md` when in | not checked — running |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Your hand with the note on screen at 280px: page width equal to the screen; 3 elements past the edge before the fix (the card header's two source buttons, 63px over), 0 after, measured with the grader paused so the screen could be driven | 1, fixed |
+| 10 | Look at it | The four calls above read as text; the note's sentence read in full | 0 |
+
+**Defects found:**
+
+1. Pass 9, fixed: on Your hand the "from 上家 (before you)" and "from anyone else" buttons sat in a
+   row that did not wrap and ran 63px past a 280px screen. Older than this change, found by it.
+   Fixed by letting the row wrap; re-measured with the note on screen: 0 past the edge.
+
+**Not checked:** the identity check (running, and recorded separately); a real phone; 320, 375, 390
+and 1280px on the note, one wrapped line; the Play tab's opponents calling, which go through the
+same function but were not watched hand by hand; more than two Train claim questions, because the
+loaded machine made each one take half a minute.
+
 ### A session on the Play tab: hands in a row, the dealer moving, chips carried — Mon Sep 28 03:02:33 +08 2026
 
 Passes run on the built app served statically on port 5175, the hands played by a script that
