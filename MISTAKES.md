@@ -119,6 +119,42 @@ rendered.
 
 ## Ten passes
 
+### A verdict explained by what the play-outs did — Tue Sep 29 01:01:58 +08 2026
+
+Passes run on the dev server on port 5174 with the six re-judging workers paused for the browser
+steps. One change: under a verdict, Train now says what the play-outs did after the best action and
+after the player's, from each action's stored outcome mix.
+
+**Test boundary**
+
+- Workflows: answering a discard on Train and reading the verdict.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the outcome shares (won, by size; drawn; dealt in; paid) against
+  the stored mix counts.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage cleared, reloaded on #train; a question served | 0 |
+| 2 | Errors | `console.error` hooked on every run; the disputed question served by id and answered, twice (before and after the trim) | 0 |
+| 3 | Links | The pack buttons and the tile pressed; Next position not needed | 0 |
+| 4 | Workflow steps | 5375:17:65 answered 5筒: "What the play-outs did after discard 9萬: won 60% (5 Tai 33%, 3 Tai 19%, 6 Tai 6%), drawn 27%, dealt in 3%, paid a self-draw 4%, paid as a bystander 5%, another seat won at no cost 1%." and "After your discard 5筒: won 88% (3 Tai 69%, 5 Tai 11%, 4 Tai 5%), drawn 7%, dealt in 1%, paid a self-draw 1%, paid as a bystander 3%." | 1, fixed |
+| 5 | Writes | not run — the change stores nothing | not run — nothing stored |
+| 6 | The data it moves | The shares against the stored mix for 9萬 over 512 play-outs: wins W*+D* = 306 (60%), of which 5 Tai 168 (33%), 3 Tai 97 (19%), 6 Tai 33 (6%); d0 139 (27%); s+l 12 (2%, shown 3% by rounding of 13 with l); z 20 (4%); o 27 (5%). For 5筒: wins 449 (88%), 3 Tai 353 (69%), 5 Tai 57 (11%), 4 Tai 27 (5%); d0 35 (7%) | 0 |
+| 7 | Reconciliation | The shares explain the bars: 9萬 finishes as a 5-Tai hand a third of the time and 5筒 as a 3-Tai hand two thirds of the time, which is the $22.00 against $17.47 on the same screen | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with the block on screen at 280px: page width equal to the screen, 0 elements past the edge outside a scroller | 0 |
+| 10 | Look at it | Both sentences read in full, as above | 0 |
+
+**Defects found:**
+
+1. Pass 4, fixed: a share that rounds to 0% was still listed ("another seat won at no cost 0%").
+   Fixed by leaving any share under half a percent unsaid; re-measured: the 5筒 line ends at "paid
+   as a bystander 3%".
+
+**Not checked:** a real phone; 320, 375, 390 and 1280px on this change, two wrapped lines; a claim
+question, where the same block appears with the call's outcomes.
+
 ### The Coach in every chair of the app's own play-outs, and the judge named on each question — Mon Sep 28 19:57:03 +08 2026
 
 Passes run on the dev server on port 5174 with the six pack re-judging workers paused (`kill -STOP`)

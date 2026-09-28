@@ -119,6 +119,38 @@ const verdictOf = (regret: number, unit: string, se = 0): Verdict => {
 };
 
 const kindsOf = (a: string): number[] => a.startsWith('d:') ? [Number(a.slice(2))] : a.startsWith('chow:') ? a.slice(5).split(',').map(Number) : (/^\w+:(\d+)$/.exec(a) ? [Number(/^\w+:(\d+)$/.exec(a)![1])] : []);
+/**
+ * What the play-outs did after an action, in words: how often the hand was won and at what size,
+ * drawn, dealt in, or paid for another seat's win. The verdict's money comes from exactly this, and
+ * a reader who sees "won 84%, mostly 3 Tai" beside "won 56%, mostly 5 Tai" has the reason the bars
+ * cannot give and the Coach's rules sometimes get wrong (2026-09-29, strong-table 5375:17:65: the
+ * Coach would throw the dead tile; the play-outs keep it as the safe throw and finish an All-Pong).
+ */
+const outcomeWords = (mix: OutcomeMix | undefined, n: number): string | null => {
+  if (!mix || !n) return null;
+  const pct = (k: number) => `${Math.round((100 * k) / n)}%`;
+  const byTai = new Map<number, number>();
+  let won = 0, drawn = 0, dealtIn = 0, paidSelfDraw = 0, paidOther = 0, free = 0;
+  for (const [key, count] of Object.entries(mix.w)) {
+    const role = key[0]!, tai = Number(key.slice(1));
+    if (role === 'W' || role === 'D') { won += count; byTai.set(tai, (byTai.get(tai) ?? 0) + count); }
+    else if (role === 'd') drawn += count;
+    else if (role === 's' || role === 'l') dealtIn += count;
+    else if (role === 'z') paidSelfDraw += count;
+    else if (role === 'o') paidOther += count;
+    else free += count;
+  }
+  const sizes = [...byTai.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t, k]) => `${t} Tai ${pct(k)}`).join(', ');
+  const parts = [`won ${pct(won)}${sizes ? ` (${sizes})` : ''}`];
+  const shown = (k: number) => Math.round((100 * k) / n) >= 1;   // a share that rounds to 0% is left unsaid
+  if (shown(drawn)) parts.push(`drawn ${pct(drawn)}`);
+  if (shown(dealtIn)) parts.push(`dealt in ${pct(dealtIn)}`);
+  if (shown(paidSelfDraw)) parts.push(`paid a self-draw ${pct(paidSelfDraw)}`);
+  if (shown(paidOther)) parts.push(`paid as a bystander ${pct(paidOther)}`);
+  if (shown(free)) parts.push(`another seat won at no cost ${pct(free)}`);
+  return parts.join(', ');
+};
+
 const actionText = (a: string) => a === 'win' ? 'Win' : a === 'pass' ? 'Pass' : a === 'proceed' ? 'No kong' : a.startsWith('d:') ? `Discard ${tileLabel(Number(a.slice(2)))}` : a.startsWith('pong') ? 'Pong' : a.startsWith('chow') ? 'Chow' : 'Kong';
 
 export default function Train() {
@@ -661,6 +693,17 @@ export default function Train() {
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
+            {/* the reason behind the money, from the play-outs themselves; the Coach's words below are its rules, which can disagree */}
+            {!ruleWin && (() => {
+              const bestW = outcomeWords(bestAction.mix as OutcomeMix | undefined, bestAction.n ?? q.n);
+              const mineW = picked !== bestAction.a ? outcomeWords(pickedAction.mix as OutcomeMix | undefined, pickedAction.n ?? q.n) : null;
+              return bestW ? (
+                <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-1">
+                  <div><span className="text-muted-foreground">What the play-outs did after {label(bestAction.a).toLowerCase()}:</span> {bestW}.</div>
+                  {mineW && <div><span className="text-muted-foreground">After your {label(picked!).toLowerCase()}:</span> {mineW}.</div>}
+                </div>
+              ) : null;
+            })()}
             {coach && (
               <div className="mb-3 rounded-md border bg-secondary/40 p-3 text-sm space-y-1">
                 {/* The coach is what the Train tab teaches. Measured EVs are the authority here,

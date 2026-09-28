@@ -60,6 +60,17 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-29 — A verdict says what the play-outs did
+
+**Changed:** Under a Train verdict, one line says what happened after the best action and one after
+yours: how often the hand was won and at what size, drawn, dealt in, or paid. Read from each action's
+stored outcome mix, so nothing new is computed.
+
+**Why:** Changs called a sound verdict rubbish because the Coach's words explained nothing: the money
+was in the hand size, and only the play-outs could say so.
+
+**Impact:** Ten passes in `MISTAKES.md`.
+
 ### 2026-09-28 — No answer from simple bots: the Coach in every chair of the play-outs
 
 **Changed:** The Challenge button and the Play tab's review run their play-outs with the Coach in
