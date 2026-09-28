@@ -331,7 +331,20 @@ three Coaches in the other chairs, deals 7980001 to 7982000, 2,000 a chair. A se
 better only past two standard errors, then gets the recorded field and a fresh-deal confirmation
 before it ships, as B did. Output `data/gen/coach2/colour-*-coach.log`.
 
-**Status:** QUEUED behind the claim model's identity check, 2026-09-28.
+**Status:** RUN, 2026-09-28 06:53 to 09:55.
+
+**Findings, the fit allowed onto half-colour plans the Coach rates below:**
+
+    below     candidate minus Coach       hands won        half-colour wins   chicken wins
+    2 chips   +0.092 +/- 0.086  (t 1.1)   1,934   2,047       219   162        1,150  1,316
+    4 chips   +0.118 +/- 0.091  (t 1.3)   1,934   2,088       219   150        1,150  1,368
+    8 chips   +0.180 +/- 0.098  (t 1.8)   1,934   2,144       219   106        1,150  1,457
+
+None past the bar. The trend is A's: the more colour plans the fit takes over, the more cheap hands
+it wins against three Coaches and the fewer colour hands it finishes, and A's loss came against the
+loose players on exactly that trade. So the line B draws, the Coach keeps every colour plan, stays,
+and the sixth item of `D-034` closes in its cheap form. The full form, a model choosing plans on
+money, would need a training loop over games rather than grades, and is not started.
 
 ### The learned claim model, played for money
 

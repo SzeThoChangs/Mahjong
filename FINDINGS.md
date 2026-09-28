@@ -38,6 +38,9 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   first sample, inside the bar; a second sample decides on the pooled figure.
 - **The Chow bar** at 0.2 and 0.8 against the shipped 0.4: +0.006 +/- 0.021 and +0.044 +/- 0.034
   over 8,000 paired deals each, hands won 1,920 and 1,926 against 1,916. It barely binds; 0.4 stays.
+- **The colour-plan line**: letting the fit choose on half-colour plans the Coach rates below 2, 4
+  or 8 chips: +0.092 +/- 0.086, +0.118 +/- 0.091, +0.180 +/- 0.098 against three Coaches, half-colour
+  wins falling 219 to 106. None past the bar, and it is A's trade again; the line stays.
 - **The grades on colour-plan positions**: 287 pack questions at Changs's table judged twice at 256
   play-outs, shanten bots against the Coach in the play-outs: 2 answers changed past two standard
   errors, which is fewer than chance gives over 287 tests. The packs' colour-plan grades hold; the
