@@ -60,6 +60,16 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-28 — The strong-table pack regenerated with the new Coach
+
+**Changed:** The fourth pack is now cut from 150,000 hands played by the Coach that carries the
+fitted discard policy: 10,751 questions in 108 shards, every one of its 1,246 win offers marked. The
+builder's top index carries who played the hands, so a rebuild keeps the label.
+
+**Why:** The first strong pack was played by the Coach as it was; the fifth item of `D-034`.
+
+**Impact:** Ten passes in `MISTAKES.md`. The first strong pack stays on disk as a record.
+
 ### 2026-09-28 — The fitted claim model decides the call
 
 **Changed:** After a win is taken, Pong, Chow, Kong or pass comes from the fitted claim model,

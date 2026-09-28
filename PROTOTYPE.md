@@ -318,6 +318,15 @@ hands a second), graded 18:55 to 04:01 (599,991 decisions, 18.3 a second, 0 erro
    the per-pack index carries `players: 'strong'` so a rebuild of the top index keeps the label. The
    default pack is still the weak-bot 0-Joker one.
 
+**Regenerated with the new Coach, 2026-09-28** (`D-034`, fifth item; `D-035` in the four chairs,
+before the claim model shipped): seed 903, 150,000 hands in 3,756 seconds (40 a second), 599,998
+decisions graded in 32,535 seconds, the pack built 13:42 to 16:19. 10,751 questions in 108 shards:
+5,190 discards, 4,816 claims, 745 self decisions; 1,246 offer a win, all marked, and the play-outs
+preferred otherwise on 156. Verify dropped 2,049 of 12,800 (16.0%), the play-outs changed the best on
+50 and the win rule overrode them on 156, now counted apart. Phase mix 9%, 37%, 54% against the
+run's 35%, 41%, 24%. It replaced the first strong pack on the site the same day; the first stays at
+`data/gen/strong-quiz/` as the record of the old Coach's table.
+
 ### Letting the fit choose on a weak colour plan
 
 **Uncertainty addressed:** Candidate B draws the line at the plan: on any half-colour plan the

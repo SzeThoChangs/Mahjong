@@ -119,6 +119,41 @@ rendered.
 
 ## Ten passes
 
+### The strong-table pack regenerated with the new Coach, on the site — Mon Sep 28 16:41:44 +08 2026
+
+Passes run on the dev server on port 5174 after the regenerated pack replaced the first one in
+`web/public/quiz/strong-nowild/` and the top index was updated. The change is data plus one builder
+line, so the boundary is the pack itself.
+
+**Test boundary**
+
+- Workflows: choosing the strong-table pack on Train and answering from it.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack's counts in the top index, the per-pack index and the
+  shard files; the rule mark on every win offer; the label.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage and caches cleared, reloaded on #train: four pack buttons, the default still the weak-bot 0-Joker pack, `mj.hard.v1` = "1", a question on screen | 0 |
+| 2 | Errors | `console.error` hooked from the first line; the pack selected, 5 questions answered, one width | 0 |
+| 3 | Links | The strong-table button, exactly one match, pressed once; the questions after it carried the id prefix `strong-nowild /`; Next position served the next each time | 0 |
+| 4 | Workflow steps | 5 questions answered with hard only on (4127:13:59, 2468:4:39, 4383:7:74, 4603:19:56, 1027:15:19): 3 best, 2 big mistakes, the Coach line on every one | 0 |
+| 5 | Writes | not run — the change stores nothing new | not run — nothing stored |
+| 6 | The data it moves | 10,751 questions counted in the shards; 1,246 offer a win and all 1,246 carry the rule; 0 of 108 shard tallies disagree with their files; the play-outs preferred otherwise on 156 of the marked, counted in Node | 0 |
+| 7 | Reconciliation | Top index 10,751 questions, 108 shards, players strong; per-pack index the same three; shards the same count | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with the strong pack selected at 280px: page width equal to the screen, 0 elements past the edge outside a scroller; the button 231 by 48px, wrapped to two lines and selected | 0 |
+| 10 | Look at it | The four labels read as text; the five Coach lines read ("The Coach would discard 9筒. The measurement disagrees...", "The Coach would pong. Agrees with the measurement.") | 0 |
+
+**Defects found:** none in the pack. One in the builder, found by pass 7 before the copy: the top
+index the builder writes did not carry `players`, because the edit that was meant to add it had
+failed on an earlier assertion and was never re-run. Fixed and typechecked; the site's top index was
+written by hand for this copy, as for the first strong pack.
+
+**Not checked:** a real phone; 320, 375, 390 and 1280px on this change, which alters no layout; a
+screenshot, the browser pane being hidden; the pack's questions in the Play or Review screens.
+
 ### The fitted claim model inside the Coach's claim rule — Mon Sep 28 06:03:11 +08 2026
 
 Passes run on the built app served statically on port 5175 while the strong-table grader held the

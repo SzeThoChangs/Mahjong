@@ -407,12 +407,13 @@ console.log(`${labelled} questions carry a cause  [${[...perCause].sort((a, b) =
  * positions rather than questions, so a scan that trusts the extension puts a phantom pack in the
  * picker. Anything without questions is not a quiz pack.
  */
-type Listed = { id: string; money?: boolean; unit?: string; table?: unknown; questions: number; shards?: number };
+type Listed = { id: string; money?: boolean; unit?: string; table?: unknown; questions: number; shards?: number; players?: 'strong' };
 const packs = readdirSync(outDir, { withFileTypes: true }).map((ent): Listed | null => {
   if (ent.isDirectory()) {
     try {
       const ix = JSON.parse(readFileSync(join(outDir, ent.name, 'index.json'), 'utf8')) as PackIndex;
-      return { id: ent.name, money: ix.money, unit: ix.unit, table: ix.table, questions: ix.questions, shards: ix.shards.length };
+      // `players` rides along from the per-pack index, so a rebuilt top index keeps the strong table's label
+      return { id: ent.name, money: ix.money, unit: ix.unit, table: ix.table, questions: ix.questions, shards: ix.shards.length, ...(ix.players ? { players: ix.players } : {}) };
     } catch { return null; }
   }
   if (!ent.name.endsWith('.json') || ent.name === 'index.json') return null;
