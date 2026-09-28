@@ -32,6 +32,8 @@ const out = arg('out', `../data/gen/coachpacks/${pack}`);
 const rollouts = Number(arg('rollouts', '256')), top = Number(arg('top', '4'));
 const worker = Number(arg('worker', '0')), workers = Number(arg('workers', '1'));
 const merge = process.argv.includes('--merge');
+/** `--limit N`: judge only the first N questions of this worker's first shard, for a smoke run */
+const limit = Number(arg('limit', '0'));
 
 type Action = { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown };
 type Q = PackQuestion & { id: string; k: string; best: string; sel: string; n: number; c: Cause | null; rule?: 'win'; judge?: 'coach'; actions: Action[]; h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; b: number[]; seat: number; dl?: number; w: number; t: number };
@@ -91,7 +93,8 @@ const t0 = Date.now();
 for (const s of mine) {
   const target = join(out, s.file);
   if (existsSync(target)) { console.log(`${s.file} already judged, skipped`); continue; }
-  const qs = (JSON.parse(readFileSync(join(srcDir, s.file), 'utf8')) as { questions: Q[] }).questions;
+  const all = (JSON.parse(readFileSync(join(srcDir, s.file), 'utf8')) as { questions: Q[] }).questions;
+  const qs = limit > 0 ? all.slice(0, limit) : all;
   for (const q of qs) {
     try {
       const snap = snapshotFromQuestion(q, rules);
@@ -112,5 +115,6 @@ for (const s of mine) {
   }
   writeFileSync(target, JSON.stringify({ questions: qs }));
   console.log(`${s.file}: ${qs.length} questions written`);
+  if (limit > 0) break;
 }
 console.log(`worker ${worker} finished: ${done} judged, ${changed} best moved, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
