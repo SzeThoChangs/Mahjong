@@ -17,7 +17,7 @@
 import { readdirSync, readFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, fnv1a, rankDiscards, type PackQuestion, type Context } from 'sg-mahjong-solver';
-import type { Meld } from 'sg-mahjong-engine';
+import { shanten, type Meld } from 'sg-mahjong-engine';
 import { rulesForDir } from './tablerules.js';
 
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
@@ -59,7 +59,18 @@ const onColourPlan = (q: Q & { h: number[]; m: number[][]; disc?: number[][]; pm
     opponentMelds: (q.pm ?? []).map((ms, seat) => (seat === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };
   try { return rankDiscards(q.h, melds, ctx, { fitted: false }).best.target.id === 'half_color'; } catch { return false; }
 };
-const picked = (q: Q) => (select === 'pong' ? q.k === 'claim' && q.best.startsWith('pong') && q.actions.some((a) => a.a === 'pass') : select === 'colour' ? onColourPlan(q as never) : hard(q));
+/**
+ * `--select wait` takes every discard question where the pack's best throw leaves the hand short of
+ * Ting Pai while another legal throw would leave it waiting: "build bigger" beat "wait now" in the
+ * play-outs. Changs disputed one on 2026-09-28 and the Coach-played judge did not uphold it
+ * (PROTOTYPE.md, "A disputed verdict"), so the class is judged the same way.
+ */
+const buildsOverWait = (q: Q & { h: number[]; m: number[][] }): boolean => {
+  if (q.k !== 'discard' || q.h.length % 3 !== 2 || !q.best.startsWith('d:')) return false;
+  const after = (kind: number) => { const r = [...q.h]; r.splice(r.indexOf(kind), 1); return shanten(r, q.m.length); };
+  return after(Number(q.best.slice(2))) > 0 && q.actions.some((a) => a.a.startsWith('d:') && after(Number(a.a.slice(2))) === 0);
+};
+const picked = (q: Q) => (select === 'pong' ? q.k === 'claim' && q.best.startsWith('pong') && q.actions.some((a) => a.a === 'pass') : select === 'colour' ? onColourPlan(q as never) : select === 'wait' ? buildsOverWait(q as never) : hard(q));
 for (const f of readdirSync(dir).filter((x) => /^\d+\.json$/.test(x)).sort())
   for (const q of (JSON.parse(readFileSync(join(dir, f), 'utf8')) as { questions: Q[] }).questions) if (picked(q)) all.push(q);
 // a fixed, spread-out sample: order by a hash of the id, take the first N, then this worker's share

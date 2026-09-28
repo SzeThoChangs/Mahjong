@@ -420,6 +420,30 @@ this table: the calls the Coach makes are the same at 0.2, 0.4 and 0.8. It stays
 Pong bar (`D-031`) and the danger weight swept before, the third item of `D-034` closes: the Coach's
 fixed numbers are not where money is.
 
+### A disputed verdict: wait now or build bigger, strong-table question 3349:11:51
+
+**Uncertainty addressed:** Changs challenged a "big mistake" on 2026-09-28: at turn 44 with two
+pongs down, 白白, 4條5條6條 and 5筒 7筒 8筒, he threw 5筒 to wait on 6筒 or 9筒; the pack and the
+Challenge button both say 7筒, one draw short of a bigger hand, at 18 chips against 10.
+
+**What was run:** the position re-judged from the pack question, the top three throws, twice on the
+same hidden deals: the usual play-outs at 2,048, and the Coach in all four chairs at 512.
+
+    finished by                       7筒               5筒               8筒
+    simple bots, 2,048        18.80  win 55%   12.12  win 78%   10.35  win 63%
+    Coach in four chairs, 512  18.13  win 49%   16.86  win 71%   18.52  win 59%
+
+Against simple bots 7筒 leads 5筒 by 6.68 +/- 0.58 (t 11.6); against the Coach the three are within
+0.39 +/- 1.23 of each other, and 5筒 wins the hand 71% of the time.
+
+**What this establishes:** on this position the verdict is the grader's known weakness, not a
+mistake by the player: simple bots never defend and rarely win first, so a hand one draw short of
+bigger gets time that strong players do not give it. The colour-plan regrade found the bias absent
+on separable colour-plan positions (2 of 287); this is a different class, wait now against build
+bigger, and it flips. The count of that class in the packs is below; the next step is to regrade a
+sample of it with the Coach in the play-outs, as the colour class was, and if a material share flips,
+to re-grade the class.
+
 ### The grades on colour-hand positions, re-made with the Coach playing the play-outs
 
 **Uncertainty addressed:** Every pack answer is the measured best when the rest of the hand is
