@@ -448,6 +448,33 @@ danger at the table's Joker count), so a challenge answers by strong play whatev
 built with; each Train question says which judge its bars rest on until the pack it came from has
 been re-judged.
 
+### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
+
+**Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54
+with 發 ponged and 3筒 konged, holding 7萬7萬 8萬8萬 9萬 7條7條 and a drawn 5筒 with the other three
+copies already visible, he threw the dead 5筒 and the pack called it a big mistake against 9萬.
+
+**What was run:** the top three throws re-judged on the same hidden deals, simple bots at 2,048
+and the Coach in all four chairs at 512 twice on different dice.
+
+    finished by                      9萬                5筒               7萬
+    simple bots, 2,048        20.79  win 58%    16.32  win 84%    7.26  win 45%
+    Coach, 512                18.34  win 55%    12.61  win 84%    7.88  win 45%
+    Coach, 512, other dice    19.26  win 56%    12.45  win 84%    7.18  win 40%
+
+9萬 over 5筒 by 4.47 +/- 0.51, 5.72 +/- 1.10 and 6.81 +/- 1.07. Every judge agrees, past five
+standard errors: throwing the dead tile wins the hand far more often and is worth five or six
+chips less a hand. Three pairs kept make an All-Pong hand, with the dead tile held back as the
+safe throw for later; the dead tile thrown now leaves a quick cheap hand.
+
+**What this establishes:** the verdict is sound under strong play, and the question is a real
+lesson, not a defect of the grader. What failed was the explanation: the Coach's reasons for 9萬
+("single, needs two more") say nothing about why, and the Coach itself, its numbers and the fitted
+policy both, would have thrown 5筒. The play-outs know why: each action's stored win mix says what
+the hand finished as and for how much. The fix is to explain a verdict from that, beside the
+Coach's words, and to say plainly when the Coach disagrees with the measurement, which it does
+here.
+
 ### A disputed verdict: wait now or build bigger, strong-table question 3349:11:51
 
 **Uncertainty addressed:** Changs challenged a "big mistake" on 2026-09-28: at turn 44 with two
