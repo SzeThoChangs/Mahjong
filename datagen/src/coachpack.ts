@@ -1,0 +1,116 @@
+/**
+ * Re-judge every question of a pack with the Coach in all four chairs of the play-outs (D-037).
+ *
+ *   tsx src/coachpack.ts --pack strong-nowild --run ../data/gen/run-strong2-nowild --out ../data/gen/coachpacks/strong-nowild --rollouts 256 --top 4 --worker 0 --workers 6
+ *   tsx src/coachpack.ts --pack strong-nowild --out ../data/gen/coachpacks/strong-nowild --merge
+ *
+ * Every answer the app gives today rests on play-outs finished by the `shanten` bots, which never
+ * defend and rarely win first. Changs disputed a verdict on 2026-09-28, the Coach-played judge did
+ * not uphold it, and he said no answer may come from simple bots. The simple bots still choose the
+ * positions, because that is cheap; here each question's throws are judged again with the Coach
+ * playing out the rest of the hand, and the pack's answer becomes that.
+ *
+ * What is judged: for a discard, the top `top` throws by the old grade plus the throw the recorded
+ * seat made, so a mistake verdict on the player's own throw is always Coach-judged; for a claim or
+ * a self decision, every legal action. A win on offer keeps the rule (D-033). The question keeps
+ * its position, its tips and its ids, gains `judge: 'coach'` and the Coach-judged actions, and its
+ * cause is worked out again where the best throw moved. Shards are independent files, so each
+ * worker takes shards by number and writes them under `--out`; `--merge` then writes the per-pack
+ * index from the finished shards, copying the table and placement from the source index.
+ *
+ * Resume: a shard already present under `--out` is skipped, so a killed run continues.
+ */
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, rankDiscards, suggestCause, type PackQuestion, type PackIndex, type Context, type Cause, type RejudgedAction } from 'sg-mahjong-solver';
+import type { Meld, TileKind } from 'sg-mahjong-engine';
+import { rulesForDir } from './tablerules.js';
+
+const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; };
+const pack = arg('pack', 'strong-nowild'), run = arg('run', '../data/gen/run-strong2-nowild');
+const out = arg('out', `../data/gen/coachpacks/${pack}`);
+const rollouts = Number(arg('rollouts', '256')), top = Number(arg('top', '4'));
+const worker = Number(arg('worker', '0')), workers = Number(arg('workers', '1'));
+const merge = process.argv.includes('--merge');
+
+type Action = { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown };
+type Q = PackQuestion & { id: string; k: string; best: string; sel: string; n: number; c: Cause | null; rule?: 'win'; judge?: 'coach'; actions: Action[]; h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; b: number[]; seat: number; dl?: number; w: number; t: number };
+
+const srcDir = `../web/public/quiz/${pack}`;
+const srcIx = JSON.parse(readFileSync(join(srcDir, 'index.json'), 'utf8')) as PackIndex;
+mkdirSync(out, { recursive: true });
+
+if (merge) {
+  const shards = srcIx.shards.map((s) => {
+    const qs = (JSON.parse(readFileSync(join(out, s.file), 'utf8')) as { questions: Q[] }).questions;
+    const kinds: Record<string, number> = {}, causes: Record<string, number> = {};
+    for (const q of qs) { kinds[q.k] = (kinds[q.k] ?? 0) + 1; if (q.c) causes[q.c] = (causes[q.c] ?? 0) + 1; }
+    return { file: s.file, n: qs.length, kinds, causes };
+  });
+  const ix = { ...srcIx, shards, questions: shards.reduce((a, s) => a + s.n, 0), judge: 'coach' as const, rollouts };
+  writeFileSync(join(out, 'index.json'), JSON.stringify(ix));
+  console.log(`merged ${shards.length} shards, ${ix.questions} questions -> ${out}/index.json`);
+  process.exit(0);
+}
+
+const rules = rulesForDir(run);
+const reads = readsFor(srcIx.table.wildcards);
+const coach = () => (srcIx.table.wildcards === 0 ? new AltReadsCoachBot(reads) : new CoachBot());
+const minimumFan = srcIx.table.minimumTai === 2 ? 2 : 1;
+
+/** the pack's action shape: best first, each with its paired standard error against the best, as the builder writes it */
+const toActions = (r: RejudgedAction[]): Action[] => {
+  const sorted = [...r].sort((a, b) => b.ev - a.ev);
+  return sorted.map((a) => {
+    const se = a === sorted[0] ? 0 : pairedGap(sorted[0]!, a).se;
+    return { a: a.a, ev: Number(a.ev.toFixed(2)), se: Number((Number.isFinite(se) ? se : 0).toFixed(2)), win: Number(a.win.toFixed(2)), dealin: Number(a.dealin.toFixed(2)), draw: Number(a.draw.toFixed(2)), n: a.n, mix: a.mix };
+  });
+};
+
+/** the same cause the builder works out, from the question alone */
+const causeOf = (q: Q, best: string): Cause | null => {
+  if (q.k !== 'discard' || q.sel === best || !q.sel.startsWith('d:') || !best.startsWith('d:')) return null;
+  try {
+    const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2) as TileKind[], concealed: m[1] === 1 }));
+    const visible: number[] = [];
+    for (const d of q.disc ?? []) visible.push(d[1]!);
+    (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
+    (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
+    const seat = q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat;
+    const ctx: Context = { seat, prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, reads, visible,
+      opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };
+    const r = rankDiscards(q.h as TileKind[], melds, ctx);
+    return suggestCause(q.h as TileKind[], melds, { bonus: q.b as TileKind[], seat, prevailingWind: q.w, melds, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1 },
+      r.options, Number(q.sel.slice(2)) as TileKind, Number(best.slice(2)) as TileKind).suggested;
+  } catch { return null; }
+};
+
+const mine = srcIx.shards.filter((_, i) => i % workers === worker);
+let done = 0, changed = 0, failed = 0;
+const t0 = Date.now();
+for (const s of mine) {
+  const target = join(out, s.file);
+  if (existsSync(target)) { console.log(`${s.file} already judged, skipped`); continue; }
+  const qs = (JSON.parse(readFileSync(join(srcDir, s.file), 'utf8')) as { questions: Q[] }).questions;
+  for (const q of qs) {
+    try {
+      const snap = snapshotFromQuestion(q, rules);
+      const p = pendingOf(snap, rules);
+      const byOld = [...q.actions].sort((a, b) => b.ev - a.ev).map((a) => a.a);
+      const want = new Set<string>(q.k === 'discard' ? [...byOld.slice(0, top), q.sel] : byOld);
+      if (byOld.includes('win')) want.add('win');
+      const legal = p.legal.filter((l) => want.has(encAction(l)));
+      if (legal.length < 2) { q.judge = 'coach'; continue; }      // one legal action: nothing to judge, but the mark says the Coach looked
+      const r = rejudge(snap, rules, p.seat, legal, { rollouts, seed: 20260928, key: q.id, policy: coach });
+      const actions = toActions(r);
+      const oldBest = q.best;
+      q.actions = actions; q.n = rollouts; q.judge = 'coach';
+      q.best = q.rule === 'win' && actions.some((a) => a.a === 'win') ? 'win' : actions[0]!.a;
+      if (q.best !== oldBest) { changed++; q.c = causeOf(q, q.best); }
+    } catch (e) { failed++; q.judge = undefined; console.log(`${q.id} failed: ${(e as Error).message}`); }
+    if (++done % 25 === 0) console.log(`worker ${worker}: ${done} judged, ${changed} best moved, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+  }
+  writeFileSync(target, JSON.stringify({ questions: qs }));
+  console.log(`${s.file}: ${qs.length} questions written`);
+}
+console.log(`worker ${worker} finished: ${done} judged, ${changed} best moved, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);

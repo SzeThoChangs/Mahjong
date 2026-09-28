@@ -1144,3 +1144,29 @@ both models inside it. The identity check against the harness's own claim bot is
 `PROTOTYPE.md`.
 
 **Related:** D-031, D-034, D-035, `PROTOTYPE.md`.
+
+---
+
+## D-037 — Answers come from play-outs finished by strong players, not simple bots
+
+**Date:** 2026-09-28. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
+
+**What was decided:** No answer the app gives is to rest on play-outs finished by the simple
+`shanten` bots. Changs disputed a "big mistake" on a wait-now-or-build-bigger position, the Coach-
+played re-judging did not uphold it, and he said: "We cannot allow answers from simple bots. It is
+not realistic." The simple bots may still find candidate positions, because they are cheap; the
+answer on any question a player sees comes from play-outs with the Coach in all four chairs.
+
+**Why:** The Coach is the project's stand-in for his strong table (`A-006`). The simple bots never
+defend and rarely win first, which gives a slow bigger hand time it does not get at his table; the
+win rule (`D-033`) was the first place that bias was measured, the wait-or-build class the second.
+
+**What it costs:** a Coach-played judgement of one question's top throws takes 20 to 40 seconds at
+256 play-outs on the Mac; a pack of 10,700 questions is 12 to 18 hours with six workers, so his
+table's two packs are about a day and a half and all four about three days. The Challenge button on
+the phone has to run the Coach too, which is minutes rather than seconds.
+
+**How it is being carried out:** `PROTOTYPE.md`, "Every answer re-judged with the Coach in the
+play-outs". Until a pack is re-judged, its questions say which judge they rest on.
+
+**Related:** D-033, D-034, D-035, `A-006`, `PROTOTYPE.md`.

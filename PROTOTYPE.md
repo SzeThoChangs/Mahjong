@@ -420,6 +420,27 @@ this table: the calls the Coach makes are the same at 0.2, 0.4 and 0.8. It stays
 Pong bar (`D-031`) and the danger weight swept before, the third item of `D-034` closes: the Coach's
 fixed numbers are not where money is.
 
+### Every answer re-judged with the Coach in the play-outs
+
+**Uncertainty addressed:** none about the choice, which is Changs's (`D-037`): no answer may rest on
+play-outs finished by simple bots. What is uncertain is how many answers move, and what the packs
+look like when the Coach is the judge.
+
+**What is built:** `datagen/src/coachpack.ts`. It takes a pack as shipped, rebuilds every position
+from the question alone, and judges again with the Coach in all four chairs: for a discard the top
+four throws by the old grade plus the throw the recorded seat made, for a claim or a self decision
+every legal action, at 256 play-outs, the win rule kept. The question keeps its position, tips, ids
+and cause machinery, gains `judge: 'coach'`, and its cause is worked out again where the best throw
+moved. Six workers take shards by number; a merge writes the per-pack index with `judge: 'coach'`
+on it. A killed run resumes from the shards already written.
+
+**Named before the run:** the strong-table pack first, 10,751 questions, then `min1-nowild`. The
+counts to report: how many best answers moved, how many of the old "decisive" gaps the Coach does
+not reproduce, the phase and kind of the moved ones, and the time taken. The app then shows which
+judge a question rests on, and the Challenge button gains the strong-table play-outs.
+
+**Status:** QUEUED behind the wait-class regrade, 2026-09-28 19:2x.
+
 ### A disputed verdict: wait now or build bigger, strong-table question 3349:11:51
 
 **Uncertainty addressed:** Changs challenged a "big mistake" on 2026-09-28: at turn 44 with two
