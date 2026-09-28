@@ -448,6 +448,13 @@ danger at the table's Joker count), so a challenge answers by strong play whatev
 built with; each Train question says which judge its bars rest on until the pack it came from has
 been re-judged.
 
+**Measured on Changs's own phone, an iPhone 18 Pro Max, 2026-09-29 01:12:** a Challenge with the
+Coach in every chair, 512 play-outs on each of two actions from a mid-hand claim (`min1-nowild`
+4634:5:12), took 44.7 seconds; the same on the Mac from a late position took 15.2. So on the phone
+a Challenge is under a minute, and the Play review at 384 play-outs a decision is about half that
+per decision, or ten minutes and more for a whole hand's "Judge all"; the screen says so. The
+"what the play-outs did" line and the judge line both rendered on the phone.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54
