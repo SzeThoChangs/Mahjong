@@ -49,7 +49,7 @@ const STEP_MS = 350;
  * throw. Six is the tile you threw plus the five the coach's own ranking likes best, which is
  * where the best tile almost always is; the screen says which were compared.
  */
-const MAX_JUDGED = 6;
+const MAX_JUDGED = 3;   // the tile thrown plus the Coach's two favourites, since the Coach plays the play-outs (D-037)
 
 /** the game in progress: the engine, the bots, and the decision the human is being asked for */
 interface Live {
@@ -446,7 +446,7 @@ export default function Play() {
               play-outs' verdicts hold against strong players. Until 2026-09-28 this paragraph said
               calls were unchecked and a taken win was simply not marked; both were out of date.
             */}
-            <p className="text-muted-foreground">Trust it on throws, <J>Pong</J> and <J>Chow</J>, which were measured for money against strong players. A win on offer is not judged by the play-outs at all: taking it is right and declining it is a mistake, by the rule the Train tab uses.</p>
+            <p className="text-muted-foreground">Every judgement here is by strong play: the <J>Coach</J> sits in all four chairs of the play-outs. That makes an early decision slow, about a minute on a laptop and several on a phone, so a throw is compared with the two tiles the <J>Coach</J> liked best rather than the whole hand. A win on offer is not judged by the play-outs at all: taking it is right and declining it is a mistake, by the rule the Train tab uses.</p>
             {session && session.hands.some((x) => x.id === hand.id) && (
               <p className="text-muted-foreground">Session: hand {session.hands.findIndex((x) => x.id === hand.id) + 1}, you {fmt(session.chips[you] ?? 0)} so far. Next: {WIND[session.prevailingWind]}圈, you are {WIND[roleOf(you, session.dealer)]}{session.dealer === you ? ' and you deal' : ''}.</p>
             )}

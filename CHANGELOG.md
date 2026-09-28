@@ -60,6 +60,19 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-28 — No answer from simple bots: the Coach in every chair of the play-outs
+
+**Changed:** The Challenge button and the Play tab's review run their play-outs with the Coach in
+all four chairs. Each Train question says which judge its bars rest on. The Play judge compares the
+thrown tile with the Coach's two favourites at 128 play-outs each, because the Coach is slow from an
+early position, and says so. The packs are being re-judged the same way, the strong-table pack
+first (`datagen/src/coachpack.ts`).
+
+**Why:** Changs disputed a "big mistake" that the Coach-played judge did not uphold, and ruled that
+no answer may rest on play-outs finished by simple bots (`D-037`).
+
+**Impact:** Ten passes in `MISTAKES.md`. Until a pack is re-judged its questions say so.
+
 ### 2026-09-28 — The strong-table pack regenerated with the new Coach
 
 **Changed:** The fourth pack is now cut from 150,000 hands played by the Coach that carries the

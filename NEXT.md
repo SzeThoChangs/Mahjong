@@ -106,29 +106,31 @@ review answering a win on offer by the rule both ways, friends' records and Send
 setup (`A-007`), a session on the Play tab, and the training plan brought up to date. Every one of
 these has its ten passes in `MISTAKES.md`.
 
-**Done, 2026-09-28 16:45:** the whole of `D-034` that the Mac could settle. Candidate B and the
-claim model shipped and checked identical to the measured bots; the Chow bar, the colour-plan grades
-and the colour-plan line measured and left as they were; the strong-table pack regenerated with the
-new Coach and on the site; the session, friends' records and the training plan done. Nothing is
-running on the Mac.
+**Changed course at 18:52, 2026-09-28:** Changs disputed a "big mistake" (strong-table question
+3349:11:51); re-judged with the Coach in the play-outs it is a small edge for the pack's tile, not a
+big one, and he ruled that no answer may rest on simple bots (`D-037`). The app's Challenge and Play
+judges now run the Coach; each question names its judge; `datagen/src/coachpack.ts` re-judges a
+whole pack.
+
+**Running on the Mac:** the strong-table pack re-judged with the Coach, six workers, started 19:45
+(`data/gen/coach2/coachpack-chain.sh`, logs `coachpack-strong-w*.log`, output
+`data/gen/coachpacks/strong-nowild/`). Roughly eight hours. Then `min1-nowild` the same way.
 
 ## Recommended Next Action
 
 ### Next
 
-Nothing for the agent until Changs has used the app. What waits on him: whether the hard questions
-and the strong-table pack feel right (`A-005`), whether a session is what he opens (the session
-entry in `PROTOTYPE.md`), and whether any friend sends a record (`A-007`).
+When the strong pack's re-judging lands: read the counts (best moved, decisive gaps not
+reproduced, by phase and kind), copy the pack in with its `judge: 'coach'` index, ten passes,
+deploy; then start `min1-nowild`. The two 4-Joker packs follow.
 
 ### Why
 
-Every remaining item is a question about use, not about the code or the Coach, and the one Coach
-item left, a model choosing the plan on money, is a week of its own that should not start without
-a reason from play.
+`D-037` is not carried out until every pack a player can open rests on the Coach's play-outs.
 
 ### Expected Outcome
 
-His answers, or a week of use with none, which is itself an answer.
+Four packs judged by strong play, each question saying so, and a record of how many answers moved.
 
 ## After That
 

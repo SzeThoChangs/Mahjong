@@ -110,7 +110,8 @@ const freshSeed = () => 900000 + Math.floor(Math.random() * 1e6);
  */
 export async function challenge(req: Omit<ChallengeRequest, 'rollouts' | 'seed'> & { rollouts?: number }, onProgress: (done: number, total: number) => void): Promise<ChallengeOutcome> {
   const rollouts = req.rollouts ?? CHALLENGE_ROLLOUTS;
-  const msg: ChallengeRequest = { q: req.q, rules: req.rules, compare: req.compare, rollouts, seed: freshSeed() };
+  // the Coach plays out the rest of the hand (D-037): a challenge is judged by strong play, whatever the pack was
+  const msg: ChallengeRequest = { q: req.q, rules: req.rules, compare: req.compare, rollouts, seed: freshSeed(), policy: 'coach' };
   const m = await runWorker(msg, onProgress);
   const pick = m.actions.find((a) => a.a === req.compare[0]), ref = m.actions.find((a) => a.a === req.compare[1]);
   if (!pick || !ref) throw new Error('the play-outs came back without the actions asked for');
@@ -126,7 +127,14 @@ export async function challenge(req: Omit<ChallengeRequest, 'rollouts' | 'seed'>
  * second on the Mac and a few on a phone. The error bar is wider than a challenge's by about
  * root two, and the verdict words say so by leaning on it.
  */
-export const PLAY_ROLLOUTS = 256;
+export const PLAY_ROLLOUTS = 128;
+/*
+ * 128 since D-037 put the Coach in every chair of the play-outs. Measured on the Mac on 2026-09-28:
+ * a Challenge from turn 44 ran 68 Coach play-outs a second, a Play decision from turn 2 ran 6 a
+ * second, because an early hand has fifty turns of four Coaches still to play. At 256 per action and
+ * six actions that was over four minutes a decision here and far more on a phone. Three actions at
+ * 128 is a quarter of it; the error bar is wider by about root two and the words lean on it.
+ */
 
 /** What the judge said about one decision made at the table, in the Challenge button's language. */
 export interface PlayVerdict {
@@ -154,7 +162,7 @@ export interface PlayVerdict {
  * inside the noise, and the honest word for that is close - not a worse move, an unmeasurable one.
  */
 export async function judgePlay(snap: Snapshot, rules: RulesConfig, seat: number, compare: string[], pick: string, key: string, onProgress: (done: number, total: number) => void): Promise<PlayVerdict> {
-  const msg: PositionRequest = { snap, rules, seat, compare, rollouts: PLAY_ROLLOUTS, seed: freshSeed(), key };
+  const msg: PositionRequest = { snap, rules, seat, compare, rollouts: PLAY_ROLLOUTS, seed: freshSeed(), key, policy: 'coach' };
   const m = await runWorker(msg, onProgress);
   const sorted = [...m.actions].sort((x, y) => y.ev - x.ev);
   const mine = sorted.find((a) => a.a === pick);

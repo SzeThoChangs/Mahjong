@@ -58,12 +58,13 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| The week's programme (`D-034`) | Agent | Every item done except the full form of the sixth; nothing running |
+| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Strong-table pack running (six workers); the app's own judges already changed |
 
 Nothing is running on the Mac.
 
 ## Recently Completed
 
+- 2026-09-28: no answer from simple bots (`D-037`): the Challenge and Play judges run the Coach; the packs are being re-judged the same way.
 - 2026-09-28: the strong-table pack regenerated with the new Coach and put on the site (10,751 questions); the colour-plan line measured and kept; the shipped discard and claim rules checked identical to the measured bots.
 - 2026-09-28: the claim model shipped inside the Coach's claim rule (`D-036`), pooled +0.249 chips a game against three Coaches; the Chow bar and the colour-plan grades measured and left as they were.
 - 2026-09-28: a session on the Play tab, hands in a row with the dealer moving and chips carried; the fed count and the wind turn measured on the built app.

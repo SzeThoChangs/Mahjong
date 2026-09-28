@@ -13,7 +13,7 @@
  * decided, which needs no rebuilding. Everything after that point is shared, so a decision made at
  * the table and a decision posed by a pack are judged by one instrument.
  */
-import { rejudge, snapshotFromQuestion, pendingOf, encAction, type PackQuestion, type RejudgedAction } from 'sg-mahjong-solver';
+import { rejudge, snapshotFromQuestion, pendingOf, encAction, AltReadsCoachBot, CoachBot, readsFor, type PackQuestion, type RejudgedAction } from 'sg-mahjong-solver';
 import type { LegalAction, RulesConfig, Snapshot } from 'sg-mahjong-engine';
 
 export interface ChallengeRequest {
@@ -23,6 +23,10 @@ export interface ChallengeRequest {
   compare: string[];
   rollouts: number;
   seed: number;
+  /** 'coach': the Coach plays all four chairs of the play-outs, reading danger at the table's Joker
+   *  count (D-037). Absent: the simple shanten bots, which is what the packs built before that
+   *  decision rest on. */
+  policy?: 'coach';
 }
 /** A position captured live, before the seat decided. `key` names it so its hidden states are
  *  reproducible and different from every other decision's under the same seed. */
@@ -34,6 +38,7 @@ export interface PositionRequest {
   rollouts: number;
   seed: number;
   key: string;
+  policy?: 'coach';
 }
 export type WorkerRequest = ChallengeRequest | PositionRequest;
 export type ChallengeMessage =
@@ -53,7 +58,9 @@ function pickLegal(legal: LegalAction[], compare: string[]): LegalAction[] {
 }
 
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
-  const { rules, compare, rollouts, seed } = e.data;
+  const { rules, compare, rollouts, seed, policy } = e.data;
+  // the Coach for this table: the no-Joker danger reads at a no-Joker table (D-030), else the book's
+  const coach = () => (rules.jokers.count === 0 ? new AltReadsCoachBot(readsFor(0)) : new CoachBot());
   try {
     let snap: Snapshot, seat: number, key: string;
     if ('snap' in e.data) {
@@ -70,7 +77,7 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
     const t0 = performance.now();
     let last = 0;
     const actions = rejudge(snap, rules, seat, legal, {
-      rollouts, seed, key, coupled: true, adaptive: false,
+      rollouts, seed, key, coupled: true, adaptive: false, policy: policy === 'coach' ? coach : undefined,
       onProgress: (done, total) => { if (done - last >= 32 || done === total) { last = done; post({ type: 'progress', done, total }); } },
     });
     post({ type: 'done', actions, ms: performance.now() - t0 });

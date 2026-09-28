@@ -439,7 +439,14 @@ counts to report: how many best answers moved, how many of the old "decisive" ga
 not reproduce, the phase and kind of the moved ones, and the time taken. The app then shows which
 judge a question rests on, and the Challenge button gains the strong-table play-outs.
 
-**Status:** QUEUED behind the wait-class regrade, 2026-09-28 19:2x.
+**Status:** RUNNING from 2026-09-28 19:45, six workers. A smoke run of three questions at 64
+play-outs took 12 seconds and wrote the pack's own shape with `judge: 'coach'`.
+
+**The app's own judges, changed the same evening:** the Challenge button and the Play tab's review
+now run their play-outs with the Coach in every chair (`policy: 'coach'` in the worker, reading
+danger at the table's Joker count), so a challenge answers by strong play whatever the pack was
+built with; each Train question says which judge its bars rest on until the pack it came from has
+been re-judged.
 
 ### A disputed verdict: wait now or build bigger, strong-table question 3349:11:51
 
@@ -457,9 +464,17 @@ same hidden deals: the usual play-outs at 2,048, and the Coach in all four chair
 Against simple bots 7筒 leads 5筒 by 6.68 +/- 0.58 (t 11.6); against the Coach the three are within
 0.39 +/- 1.23 of each other, and 5筒 wins the hand 71% of the time.
 
-**What this establishes:** on this position the verdict is the grader's known weakness, not a
-mistake by the player: simple bots never defend and rarely win first, so a hand one draw short of
-bigger gets time that strong players do not give it. The colour-plan regrade found the bias absent
+**A second Coach-judged sample, from the app's own Challenge button once it ran the Coach (19:52):**
+512 fresh play-outs on 7筒 and 5筒 only, 15 seconds in the browser: 7筒 ahead by $3.28 +/- $1.01 in
+Changs's table money, which is about 2.5 +/- 0.8 in the pack's chips (the app prices the pack's
+18.19 as $24.08). So the two Coach-judged samples read 1.3 +/- 1.2 and 2.5 +/- 0.8 for 7筒 over
+5筒, about 1.9 +/- 0.7 pooled, against 6.7 +/- 0.6 from the simple bots.
+
+**What this establishes:** under strong play 7筒 is still the better throw, by about two chips
+rather than seven, and the "big mistake" is the grader's known weakness: simple bots never defend
+and rarely win first, so a hand one draw short of bigger gets time that strong players do not give
+it. The first reading here, that the three throws were equal within the noise, was one sample; the
+second narrowed it to a small edge for 7筒, and both are recorded. The colour-plan regrade found the bias absent
 on separable colour-plan positions (2 of 287); this is a different class, wait now against build
 bigger, and it flips. The count of that class in the packs is below; the next step is to regrade a
 sample of it with the Coach in the play-outs, as the colour class was, and if a material share flips,

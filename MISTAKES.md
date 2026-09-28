@@ -119,6 +119,46 @@ rendered.
 
 ## Ten passes
 
+### The Coach in every chair of the app's own play-outs, and the judge named on each question — Mon Sep 28 19:57:03 +08 2026
+
+Passes run on the dev server on port 5174 with the six pack re-judging workers paused (`kill -STOP`)
+for the browser-driven steps and resumed after. One design change made inside the set after a
+measurement: the Play judge's budget.
+
+**Test boundary**
+
+- Workflows: the Challenge button on Train; a Play hand's review and one judged decision; the line
+  on Train saying which judge a question rests on.
+- Screens: Train, Play.
+- Access restrictions: none exist.
+- Values, records and calculations: the play-outs' policy in the worker; the Challenge outcome on
+  the disputed question 3349:11:51; the Play judge's time and words; the judge line's text.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Storage cleared, reloaded on #train: a question served, the judge line under it | 0 |
+| 2 | Errors | `console.error` hooked on every run: the Challenge, two Play hands with a judged decision each, the width checks | 0 |
+| 3 | Links | The Challenge button, Deal, Skip to my turn, Judge: each did what it names | 0 |
+| 4 | Workflow steps | The disputed question served by id and answered 5筒: "Big mistake" from the pack bars, the line "Judged by simple bots; this pack is being re-judged with the Coach.", the button "Challenge the verdict (512 fresh play-outs, the Coach in every chair)". Challenged: 15.2 seconds, "Holds: on fresh play-outs your discard 5筒 is still $3.28 worse than discard 7筒 (about ±$1.01)", "discard 7筒 $19.79, discard 5筒 $16.51". Play: a turn-5 discard judged at the first budget, 224 of 1,536 play-outs after 38 seconds; at the new budget, 44.8 seconds, "Too close to call", "Compared 3 of 13 legal tiles: yours and the 2 the Coach liked best" | 1, fixed |
+| 5 | Writes | The judged Play verdict counted "1 judged, 0 mistakes" in the tally; nothing new is stored by this change | 0 |
+| 6 | The data it moves | The worker's play-outs run the Coach when asked: the Challenge on the disputed position took 15.2 seconds for 1,024 play-outs where the simple bots' Challenge on the same position took about 2, and its figures ($19.79 against $16.51) sit beside the Node re-judging's 18.13 against 16.86 in pack chips | 0 |
+| 7 | Reconciliation | The Challenge's gap $3.28 +/- $1.01 in the table's money against the Node run's 1.27 in pack chips: the app prices the pack's 18.19 as $24.08, so $3.28 is about 2.5 chips; the two Coach-judged samples agree in direction and differ by 1.2 on a standard error of 1.4 for the difference | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | Train with the judge line and Play's review at 280px: page width equal to the screen, 0 elements past the edge outside a scroller | 0 |
+| 10 | Look at it | The Challenge outcome, the judge line, the Play words ("Every judgement here is by strong play: the Coach sits in all four chairs of the play-outs. That makes an early decision slow, about a minute on a laptop and several on a phone...") read as text | 0 |
+
+**Defects found:**
+
+1. Pass 4, fixed: the Play judge with the Coach at 256 play-outs over six actions ran 6 play-outs a
+   second from a turn-2 decision, over four minutes a decision on the Mac and far longer on a phone.
+   Expected: a judgement a person waits for. Fixed by judging the thrown tile plus the Coach's two
+   favourites at 128 each, and saying so on screen. Re-measured on a turn-5 decision: 44.8 seconds,
+   the words naming the three tiles compared.
+
+**Not checked:** a real phone, where the Coach's play-outs are several times slower again; the
+Challenge on a claim or a self decision; dark mode; 320, 375, 390 and 1280px on this change, which
+adds one short line and changes one paragraph.
+
 ### The strong-table pack regenerated with the new Coach, on the site — Mon Sep 28 16:41:44 +08 2026
 
 Passes run on the dev server on port 5174 after the regenerated pack replaced the first one in

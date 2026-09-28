@@ -61,4 +61,7 @@ export interface PackIndex {
   shards: ShardIx[];
   /** who played the hands: absent for the personality bots, 'strong' for four Coaches (PROTOTYPE.md) */
   players?: 'strong';
+  /** the whole pack re-judged with the Coach in the play-outs (D-037), and at how many per action */
+  judge?: 'coach';
+  rollouts?: number;
 }

@@ -81,7 +81,7 @@ function isHard(q: { best: string; sel: string; actions: { ev: number; se?: numb
   return (a[0]!.ev - a[1]!.ev) / se <= 8;
 }
 
-interface Q { id: string; k: string; c?: string | null; rule?: 'win'; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
+interface Q { id: string; k: string; c?: string | null; rule?: 'win'; judge?: 'coach'; seat: number; dl?: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: Action[] }
 type Verdict = 'best' | 'unclear' | 'fine' | 'mistake' | 'blunder';
 
 /** the tallies a shard entry carries, counted here for a pack built before packs were sharded */
@@ -761,13 +761,16 @@ export default function Train() {
               {/* The one handle a person has on a position they dispute. Without it, "that verdict
                   was wrong" cannot be checked by anybody, because the id lives only in the hand log.
                   Quote pack and id and the position can be re-judged here at 2,048 play-outs. */}
+              {/* which play-outs the verdict rests on (D-037): the packs are being re-judged with the Coach, and until a
+                  question has been, the screen says its bars come from the simple bots */}
+              <span className="self-center text-[11px] text-muted-foreground">{q.judge === 'coach' ? 'Judged by strong play: the Coach in every chair.' : 'Judged by simple bots; this pack is being re-judged with the Coach.'}</span>
               <span className="ml-auto self-center font-mono text-[11px] text-muted-foreground select-all">{pack} / {q.id}</span>
               {/* The verdict rests on the same play-outs that admitted the question, so about one in
                   ten overstates. This judges the pick again on fresh dice, on this device, with no
                   server - see `lib/rejudge.ts`. Gone once it has answered: a second press would be
                   a second opinion on new dice, and the tally must not be moved twice. */}
               {challengeState === null && actions.length > 1 && !ruleWin && (
-                <Button variant="outline" onClick={runsChallenge} className="h-auto max-w-full whitespace-normal py-2 text-left">Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs)</Button>
+                <Button variant="outline" onClick={runsChallenge} className="h-auto max-w-full whitespace-normal py-2 text-left">Challenge the verdict ({CHALLENGE_ROLLOUTS} fresh play-outs, the Coach in every chair)</Button>
               )}
             </div>
             {challengeState && (

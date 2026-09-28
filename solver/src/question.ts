@@ -46,6 +46,8 @@ export interface PackQuestion {
   /** `win`: a win was on offer, so the answer is the win by rule rather than by the play-outs
    *  (FINDINGS, "At a strong table the rule beats every judge we have") */
   rule?: 'win';
+  /** which play-outs the answer rests on: 'coach' when the Coach played all four chairs (D-037); absent for the simple bots */
+  judge?: 'coach';
   seat: number;
   /** dealer */
   dl: number;
