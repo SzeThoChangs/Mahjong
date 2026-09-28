@@ -465,6 +465,19 @@ bigger, and it flips. The count of that class in the packs is below; the next st
 sample of it with the Coach in the play-outs, as the colour class was, and if a material share flips,
 to re-grade the class.
 
+**The class, counted 2026-09-28:** discard questions where the pack's best throw leaves the hand
+short of Ting Pai while another legal throw would leave it waiting: 208 of 5,190 in the strong-table
+pack (4.0%), 120 of 4,001 in `min1-nowild` (3.0%), 198 of 3,303 in `min1`, 197 of 4,739 in `coach`.
+In the strong-table pack the recorded seat waited on all 208.
+
+**All 328 at Changs's table judged again with the Coach in the play-outs, 19:00 to 19:44, 256
+play-outs, the top three throws:** strong-table pack, 4 best answers moved past two standard errors,
+21 more where the Coach names a different best inside the noise, 183 the same; `min1-nowild`, 2, 15
+and 103. So about one in eight of these "decisive" verdicts is not upheld under strong play and
+about one in fifty reverses outright. Changs's position is one of the 21. On the same day he ruled
+that no answer may rest on simple bots (`D-037`), so the class is not re-graded on its own: the whole
+pack is, in the entry above.
+
 ### The grades on colour-hand positions, re-made with the Coach playing the play-outs
 
 **Uncertainty addressed:** Every pack answer is the measured best when the rest of the hand is
