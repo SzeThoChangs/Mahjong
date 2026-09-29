@@ -45,6 +45,15 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   play-outs, shanten bots against the Coach in the play-outs: 2 answers changed past two standard
   errors, which is fewer than chance gives over 287 tests. The packs' colour-plan grades hold; the
   bias lives in the ambiguous positions a pack never holds and in the choice of plan.
+- **The strong-table pack re-judged with the Coach in every chair** (`D-037`), all 10,751
+  questions at 256 play-outs, 2026-09-29 17:22 to 09-30 01:37: the best answer moved on 474 (4.4%),
+  251 of 5,190 discards, 209 of 4,816 claims, 14 of 745 self decisions; early turns move most (108 of
+  1,698 at turn 20 or before, 216 of 4,515 to turn 40, 150 of 4,538 after). Of the 2,426 old verdicts
+  that called the recorded seat's choice a mistake past two standard errors, 1,617 still do, 194
+  reverse outright (the seat's own choice is now best), and 615 fall inside the noise. That last
+  number mixes two causes: the Coach judging differently, and half the play-outs (256 against the old
+  512), which widens every error bar by about 1.4 times. The 194 reversals are the clean measure: about
+  one in twelve confident mistake verdicts under simple bots was the wrong way round.
 
 # Status — 2026-08-25 (data-generation programme)
 

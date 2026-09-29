@@ -60,6 +60,15 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-30 — The whole strong-table pack judged by the Coach
+
+**Changed:** all 10,751 questions carry the Coach's answers and the pack's index says `judge:
+'coach'`; 474 best answers moved.
+
+**Why:** `D-037`.
+
+**Impact:** Ten passes in `MISTAKES.md`. The other three packs are being re-judged in a chain.
+
 ### 2026-09-29 — Half the strong-table pack judged by the Coach, on the site
 
 **Changed:** 4,931 of the strong-table pack's 10,751 questions now carry the Coach's answers; 221

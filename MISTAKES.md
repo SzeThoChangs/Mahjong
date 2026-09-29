@@ -119,6 +119,40 @@ rendered.
 
 ## Ten passes
 
+### The whole strong-table pack judged by the Coach, on the site — Wed Sep 30 01:44:50 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the re-judging workers for the next
+pack paused with `SIGSTOP` while the browser was driven and resumed after. The merged pack was copied
+from `data/gen/coachpacks/strong-nowild/` into `web/public/quiz/strong-nowild/`; `web/dist` checked
+byte-identical to it after the build.
+
+**Test boundary**
+
+- Workflows: answering Train questions from the strong-table pack.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark, the win rule,
+  the best answer against the stored actions, the counts against the pack as shipped before `D-037`.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 7 questions answered | 0 |
+| 3 | Links | The strong-table button pressed: exactly one control matched, questions carried `strong-nowild /` ids | 0 |
+| 4 | Workflow steps | 7 questions answered from shard 049, one of the 59 judged after the half went out (6686:4:79, 1060:9:20, 2124:0:5, 1556:3:20, 1030:3:27, 1802:1:55, 3886:9:40): Pong, Pass and a discard, each showing "What the play-outs did after" and the strong-play judge line; Next position served the next each time | 0 |
+| 5 | Writes | not run — nothing new is stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 10,751 questions in 108 shards, equal to the index; every shard's kinds and causes equal to its index entry; all 10,751 marked `judge: 'coach'`; the index carries `judge: 'coach'` and `rollouts: 256`; no duplicate or new ids against commit 0f85579; every best among its actions, actions ordered best first; 1,246 win offers, all carrying the rule and answering "win" | 0 |
+| 7 | Reconciliation | Top index 10,751 and 108 shards, equal to the per-pack index; worker logs sum to 5,820 judged in this second part and 253 moved, and 4,931 plus 5,820 is 10,751; moved against 0f85579 counted at 474 (251 discards, 209 claims, 14 self) | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of 3886:9:40, read: a claim, "Measured best: worth $0.52 per hand", the play-outs line after pong (won 46%, 1 Tai 37%), the Coach agreeing with pong, bars Pong $0.52 best and Pass -$0.17, "Judged by strong play: the Coach in every chair." | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; 320, 375 and 1280px (no layout changed); the Challenge button on this
+build; whether the 615 old mistake verdicts now inside the noise are the Coach's doing or the halved
+play-outs', which would need those questions judged again at 512.
+
 ### Half the strong-table pack judged by the Coach, on the site — Tue Sep 29 17:30:23 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the six re-judging workers paused

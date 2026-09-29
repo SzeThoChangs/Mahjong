@@ -112,24 +112,21 @@ big one, and he ruled that no answer may rest on simple bots (`D-037`). The app'
 judges now run the Coach; each question names its judge; `datagen/src/coachpack.ts` re-judges a
 whole pack.
 
-**Running on the Mac:** the strong-table pack re-judged with the Coach, six workers
-(`data/gen/coach2/coachpack-strong-chain.sh`, logs `coachpack-strong-w*.log`, output
-`data/gen/coachpacks/strong-nowild/`). Started 2026-09-28 19:45. The Mac restarted about 11:50 on
-09-29 and the run died at 49 of 108 shards (4,931 questions judged, none failed). Restarted 17:22
-under `caffeinate -is` so the Mac cannot sleep; it skips the 49 written shards. About eight more
-hours. Then `min1-nowild` the same way.
-
-`coachpack.ts --merge --partial --to <dir>` builds a site-ready pack from the shards judged so far
-plus the shipped ones, each question naming its judge. It never writes into `--out`, because a running
-worker would take a copied shard as judged.
+**Running on the Mac:** `min1-nowild`, then `min1`, then `coach`, re-judged with the Coach, six
+workers each (`data/gen/coach2/coachpack-rest-chain.sh`, started 2026-09-30 01:43 under
+`caffeinate -is`; logs `coachpack-<pack>-w*.log`; progress lines in `coachpack-chain.log`; each
+pack writes `coachpack-<pack>.done` when merged). A restart of the Mac kills it: run the script
+again and it skips merged packs and written shards. About eight hours a pack at 0 Jokers; the
+4-Joker packs not yet timed.
 
 ## Recommended Next Action
 
 ### Next
 
-When the strong pack's re-judging lands (the first 49 shards are already on the site): read the counts (best moved, decisive gaps not
-reproduced, by phase and kind), copy the pack in with its `judge: 'coach'` index, ten passes,
-deploy; then start `min1-nowild`. The two 4-Joker packs follow.
+When each pack of the chain merges: copy `data/gen/coachpacks/<pack>/` into
+`web/public/quiz/<pack>/`, count against the shipped pack as for the strong table (moved by kind and
+phase, old decisive verdicts kept, reversed, inside the noise), ten passes, deploy. Or ship a pack
+half-done with `coachpack.ts --merge --partial --to <dir>` if Changs wants it sooner.
 
 ### Why
 

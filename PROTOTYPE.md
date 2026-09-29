@@ -448,8 +448,10 @@ about 11:50 on 2026-09-29 and the run died at 49 of 108 shards; restarted 17:22 
 answer moved on 221 (4.5%): 114 of 2,392 discards (4.8%), 101 of 2,190 claims (4.6%), 6 of 349 self
 decisions (1.7%). Every one of the 1,246 win-offering questions in the pack still answers "win". On
 Changs's word these went on the site the same evening, the other 59 shards as they were, each
-question naming its judge (`--merge --partial --to`). Not yet counted: how many old decisive gaps
-the Coach does not reproduce, and the phase of the moved ones; those wait for the whole pack.
+question naming its judge (`--merge --partial --to`). The whole pack finished 2026-09-30 01:37 and went on
+the site at 01:50; the counts are in `FINDINGS.md`, "The strong-table pack re-judged". The other
+three packs followed in one chain (`data/gen/coach2/coachpack-rest-chain.sh`: `min1-nowild`, then
+`min1`, then `coach`), started 01:43 under `caffeinate -is`, a merged pack skipped on restart.
 
 **The app's own judges, changed the same evening:** the Challenge button and the Play tab's review
 now run their play-outs with the Coach in every chair (`policy: 'coach'` in the worker, reading

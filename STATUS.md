@@ -58,12 +58,13 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Strong-table pack: 49 of 108 shards re-judged and on the site; the rest running (six workers), then `min1-nowild` |
+| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Strong-table pack done and on the site; `min1-nowild`, `min1` and `coach` running in a chain (six workers) |
 
-The strong-table re-judging is running on the Mac, six workers under `caffeinate`.
+The re-judging of `min1-nowild`, then `min1`, then `coach` is running on the Mac, six workers under `caffeinate`.
 
 ## Recently Completed
 
+- 2026-09-30: the whole strong-table pack judged by the Coach and on the site; 474 best answers moved, 194 confident mistake verdicts reversed.
 - 2026-09-29: the strong-table pack's first 49 shards re-judged with the Coach and on the site (4,931 questions, 221 best answers moved); the other 59 still say they rest on simple bots.
 - 2026-09-28: no answer from simple bots (`D-037`): the Challenge and Play judges run the Coach; the packs are being re-judged the same way.
 - 2026-09-28: the strong-table pack regenerated with the new Coach and put on the site (10,751 questions); the colour-plan line measured and kept; the shipped discard and claim rules checked identical to the measured bots.
