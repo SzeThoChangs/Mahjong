@@ -42,16 +42,34 @@ const srcDir = `../web/public/quiz/${pack}`;
 const srcIx = JSON.parse(readFileSync(join(srcDir, 'index.json'), 'utf8')) as PackIndex;
 mkdirSync(out, { recursive: true });
 
+/**
+ * `--merge --partial --to <dir>` writes a pack that can go on the site before every shard is
+ * re-judged: a shard already judged comes from `--out`, any other is copied from the pack as shipped,
+ * and each question still says which judge it rests on. It writes to `--to`, never into `--out`,
+ * because a running worker takes any shard present under `--out` as judged and would skip it. The
+ * index carries `judge: 'coach'` only when every shard was re-judged.
+ */
+const partial = process.argv.includes('--partial');
 if (merge) {
+  const to = arg('to', out);
+  if (partial && to === out) throw new Error('--partial needs --to <dir> apart from --out');
+  mkdirSync(to, { recursive: true });
+  let judged = 0;
   const shards = srcIx.shards.map((s) => {
-    const qs = (JSON.parse(readFileSync(join(out, s.file), 'utf8')) as { questions: Q[] }).questions;
+    const mine = join(out, s.file);
+    if (!existsSync(mine) && !partial) throw new Error(`${s.file} is not judged yet; pass --partial --to <dir> to fill from the shipped pack`);
+    if (existsSync(mine)) judged++;
+    const text = readFileSync(existsSync(mine) ? mine : join(srcDir, s.file), 'utf8');
+    if (to !== out) writeFileSync(join(to, s.file), text);
+    const qs = (JSON.parse(text) as { questions: Q[] }).questions;
     const kinds: Record<string, number> = {}, causes: Record<string, number> = {};
     for (const q of qs) { kinds[q.k] = (kinds[q.k] ?? 0) + 1; if (q.c) causes[q.c] = (causes[q.c] ?? 0) + 1; }
     return { file: s.file, n: qs.length, kinds, causes };
   });
-  const ix = { ...srcIx, shards, questions: shards.reduce((a, s) => a + s.n, 0), judge: 'coach' as const, rollouts };
-  writeFileSync(join(out, 'index.json'), JSON.stringify(ix));
-  console.log(`merged ${shards.length} shards, ${ix.questions} questions -> ${out}/index.json`);
+  const whole = judged === srcIx.shards.length;
+  const ix = { ...srcIx, shards, questions: shards.reduce((a, s) => a + s.n, 0), ...(whole ? { judge: 'coach' as const, rollouts } : {}) };
+  writeFileSync(join(to, 'index.json'), JSON.stringify(ix));
+  console.log(`merged ${shards.length} shards (${judged} re-judged by the Coach), ${ix.questions} questions -> ${to}/index.json`);
   process.exit(0);
 }
 

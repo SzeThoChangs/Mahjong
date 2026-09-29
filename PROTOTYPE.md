@@ -440,7 +440,16 @@ not reproduce, the phase and kind of the moved ones, and the time taken. The app
 judge a question rests on, and the Challenge button gains the strong-table play-outs.
 
 **Status:** RUNNING from 2026-09-28 19:45, six workers. A smoke run of three questions at 64
-play-outs took 12 seconds and wrote the pack's own shape with `judge: 'coach'`.
+play-outs took 12 seconds and wrote the pack's own shape with `judge: 'coach'`. The Mac restarted
+about 11:50 on 2026-09-29 and the run died at 49 of 108 shards; restarted 17:22 under
+`caffeinate -is`, skipping the written shards.
+
+**The first 49 shards, measured 2026-09-29 17:30:** 4,931 questions judged, none failed. The best
+answer moved on 221 (4.5%): 114 of 2,392 discards (4.8%), 101 of 2,190 claims (4.6%), 6 of 349 self
+decisions (1.7%). Every one of the 1,246 win-offering questions in the pack still answers "win". On
+Changs's word these went on the site the same evening, the other 59 shards as they were, each
+question naming its judge (`--merge --partial --to`). Not yet counted: how many old decisive gaps
+the Coach does not reproduce, and the phase of the moved ones; those wait for the whole pack.
 
 **The app's own judges, changed the same evening:** the Challenge button and the Play tab's review
 now run their play-outs with the Coach in every chair (`policy: 'coach'` in the worker, reading

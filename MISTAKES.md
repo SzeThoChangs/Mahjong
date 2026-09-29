@@ -119,6 +119,41 @@ rendered.
 
 ## Ten passes
 
+### Half the strong-table pack judged by the Coach, on the site — Tue Sep 29 17:30:23 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the six re-judging workers paused
+with `SIGSTOP` while the browser was driven and resumed after. The pack was merged with
+`coachpack.ts --merge --partial --to` into the scratchpad and copied into
+`web/public/quiz/strong-nowild/`: 49 shards replaced, 59 byte-identical to what was shipped.
+
+**Test boundary**
+
+- Workflows: answering Train questions from the strong-table pack, both re-judged and not.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark on each
+  question, the win rule, the best answer against the stored actions, the merge helper itself.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 12 questions answered over three loads | 0 |
+| 3 | Links | The strong-table button pressed on each load: exactly one control matched, questions carried `strong-nowild /` ids | 0 |
+| 4 | Workflow steps | 12 questions answered: 10 from re-judged shards 045 and 032 (claims, discards, Chow, Pass), 2559:13:42 from shard 080 not yet re-judged; Next position served the next each time | 0 |
+| 5 | Writes | not run — nothing new is stored; the merge helper was checked instead: `--partial` without `--to` refuses, and with it the 49 shards under `--out` stayed 49, so no running worker can mistake a copied shard for a judged one | not run — nothing stored |
+| 6 | The data it moves | In Node: 10,751 questions in 108 shards, equal to the index; every shard's kinds and causes equal to its index entry; 4,931 marked `judge: 'coach'`, which is every question in the 49 re-judged shards; no duplicate ids, no new ids against the shipped pack; every best among its actions, actions ordered best first; every re-judged discard carries the seat's own throw; 1,246 win offers, all 1,246 carry the rule and answer "win"; the per-pack index has no `judge` field, since not every shard is done | 0 |
+| 7 | Reconciliation | The top index says 10,751 and 108 shards, the same as the per-pack index; 221 moved best answers counted against `git show HEAD` (114 discards, 101 claims, 6 self) | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller; the judge line wraps to two lines at 280px, 216 by 31px | 0 |
+| 10 | Look at it | Screenshots at 390px, read: 2559:13:42 says "Judged by simple bots; this pack is being re-judged with the Coach."; 3371:14:26 says "Judged by strong play: the Coach in every chair." with four throws, "best" on 3條 at $7.05 and 西 at $6.95. The pack itself ranks 西 first by 0.02; the screen re-prices each action's outcomes with the Table setup money, which moves a tie. That is how Train has priced since the money settings came in, not this change | 0 |
+
+**Defects found:** none new. Where two answers are within noise, the screen's best and the pack's
+`best` can differ because of re-pricing; the grading on screen uses the re-priced order.
+
+**Not checked:** a real phone; 320, 375 and 1280px (no layout changed); the Challenge button on a
+re-judged question on this build; Spot, Review and Play, which do not read the pack's answers the
+same way.
+
 ### A verdict explained by what the play-outs did — Tue Sep 29 01:01:58 +08 2026
 
 Passes run on the dev server on port 5174 with the six re-judging workers paused for the browser

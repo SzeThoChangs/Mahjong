@@ -60,6 +60,15 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-29 — Half the strong-table pack judged by the Coach, on the site
+
+**Changed:** 4,931 of the strong-table pack's 10,751 questions now carry the Coach's answers; 221
+best answers moved. The rest are unchanged and still say they rest on simple bots.
+
+**Why:** `D-037`. Changs asked for the judged half tonight rather than the whole pack tomorrow.
+
+**Impact:** Ten passes in `MISTAKES.md`. The rest of the pack follows when the run finishes.
+
 ### 2026-09-29 — A verdict says what the play-outs did
 
 **Changed:** Under a Train verdict, one line says what happened after the best action and one after

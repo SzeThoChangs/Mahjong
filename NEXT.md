@@ -112,15 +112,22 @@ big one, and he ruled that no answer may rest on simple bots (`D-037`). The app'
 judges now run the Coach; each question names its judge; `datagen/src/coachpack.ts` re-judges a
 whole pack.
 
-**Running on the Mac:** the strong-table pack re-judged with the Coach, six workers, started 19:45
-(`data/gen/coach2/coachpack-chain.sh`, logs `coachpack-strong-w*.log`, output
-`data/gen/coachpacks/strong-nowild/`). Roughly eight hours. Then `min1-nowild` the same way.
+**Running on the Mac:** the strong-table pack re-judged with the Coach, six workers
+(`data/gen/coach2/coachpack-strong-chain.sh`, logs `coachpack-strong-w*.log`, output
+`data/gen/coachpacks/strong-nowild/`). Started 2026-09-28 19:45. The Mac restarted about 11:50 on
+09-29 and the run died at 49 of 108 shards (4,931 questions judged, none failed). Restarted 17:22
+under `caffeinate -is` so the Mac cannot sleep; it skips the 49 written shards. About eight more
+hours. Then `min1-nowild` the same way.
+
+`coachpack.ts --merge --partial --to <dir>` builds a site-ready pack from the shards judged so far
+plus the shipped ones, each question naming its judge. It never writes into `--out`, because a running
+worker would take a copied shard as judged.
 
 ## Recommended Next Action
 
 ### Next
 
-When the strong pack's re-judging lands: read the counts (best moved, decisive gaps not
+When the strong pack's re-judging lands (the first 49 shards are already on the site): read the counts (best moved, decisive gaps not
 reproduced, by phase and kind), copy the pack in with its `judge: 'coach'` index, ten passes,
 deploy; then start `min1-nowild`. The two 4-Joker packs follow.
 
