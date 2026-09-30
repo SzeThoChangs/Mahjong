@@ -453,6 +453,12 @@ the site at 01:50; the counts are in `FINDINGS.md`, "The strong-table pack re-ju
 three packs followed in one chain (`data/gen/coach2/coachpack-rest-chain.sh`: `min1-nowild`, then
 `min1`, then `coach`), started 01:43 under `caffeinate -is`, a merged pack skipped on restart.
 
+**The 615 at 512, on Changs's word:** `coachpack.ts --ids` judges a listed set again;
+`data/gen/coach2/recheck-615.sh` paused the chain with SIGSTOP, ran six workers at 512 play-outs on
+seed 20260930, and resumed it. It took twelve hours because the lid was closed at 02:36 and the Mac
+slept until about 11:30 (`pmset -g log`, "Clamshell Sleep"); the working time was under three. The
+counts are in `FINDINGS.md`; the 512 answers went into the pack and on the site 2026-09-30 14:00.
+
 **The app's own judges, changed the same evening:** the Challenge button and the Play tab's review
 now run their play-outs with the Coach in every chair (`policy: 'coach'` in the worker, reading
 danger at the table's Joker count), so a challenge answers by strong play whatever the pack was

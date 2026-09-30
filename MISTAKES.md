@@ -119,6 +119,40 @@ rendered.
 
 ## Ten passes
 
+### 615 strong-table questions judged again at 512 play-outs, on the site — Wed Sep 30 13:53:20 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the `min1-nowild` workers paused
+with `SIGSTOP` while the browser was driven and resumed after. The 512 shards were merged over the
+shipped pack with `coachpack.ts --merge --partial --to` into the scratchpad and copied into
+`web/public/quiz/strong-nowild/`; `web/dist` checked byte-identical after the build. The id list
+was served beside the build for the test only and removed after.
+
+**Test boundary**
+
+- Workflows: answering Train questions from the strong-table pack, including one of the 615.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, which questions changed, the
+  play-out count on each, the win rule, the best answer against the stored actions.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 2 questions answered at three widths | 0 |
+| 3 | Links | The strong-table button pressed: exactly one control matched, questions carried `strong-nowild /` ids | 0 |
+| 4 | Workflow steps | 5762:11:61 answered, Next position, then 5566:11:56, one of the 615: Pass chosen, verdict "These 512 play-outs resolve a gap of about $0.75, so this one is inside the noise", bars Pong -$0.79 best and Pass -$0.87 you, the strong-play judge line | 0 |
+| 5 | Writes | not run — nothing new is stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 10,751 questions in 108 shards, equal to the index; every shard's kinds and causes equal to its index entry; all 10,751 marked `judge: 'coach'`; 615 at n=512, 10,136 at n=256, none other; every listed id at 512; no question outside the list differs by a byte from the previous commit; 103 of the 615 changed best answer; no duplicate or new ids; every best among its actions, actions ordered best first; 1,246 win offers, all carrying the rule and answering "win"; the index says `rollouts: 256` | 0 |
+| 7 | Reconciliation | Worker logs: 106, 95, 108, 107, 106 and 93 judged, 615; 11, 14, 21, 21, 20 and 16 best moved, 103, equal to the count against the pack; the count script's 287 plus 257 plus 71 is 615 | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of 5566:11:56, read: the Coach would pong, its reasons and the pass's, Pong -$0.79 "best", Pass -$0.87 "you", "Judged by strong play: the Coach in every chair.", session "too close to call 1", "Given up $0.08" | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; 320, 375 and 1280px (no layout changed); the Challenge button on this
+build; the 4-Joker packs, which this change does not touch.
+
 ### The whole strong-table pack judged by the Coach, on the site — Wed Sep 30 01:44:50 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the re-judging workers for the next

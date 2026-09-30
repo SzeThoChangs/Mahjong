@@ -54,6 +54,14 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   number mixes two causes: the Coach judging differently, and half the play-outs (256 against the old
   512), which widens every error bar by about 1.4 times. The 194 reversals are the clean measure: about
   one in twelve confident mistake verdicts under simple bots was the wrong way round.
+- **The 615 judged again at 512 play-outs on a fresh seed** (2026-09-30, 01:53 to 13:52 with the
+  Mac asleep for nine hours of it): 287 (47%) are a clear mistake again, 283 of them with the old
+  best answer, so for about half the play-out count was the whole cause; 257 (42%) stay inside the
+  noise at 512; 71 (12%) now have the seat's own choice as best. Over the 2,426 old confident
+  mistake verdicts together: 1,900 hold (78%), 265 reverse (11%), 257 are too close to call (11%).
+  The 71 reversals came from questions chosen for being close, where a fresh sample flips some by
+  chance, so they are an upper bound on what the Coach really overturns. The 512 answers are in the
+  pack; its index says `rollouts: 256`, the fewest any question has.
 
 # Status — 2026-08-25 (data-generation programme)
 

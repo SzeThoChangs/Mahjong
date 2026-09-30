@@ -64,6 +64,7 @@ The re-judging of `min1-nowild`, then `min1`, then `coach` is running on the Mac
 
 ## Recently Completed
 
+- 2026-09-30: the 615 strong-table verdicts that fell inside the noise judged again at 512 play-outs: 287 clear again, 257 still close, 71 the other way; the 512 answers on the site.
 - 2026-09-30: the whole strong-table pack judged by the Coach and on the site; 474 best answers moved, 194 confident mistake verdicts reversed.
 - 2026-09-29: the strong-table pack's first 49 shards re-judged with the Coach and on the site (4,931 questions, 221 best answers moved); the other 59 still say they rest on simple bots.
 - 2026-09-28: no answer from simple bots (`D-037`): the Challenge and Play judges run the Coach; the packs are being re-judged the same way.

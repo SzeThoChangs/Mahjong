@@ -60,6 +60,17 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-09-30 — 615 strong-table questions judged again at 512 play-outs
+
+**Changed:** the 615 questions whose old clear-mistake verdict fell inside the noise at 256 carry
+answers from 512 Coach play-outs on a fresh seed; 103 best answers moved against the 256 run.
+`coachpack.ts` takes `--ids` and `--seed`; a pack index's `rollouts` is the fewest any question has.
+
+**Why:** Changs asked whether those 615 were the Coach's doing or the halved play-outs'. About half
+each; the counts are in `FINDINGS.md`.
+
+**Impact:** Ten passes in `MISTAKES.md`.
+
 ### 2026-09-30 — The whole strong-table pack judged by the Coach
 
 **Changed:** all 10,751 questions carry the Coach's answers and the pack's index says `judge:

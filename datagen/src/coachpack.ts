@@ -19,6 +19,11 @@
  * index from the finished shards, copying the table and placement from the source index.
  *
  * Resume: a shard already present under `--out` is skipped, so a killed run continues.
+ *
+ * `--ids <file>` (one question id a line) judges only those questions and copies the rest of their
+ * shard as it is; a shard holding none of them is not written. With `--rollouts 512 --seed <n>` this
+ * judges a few questions of a finished pack again at more play-outs, and `--merge --partial --to`
+ * puts them back into the whole pack.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,6 +39,8 @@ const worker = Number(arg('worker', '0')), workers = Number(arg('workers', '1'))
 const merge = process.argv.includes('--merge');
 /** `--limit N`: judge only the first N questions of this worker's first shard, for a smoke run */
 const limit = Number(arg('limit', '0'));
+const seed = Number(arg('seed', '20260928'));
+const only = process.argv.includes('--ids') ? new Set(readFileSync(arg('ids', ''), 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)) : null;
 
 type Action = { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown };
 type Q = PackQuestion & { id: string; k: string; best: string; sel: string; n: number; c: Cause | null; rule?: 'win'; judge?: 'coach'; actions: Action[]; h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; b: number[]; seat: number; dl?: number; w: number; t: number };
@@ -54,7 +61,7 @@ if (merge) {
   const to = arg('to', out);
   if (partial && to === out) throw new Error('--partial needs --to <dir> apart from --out');
   mkdirSync(to, { recursive: true });
-  let judged = 0;
+  let judged = 0, coachMarked = 0, total = 0, fewest = Infinity;
   const shards = srcIx.shards.map((s) => {
     const mine = join(out, s.file);
     if (!existsSync(mine) && !partial) throw new Error(`${s.file} is not judged yet; pass --partial --to <dir> to fill from the shipped pack`);
@@ -62,12 +69,16 @@ if (merge) {
     const text = readFileSync(existsSync(mine) ? mine : join(srcDir, s.file), 'utf8');
     if (to !== out) writeFileSync(join(to, s.file), text);
     const qs = (JSON.parse(text) as { questions: Q[] }).questions;
+    for (const q of qs) { total++; if (q.judge === 'coach') { coachMarked++; fewest = Math.min(fewest, q.n); } }
     const kinds: Record<string, number> = {}, causes: Record<string, number> = {};
     for (const q of qs) { kinds[q.k] = (kinds[q.k] ?? 0) + 1; if (q.c) causes[q.c] = (causes[q.c] ?? 0) + 1; }
     return { file: s.file, n: qs.length, kinds, causes };
   });
-  const whole = judged === srcIx.shards.length;
-  const ix = { ...srcIx, shards, questions: shards.reduce((a, s) => a + s.n, 0), ...(whole ? { judge: 'coach' as const, rollouts } : {}) };
+  // the mark goes by the questions, not the shards: a pack re-judged whole and then partly again at
+  // more play-outs is still wholly the Coach's, and its `rollouts` is the fewest any question had
+  const whole = coachMarked === total;
+  const { judge: _j, rollouts: _r, ...base } = srcIx;
+  const ix = { ...base, shards, questions: shards.reduce((a, s) => a + s.n, 0), ...(whole ? { judge: 'coach' as const, rollouts: fewest } : {}) };
   writeFileSync(join(to, 'index.json'), JSON.stringify(ix));
   console.log(`merged ${shards.length} shards (${judged} re-judged by the Coach), ${ix.questions} questions -> ${to}/index.json`);
   process.exit(0);
@@ -112,8 +123,10 @@ for (const s of mine) {
   const target = join(out, s.file);
   if (existsSync(target)) { console.log(`${s.file} already judged, skipped`); continue; }
   const all = (JSON.parse(readFileSync(join(srcDir, s.file), 'utf8')) as { questions: Q[] }).questions;
+  if (only && !all.some((q) => only.has(q.id))) continue;
   const qs = limit > 0 ? all.slice(0, limit) : all;
   for (const q of qs) {
+    if (only && !only.has(q.id)) continue;
     try {
       const snap = snapshotFromQuestion(q, rules);
       const p = pendingOf(snap, rules);
@@ -122,7 +135,7 @@ for (const s of mine) {
       if (byOld.includes('win')) want.add('win');
       const legal = p.legal.filter((l) => want.has(encAction(l)));
       if (legal.length < 2) { q.judge = 'coach'; continue; }      // one legal action: nothing to judge, but the mark says the Coach looked
-      const r = rejudge(snap, rules, p.seat, legal, { rollouts, seed: 20260928, key: q.id, policy: coach });
+      const r = rejudge(snap, rules, p.seat, legal, { rollouts, seed, key: q.id, policy: coach });
       const actions = toActions(r);
       const oldBest = q.best;
       q.actions = actions; q.n = rollouts; q.judge = 'coach';

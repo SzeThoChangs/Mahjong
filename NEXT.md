@@ -114,7 +114,8 @@ whole pack.
 
 **Running on the Mac:** `min1-nowild`, then `min1`, then `coach`, re-judged with the Coach, six
 workers each (`data/gen/coach2/coachpack-rest-chain.sh`, started 2026-09-30 01:43 under
-`caffeinate -is`; logs `coachpack-<pack>-w*.log`; progress lines in `coachpack-chain.log`; each
+`caffeinate -is`, paused 01:53 to 13:52 for the 615 re-check and asleep with the lid closed for
+nine hours of that; logs `coachpack-<pack>-w*.log`; progress lines in `coachpack-chain.log`; each
 pack writes `coachpack-<pack>.done` when merged). A restart of the Mac kills it: run the script
 again and it skips merged packs and written shards. About eight hours a pack at 0 Jokers; the
 4-Joker packs not yet timed.
