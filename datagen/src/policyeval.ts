@@ -14,7 +14,7 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { makeRng, kindOf, type Meld, type TileKind } from 'sg-mahjong-engine';
-import { rankDiscards, type Context } from 'sg-mahjong-solver';
+import { rankDiscards, visibleOfQuestion, type Context } from 'sg-mahjong-solver';
 import { eachEval } from './evalstats.js';
 import { separationT, seVersionOf } from './se.js';
 import { loadHands } from './stats.js';
@@ -111,10 +111,7 @@ for (const hand of sample) {
 
     // book coach, with the table in view
     const melds: Meld[] = d.me.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-    const visible: TileKind[] = [];
-    for (const e of d.pub.dl) visible.push(e[1]! as TileKind);
-    d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...(m.slice(2) as TileKind[])); });
-    d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...(bs as TileKind[])); });
+    const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
     const ctx: Context = {
       seat: role, prevailingWind: d.w, bonus: d.me.b as TileKind[], playerTurns: d.t,
       minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, visible,

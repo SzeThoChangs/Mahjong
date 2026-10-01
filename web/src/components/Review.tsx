@@ -29,7 +29,7 @@ import { dueMistakes, openMistakes, reviewed, forget, whenDue, howLongAgo, cause
 import { CAUSES, causeLabel, type Cause } from 'sg-mahjong-solver';
 import { PRACTISABLE } from '@/lib/scenario';
 import { leadingSpotCause, spotCauseLabel } from '@/lib/spotstats';
-import { rankDiscards, readsFor, shardOf, shardFile, type Context, type PackIndex } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, shardOf, shardFile, visibleOfQuestion, type Context, type PackIndex } from 'sg-mahjong-solver';
 import { loadConfig } from '@/lib/money';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon } from '@/lib/jargon';
@@ -132,10 +132,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     if (!quizQ) return null;
     const minTai = quizMin ?? loadConfig().minTai;
     const melds: Meld[] = quizQ.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-    const visible: number[] = [];
-    for (const d of quizQ.disc ?? []) visible.push(d[1]!);
-    (quizQ.pm ?? []).forEach((ms, s2) => { if (s2 !== quizQ.seat) for (const m of ms) visible.push(...m.slice(2)); });
-    (quizQ.pb ?? []).forEach((bs, s2) => { if (s2 !== quizQ.seat) visible.push(...bs); });
+    const visible = visibleOfQuestion(quizQ);
     const ctx: Context = {
       seat: quizQ.dl !== undefined ? (quizQ.seat - quizQ.dl + 4) % 4 : quizQ.seat, prevailingWind: quizQ.w, bonus: quizQ.b,
       playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), reads: readsFor(quizJokers ?? loadConfig().jokers), visible,

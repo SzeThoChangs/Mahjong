@@ -60,6 +60,19 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-01 — The table counted once
+
+**Changed:** the Coach, the bots and every screen count a claimed discard once (in the set, not the
+pool), count the tile on offer once, and never wrap the unseen count. One builder each for a player's
+view (`visibleOf`) and a pack question (`visibleOfQuestion`); three tests. `policymoney.ts --old
+<path>` measures the Coach against the Coach from another checkout.
+
+**Why:** "256 of them live" on screen. Over half the questions in each pack had a kind over-counted.
+
+**Impact:** Ten passes in `MISTAKES.md`. Measured at the noise floor for money and for verdicts, so
+the packs are not judged again. The `coach` pack's re-judging, running under the old code, finishes
+as it is.
+
 ### 2026-10-01 — The two min-1 packs judged by the Coach
 
 **Changed:** `min1-nowild` (10,291 questions) and `min1` (10,528) carry the Coach's answers; 576 and

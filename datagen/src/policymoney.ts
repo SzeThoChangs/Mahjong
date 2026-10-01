@@ -53,13 +53,26 @@ const chowCost = process.argv.includes('--chow') ? Number(arg('chow', '0.4')) : 
  * line between "the Coach keeps the plan" and "the fit chooses" instead of a model choosing plans.
  */
 const colourBelow = process.argv.includes('--colour-below') ? Number(arg('colour-below', '0')) : null;
+/**
+ * `--old <path to a solver src/index.ts>`: arm A is the Coach from another checkout of the code,
+ * loaded beside this one, so a change to the Coach can be measured against the Coach as it was
+ * without a flag in the shipped code pretending to be the old behaviour. Made for the counting fix
+ * of 2026-10-01 (`visibleOf`): the old checkout must carry its own engine, because the wrap it had
+ * lives there (`git worktree add <dir> <commit>`, then `ln -s ../../engine
+ * <dir>/solver/node_modules/sg-mahjong-engine`).
+ */
+const oldPath = arg('old', '');
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath && !claims && !pure && chowCost === null && colourBelow === null) throw new Error('give --weights <json>, --claims, --pure, --chow <cost>, --colour-below <chips> or --self');
+if (!self && !weightsPath && !claims && !pure && chowCost === null && colourBelow === null && !oldPath) throw new Error('give --weights <json>, --claims, --pure, --chow <cost>, --colour-below <chips>, --old <path> or --self');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const old: any = oldPath ? await import(oldPath) : null;
+const oldReads = old ? (rules.jokers.count === 0 ? old.READS_NOWILD : old.readsFor(rules.jokers.count)) : null;
+const oldCoach = (): Bot => new old.AltReadsCoachBot(oldReads);
 const weights: PolicyWeights | null = weightsPath ? (JSON.parse(readFileSync(weightsPath, 'utf8')) as PolicyWeights) : null;
 
 /** The shipped Coach for this table, except that the discard comes from the fitted weights. */
@@ -213,7 +226,7 @@ for (let seat = 0; seat < 4; seat++) {
       const out = playGame(field(shuffle, seat, make), cfg, wall, { dealer: g % 4, prevailingWind: Math.floor(g / 4) % 4, rules });
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
-    const a = play(() => new AltReadsCoachBot(reads));
+    const a = play(() => (old ? oldCoach() : new AltReadsCoachBot(reads)));
     const b = play(() => (colourBelow !== null ? new ColourBelowBot(colourBelow) : chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
@@ -224,7 +237,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${self ? 'self-check' : colourBelow !== null ? `the fit allowed onto colour plans worth under ${colourBelow} chips` : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${old ? `the Coach as it is, against the Coach at ${oldPath}` : self ? 'self-check' : colourBelow !== null ? `the fit allowed onto colour plans worth under ${colourBelow} chips` : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {

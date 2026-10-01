@@ -135,7 +135,7 @@ function HandView({ hand, i, setI, unit, onBack }: { hand: HandData; i: number; 
       }));
       const visible: number[] = [];
       for (let s = 0; s < 4; s++) {
-        for (const t of rivers[s]!) visible.push(t.k);
+        for (const t of rivers[s]!) if (!t.claimed) visible.push(t.k);   // a claimed tile is counted in its set below
         if (s !== cur.p) for (const m of melds[s]!) visible.push(...m.slice(2));
       }
       const ctx: Context = {

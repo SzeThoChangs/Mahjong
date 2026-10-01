@@ -68,6 +68,16 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   772 fall inside the noise. `min1`, 10,528 questions, 601 moved (5.7%: 258 of 3,303 discards, 277
   of 6,012 claims, 66 of 1,213 self); of 3,371 old verdicts 2,487 hold, 217 reverse, 667 inside the
   noise. The inside-the-noise share again mixes the Coach with the halved play-outs.
+- **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
+  in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
+  engine's unseen count from 0 to 255. Over half the questions in each pack had a kind
+  over-counted. Fixed at the source (`visibleOf`, `visibleOfQuestion`, `unseenCounts`). Measured:
+  the fixed Coach beats the old Coach by +0.095 +/- 0.059 chips a game over 8,000 paired deals,
+  three fixed Coaches in the other chairs; on 300 strong-table questions judged again it moves 8 of
+  300 best answers, 1 past two standard errors. Both at the noise floor, so the packs' verdicts
+  stand. Found by reading one screen (`MISTAKES.md`, 2026-10-01), not by any test or measurement:
+  the counts were wrong in every bot, every pack build and every fitted model since the table came
+  into view, and nothing downstream noticed.
 
 # Status — 2026-08-25 (data-generation programme)
 

@@ -20,7 +20,7 @@
 import { writeFileSync } from 'node:fs';
 import { GameState, makeRng, kindOf, discardFeatures, unseenCounts, shuffleWall, type PlayerView } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot, ctxOf, meldsOf, rankDiscards, policyTable, copyFeatures, suitTable, COPY_FEATURE_NAMES } from 'sg-mahjong-solver';
+import { CoachBot, ctxOf, visibleOf, meldsOf, rankDiscards, policyTable, copyFeatures, suitTable, COPY_FEATURE_NAMES } from 'sg-mahjong-solver';
 
 function arg(n: string, d?: string) { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? (process.argv[i + 1] ?? d) : d; }
 const nHands = Number(arg('hands', '2000'));
@@ -59,7 +59,7 @@ function collect(first: number, count: number): Example[] {
           if (label >= 0) {
             const tbl = policyTable(ctx), suits = suitTable(hand);
             // one call gives a row per candidate tile, in the engine's own order
-            const unseen = unseenCounts({ hand, allMelds: v.players.flatMap((q) => q.melds.flatMap((m) => m.tiles)), allDiscards: v.discardLog.map((d) => kindOf(d.tile)) });
+            const unseen = unseenCounts({ hand, allMelds: v.melds.flatMap((m) => m.tiles), allDiscards: visibleOf(v) });
             const feats = discardFeatures(hand, melds, unseen);
             const byKind = new Map(feats.map((f) => [f.k, f]));
             const rows = kinds.map((k) => byKind.get(k));

@@ -1,6 +1,6 @@
 /** Compact, serialisable records. Tiles are numeric kinds (0..45); see engine/src/tiles.ts for the layout. */
 import { kindOf, type Decision, type InstMeld, type TileKind } from 'sg-mahjong-engine';
-import { encAction } from 'sg-mahjong-solver';
+import { encAction, visibleOf } from 'sg-mahjong-solver';
 import type { BotType } from './bots.js';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
 
@@ -29,7 +29,7 @@ export function encodeDecision(d: Decision, meta: { g: number; h: number; d: num
   const melds = v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
   let f: unknown;
   if (d.kind === 'discard') {
-    const unseen = unseenCounts({ hand, allMelds: v.players.flatMap((p) => p.melds.flatMap((m) => m.tiles)), allDiscards: v.discardLog.map((x) => kindOf(x.tile)) });
+    const unseen = unseenCounts({ hand, allMelds: v.melds.flatMap((m) => m.tiles), allDiscards: visibleOf(v) });
     const feats: DiscardFeatures[] = discardFeatures(hand, melds, unseen);
     f = feats;
   } else {

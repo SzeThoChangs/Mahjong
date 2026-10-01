@@ -27,7 +27,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, rankDiscards, suggestCause, type PackQuestion, type PackIndex, type Context, type Cause, type RejudgedAction } from 'sg-mahjong-solver';
+import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, visibleOfQuestion, AltReadsCoachBot, CoachBot, readsFor, rankDiscards, suggestCause, type PackQuestion, type PackIndex, type Context, type Cause, type RejudgedAction } from 'sg-mahjong-solver';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 import { rulesForDir } from './tablerules.js';
 
@@ -103,10 +103,7 @@ const causeOf = (q: Q, best: string): Cause | null => {
   if (q.k !== 'discard' || q.sel === best || !q.sel.startsWith('d:') || !best.startsWith('d:')) return null;
   try {
     const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2) as TileKind[], concealed: m[1] === 1 }));
-    const visible: number[] = [];
-    for (const d of q.disc ?? []) visible.push(d[1]!);
-    (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
-    (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
+    const visible = visibleOfQuestion(q);
     const seat = q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat;
     const ctx: Context = { seat, prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, reads, visible,
       opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };

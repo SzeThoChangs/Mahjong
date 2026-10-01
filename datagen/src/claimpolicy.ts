@@ -20,7 +20,7 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { makeRng, type Meld, type TileKind } from 'sg-mahjong-engine';
-import { claimFeatures, claimCandidateOf, CLAIM_FEATURE_NAMES, type Context } from 'sg-mahjong-solver';
+import { claimFeatures, claimCandidateOf, CLAIM_FEATURE_NAMES, visibleOfQuestion, type Context } from 'sg-mahjong-solver';
 import { eachEval } from './evalstats.js';
 import { separationT, seVersionOf } from './se.js';
 import { loadHands } from './stats.js';
@@ -89,10 +89,7 @@ for (const hand of hands) {
     if (li < 0) { unmatched++; continue; }
 
     const melds: Meld[] = d.me.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-    const visible: TileKind[] = [];
-    for (const e of d.pub.dl) visible.push(e[1]! as TileKind);
-    d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...(m.slice(2) as TileKind[])); });
-    d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...(bs as TileKind[])); });
+    const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
     const ctx: Context = {
       seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: d.me.b as TileKind[], playerTurns: d.t,
       minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1,

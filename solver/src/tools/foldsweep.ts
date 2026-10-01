@@ -13,7 +13,7 @@
  */
 import { Wall, playGame, makeRng, kindOf, shanten, type Bot, type PlayerView, type TileInstance, type Meld } from 'sg-mahjong-engine';
 import { loadTableConfig, loadTableRules } from 'sg-mahjong-engine/node';
-import { CoachBot } from '../bot.js';
+import { CoachBot, visibleOf } from '../bot.js';
 import { rankDiscards } from '../rank.js';
 import { maxReadyChance } from '../reads.js';
 import type { Context } from '../targets.js';
@@ -26,11 +26,7 @@ const cfg = loadTableConfig(), rules = loadTableRules();
 const ctxOf = (v: PlayerView): Context => ({
   seat: (v.seat - v.dealer + 4) % 4, prevailingWind: v.prevailingWind, bonus: v.bonus.map(kindOf), playerTurns: v.playerTurns,
   minimumFan: v.config.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: v.config.self_draw_minimum_fan, wallRemaining: v.wallRemaining,
-  visible: [
-    ...v.discardLog.map((d) => kindOf(d.tile)),
-    ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.melds.flatMap((m) => m.tiles))),
-    ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.bonus.map(kindOf))),
-  ],
+  visible: visibleOf(v),
   opponentMelds: v.players.map((p, s) => (s === v.seat ? -1 : p.melds.length)).filter((x) => x >= 0),
 });
 const meldsOf = (v: PlayerView): Meld[] => v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));

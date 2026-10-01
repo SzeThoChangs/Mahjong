@@ -125,6 +125,50 @@ describe('learned policy', () => {
   });
 });
 
+describe('the table is counted once', () => {
+  // A discard claimed into a set stays in the discard log with `claimedBy` set and sits inside the
+  // set too. Until 2026-10-01 both were counted, which read the kind as deader than it was and, at a
+  // fifth copy, wrapped the engine's unseen count from 0 to 255 ("256 of them live" on screen).
+  it('a claimed discard is counted in the set, not the pool', async () => {
+    const { visibleOf } = await import('../src/bot.js');
+    const { kindOf } = await import('sg-mahjong-engine');
+    const five = K('5w')[0]!;
+    // a tile instance is an index; the copies of 5w are whichever indexes map to that kind
+    const copies = Array.from({ length: 200 }, (_, i) => i).filter((i) => kindOf(i as never) === five);
+    const tile = (_k: number, i: number) => copies[i] as never;
+    const v = {
+      seat: 0, dealer: 0, prevailingWind: 0, hand: [], melds: [], bonus: [], playerTurns: 10, wallRemaining: 50,
+      discardLog: [
+        { seat: 1, tile: tile(five, 0), claimedBy: 2, claimKind: 'pong', turn: 3 },
+        { seat: 3, tile: tile(five, 3), claimedBy: null, claimKind: null, turn: 9 },
+      ],
+      players: [
+        { melds: [], bonus: [] }, { melds: [], bonus: [] },
+        { melds: [{ type: 'pong', tiles: [five, five, five], concealed: false }], bonus: [] },
+        { melds: [], bonus: [] },
+      ],
+      config: { minimum_fan: 1, self_draw_minimum_fan: 1 },
+    } as never;
+    expect(visibleOf(v).filter((k) => k === five).length).toBe(4);
+  });
+  it('the unseen count never wraps below zero', async () => {
+    const { unseenCounts } = await import('sg-mahjong-engine');
+    const five = K('5w')[0]!;
+    const u = unseenCounts({ hand: [five, five], allMelds: [five, five, five], allDiscards: [five] });
+    expect(u[five]).toBe(0);
+  });
+  it('a claim reports no more live improvers than exist', async () => {
+    const { analyseClaim, visibleOfQuestion } = await import('../src/index.js');
+    // the position behind "256 of them live": min1-nowild 1449:15:51, the offered 2t on the floor
+    const q = { seat: 1, disc: [[0, 12, -1]], pm: [[], [], [], [[1, 0, 21, 21, 21]]], pb: [[], [], [], []] };
+    const hand = [6, 28, 14, 13, 28, 7, 5, 12, 12, 23] as never;
+    const melds = [{ type: 'chow' as const, tiles: [2, 3, 4] as never, concealed: false }];
+    const c = ctx({ seat: 3, prevailingWind: 3, playerTurns: 45, minimumFan: 1, visible: visibleOfQuestion(q) });
+    const a = analyseClaim({ kind: 'chow', used: [13, 14] as never }, hand, melds, 12 as never, c);
+    expect(a.rem).toBeLessThanOrEqual(4 * a.eff);
+  });
+});
+
 describe('the coach reads the table', () => {
   const hand = '1t 2t 3t 4s 5s 6s 7w 8w 9w E E 2s 8s 5w';
   it('prefers a tile already on the floor over an identical fresh one', () => {

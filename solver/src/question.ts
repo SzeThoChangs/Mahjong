@@ -155,6 +155,19 @@ function paidEventsOf(rules: RulesConfig, bonus: TileKind[], role: number): stri
  * with the unseen tiles in an arbitrary order, and `rejudge` re-deals them for every play-out. What
  * is exact is everything that was visible, and the sizes of everything that was not.
  */
+/**
+ * `Context.visible` for a pack question or a decision record: the pool less the tiles claimed out
+ * of it (`claimedBy` of -1, or absent, means the tile is still on the floor), the other seats'
+ * exposed sets, and their flowers and animals. The same rule as `visibleOf` in `bot.ts`.
+ */
+export function visibleOfQuestion(q: { seat: number; disc?: number[][]; pm?: number[][][]; pb?: number[][] }): TileKind[] {
+  const out: TileKind[] = [];
+  for (const d of q.disc ?? []) if ((d[2] ?? -1) < 0) out.push(d[1] as TileKind);
+  (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) out.push(...(m.slice(2) as TileKind[])); });
+  (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) out.push(...(bs as TileKind[])); });
+  return out;
+}
+
 export function snapshotFromQuestion(q: PackQuestion, rules: RulesConfig): Snapshot {
   if (q.dl === undefined || !q.disc || !q.pm || !q.pb) throw new Error('this question predates the table fields (dl, disc, pm, pb) and cannot be rebuilt');
   if (q.k !== 'discard' && q.k !== 'claim' && q.k !== 'self') throw new Error(`unknown decision kind ${q.k}`);

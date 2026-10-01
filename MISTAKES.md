@@ -119,6 +119,41 @@ rendered.
 
 ## Ten passes
 
+### The table counted once: the claimed-discard fix in the Coach — Thu Oct  1 17:14:06 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175 carrying the fix, the `coach`
+re-judging workers paused with `SIGSTOP` while the browser was driven and resumed after. The
+change is in the solver, the engine and every caller that builds `Context.visible`; no pack file
+changed.
+
+**Test boundary**
+
+- Workflows: answering claim questions on Train; building a hand on Your hand and asking about a
+  thrown tile.
+- Screens: Train, Your hand.
+- Access restrictions: none exist.
+- Values, records and calculations: the "of them live" count in the Coach's reasons; the unseen
+  count never wrapping; the verdicts the fix moves on 300 strong-table questions.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 14 claim questions answered, then the Your hand flow | 0 |
+| 3 | Links | "0 Jokers, min 1 Tai" then "claim" pressed: one control matched each, 14 claim questions followed, ids `min1-nowild /`; "Your hand" opened `#ask` | 0 |
+| 4 | Workflow steps | Train: 14 claim questions answered (138:24:21, 4859:13:31, 2601:24:46, 2120:14:59 and ten more), 9 "would still improve you, N of them live" lines read, every N at most four times its kinds, the largest 51 for 13 kinds. Your hand: 13 tiles entered (1-2-3萬, 4-5-6筒, 7-8-9條, 東東, 發, 白), 東 marked seen on the table, 東 thrown from before you: "Take it — pong", +3.9 chips, "1 tile kind would still improve you, 3 of them live" (the three 發 or 白 left, which is right: one 東 in hand, one on the table, one offered, so the fourth 東 is not an improver) | 0 |
+| 5 | Writes | not run — nothing stored by this change; Your hand keeps its hand in memory as before | not run — nothing stored |
+| 6 | The data it moves | In Node (`solver/test/solver.test.ts`, three new tests): a claimed discard counts once across the pool and the set; `unseenCounts` of six sightings of one kind is 0, not 254; `analyseClaim` on min1-nowild 1449:15:51 reports `rem` at most four times `eff`. 300 strong-table questions judged again by the fixed Coach at 256 play-outs and the pack's seed: 292 best answers the same, 8 moved, 1 past two standard errors; the seat's own verdict flowed mistake to close on 7, close to mistake on 1, mistake to own on 1 | 0 |
+| 7 | Reconciliation | Six worker logs: 39, 41, 48, 63, 57, 52 judged, 300; 1, 1, 2, 2, 2, 0 moved, 8; equal to the count against the pack. `./check.sh`: four packages typecheck, 83 solver and 94 engine tests pass, the web build succeeds | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px on a Train claim verdict: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | The Your hand advice read in full above; the Train claim verdicts read on 14 questions | 0 |
+
+**Defects found:** none new.
+
+**Not checked:** a real phone; the Play review and the Challenge button on this build (both run the
+same `ctxOf`, pinned by the test); the money the fix is worth, still running when these passes
+were recorded; Spot and Film room, which do not count tiles.
+
 ### The two min-1 packs judged by the Coach, on the site — Thu Oct  1 16:23:22 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the `coach` re-judging workers paused

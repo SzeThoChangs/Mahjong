@@ -36,9 +36,12 @@ export function structure(concealed: TileKind[]): Structure {
 /** Unseen copies of each kind from the acting player's point of view. */
 export function unseenCounts(visible: { hand: TileKind[]; allMelds: TileKind[]; allDiscards: TileKind[] }): Uint8Array {
   const u = new Uint8Array(34).fill(4);          // jokers (kind 46) are simply ignored here
-  for (const k of visible.hand) if (k < 34) u[k]!--;
-  for (const k of visible.allMelds) if (k < 34) u[k]!--;
-  for (const k of visible.allDiscards) if (k < 34) u[k]!--;
+  // never below zero: a Uint8Array wraps 0 to 255, and until 2026-10-01 a fifth sighting of a kind
+  // (a claimed discard counted in the pool and in the set) made a dead tile the most live on the table
+  const take = (k: TileKind) => { if (k < 34 && u[k]! > 0) u[k]!--; };
+  for (const k of visible.hand) take(k);
+  for (const k of visible.allMelds) take(k);
+  for (const k of visible.allDiscards) take(k);
   return u;
 }
 

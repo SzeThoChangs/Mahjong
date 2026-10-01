@@ -16,7 +16,7 @@
  */
 import { readdirSync, readFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, AltReadsCoachBot, CoachBot, readsFor, fnv1a, rankDiscards, type PackQuestion, type Context } from 'sg-mahjong-solver';
+import { rejudge, pairedGap, encAction, snapshotFromQuestion, pendingOf, visibleOfQuestion, AltReadsCoachBot, CoachBot, readsFor, fnv1a, rankDiscards, type PackQuestion, type Context } from 'sg-mahjong-solver';
 import { shanten, type Meld } from 'sg-mahjong-engine';
 import { rulesForDir } from './tablerules.js';
 
@@ -51,9 +51,7 @@ const ixTable = JSON.parse(readFileSync(join(`../web/public/quiz/${pack}`, 'inde
 const onColourPlan = (q: Q & { h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; seat: number; dl?: number; w: number; b: number[]; t: number }): boolean => {
   if (q.k !== 'discard' || q.h.length % 3 !== 2) return false;
   const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-  const visible: number[] = [];
-  for (const d of q.disc ?? []) visible.push(d[1]!);
-  (q.pm ?? []).forEach((ms, seat) => { if (seat !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
+  const visible = visibleOfQuestion(q);
   const ctx: Context = { seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
     minimumFan: ixTable.table.minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(ixTable.table.wildcards), visible,
     opponentMelds: (q.pm ?? []).map((ms, seat) => (seat === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };

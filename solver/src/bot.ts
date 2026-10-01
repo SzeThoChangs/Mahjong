@@ -16,14 +16,23 @@ import { claimRank, claimAdvice, type ClaimCandidate } from './claim.js';
  * live and priced every throw as if nobody were close to ready. Any comparison run against it was
  * measuring a handicapped coach.
  */
+/**
+ * `Context.visible` for a player at the table: the discard pool less the tiles claimed out of it,
+ * which sit inside someone's exposed set and are counted there, the other seats' exposed sets, and
+ * their flowers and animals. The tile on offer for a claim is already in the pool. Until 2026-10-01
+ * a claimed discard was counted twice, in the pool and in the set, which read a kind as deader than
+ * it was and, at a fifth copy, wrapped the engine's unseen count from 0 to 255.
+ */
+export const visibleOf = (v: PlayerView): TileKind[] => [
+  ...v.discardLog.filter((d) => d.claimedBy === null).map((d) => kindOf(d.tile)),
+  ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.melds.flatMap((m) => m.tiles))),
+  ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.bonus.map(kindOf))),
+];
+
 export const ctxOf = (v: PlayerView): Context => ({
   seat: (v.seat - v.dealer + 4) % 4, prevailingWind: v.prevailingWind, bonus: v.bonus.map(kindOf), playerTurns: v.playerTurns, wallRemaining: v.wallRemaining,
   minimumFan: v.config.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: v.config.self_draw_minimum_fan,
-  visible: [
-    ...v.discardLog.map((d) => kindOf(d.tile)),
-    ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.melds.flatMap((m) => m.tiles))),
-    ...v.players.flatMap((p, s) => (s === v.seat ? [] : p.bonus.map(kindOf))),
-  ],
+  visible: visibleOf(v),
   opponentMelds: v.players.map((p, s) => (s === v.seat ? -1 : p.melds.length)).filter((n) => n >= 0),
   // the same seats unreduced, for the advice only - see `collectingSuit`
   opponents: v.players.flatMap((p, s) => (s === v.seat ? [] : [{
@@ -294,11 +303,7 @@ export class FastCoachBot extends CoachBot {
     const kinds = [...new Set(hand)].filter((k) => k < 34);
     if (kinds.length <= 1) return super.chooseDiscard(v);
     const ctx = this.ctx(v), melds = meldsOf(v);
-    const unseen = unseenCounts({
-      hand,
-      allMelds: v.players.flatMap((p) => p.melds.flatMap((m) => m.tiles)),
-      allDiscards: v.discardLog.map((d) => kindOf(d.tile)),
-    });
+    const unseen = unseenCounts({ hand, allMelds: v.melds.flatMap((m) => m.tiles), allDiscards: visibleOf(v) });
     const byKind = new Map(discardFeatures(hand, melds, unseen).map((f) => [f.k, f]));
     const tbl = policyTable(ctx), suits = suitTable(hand);
     let best: TileKind | null = null, bestScore = -Infinity;

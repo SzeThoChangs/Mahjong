@@ -100,7 +100,7 @@ export function analyseClaim(c: ClaimCandidate, concealed: TileKind[], melds: Me
     const unseen = unseenCounts({
       hand: best,
       allMelds: newMelds.flatMap((m) => m.tiles),
-      allDiscards: [...(ctx.visible ?? []), offered],
+      allDiscards: [...(ctx.visible ?? [])],      // the tile on offer is in the pool, so in `visible`, already
     });
     const hf = handFeatures(best, newMelds, unseen, { bonus: [...ctx.bonus], seat: ctx.seat, prevailingWind: ctx.prevailingWind });
     eff = hf.eff; rem = hf.rem;

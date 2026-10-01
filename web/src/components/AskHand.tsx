@@ -158,7 +158,8 @@ export default function AskHand() {
       }
     }
     if (cands.length === 1) return { none: true as const };
-    try { return { none: false as const, ...claimAdvice(cands, hand, melds, offered, ctx) }; } catch { return null; }
+    // the tile on offer is on the table too, and `Context.visible` counts it there
+    try { return { none: false as const, ...claimAdvice(cands, hand, melds, offered, { ...ctx, visible: [...(ctx.visible ?? []), offered] }) }; } catch { return null; }
   }, [offered, hand, melds, total, ctx, fromLeft]);
 
   const Picker = ({ kinds, cols }: { kinds: TileKind[]; cols?: string }) => (

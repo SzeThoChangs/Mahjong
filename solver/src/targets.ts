@@ -55,10 +55,13 @@ export function bonusFanChance(ctx: Context): number {
 export interface TargetEval { id: TargetId; value: number | string; chips: number; armed: boolean; note?: string; suit?: string }
 export interface Context {
   seat: number; prevailingWind: number; bonus: TileKind[]; playerTurns: number; minimumFan: 1 | 2; selfDrawMinimumFan: number;
-  /** Every tile kind the player can SEE that is not in their own concealed hand or own melds:
-   *  the discard pool, all players' exposed melds, all flowers and animals on the table. Without it
-   *  the coach counts four copies of a tile that is already dead, which inflates what a shape can
-   *  still become. Optional so older callers keep working - they just reason blind. */
+  /** Every tile kind the player can SEE that is not in their own concealed hand or own melds,
+   *  each copy once: the discard pool LESS the tiles claimed out of it (those are inside someone's
+   *  exposed set and counted there), the other seats' exposed sets, all flowers and animals on the
+   *  table, and the tile on offer when a claim is being decided. Build it with `visibleOf` (a
+   *  `PlayerView`) or `visibleOfQuestion` (a pack question or record), not by hand. Without it the
+   *  coach counts four copies of a tile that is already dead, which inflates what a shape can still
+   *  become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
   /** An alternative reads table to price danger with. Defaults to the shipped one; exists so a
    *  regenerated table can be PLAYED against the current one before it replaces it. */

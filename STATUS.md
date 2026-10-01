@@ -64,6 +64,7 @@ The re-judging of the `coach` pack is running on the Mac, six workers under `caf
 
 ## Recently Completed
 
+- 2026-10-01: the table counted once: a claimed discard was counted twice everywhere and wrapped the unseen count to 255; fixed at the source, measured at the noise floor for money (+0.095 +/- 0.059) and verdicts (1 of 300 past the bar).
 - 2026-10-01: `min1-nowild` and `min1` judged by the Coach and on the site (576 and 601 best answers moved).
 - 2026-09-30: the 615 strong-table verdicts that fell inside the noise judged again at 512 play-outs: 287 clear again, 257 still close, 71 the other way; the 512 answers on the site.
 - 2026-09-30: the whole strong-table pack judged by the Coach and on the site; 474 best answers moved, 194 confident mistake verdicts reversed.

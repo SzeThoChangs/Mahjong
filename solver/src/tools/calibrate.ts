@@ -17,7 +17,7 @@
  * Prints the constants to paste into Trainer.tsx.
  */
 import { readFileSync } from 'node:fs';
-import { policyRank, type Context } from '../index.js';
+import { policyRank, visibleOfQuestion, type Context } from '../index.js';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 
 interface Action { a: string; ev: number; se?: number }
@@ -42,10 +42,7 @@ let hands = 0, threw = 0;
 for (const q of pack.questions) {
   if (q.k !== 'discard' || q.h.length % 3 !== 2) continue;
   const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-  const visible: TileKind[] = [];
-  for (const d of q.disc ?? []) visible.push(d[1]! as TileKind);
-  (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) visible.push(...(m.slice(2) as TileKind[])); });
-  (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...(bs as TileKind[])); });
+  const visible = visibleOfQuestion(q);
   const ctx: Context = {
     seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat,
     prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t,

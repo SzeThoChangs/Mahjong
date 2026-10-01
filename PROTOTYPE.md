@@ -472,6 +472,72 @@ a Challenge is under a minute, and the Play review at 384 play-outs a decision i
 per decision, or ten minutes and more for a whole hand's "Judge all"; the screen says so. The
 "what the play-outs did" line and the judge line both rendered on the phone.
 
+### The table counted once: a claimed discard was counted in the pool and in the set
+
+**Uncertainty addressed:** Pass 10 of the min-1 packs' shipping (2026-10-01) read "2 tile kinds
+would still improve you, 256 of them live" on `min1-nowild` 1449:15:51. At most eight copies exist.
+Reproduced in Node: `analyseClaim` gave `rem` 256 for the chow, 257 for the pong, 532 for the pass.
+The question is how much of the Coach's play and judging this moved.
+
+**Cause, found by reading, then checked on the position:** a discard claimed into a set stays in
+the discard log with `claimedBy` set, and the same tile sits inside the claimant's exposed set.
+Every caller that built `Context.visible` (the Coach's `ctxOf`, `FastCoachBot`, the datagen bots,
+Train, Review, the Play review, the pack builders, the policy and claim trainers, five tools) took
+both. The claim path added the tile on offer a second time on top. The engine's `unseenCounts`
+keeps copies in a `Uint8Array`, so a fifth sighting wrapped 0 to 255. Counted over the four shipped
+packs on 2026-10-01: a kind over-counted on 5,671 of 10,547 (`coach`), 3,319 of 10,528 (`min1`),
+5,601 of 10,291 (`min1-nowild`) and 7,203 of 10,751 (`strong-nowild`) questions; the tile on offer
+pushed a kind past four on a further 594, 633, 1,074 and 939 claim questions. So the wrap, not just
+the over-count, was common.
+
+**What it touched:** the Coach's dead-tile and deal-in reads in `rankDiscards` (`gone`), the fitted
+discard policy's `rem` feature and the claim model's `rem` feature (both fitted on contexts built
+the same wrong way), the shanten bots' `rem`, and so every play-out the Coach has ever finished,
+including the ones behind the four packs' answers (`D-037`).
+
+**What is built:** one builder each way. `visibleOf(view)` in `solver/src/bot.ts` and
+`visibleOfQuestion(q)` in `solver/src/question.ts` return the pool less the tiles claimed out of it,
+the other seats' sets and their bonus tiles; the tile on offer is in the pool already, so
+`claim.ts` no longer adds it and Your hand adds it to what the player typed as seen. `unseenCounts`
+never goes below zero. Every caller uses the builders. Three tests pin it. `policymoney.ts --old
+<path>` loads the Coach from another checkout of the code (a git worktree of the commit before the
+fix, with its own engine so the wrap is kept) as arm A, so the fixed Coach is measured against the
+Coach that judged the packs, not against a flag pretending to be it.
+
+**Named before the run, 2026-10-01 16:50:**
+1. Money: the fixed Coach against the old Coach, three fixed Coaches in the other chairs, 0-Joker
+   min-1 table, deals 7900001 to 7902000, all four chairs, 8,000 paired deals. Expected: a small
+   gain or nothing past the bar, because an over-counted kind reads as safer to throw and less
+   worth waiting on, which is a mild mistake rather than a blunder. If it comes out negative past
+   the bar the fix is still right and the fitted weights are what moved, and they get refitted.
+2. Verdicts: 300 strong-table questions drawn at random with seed 20261001 (135 discards, 135
+   claims, 30 self decisions; 286 have a claimed tile on the floor), judged again by the fixed
+   Coach at the pack's 256 play-outs and seed. Counted: best answers that move, past two standard
+   errors or not, and the flow of each question's verdict on the seat's own choice (clear mistake,
+   close, or the seat's own choice best). The noise floor is known from the 615 at 512: a fresh
+   sample alone moves a best answer inside the noise often, so only moves past two standard errors
+   count as the fix's doing.
+
+**What it will not show:** whether the packs need judging again. That follows from the two numbers
+above and is a decision for the record, not a measurement.
+
+**Status:** RUN, 2026-10-01 16:44 to 17:38.
+
+**Money:** the fixed Coach minus the old Coach, +0.095 +/- 0.059 chips a game (t 1.6) over 8,000
+paired deals; hands won 1,956 against 1,941, deal-ins 1,433 against 1,429, the win mix the same to
+within a handful. Inside the bar, in the expected direction.
+
+**Verdicts:** of the 300, 292 best answers the same, 8 moved, 1 past two standard errors (one
+discard). The seat's own verdict: 229 own-choice-best both times, 47 clear mistake both times, 9
+close both times; 7 went clear mistake to close, 1 close to clear mistake, 1 clear mistake to own,
+3 own to close, 3 close to own. The old best action's measured value moved by +0.04 chips on
+average. That is the noise floor (the 615 at 512 moved more on a fresh seed alone).
+
+**So:** the fix is right and worth keeping; the packs' verdicts stand. They are not judged again for
+this. The fitted discard policy and the claim model were trained on the wrong counts and still win
+money under the right ones, since the fixed Coach that carries them beats the old; refitting them on
+corrected contexts is a separate piece of work, listed in `NEXT.md`.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54

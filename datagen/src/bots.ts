@@ -8,7 +8,7 @@ import {
   kindOf, type Bot, type ClaimOption, type PlayerView, type SelfAction, type TileInstance, type TileKind, type Meld,
 } from 'sg-mahjong-engine';
 import { discardFeatures, shanten, unseenCounts, type DiscardFeatures } from 'sg-mahjong-engine';
-import { CoachBot, PlanBot, rankDiscards, ctxOf, type TargetId, AltReadsCoachBot, READS_NOWILD } from 'sg-mahjong-solver';
+import { CoachBot, PlanBot, rankDiscards, ctxOf, visibleOf, type TargetId, AltReadsCoachBot, READS_NOWILD } from 'sg-mahjong-solver';
 import { isHonour, isJoker, rankOf } from 'sg-mahjong-engine';
 
 export type BotType = 'efficiency' | 'aggressive' | 'pong' | 'chow' | 'random' | 'defensive' | 'coach'
@@ -52,8 +52,8 @@ export function pickRanked<T>(ranked: T[], rng: () => number, cfg: RandomnessCon
 const meldsOf = (v: PlayerView): Meld[] => v.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }));
 const unseenOf = (v: PlayerView, extra: TileKind[] = []) => unseenCounts({
   hand: [...v.hand.map(kindOf), ...extra],
-  allMelds: v.players.flatMap((p) => p.melds.flatMap((m) => m.tiles)),
-  allDiscards: v.discardLog.map((d) => kindOf(d.tile)),
+  allMelds: v.melds.flatMap((m) => m.tiles),
+  allDiscards: visibleOf(v),      // the pool less claimed tiles, the other seats' sets and bonus
 });
 
 /** Personality weights over discard features. Higher = better tile to KEEP... we score the DISCARD, so sign flips below. */

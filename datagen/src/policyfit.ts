@@ -31,7 +31,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { makeRng, type DiscardFeatures, type Meld, type TileKind } from 'sg-mahjong-engine';
-import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, rankDiscards, readsFor, type Context, type PolicyTable } from 'sg-mahjong-solver';
+import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, rankDiscards, readsFor, visibleOfQuestion, type Context, type PolicyTable } from 'sg-mahjong-solver';
 import { eachEval } from './evalstats.js';
 import { separationT, seVersionOf } from './se.js';
 import { loadHands } from './stats.js';
@@ -87,10 +87,7 @@ const push = (row: number[]) => {
 };
 
 const contextOf = (d: DecisionRecord, minimumTai: number, jokers: number): Context => {
-  const visible: number[] = [];
-  for (const e of d.pub.dl) visible.push(e[1]!);
-  d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...m.slice(2)); });
-  d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...bs); });
+  const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
   return {
     seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: (d.me.b ?? []) as TileKind[], playerTurns: d.t,
     minimumFan: minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(jokers),

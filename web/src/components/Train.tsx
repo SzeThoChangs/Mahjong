@@ -29,7 +29,7 @@ import { recordMistake, challengeMistake, causeTally, readPractise, writePractis
 import { recordPlay, challengePlay } from '@/lib/history';
 import { priceMix, loadConfig, type OutcomeMix } from '@/lib/money';
 import { challenge, challengeKind, canChallenge, rulesForPack, CHALLENGE_ROLLOUTS, type ChallengeOutcome } from '@/lib/rejudge';
-import { rankDiscards, readsFor, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
+import { rankDiscards, readsFor, handValue, claimRank, claimReasons, claimCandidateOf, liveCalls, causeLabel, TIPS, visibleOfQuestion, type Context, type Cause, type ShardIx } from 'sg-mahjong-solver';
 import type { Meld } from 'sg-mahjong-engine';
 import { jargon, J } from '@/lib/jargon';
 import { claimQuestion } from '@/lib/claimwords';
@@ -353,12 +353,10 @@ export default function Train() {
     if (!q) return null;
     try {
       const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-      // everything the player can see that is not their own concealed hand or own melds, so the
-      // coach stops counting four copies of a tile that is already dead on the table
-      const visible: number[] = [];
-      for (const d of q.disc ?? []) visible.push(d[1]!);
-      (q.pm ?? []).forEach((seatMelds, s) => { if (s !== q.seat) for (const meld of seatMelds) visible.push(...meld.slice(2)); });
-      (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...bonus); });
+      // everything the player can see that is not their own concealed hand or own melds, each copy
+      // once (a claimed discard counts in the set, not the pool), so the coach stops counting four
+      // copies of a tile that is already dead on the table
+      const visible = visibleOfQuestion(q);
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
         minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,
@@ -390,10 +388,7 @@ export default function Train() {
     if (!q) return null;
     try {
       const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-      const visible: number[] = [];
-      for (const d of q.disc ?? []) visible.push(d[1]!);
-      (q.pm ?? []).forEach((ms, s) => { if (s !== q.seat) for (const m of ms) visible.push(...m.slice(2)); });
-      (q.pb ?? []).forEach((bs, s) => { if (s !== q.seat) visible.push(...bs); });
+      const visible = visibleOfQuestion(q);
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
         minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,

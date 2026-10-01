@@ -24,7 +24,7 @@ import { rulesForDir } from './tablerules.js';
 import { decisionsOfHand } from './evaluate.js';
 import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DiscardFeatures } from 'sg-mahjong-engine';
-import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, type PolicyTable } from 'sg-mahjong-solver';
+import { policyFeatures, policyTable, POLICY_FEATURE_NAMES, visibleOfQuestion, type PolicyTable } from 'sg-mahjong-solver';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
@@ -45,10 +45,7 @@ const featurise = (f: DiscardFeatures, role: number, prevailing: number, turns: 
 
 /** The same view of the table the browser will have: pool, other seats' melds, their bonus tiles. */
 function tableOf(d: DecisionRecord): PolicyTable {
-  const visible: number[] = [];
-  for (const e of d.pub.dl) visible.push(e[1]!);
-  d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...m.slice(2)); });
-  d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...bs); });
+  const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
   return policyTable({
     seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: [], playerTurns: d.t,
     minimumFan: 2, selfDrawMinimumFan: 1,

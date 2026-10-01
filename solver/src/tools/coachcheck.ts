@@ -12,7 +12,7 @@
  * and what its choices cost in dollars per hand.
  */
 import { readFileSync } from 'node:fs';
-import { rankDiscards, type Context } from '../index.js';
+import { rankDiscards, visibleOfQuestion, type Context } from '../index.js';
 import { isHonour, rankOf } from 'sg-mahjong-engine';
 import type { Meld, TileKind } from 'sg-mahjong-engine';
 
@@ -42,12 +42,7 @@ const isoRank: { coach: number; measured: number }[] = [];
 for (const q of pack.questions) {
   if (q.k !== 'discard' || q.h.length % 3 !== 2) { skipped++; continue; }
   const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
-  const visible: TileKind[] = [];
-  if (!BLIND) {
-    for (const d of q.disc ?? []) visible.push(d[1]! as TileKind);
-    (q.pm ?? []).forEach((seatMelds, s) => { if (s !== q.seat) for (const meld of seatMelds) visible.push(...(meld.slice(2) as TileKind[])); });
-    (q.pb ?? []).forEach((bonus, s) => { if (s !== q.seat) visible.push(...(bonus as TileKind[])); });
-  }
+  const visible: TileKind[] = BLIND ? [] : visibleOfQuestion(q);
   const ctx: Context = {
     seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat,
     prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t,
