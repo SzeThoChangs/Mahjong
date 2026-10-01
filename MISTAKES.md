@@ -119,6 +119,48 @@ rendered.
 
 ## Ten passes
 
+### The two min-1 packs judged by the Coach, on the site — Thu Oct  1 16:23:22 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the `coach` re-judging workers paused
+with `SIGSTOP` while the browser was driven and resumed after. Both merged packs copied from
+`data/gen/coachpacks/` into `web/public/quiz/`; `web/dist` checked byte-identical after the build.
+
+**Test boundary**
+
+- Workflows: answering Train questions from the two min-1 packs.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: each pack index against its shards, the judge mark, the win
+  rule, the best answer against the stored actions, the seat's own throw judged, the counts against
+  the packs as shipped before.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 9 questions answered over both packs at three widths | 0 |
+| 3 | Links | "4 Jokers, min 1 Tai" and "0 Jokers, min 1 Tai" pressed: exactly one control matched each, questions carried `min1 /` and `min1-nowild /` ids | 0 |
+| 4 | Workflow steps | min1: 2016:12:18, 231:16:24, 946:22:17, 1549:21:36; min1-nowild: 2771:2:69, 2488:9:60, 2803:3:21, 4122:20:62, 1449:15:51 (chow, pong, kong, discards): each showed the play-outs line and "Judged by strong play", Next position served the next | 0 |
+| 5 | Writes | not run — nothing new is stored | not run — nothing stored |
+| 6 | The data it moves | In Node, each pack: questions equal to its index (10,291 and 10,528); every shard's kinds and causes equal to its index entry; every question marked `judge: 'coach'`, the index `judge: 'coach'`, `rollouts: 256`; no duplicate or new ids; every best among its actions, ordered best first; every re-judged discard carries the seat's own throw; win offers 1,030 and 2,332, all carrying the rule and answering "win" | 0 |
+| 7 | Reconciliation | Top index 10,291 in 103 and 10,528 in 106 shards, equal to the per-pack indexes; worker logs sum to 10,291 judged and 576 moved, 10,528 and 601, equal to the counts against the shipped packs; no worker reported a failure | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of min1-nowild 1449:15:51, read: a claim at turn 12, "Measured best: worth $4.71 per hand", Chow $4.71 best, Pong $4.70, Pass $3.14, "The Coach would chow. Agrees with the measurement.", "Judged by strong play". **The reason line says "2 tile kinds would still improve you, 256 of them live"**, which cannot be: at most eight copies exist | 1 |
+
+**Defects found:** one, in the Coach's own counting, not in the pack files. Reproduced in Node on
+the position: `analyseClaim` reports `rem` 256 for the chow, 257 for the pong, 532 for the pass.
+Cause: a discard that was claimed into a set stays in the discard list and is also inside the set,
+so every caller that builds `visible` from both counts that copy twice; the claim path then adds the
+offered tile a second time on top; and `unseenCounts` keeps the count in a `Uint8Array`, so a fifth
+copy wraps 0 to 255. Counted over the four packs: a kind over-counted on 3,319 to 7,203 questions of
+each 10,300 to 10,751. It touches the Coach's play (`ctxOf`, `FastCoachBot`), the fitted policy's
+`rem` feature, the claim model's `rem` feature, and the dead-tile reads in `rankDiscards`. The
+packs' verdicts rest on play-outs by that Coach. Fixed in the next change, with its own passes and
+a measurement of what it moved.
+
+**Not checked:** a real phone; 320, 375 and 1280px (no layout changed); the Challenge button on this
+build; the `coach` pack, still running.
+
 ### 615 strong-table questions judged again at 512 play-outs, on the site — Wed Sep 30 13:53:20 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the `min1-nowild` workers paused
