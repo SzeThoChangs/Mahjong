@@ -119,6 +119,41 @@ rendered.
 
 ## Ten passes
 
+### The pipeline for Coach-judged packs (build tools only, no app change) — Thu Oct  1 20:40:00 +08 2026
+
+Passes run on a 300-hand smoke run at the 4-Joker min-1 table in the scratchpad, while the
+coach-pack workers shared the Mac. Nothing on the site changed; the app reads the new packs' index
+fields (`judge`, `rollouts`, `players`) that it already reads for the other packs.
+
+**Test boundary**
+
+- Workflows: generate, grade with the Coach, build a pack with the Coach as judge, finish at more
+  play-outs with the drop rule, merge.
+- Screens: none.
+- Access restrictions: none exist.
+- Values, records and calculations: the judge mark on every question and the index, the fewest
+  play-outs recorded, the refusal of grades by another policy, the drop rule, the written count.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | not run — no screen | not run — build tools |
+| 2 | Errors | Each step's exit and log read: generate 0 errors, grade 0 errors and 0 failed workers, build 0 drifted and 0 mismatched, finish 0 failed | 0 |
+| 3 | Links | not run — no screen | not run — build tools |
+| 4 | Workflow steps | generate 300 hands (19 s); grade 1,199 decisions by the Coach (7,708 s); build 78 questions at `--judge coach`; finish six at 64 with `--drop-close` (2 moved, 2 dropped); the chain script written with the same commands and `.done` marks for each step | 0 |
+| 5 | Writes | The built pack's index: 78 questions, `judge: 'coach'`, `rollouts: 64`, `players: 'strong'`, table 4 Jokers min 1; its first question `judge: 'coach'`, `n: 64`, 5 actions. The finish wrote 4 of 6 questions and said so after the written count was corrected (it first printed the count before the drop) | 1, fixed |
+| 6 | The data it moves | `--judge coach` on the strong-table run, graded by shanten: refused with "2657:8:8 was graded by shanten". Decisive counted from the grades: 87 of 1,199, by kind and phase as in `PROTOTYPE.md` | 0 |
+| 7 | Reconciliation | The build's own stratum line sums to 78 drawn, equal to the index; the finish's "6 judged, 2 dropped" equal to 4 written | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | not run — no screen | not run — build tools |
+| 10 | Look at it | The chain script read through once against the smoke commands: same flags, the budget on the grade step, `--src` pointing at the built pack, the merge reading `--src` | 0 |
+
+**Defects found:** one, the finish step's "questions written" message counted before the drop;
+corrected to the written count and the dropped count.
+
+**Not checked:** the chain end to end (its first real run is the measurement); the grade step's
+`timeout` ending `evaluate.ts` cleanly with its workers (a kill costs one batch, `--resume`
+carries on); the Mac staying awake.
+
 ### The table counted once: the claimed-discard fix in the Coach — Thu Oct  1 17:14:06 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175 carrying the fix, the `coach`

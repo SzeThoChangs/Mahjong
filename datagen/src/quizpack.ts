@@ -57,8 +57,16 @@ const seVersion = seVersionOf(dir);   // older runs stored gapSe sqrt(k) short; 
 // These were both called `t` and the phase report silently bucketed decisions by their t-statistic.
 interface Ref { g: number; h: number; d: number; spread: number; k: string; sep: number; turn: number }
 const stratumOf = (kind: string, turn: number) => `${kind}/${phaseOfTurn(turn)}`;
+/**
+ * `--judge coach`: the grades were made by the Coach in every chair of the play-outs (`evaluate.ts
+ * --policy coach`), the verify pass judges the same way, and every question is marked
+ * `judge: 'coach'` (D-037) so the app says so. A grade made by any other policy is refused, since a
+ * pack must not claim a judge it did not have.
+ */
+const judge = arg('judge', '') === 'coach' ? ('coach' as const) : undefined;
 const decisive = new Map<string, Ref[]>(), close = new Map<string, Ref[]>(), seen = new Map<string, number>();
 eachEval(dir, (e) => {
+  if (judge && e.policy !== 'coach') throw new Error(`--judge coach, but ${e.g}:${e.h}:${e.d} was graded by ${e.policy}`);
   if (e.actions.length <= 1) return;
   const best = e.actions[0]!, second = e.actions[1]!;
   const spread = best.ev - e.actions[e.actions.length - 1]!.ev;
@@ -185,7 +193,7 @@ function ruleOf(actions: string[]): { rule?: 'win' } {
   return actions.includes('win') ? { rule: 'win' } : {};
 }
 
-interface Q { tp: string[]; c: Cause | null; rule?: 'win'; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
+interface Q { tp: string[]; c: Cause | null; rule?: 'win'; judge?: 'coach'; id: string; k: string; seat: number; dl: number; w: number; t: number; fih: number; h: number[]; dr: number | null; b: number[]; m: number[][]; ld?: [number, number]; disc: number[][]; pm: number[][][]; pb: number[][]; bot: string; spread: number; best: string; sel: string; n: number; actions: { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown }[] }
 const questions: Q[] = [];
 let handsDone = 0;
 let drifted = 0, mismatched = 0;
@@ -251,7 +259,7 @@ for (const [key, list] of byHand) {
     };
     const tp = throws.length ? liveCalls(d.me.h, d.me.m.length, throws, view).map((c) => c.tip) : [];
     questions.push({
-      tp, c: causeOf(e, d, melds, view.seat), ...ruleOf(e.actions.map((a) => a.a)),
+      tp, c: causeOf(e, d, melds, view.seat), ...ruleOf(e.actions.map((a) => a.a)), ...(judge ? { judge } : {}),
       id: `${e.g}:${e.h}:${e.d}`, k: e.k, seat: d.p, dl: d.dl, w: d.w, t: d.t, fih,
       h: d.me.h, dr: d.me.dr, b: d.me.b, m: d.me.m,
       disc: d.pub.dl.map((x) => [x[0]!, x[1]!, x[2]!]), pm: d.pub.m, pb: d.pub.b,
@@ -309,7 +317,7 @@ if (VERIFY > 0) {
   // afterwards, since shard placement and the order the app draws in must not depend on hand order.
   kept.sort((a, b) => a.id.localeCompare(b.id));
   let curKey = ''; let curDecs: NonNullable<ReturnType<typeof decisionsOfHand>> | null = null;
-  const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts: VERIFY, mode: 'sampled', policy: 'shanten',
+  const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts: VERIFY, mode: 'sampled', policy: judge ?? 'shanten',
     seed: 424242 + VERIFY, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: false, coupled: true };
   const survivors: Q[] = [];
   let dropped = 0, changed = 0, ruleOverrode = 0, unreplayable = 0, done = 0;
@@ -388,7 +396,8 @@ const shards = buckets.map((qs, i) => {
 });
 // `--players strong` marks a pack cut from Coach-played hands; the app shows it on the pack button
 const players = arg('players', '') === 'strong' ? ('strong' as const) : undefined;
-const packIx: PackIndex = { run: dir.split('/').pop()!, money, unit: money ? '$' : 'chips', table, questions: kept.length, placement: { by: 'fnv1a32', modulo }, shards, ...(players ? { players } : {}) };
+const fewest = kept.reduce((a, q) => Math.min(a, q.n), Infinity);
+const packIx: PackIndex = { run: dir.split('/').pop()!, money, unit: money ? '$' : 'chips', table, questions: kept.length, placement: { by: 'fnv1a32', modulo }, shards, ...(players ? { players } : {}), ...(judge ? { judge, rollouts: fewest } : {}) };
 writeFileSync(join(packDir, 'index.json'), JSON.stringify(packIx));
 const labelled = kept.filter((q) => q.c).length;
 const perCause = new Map<string, number>();

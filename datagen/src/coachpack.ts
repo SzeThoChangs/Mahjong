@@ -20,6 +20,12 @@
  *
  * Resume: a shard already present under `--out` is skipped, so a killed run continues.
  *
+ * `--src <dir>` reads the pack from somewhere other than `web/public/quiz/<pack>`, for a pack built
+ * but not yet on the site. `--drop-close` leaves out a question whose best no longer beats its
+ * runner-up by two standard errors after the re-judging (a win on offer is kept by the rule), which
+ * is the `--verify` rule of `quizpack.ts`, so a pack graded at 64 play-outs by the Coach can be
+ * finished here at 256 instead of in the builder's single thread.
+ *
  * `--ids <file>` (one question id a line) judges only those questions and copies the rest of their
  * shard as it is; a shard holding none of them is not written. With `--rollouts 512 --seed <n>` this
  * judges a few questions of a finished pack again at more play-outs, and `--merge --partial --to`
@@ -40,12 +46,13 @@ const merge = process.argv.includes('--merge');
 /** `--limit N`: judge only the first N questions of this worker's first shard, for a smoke run */
 const limit = Number(arg('limit', '0'));
 const seed = Number(arg('seed', '20260928'));
+const dropClose = process.argv.includes('--drop-close');
 const only = process.argv.includes('--ids') ? new Set(readFileSync(arg('ids', ''), 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)) : null;
 
 type Action = { a: string; ev: number; se: number; win: number; dealin: number; draw: number; n: number; mix?: unknown };
 type Q = PackQuestion & { id: string; k: string; best: string; sel: string; n: number; c: Cause | null; rule?: 'win'; judge?: 'coach'; actions: Action[]; h: number[]; m: number[][]; disc?: number[][]; pm?: number[][][]; pb?: number[][]; b: number[]; seat: number; dl?: number; w: number; t: number };
 
-const srcDir = `../web/public/quiz/${pack}`;
+const srcDir = arg('src', `../web/public/quiz/${pack}`);
 const srcIx = JSON.parse(readFileSync(join(srcDir, 'index.json'), 'utf8')) as PackIndex;
 mkdirSync(out, { recursive: true });
 
@@ -115,6 +122,7 @@ const causeOf = (q: Q, best: string): Cause | null => {
 
 const mine = srcIx.shards.filter((_, i) => i % workers === worker);
 let done = 0, changed = 0, failed = 0;
+const dropped = new Set<string>();
 const t0 = Date.now();
 for (const s of mine) {
   const target = join(out, s.file);
@@ -138,11 +146,14 @@ for (const s of mine) {
       q.actions = actions; q.n = rollouts; q.judge = 'coach';
       q.best = q.rule === 'win' && actions.some((a) => a.a === 'win') ? 'win' : actions[0]!.a;
       if (q.best !== oldBest) { changed++; q.c = causeOf(q, q.best); }
+      // the builder's verify rule: the best must beat the runner-up past two of the runner-up's paired SE
+      if (dropClose && q.rule !== 'win' && actions.length > 1 && !(actions[0]!.ev - actions[1]!.ev > 2 * actions[1]!.se)) { dropped.add(q.id); }
     } catch (e) { failed++; q.judge = undefined; console.log(`${q.id} failed: ${(e as Error).message}`); }
-    if (++done % 25 === 0) console.log(`worker ${worker}: ${done} judged, ${changed} best moved, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+    if (++done % 25 === 0) console.log(`worker ${worker}: ${done} judged, ${changed} best moved, ${dropped.size} dropped, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
   }
-  writeFileSync(target, JSON.stringify({ questions: qs }));
-  console.log(`${s.file}: ${qs.length} questions written`);
+  const keep = qs.filter((q) => !dropped.has(q.id));
+  writeFileSync(target, JSON.stringify({ questions: keep }));
+  console.log(`${s.file}: ${keep.length} questions written${dropClose ? `, ${qs.length - keep.length} dropped` : ''}`);
   if (limit > 0) break;
 }
-console.log(`worker ${worker} finished: ${done} judged, ${changed} best moved, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+console.log(`worker ${worker} finished: ${done} judged, ${changed} best moved, ${dropped.size} dropped, ${failed} failed, ${((Date.now() - t0) / 60000).toFixed(1)} min`);

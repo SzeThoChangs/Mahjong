@@ -1170,3 +1170,30 @@ the phone has to run the Coach too, which is minutes rather than seconds.
 play-outs". Until a pack is re-judged, its questions say which judge they rest on.
 
 **Related:** D-033, D-034, D-035, `A-006`, `PROTOTYPE.md`.
+
+## D-038 — Two new strong-table packs at the 4-Joker tables, judged by the Coach from the start
+
+**Date:** 2026-10-01. **Decided by:** Changs (CONFIRMED). **Status:** ACTIVE
+
+**What was decided:** Asked which of two things to do first, rebuilding the packs whose hands were
+played by the weak bots as strong-table packs, or retraining the two fitted models on Coach-judged
+labels, Changs chose the packs: "ok do that, start when the pack is done." Two packs are built,
+`strong-min1` (4 Jokers, min 1 Tai) and `strong-min2` (4 Jokers, min 2 Tai), from 150,000 hands
+played by four Coaches each, graded by the Coach in every chair of the play-outs from the first
+candidate on, never by the simple bots. They go on the site beside the existing packs under their
+own ids, so the Review tab's records against the old packs keep working; whether the old packs are
+then retired is his call once he has seen the new ones.
+
+**Why not three:** of the three packs named, the 0-Joker min-1 table already has its strong pack
+(`strong-nowild`), and the `coach` pack's hands were in fact played by four Coaches of 2026-08 (its
+run manifest says so), so the only pack whose hands came from the weak bots is `min1`. The 4-Joker
+min-2 pack is rebuilt anyway for the current Coach's play and for Coach judging from the start.
+
+**What it costs:** the Coach grades about 0.3 decisions a second on six workers (1,199 decisions in
+128 minutes while sharing the Mac, 2026-10-01), and about 7% of decisions are decisive at 64
+play-outs, so a 40-hour grading budget yields roughly 3,000 questions a pack, not 10,000. The budget
+is a knob (`GRADE_HOURS`); a bigger pack costs a proportionally longer run. The Mac must stay open
+and plugged in throughout.
+
+**Related:** D-032, D-037, `PROTOTYPE.md` "Two strong-table packs at the 4-Joker tables".
+

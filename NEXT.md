@@ -122,19 +122,17 @@ asleep with the lid closed the rest.
 
 ### Next
 
-When the `coach` pack merges: copy it in, count against the shipped pack as for the others, ten
-passes, deploy. Then `D-037` is carried out for every pack.
-
-After that, Changs's choice between the two things that still rest on simple bots:
-
-1. **The positions in three packs** (`coach`, `min1`, `min1-nowild` were played by the weak bots or
-   the old coach bot). Build each again as a strong-table pack the way `strong-nowild` was, but with
-   the Coach judging from the start instead of shanten play-outs: screen candidates at 64 play-outs,
-   judge the kept ones at 256. About two days a pack with the lid open; never measured, so time the
-   first one.
-2. **The fitted discard policy and the claim model** were trained on labels from shanten play-outs
-   and on the wrong tile counts. Refit on Coach-judged labels with the counts right: about 40,000
-   decisions at Coach speed is three to four days.
+1. When the `coach` pack merges (`data/gen/coach2/coachpack-coach.done`, about 05:30 on
+   2026-10-02 if the lid stays open): copy it in, count against the shipped pack, ten passes,
+   deploy. `D-037` is then carried out for every pack.
+2. `data/gen/coach2/strong-4j-chain.sh` starts by itself after that: `strong-min1`, then
+   `strong-min2` (`D-038`). Log `strong-4j-chain.log`; each step marks a `.done` file under
+   `coach2/`; a restart of the Mac is survived by running the script again. When a pack merges
+   (`coachpack/<pack>/`): copy into `web/public/quiz/<pack>/`, rebuild the top index (quizpack's
+   Listed pass, or by hand with `players` and `judge`), add nothing to the app (the pack buttons
+   read the index), ten passes, deploy, and record the counts named in `PROTOTYPE.md`.
+3. Then Changs's call: retire `min1` and `coach` (the weak-bot and old-Coach packs) or keep them
+   beside the new ones; and whether to refit the two models on Coach-judged labels.
 
 Small, any time: drop the `--field pool` arm of the money tests and the `shanten` default in
 `datagen/src/challenge.ts`.

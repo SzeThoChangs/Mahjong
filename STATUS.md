@@ -58,9 +58,9 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Three packs done and on the site; `coach` (4 Jokers, min 2) running |
+| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Three packs done and on the site; `coach` (4 Jokers, min 2) running, then two new strong 4-Joker packs (`D-038`) |
 
-The re-judging of the `coach` pack is running on the Mac, six workers under `caffeinate`; it needs the lid open.
+The re-judging of the `coach` pack is running on the Mac, six workers; the chain building `strong-min1` and `strong-min2` (`D-038`) starts when it merges. The Mac needs the lid open and power for about a week.
 
 ## Recently Completed
 

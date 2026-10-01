@@ -538,6 +538,38 @@ this. The fitted discard policy and the claim model were trained on the wrong co
 money under the right ones, since the fixed Coach that carries them beats the old; refitting them on
 corrected contexts is a separate piece of work, listed in `NEXT.md`.
 
+### Two strong-table packs at the 4-Joker tables, judged by the Coach from the start
+
+**Uncertainty addressed:** none about the choice (`D-038`). What is unknown is how large a pack the
+Coach can grade from scratch in a fixed time, and what its mix looks like when the Coach, not the
+simple bots, decides which positions are decisive.
+
+**What is built:** `evaluate.ts --policy coach` grades every legal action with the Coach in every
+chair, 64 play-outs an action with successive halving. `quizpack.ts --judge coach` refuses grades
+by any other policy, verifies with the same judge, and marks every question and the index
+`judge: 'coach'`. `coachpack.ts --src <dir> --drop-close` finishes a built pack at 256 play-outs on
+six workers and drops a question whose best no longer beats its runner-up past two standard errors,
+which is the builder's own verify rule moved out of its single thread. The chain is
+`data/gen/coach2/strong-4j-chain.sh`: generate, grade for `GRADE_HOURS` (40), build, finish, merge;
+`strong-min1` then `strong-min2`; it waits for the `coach` pack's re-judging and skips finished
+steps on a restart.
+
+**Measured on a 300-hand smoke run at the 4-Joker min-1 table, 2026-10-01:** generation 16 hands a
+second; grading 1,199 decisions in 7,708 seconds on six workers while the coach-pack workers shared
+the Mac (0.16 a second, so about 0.3 alone); 87 of 1,199 decisive at 64 play-outs (7.3%: 37 of 254
+claims, 36 of 929 discards, 14 of 16 self decisions; 38 of 776 early, 32 of 351 mid, 17 of 72
+late). The build made 78 questions from them with `judge: 'coach'`, `rollouts: 64`, `players:
+'strong'`; the finish at 64 on six of them moved two best answers and dropped two.
+
+**Named before the run:** at 0.3 decisions a second, 40 hours grades about 43,000 decisions, of
+which about 3,100 are decisive, and the finish at 256 is expected to drop a quarter to a third of
+those (the smoke dropped two of six, which is one sample). So each pack should land at 2,000 to
+3,000 questions, skewed to claims and the mid and late game like the strong-table pack. Counted
+when it lands: questions by kind and phase, dropped at 256, best moved at 256, win offers, and the
+hours each step took.
+
+**Status:** RUNNING from 2026-10-01 20:40, waiting for the `coach` pack.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54
