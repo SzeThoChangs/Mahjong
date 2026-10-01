@@ -112,13 +112,11 @@ big one, and he ruled that no answer may rest on simple bots (`D-037`). The app'
 judges now run the Coach; each question names its judge; `datagen/src/coachpack.ts` re-judges a
 whole pack.
 
-**Running on the Mac:** `min1-nowild`, then `min1`, then `coach`, re-judged with the Coach, six
-workers each (`data/gen/coach2/coachpack-rest-chain.sh`, started 2026-09-30 01:43 under
-`caffeinate -is`, paused 01:53 to 13:52 for the 615 re-check and asleep with the lid closed for
-nine hours of that; logs `coachpack-<pack>-w*.log`; progress lines in `coachpack-chain.log`; each
-pack writes `coachpack-<pack>.done` when merged). A restart of the Mac kills it: run the script
-again and it skips merged packs and written shards. About eight hours a pack at 0 Jokers; the
-4-Joker packs not yet timed.
+**Running on the Mac:** the `coach` pack (4 Jokers, min 2) re-judged with the Coach, six workers,
+the last of the chain (`data/gen/coach2/coachpack-rest-chain.sh`), started 2026-10-01 15:27 under
+`caffeinate -is`; logs `coachpack-coach-w*.log`; `coachpack-coach.done` when merged. The Mac must
+stay open and plugged in: `min1-nowild` took 15 hours and `min1` 11 for eight hours of work each,
+asleep with the lid closed the rest.
 
 ## Recommended Next Action
 

@@ -62,6 +62,12 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   The 71 reversals came from questions chosen for being close, where a fresh sample flips some by
   chance, so they are an upper bound on what the Coach really overturns. The 512 answers are in the
   pack; its index says `rollouts: 256`, the fewest any question has.
+- **The two min-1 packs re-judged the same way** (256 play-outs, the Mac asleep for much of it):
+  `min1-nowild`, 10,291 questions, 576 best answers moved (5.6%: 218 of 4,001 discards, 273 of 5,272
+  claims, 85 of 1,018 self decisions); of 4,033 old clear-mistake verdicts 3,033 hold, 228 reverse,
+  772 fall inside the noise. `min1`, 10,528 questions, 601 moved (5.7%: 258 of 3,303 discards, 277
+  of 6,012 claims, 66 of 1,213 self); of 3,371 old verdicts 2,487 hold, 217 reverse, 667 inside the
+  noise. The inside-the-noise share again mixes the Coach with the halved play-outs.
 
 # Status — 2026-08-25 (data-generation programme)
 

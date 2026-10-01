@@ -60,6 +60,16 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-01 — The two min-1 packs judged by the Coach
+
+**Changed:** `min1-nowild` (10,291 questions) and `min1` (10,528) carry the Coach's answers; 576 and
+601 best answers moved.
+
+**Why:** `D-037`.
+
+**Impact:** Ten passes in `MISTAKES.md`; pass 10 found a wrong number in the Coach's reason text
+("256 of them live"), traced to claimed discards counted twice; the fix follows separately.
+
 ### 2026-09-30 — 615 strong-table questions judged again at 512 play-outs
 
 **Changed:** the 615 questions whose old clear-mistake verdict fell inside the noise at 256 carry
