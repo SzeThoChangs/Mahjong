@@ -568,7 +568,13 @@ those (the smoke dropped two of six, which is one sample). So each pack should l
 when it lands: questions by kind and phase, dropped at 256, best moved at 256, win offers, and the
 hours each step took.
 
-**Status:** RUNNING from 2026-10-01 20:40, waiting for the `coach` pack.
+**Status:** RUNNING. Started by itself at 12:01 on 2026-10-02 after the `coach` pack merged;
+both runs generated (150,000 hands each, 6.45 million decisions, 44 and 46 minutes); then the
+grade step failed at once because the chain used `timeout`, which macOS does not have, and the
+chain marked the step done and built two empty packs. Found at 15:06. `evaluate.ts` gained
+`--budget <seconds>` (each worker stops after its current decision, the manifest is written; proved
+on a 100-hand run with a 45-second budget), the chain now stops on a failed step instead of marking
+it done, and grading restarted at 15:09 with the 40-hour budget.
 
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 

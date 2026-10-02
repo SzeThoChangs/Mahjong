@@ -58,12 +58,13 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Work | Owner / Agent | State |
 |---|---|---|
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
-| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Three packs done and on the site; `coach` (4 Jokers, min 2) running, then two new strong 4-Joker packs (`D-038`) |
+| `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Done: every pack on the site is Coach-judged (2026-10-02) |
 
-The re-judging of the `coach` pack is running on the Mac, six workers; the chain building `strong-min1` and `strong-min2` (`D-038`) starts when it merges. The Mac needs the lid open and power for about a week.
+The chain building `strong-min1` and `strong-min2` (`D-038`) is grading on the Mac, six workers, from 2026-10-02 15:09; 40 hours a pack. The Mac needs the lid open and power until about 2026-10-06.
 
 ## Recently Completed
 
+- 2026-10-02: the `coach` pack judged by the Coach and on the site (535 best answers moved); `D-037` is carried out for every pack. The grader gained a time budget after the new packs' chain failed on a `timeout` macOS does not have.
 - 2026-10-01: the table counted once: a claimed discard was counted twice everywhere and wrapped the unseen count to 255; fixed at the source, measured at the noise floor for money (+0.095 +/- 0.059) and verdicts (1 of 300 past the bar).
 - 2026-10-01: `min1-nowild` and `min1` judged by the Coach and on the site (576 and 601 best answers moved).
 - 2026-09-30: the 615 strong-table verdicts that fell inside the noise judged again at 512 play-outs: 287 clear again, 257 still close, 71 the other way; the 512 answers on the site.

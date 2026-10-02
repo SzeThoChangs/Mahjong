@@ -34,7 +34,9 @@ import { SE_VERSION } from './se.js';
  * plan they cannot execute.
  */
 export type Policy = 'fast' | 'shanten' | 'efficiency' | 'coach';
-export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean; only?: ReadonlySet<string> }
+export interface EvalArgs { dir: string; hands: number; perHand: number; rollouts: number; mode: 'sampled' | 'oracle'; policy: Policy; seed: number; workers: number; workerIndex: number; rulesOverride: object; randomness: RandomnessConfig; adaptive?: boolean; resume?: boolean; coupled?: boolean; only?: ReadonlySet<string>;
+  /** `--budget <seconds>`: each worker stops after the decision it is on once this much time has passed, flushes, and the manifest is written as usual, so a grading run can be given a fixed time rather than a count and `--resume` continues it later. macOS has no `timeout`, and a kill would lose each worker's unflushed batch. */
+  budget?: number }
 /** The per-action numbers and the outcome mix are the solver's now (`solver/src/rejudge.ts`), so the
  *  phone's Challenge button and this grader share one definition of them. */
 export type { ActionEval, OutcomeMix };
@@ -149,10 +151,12 @@ export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { ev
   const done = new Set<string>();
   if (a.resume && existsSync(path)) eachJsonlGz<EvalRecord>(path, (e) => done.add(`${e.g}:${e.h}:${e.d}`));   // stream: a worker's own shard is gigabytes once parsed
   const out = new JsonlGzWriter(path, 1 << 20, a.resume);
-  let n = 0, skipped = 0, errors = 0;
-  for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {
+  let n = 0, skipped = 0, errors = 0, stopped = false;
+  const deadline = a.budget ? Date.now() + a.budget * 1000 : Infinity;
+  outer: for (const { hand, decisions } of selectDecisions(a.dir, a, rules)) {
     for (const dec of decisions) {
       if (done.has(`${dec.g}:${dec.h}:${dec.d}`)) { skipped++; continue; }
+      if (Date.now() > deadline) { stopped = true; break outer; }
       try {
         const pos = positionAt(hand, dec.d, rules, a.randomness);
         if (!pos) continue;
@@ -167,6 +171,7 @@ export function runEvalWorker(a: EvalArgs, progress?: (n: number) => void): { ev
     }
   }
   out.close();
+  if (stopped) console.error(`[w${a.workerIndex}] budget of ${a.budget}s reached after ${n} decisions; --resume continues`);
   return { evaluated: n, skipped, errors };
 }
 
@@ -184,6 +189,7 @@ if (parentPort) {
     // --only <file>: one `g:h:d` per line, grade exactly those and nothing else
     only: arg('only') ? new Set(readFileSync(arg('only')!, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)) : undefined,
     coupled: !process.argv.includes('--no-coupled'),   // position-keyed rollout randomness; --no-coupled reproduces pre-2026-08-26 runs
+    ...(arg('budget') ? { budget: Number(arg('budget')) } : {}),
     rulesOverride: arg('rules') ? JSON.parse(arg('rules')!) : {}, randomness: arg('randomness') ? JSON.parse(arg('randomness')!) : { ranked: [0.7, 0.15, 0.1], random: 0.05 },
   };
   mkdirSync(dir, { recursive: true });

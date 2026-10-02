@@ -68,6 +68,10 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   772 fall inside the noise. `min1`, 10,528 questions, 601 moved (5.7%: 258 of 3,303 discards, 277
   of 6,012 claims, 66 of 1,213 self); of 3,371 old verdicts 2,487 hold, 217 reverse, 667 inside the
   noise. The inside-the-noise share again mixes the Coach with the halved play-outs.
+- **The `coach` pack (4 Jokers, min 2) re-judged the same way**, 2026-10-01 15:27 to 10-02 11:57:
+  10,547 questions, 535 best answers moved (5.1%: 310 of 4,739 discards, 207 of 4,711 claims, 18 of
+  1,097 self); of 1,287 old clear-mistake verdicts 832 hold, 128 reverse, 327 fall inside the noise.
+  With this every pack on the site rests on the Coach's play-outs (`D-037` carried out).
 - **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
   in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
   engine's unseen count from 0 to 255. Over half the questions in each pack had a kind

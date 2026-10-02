@@ -122,16 +122,13 @@ asleep with the lid closed the rest.
 
 ### Next
 
-1. When the `coach` pack merges (`data/gen/coach2/coachpack-coach.done`, about 05:30 on
-   2026-10-02 if the lid stays open): copy it in, count against the shipped pack, ten passes,
-   deploy. `D-037` is then carried out for every pack.
-2. `data/gen/coach2/strong-4j-chain.sh` starts by itself after that: `strong-min1`, then
-   `strong-min2` (`D-038`). Log `strong-4j-chain.log`; each step marks a `.done` file under
-   `coach2/`; a restart of the Mac is survived by running the script again. When a pack merges
-   (`coachpack/<pack>/`): copy into `web/public/quiz/<pack>/`, rebuild the top index (quizpack's
-   Listed pass, or by hand with `players` and `judge`), add nothing to the app (the pack buttons
-   read the index), ten passes, deploy, and record the counts named in `PROTOTYPE.md`.
-3. Then Changs's call: retire `min1` and `coach` (the weak-bot and old-Coach packs) or keep them
+1. `data/gen/coach2/strong-4j-chain.sh` is grading `strong-min1` (`D-038`) from 2026-10-02 15:09,
+   40 hours, then builds and finishes it, then `strong-min2` the same. Log
+   `strong-4j-chain.log`; `.done` marks under `coach2/`; a restart of the Mac is survived by running
+   the script again (grading resumes from disk). When a pack merges (`coachpacks/<pack>/`): copy
+   into `web/public/quiz/<pack>/`, rebuild the top index (quizpack's Listed pass, or by hand with
+   `players` and `judge`), ten passes, deploy, record the counts named in `PROTOTYPE.md`.
+2. Then Changs's call: retire `min1` and `coach` (the weak-bot and old-Coach packs) or keep them
    beside the new ones; and whether to refit the two models on Coach-judged labels.
 
 Small, any time: drop the `--field pool` arm of the money tests and the `shanten` default in

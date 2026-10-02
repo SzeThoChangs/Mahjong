@@ -103,6 +103,25 @@ rendered.
 
 <!-- Shape of an entry:
 
+## M-004 — Launching a chain with a step that had never run once
+
+**Count:** 1 (2026-10-02)
+
+**What happened:** the chain building the two new strong-table packs used `timeout 40h` to cap the
+grading step. macOS has no `timeout`. The step exited at once with 127, the chain marked it done,
+built two empty packs from nothing and "merged" them, and 2.3 hours passed before anyone looked.
+The ten-pass record for the chain said, under Not checked, "the grade step's `timeout` ending
+`evaluate.ts` cleanly" - the one thing not run was the one thing that broke.
+
+**Why it happens:** the other steps had each been run on a smoke run, so the chain felt tested; the
+cap was "just a wrapper". A step that has not been executed once in the shape it will run in has
+not been tested, whatever the pieces around it have.
+
+**The check:** before a chain is launched, every step runs once end to end on a smoke run in the
+exact command shape, including wrappers and budgets; the record names the smoke run that proved
+each step. A step marked "not checked" in a chain that will run unattended for days is a defect,
+not a note. And a chain step that fails stops the chain; it never marks itself done.
+
 ## M-001 — [The kind of mistake]
 
 **Count: 1.**
@@ -118,6 +137,41 @@ rendered.
 ---
 
 ## Ten passes
+
+### The last pack, 4 Jokers min 2, judged by the Coach, on the site — Fri Oct  2 15:12:43 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the `strong-min1` grader paused with
+`SIGSTOP` while the browser was driven and resumed after. The merged pack copied from
+`data/gen/coachpacks/coach/` into `web/public/quiz/coach/`; `web/dist` checked byte-identical
+after the build.
+
+**Test boundary**
+
+- Workflows: answering Train questions from the 4-Joker min-2 pack.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark, the win
+  rule, the best answer against the stored actions, the seat's own throw judged, the counts
+  against the pack as shipped before.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 7 questions answered at three widths | 0 |
+| 3 | Links | "4 Jokers, min 2 Tai" pressed: exactly one control matched, questions carried `coach /` ids | 0 |
+| 4 | Workflow steps | 6454:4:36, 208:4:68, 2323:4:68, 2472:16:39, 1119:5:56, 3220:14:33, 4267:11:32 answered (discards and pongs): each showed the play-outs line and "Judged by strong play", the two pong reasons "2 of them live", Next position served the next | 0 |
+| 5 | Writes | not run — nothing new is stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 10,547 questions in 106 shards, equal to the index; every shard's kinds and causes equal to its index entry; every question `judge: 'coach'`, the index `judge: 'coach'`, `rollouts: 256`; no duplicate or new ids; every best among its actions, ordered best first; every re-judged discard carries the seat's own throw; 2,030 win offers, all carrying the rule and answering "win" | 0 |
+| 7 | Reconciliation | Top index 10,547 in 106 shards, equal to the per-pack index; worker logs sum to 10,547 judged, 535 moved, 0 failed, equal to the count against the shipped pack | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of 4267:11:32, read: a claim at turn 8 with two chows on offer, "Measured best: worth $17.89 per hand", Pass $17.89 best (won 77%), Chow $16.88 (won 96%), Chow $15.69, "The Coach would chow. The measurement disagrees — trust the bars here.", the whiskers of the chows reaching the pass. The two chow rows both read "Chow" with no tiles named, which is how claim rows have always read | 0 |
+
+**Defects found:** none in this change. The same morning the new packs' chain failed on `timeout`
+(`M-004`), found while checking this pack.
+
+**Not checked:** a real phone; the Challenge button on this build; whether a claim row should name
+its tiles when two chows are on offer (a question for Changs, not a defect of the pack).
 
 ### The pipeline for Coach-judged packs (build tools only, no app change) — Thu Oct  1 20:40:00 +08 2026
 

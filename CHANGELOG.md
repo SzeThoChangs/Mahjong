@@ -60,6 +60,18 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-02 — The last pack judged by the Coach; the grader takes a time budget
+
+**Changed:** the `coach` pack (4 Jokers, min 2; 10,547 questions) carries the Coach's answers, 535
+best answers moved; every pack on the site is now Coach-judged. `evaluate.ts --budget <seconds>`
+stops each worker after its current decision and writes the manifest, for runs given a time rather
+than a count.
+
+**Why:** `D-037`; and the new packs' chain used `timeout`, which macOS lacks, so its grading step
+ended at once and two empty packs were "merged" (2.3 hours lost, caught at 15:06).
+
+**Impact:** Ten passes in `MISTAKES.md`; mistake `M-004` recorded.
+
 ### 2026-10-01 — The table counted once
 
 **Changed:** the Coach, the bots and every screen count a claimed discard once (in the set, not the
