@@ -64,6 +64,7 @@ The chain building `strong-min1` and `strong-min2` (`D-038`) is grading on the M
 
 ## Recently Completed
 
+- 2026-10-03: a claimed tile leaves the pile on screen; Changs had counted five 8萬 on one table.
 - 2026-10-02: the `coach` pack judged by the Coach and on the site (535 best answers moved); `D-037` is carried out for every pack. The grader gained a time budget after the new packs' chain failed on a `timeout` macOS does not have.
 - 2026-10-01: the table counted once: a claimed discard was counted twice everywhere and wrapped the unseen count to 255; fixed at the source, measured at the noise floor for money (+0.095 +/- 0.059) and verdicts (1 of 300 past the bar).
 - 2026-10-01: `min1-nowild` and `min1` judged by the Coach and on the site (576 and 601 best answers moved).

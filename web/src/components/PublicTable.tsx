@@ -109,14 +109,18 @@ function place(i: number, total: number, side: Side): { gridRow: number; gridCol
 function Pool({ seat, side, at }: { seat: SeatPublic; side: Side; at: Size }) {
   const rot = ROT[side];
   const down = side === 'left' || side === 'right';
-  const total = seat.discards.length;
+  // A claimed discard leaves the pile: it sits in the claimant's set, drawn in the outer ring. Until
+  // 2026-10-03 the pile drew it too, and Changs counted five 8萬 on one table (min1-nowild
+  // 5114:25:23: a pong of three, his own throw, and the claimed copy still in 南's pile).
+  const shown = seat.discards.filter((d) => !d.claimed);
+  const total = shown.length;
   const n = Math.max(1, Math.min(PER_ROW, total));
   return (
     <div className={cn('grid', at.phone ? 'gap-0' : 'gap-0.5')}
       style={down
         ? { gridTemplateRows: `repeat(${n}, ${at.tile}px)`, gridAutoColumns: 'max-content' }
         : { gridTemplateColumns: `repeat(${n}, ${at.tile}px)`, gridAutoRows: 'max-content' }}>
-      {seat.discards.map((d, i) => (
+      {shown.map((d, i) => (
         <div key={i} style={place(i, total, side)}><Tile kind={d.kind} size={at.size} rot={rot} /></div>
       ))}
     </div>

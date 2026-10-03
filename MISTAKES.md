@@ -122,6 +122,25 @@ exact command shape, including wrappers and budgets; the record names the smoke 
 each step. A step marked "not checked" in a chain that will run unattended for days is a defect,
 not a note. And a chain step that fails stops the chain; it never marks itself done.
 
+## M-005 — Fixing a double count in the numbers without looking for it in the picture
+
+**Count:** 1 (2026-10-03)
+
+**What happened:** on 2026-10-01 the Coach was found counting a claimed discard twice, in the pile
+and in the set, and that was fixed in every place that counts. The table drawing had the same two
+copies, one in the pile and one in the set, and nobody looked. Changs did, two days later: five 8萬
+on one table. The ten passes for the counting fix read reason lines and counted in Node; pass 10
+never counted tiles on the felt.
+
+**Why it happens:** a bug found in one representation gets fixed where it was found. The same fact
+(a claimed tile is in the set, not the pile) is represented in the counts, in the drawing, in the
+replay and in the reads, and each was written separately.
+
+**The check:** when a fix changes what a fact means (here: where a claimed tile is), list every
+place that represents that fact before closing the fix, and look at each one. For the table it is
+cheap: count the tile images on the felt per kind and nothing may pass four; that count is now part
+of the passes for any change to the table or the packs.
+
 ## M-001 — [The kind of mistake]
 
 **Count: 1.**
@@ -137,6 +156,38 @@ not a note. And a chain step that fails stops the chain; it never marks itself d
 ---
 
 ## Ten passes
+
+### A claimed tile leaves the pile on screen — Sat Oct  3 23:23:30 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175 carrying the change, the `strong-min1`
+grader paused with `SIGSTOP` while the browser was driven and resumed after. The change is one
+filter in `PublicTable.tsx`'s pile.
+
+**Test boundary**
+
+- Workflows: answering Train questions whose table has a claimed tile.
+- Screens: Train (the table drawing is shared by Review, Spot and the generated hand).
+- Access restrictions: none exist.
+- Values, records and calculations: the number of copies of each kind drawn on the felt.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 20 claim questions answered at three widths | 0 |
+| 3 | Links | "0 Jokers, min 1 Tai" and "claim" pressed: one control matched each, 20 questions followed with `min1-nowild /` ids | 0 |
+| 4 | Workflow steps | 20 claim questions answered and Next position pressed each time (5224:19:46, 2652:5:54, 4942:9:81, 1350:3:19, 4216:11:16, 5292:19:29 among them); on each, every tile image inside the felt counted by kind: none above four | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | In Node over all four packs, 42,117 questions: with claimed tiles left out of the pile, no kind reaches five copies across the pile, the sets, the bonus and the hand (worst 4); 5114:25:23 draws four 8萬 | 0 |
+| 7 | Reconciliation | The felt's image counts on the question in the screenshot (西 3, 9筒 3, 2萬 3, 3萬 3, all else 1 or 2) agree with what the picture shows | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px, read: 東圈 第6巡, you are 東 and dealer; your 1-2-3萬 and three bonus tiles below the felt; 北's three 1-2-3萬 set to the left; 南's five bonus tiles and the claim question "南 discarded 5條 — Pong or pass?"; the piles short and in order | 0 |
+
+**Defects found:** none in this change; the change is itself the defect Changs found (`M-005`).
+
+**Not checked:** a real phone; the Review and Spot screens on this build (same drawing, not
+opened); the exact question 5114:25:23 on screen (the Train tab draws at random; it was checked in
+the data).
 
 ### The last pack, 4 Jokers min 2, judged by the Coach, on the site — Fri Oct  2 15:12:43 +08 2026
 

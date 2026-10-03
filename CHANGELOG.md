@@ -60,6 +60,19 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-03 — A claimed tile leaves the pile on screen
+
+**Changed:** the table drawing no longer shows a discard that was claimed into a set; it is drawn
+in the set only.
+
+**Why:** Changs counted five 8萬 on one table (min1-nowild 5114:25:23): a pong of three, his own
+throw, and the claimed copy still drawn in 南's pile. Only four exist. The same double counting was
+fixed in the Coach's numbers on 2026-10-01 and nobody looked at the picture (`M-005`).
+
+**Impact:** Ten passes in `MISTAKES.md`. Every screen that draws a table from a pack question
+(Train, Review, Spot, the generated hand) is covered by the one drawing; Play was already right
+because the engine takes the tile out of the pile itself.
+
 ### 2026-10-02 — The last pack judged by the Coach; the grader takes a time budget
 
 **Changed:** the `coach` pack (4 Jokers, min 2; 10,547 questions) carries the Coach's answers, 535
