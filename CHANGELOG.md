@@ -60,6 +60,16 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-04 — A fifth pack: 4 Jokers, min 1 Tai, strong table
+
+**Changed:** `strong-min1`, 1,922 questions from hands played by four Coaches and judged by the
+Coach from the first candidate (`D-038`), on the site beside the existing packs.
+
+**Why:** `D-038`.
+
+**Impact:** Ten passes in `MISTAKES.md`; the counts in `PROTOTYPE.md` and `FINDINGS.md`. The
+second pack, 4 Jokers min 2, follows in about two days.
+
 ### 2026-10-03 — A claimed tile leaves the pile on screen
 
 **Changed:** the table drawing no longer shows a discard that was claimed into a set; it is drawn

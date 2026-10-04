@@ -576,6 +576,17 @@ chain marked the step done and built two empty packs. Found at 15:06. `evaluate.
 on a 100-hand run with a 45-second budget), the chain now stops on a failed step instead of marking
 it done, and grading restarted at 15:09 with the 40-hour budget.
 
+**`strong-min1` landed 2026-10-04 10:16, on the site 16:40.** Grading: 34,764 decisions in 40
+hours (0.24 a second; the grader was paused twice for screen checks), 0 errors. Build: 2,545
+candidates decisive at 64 play-outs (155 of 13,660 early discards, 495 of 11,513 mid, 331 of 2,750
+late; 417 of 2,756 early claims, 654 of 2,978 mid, 202 of 751 late; 291 of 356 self decisions), 129
+with a shape tip, 92 with a cause. Finish at 256 on six workers, 140 to 186 minutes a worker: 201
+best answers moved, 623 dropped as no longer past two standard errors (24.5%), 1,922 kept: 669
+discards, 964 claims, 289 self; early 586, mid 985, late 351; 535 win offers, all answered by the
+rule; 75 with a tip, 37 with a cause. The recorded seat (a Coach) chose the best on 1,733 of the
+1,922 (90%), so "hard only" has 189 questions to draw from. Within the range named before the run
+(2,000 to 3,000) at the low end, for the two pauses. `strong-min2` grading from 10:16.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54

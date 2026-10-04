@@ -157,6 +157,39 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### A fifth pack, 4 Jokers min 1 at a strong table, on the site — Sun Oct  4 16:30:38 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the `strong-min2` grader paused
+with `SIGSTOP` while the browser was driven and resumed after. The merged pack copied from
+`data/gen/coachpacks/strong-min1/` into `web/public/quiz/strong-min1/`; the top index rewritten
+from the five per-pack indexes; `web/dist` checked byte-identical after the build.
+
+**Test boundary**
+
+- Workflows: choosing the new pack on Train and answering its questions.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark, the win
+  rule, the best answer against the stored actions, the tile count on the felt, the top index.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; five pack buttons: "4 Jokers, min 2 Tai", "4 Jokers, min 1 Tai", "0 Jokers, min 1 Tai", "4 Jokers, min 1 Tai, strong table", "0 Jokers, min 1 Tai, strong table" | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 17 questions answered at three widths | 0 |
+| 3 | Links | The new button pressed: exactly one control matched, questions carried `strong-min1 /` ids | 0 |
+| 4 | Workflow steps | 16 questions answered and Next position pressed (5175:19:22, 3451:15:30, 6525:2:11, 1739:14:45, 582:14:44, 5181:10:42, 3241:5:32, 4631:17:19, 3860:10:26, 4653:23:27, 5534:5:15, 6231:6:44 among them; discards, pongs, a chow, passes): each showed the play-outs line and "Judged by strong play"; on each the felt's tile images counted by kind, none above four. Four early presses at 600 ms did not register and did at 900 ms, which is the pack's shard fetch, not a defect | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 1,922 questions in 26 shards, equal to the index; every shard's kinds and causes equal to its index entry; every question `judge: 'coach'` at n 256, the index `judge: 'coach'`, `rollouts: 256`, `players: 'strong'`, table 4 Jokers min 1; no duplicate ids; every best among its actions, ordered best first; every discard carries the seat's own throw; 535 win offers, all carrying the rule and answering "win"; no question whose best is inside two standard errors of its runner-up (the drop rule held); no kind over four copies with claimed tiles out of the pile | 0 |
+| 7 | Reconciliation | The build log's 2,545 drawn, the six finish logs' 2,545 judged, 201 moved, 623 dropped, and 2,545 minus 623 is 1,922, equal to the index; the top index lists 10,547, 10,528, 10,291, 1,922 and 10,751 in 106, 106, 103, 26 and 108 shards, equal to the five per-pack indexes | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px with the new pack selected: page scroll width equal to the screen, 0 elements past the right edge outside a scroller; the new button wraps to two lines at 280px, 231 by 48px like the other strong-table button | 0 |
+| 10 | Look at it | Screenshot at 390px, read: five pack buttons with the new one selected in dark green, "hard only" pressed, a 南圈 第1巡 table with one discard and the player's three bonus tiles, "南 discarded 2萬 — Pong or pass?", a hand of 二萬 二萬 三萬 三萬 三萬 四萬 and more | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; Review, Spot and Play on this build (none read the new pack
+specially); the Challenge button on a new-pack question.
+
 ### A claimed tile leaves the pile on screen — Sat Oct  3 23:23:30 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175 carrying the change, the `strong-min1`

@@ -72,6 +72,12 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   10,547 questions, 535 best answers moved (5.1%: 310 of 4,739 discards, 207 of 4,711 claims, 18 of
   1,097 self); of 1,287 old clear-mistake verdicts 832 hold, 128 reverse, 327 fall inside the noise.
   With this every pack on the site rests on the Coach's play-outs (`D-037` carried out).
+- **The first pack judged by the Coach from the first candidate** (`strong-min1`, 4 Jokers min 1,
+  2026-10-04): 40 hours of grading at 0.24 decisions a second found 2,545 decisive positions in
+  34,764; the finish at 256 play-outs dropped 623 of them (24.5%) and moved 201 best answers, leaving
+  1,922 questions. The recorded Coach seat already had the best answer on 90% of them. A Coach-built
+  pack is about a fifth the size of a shanten-screened one for the same wall-clock, and a quarter
+  of what the Coach calls decisive at 64 play-outs does not hold at 256.
 - **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
   in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
   engine's unseen count from 0 to 255. Over half the questions in each pack had a kind

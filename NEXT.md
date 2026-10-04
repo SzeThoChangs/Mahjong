@@ -122,14 +122,14 @@ asleep with the lid closed the rest.
 
 ### Next
 
-1. `data/gen/coach2/strong-4j-chain.sh` is grading `strong-min1` (`D-038`) from 2026-10-02 15:09,
-   40 hours, then builds and finishes it, then `strong-min2` the same. Log
-   `strong-4j-chain.log`; `.done` marks under `coach2/`; a restart of the Mac is survived by running
-   the script again (grading resumes from disk). When a pack merges (`coachpacks/<pack>/`): copy
-   into `web/public/quiz/<pack>/`, rebuild the top index (quizpack's Listed pass, or by hand with
-   `players` and `judge`), ten passes, deploy, record the counts named in `PROTOTYPE.md`.
+1. `strong-min2` (`D-038`): grading from 2026-10-04 10:16 for 40 hours, then build and finish by
+   itself; expected to merge about 2026-10-06 midday. Then: copy `data/gen/coachpacks/strong-min2/`
+   into `web/public/quiz/strong-min2/`, rewrite `web/public/quiz/index.json` from the per-pack
+   indexes (the Node one-liner in the 2026-10-04 commit, or quizpack's Listed pass), ten passes with
+   the felt tile count, deploy, record the counts as for `strong-min1`.
 2. Then Changs's call: retire `min1` and `coach` (the weak-bot and old-Coach packs) or keep them
-   beside the new ones; and whether to refit the two models on Coach-judged labels.
+   beside the new ones; grade longer for bigger strong packs (`GRADE_HOURS`); and whether to refit
+   the two models on Coach-judged labels.
 
 Small, any time: drop the `--field pool` arm of the money tests and the `shanten` default in
 `datagen/src/challenge.ts`.
