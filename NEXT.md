@@ -153,8 +153,8 @@ asleep with the lid closed the rest.
    beside the new ones; grade longer for bigger strong packs (`GRADE_HOURS`); and whether to refit
    the two models on Coach-judged labels.
 
-Small, any time: drop the `--field pool` arm of the money tests and the `shanten` default in
-`datagen/src/challenge.ts`.
+The `--field pool` arm and the `shanten` defaults in `challenge.ts` and `buildrare.ts` were dropped
+on 2026-10-04 19:20; `halving.ts` keeps shanten because it measures the halving method, not a position.
 
 ### Why
 
