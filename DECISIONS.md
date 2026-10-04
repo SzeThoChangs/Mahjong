@@ -1197,3 +1197,19 @@ and plugged in throughout.
 
 **Related:** D-032, D-037, `PROTOTYPE.md` "Two strong-table packs at the 4-Joker tables".
 
+## D-039 — The weak-bot 4-Joker min-1 pack is retired; the old-Coach min-2 pack stays
+
+**Date:** 2026-10-04. **Decided by:** Changs (CONFIRMED): "Retire min 1 keep coach". **Status:** ACTIVE
+
+**What was decided:** `min1` (4 Jokers, min 1, hands played by the weak personality bots) comes off
+the pack buttons now that `strong-min1` exists at the same table. `coach` (4 Jokers, min 2, hands
+played by four Coaches of 2026-08, every answer Coach-judged) stays beside `strong-min2` when that
+lands, because it has five times the questions and "hard only" needs the volume; it is retired the
+same way once a strong pack at its table is big enough.
+
+**How:** a retired pack's per-pack index carries `retired` with the date and reason; the top index
+leaves it out, so the app does not offer it; its files stay, so the Review tab's records against
+it still open. Nothing is deleted.
+
+**Related:** D-032, D-037, D-038.
+

@@ -60,6 +60,15 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-04 — The weak-bot 4-Joker min-1 pack retired
+
+**Changed:** `min1` is off the pack buttons; its files stay, so Review records against it still
+open. A pack index can carry `retired`, and the top index leaves such a pack out.
+
+**Why:** `D-039`, Changs: "Retire min 1 keep coach".
+
+**Impact:** Four pack buttons. Ten passes in `MISTAKES.md`.
+
 ### 2026-10-04 — A fifth pack: 4 Jokers, min 1 Tai, strong table
 
 **Changed:** `strong-min1`, 1,922 questions from hands played by four Coaches and judged by the

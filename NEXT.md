@@ -149,9 +149,9 @@ asleep with the lid closed the rest.
    into `web/public/quiz/strong-min2/`, rewrite `web/public/quiz/index.json` from the per-pack
    indexes (the Node one-liner in the 2026-10-04 commit, or quizpack's Listed pass), ten passes with
    the felt tile count, deploy, record the counts as for `strong-min1`.
-2. Then Changs's call: retire `min1` and `coach` (the weak-bot and old-Coach packs) or keep them
-   beside the new ones; grade longer for bigger strong packs (`GRADE_HOURS`); and whether to refit
-   the two models on Coach-judged labels.
+2. Then Changs's call: grade longer for bigger strong packs (`GRADE_HOURS`); whether to refit the
+   two models on Coach-judged labels; and when `strong-min2` is big enough, retire `coach` the way
+   `min1` was (`retired` in its index, `D-039`).
 
 The `--field pool` arm and the `shanten` defaults in `challenge.ts` and `buildrare.ts` were dropped
 on 2026-10-04 19:20; `halving.ts` keeps shanten because it measures the halving method, not a position.

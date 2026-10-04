@@ -421,6 +421,8 @@ const packs = readdirSync(outDir, { withFileTypes: true }).map((ent): Listed | n
   if (ent.isDirectory()) {
     try {
       const ix = JSON.parse(readFileSync(join(outDir, ent.name, 'index.json'), 'utf8')) as PackIndex;
+      // a retired pack keeps its files for the Review tab's records and is not offered as a pack (D-039)
+      if (ix.retired) return null;
       // `players` rides along from the per-pack index, so a rebuilt top index keeps the strong table's label
       return { id: ent.name, money: ix.money, unit: ix.unit, table: ix.table, questions: ix.questions, shards: ix.shards.length, ...(ix.players ? { players: ix.players } : {}) };
     } catch { return null; }

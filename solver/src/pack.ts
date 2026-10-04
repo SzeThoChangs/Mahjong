@@ -64,4 +64,7 @@ export interface PackIndex {
   /** the whole pack re-judged with the Coach in the play-outs (D-037), and the fewest play-outs any action had */
   judge?: 'coach';
   rollouts?: number;
+  /** set when the pack is taken off the pack buttons but its files stay, so a player's records
+   *  against it still open in Review: the date and the reason (D-039) */
+  retired?: string;
 }

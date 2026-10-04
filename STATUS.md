@@ -64,6 +64,7 @@ The chain is grading `strong-min2` (`D-038`) on the Mac, six workers, from 2026-
 
 ## Recently Completed
 
+- 2026-10-04: `min1` retired from the pack buttons (`D-039`), files kept for Review.
 - 2026-10-04: `strong-min1` on the site, 1,922 questions, the first pack judged by the Coach from the first candidate.
 - 2026-10-03: a claimed tile leaves the pile on screen; Changs had counted five 8萬 on one table.
 - 2026-10-02: the `coach` pack judged by the Coach and on the site (535 best answers moved); `D-037` is carried out for every pack. The grader gained a time budget after the new packs' chain failed on a `timeout` macOS does not have.

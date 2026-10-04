@@ -157,6 +157,39 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The weak-bot 4-Joker min-1 pack retired — Sun Oct  4 23:28:19 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175, the `strong-min2` grader paused
+with `SIGSTOP` while the browser was driven and resumed after. The change: `retired` on
+`quiz/min1/index.json`, the top index rewritten without it, the builder's listing pass skipping a
+retired pack, the field on the `PackIndex` type.
+
+**Test boundary**
+
+- Workflows: choosing a pack on Train; opening a Review record that points at the retired pack.
+- Screens: Train, Review.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack list; the retired pack's files still served and
+  still read by Review.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; four pack buttons: "4 Jokers, min 2 Tai", "0 Jokers, min 1 Tai", "4 Jokers, min 1 Tai, strong table", "0 Jokers, min 1 Tai, strong table"; the default pack still 0 Jokers min 1 | 0 |
+| 2 | Errors | `console.error` and window errors hooked through the Review and Train checks at three widths | 0 |
+| 3 | Links | The Review tab pressed: `#review`; Train pressed back: `#train` | 0 |
+| 4 | Workflow steps | A mistake record against `min1` 5300:16:53 written into the browser's storage, reloaded, Review opened: "Due now 1", the position drawn (西圈 第11巡), "Work it out again from the tiles"; the network log shows `quiz/min1/index.json` then `quiz/min1/000.json` fetched, so the retired pack's files serve the record. The test record removed after | 0 |
+| 5 | Writes | not run — the change stores nothing; the test record was the test's own and was removed | not run — nothing stored |
+| 6 | The data it moves | The top index lists coach 10,547/106, min1-nowild 10,291/103, strong-min1 1,922/26, strong-nowild 10,751/108; `quiz/min1/index.json` carries `retired` with the date and reason and still answers 200 from the built site; `./check.sh` green (four packages, 83 solver and 94 engine tests, the web build) | 0 |
+| 7 | Reconciliation | The four listed packs are the five directories less the one marked retired; the listing pass in `quizpack.ts` applies the same rule | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px on Train: page scroll width equal to the screen, 0 elements past the right edge outside a scroller, four buttons | 0 |
+| 10 | Look at it | Screenshot at 390px, read: four pack buttons with "0 Jokers, min 1 Tai" selected, "hard only" pressed, a 南圈 第11巡 table with sets and bonus tiles on every side; the "about: anything / Miscounted" strip from the test record, which went with it | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; a real record of Changs's against `min1` (the test used a made-up
+one of the same shape); Spot, which has its own positions.
+
 ### A fifth pack, 4 Jokers min 1 at a strong table, on the site — Sun Oct  4 16:30:38 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the `strong-min2` grader paused
