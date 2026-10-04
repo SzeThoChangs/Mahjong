@@ -59,9 +59,31 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-09-26
+2026-10-04 19:05 (Singapore)
 
 ## Last Session / Work Package
+
+### What We Were Doing
+
+Carrying out `D-037` and `D-038`: every pack judged by the Coach, then two new strong-table packs at
+the 4-Joker tables judged by the Coach from the first candidate.
+
+### What Was Completed
+
+All four original packs re-judged with the Coach and on the site (2026-09-29 to 10-02). The Coach's
+double count of claimed discards found and fixed (10-01), measured at the noise floor; the same
+double count in the table drawing found by Changs and fixed (10-03). `strong-min1` built and on the
+site (10-04), 1,922 questions. `evaluate.ts --budget`, `quizpack.ts --judge coach`, `coachpack.ts
+--src --drop-close`, `policymoney.ts --old`.
+
+### What Was Learned
+
+A Coach-built pack is about a fifth the size of a shanten-screened one for the same time, and a
+quarter of what the Coach calls decisive at 64 play-outs does not hold at 256. macOS has no
+`timeout` (`M-004`). A fix in the numbers needs the same look at the picture (`M-005`). The lid
+closed stops every run.
+
+### Superseded block (2026-09-26), kept for the record
 
 ### What We Were Doing
 
