@@ -29,7 +29,8 @@ function main(): unknown {
   if (!decs) return { stale: true, error: 'this hand no longer replays under the current engine' };
   const rec = decs.find((x) => x.d === d);
   if (!rec) return { error: 'decision not found' };
-  const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts, mode: 'sampled', policy: 'shanten', seed: 777 + rollouts, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: true };
+  // the Coach in every chair, as the app's Challenge does (D-037); shanten until 2026-10-04
+  const args: EvalArgs = { dir, hands: 0, perHand: 0, rollouts, mode: 'sampled', policy: 'coach', seed: 777 + rollouts, workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: true };
   const t0 = Date.now();
   const ev = evaluateDecision(pos.g, rec, args, rules);
   return { ev, ms: Date.now() - t0 };

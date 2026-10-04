@@ -7,8 +7,9 @@
  * Paired deals, the same seat rotated through all four chairs, one thing different: arm A is the
  * shipped no-Joker Coach, arm B is the same Coach with its discards chosen by the weights in
  * `--weights`. Claims, kongs and wins go through the Coach in both arms, so the result is the
- * discard policy and nothing else. `--field coach` puts three shipped Coaches in the other chairs,
- * `--field pool` the recorded personalities drawn per deal; both arms see the same three with the
+ * discard policy and nothing else. `--field coach` puts three shipped Coaches in the other chairs
+ * (`--field pool`, the recorded personality bots, was dropped on 2026-10-04: no measurement rests
+ * on simple bots any more, by Changs's rule); both arms see the same three with the
  * same random streams. Reported as B minus A in chips a game.
  *
  * `--self` plays arm B with the Coach's own discards, which must return exactly 0.000: the loop
@@ -19,7 +20,6 @@ import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
 import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, policyRank, rankDiscards, readsFor, claimRank, claimAdvice, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
 import type { ClaimOption } from 'sg-mahjong-engine';
-import { makeBot, BOT_TYPES, DEFAULT_RANDOMNESS } from './bots.js';
 import { fnv1a } from './records.js';
 import { rulesForDir } from './tablerules.js';
 
@@ -192,8 +192,7 @@ function field(shuffle: number, tested: number, make: () => Bot): Bot[] {
     // `--field pure`: three Coaches as they were before 2026-09-28, which is the field every figure
     // up to candidate B was measured in; with `--pure` on B's own deals it must return B's mirror exactly
     if (fieldKind === 'pure') return new PureCoachBot();
-    const pick = fnv1a(`field:${shuffle}:${s}`) % BOT_TYPES.length;
-    return makeBot(BOT_TYPES[pick]!, makeRng(fnv1a(`seed:${shuffle}:${s}`)), DEFAULT_RANDOMNESS);
+    throw new Error(`--field ${fieldKind}: only coach and pure exist; the simple-bot pool was dropped on 2026-10-04`);
   });
 }
 

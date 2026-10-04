@@ -49,9 +49,9 @@ const verbose = process.argv.includes('--verbose');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
-/** the packs' grader settings, so the verdict can be read beside theirs */
+/** the packs' grader settings, so the verdict can be read beside theirs: the Coach in every chair since D-037 */
 const EVAL: EvalArgs = {
-  dir, hands: 0, perHand: 0, rollouts: 128, mode: 'sampled', policy: 'shanten', seed: 41,
+  dir, hands: 0, perHand: 0, rollouts: 128, mode: 'sampled', policy: 'coach', seed: 41,
   workers: 1, workerIndex: 0, rulesOverride: {}, randomness: DEFAULT_RANDOMNESS, adaptive: true, coupled: true,
 };
 
