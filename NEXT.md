@@ -144,8 +144,9 @@ asleep with the lid closed the rest.
 
 ### Next
 
-1. `strong-min2` (`D-038`): grading from 2026-10-04 10:16 for 40 hours, then build and finish by
-   itself; expected to merge about 2026-10-06 midday. Then: copy `data/gen/coachpacks/strong-min2/`
+1. `strong-min2` (`D-038`): grading from 2026-10-04 10:16; the Mac was shut down 04:50 to 13:28 on
+   10-05 (18,096 graded on disk, about 1,800 unflushed lost and regraded), restarted 13:34 with the
+   remaining 22 hours; then build and finish by itself; expected to merge about 2026-10-06 15:30. Then: copy `data/gen/coachpacks/strong-min2/`
    into `web/public/quiz/strong-min2/`, rewrite `web/public/quiz/index.json` from the per-pack
    indexes (the Node one-liner in the 2026-10-04 commit, or quizpack's Listed pass), ten passes with
    the felt tile count, deploy, record the counts as for `strong-min1`.
