@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-10-04 19:05 (Singapore)
+2026-10-06 18:15 (Singapore)
 
 ## Last Session / Work Package
 
@@ -70,6 +70,8 @@ the 4-Joker tables judged by the Coach from the first candidate.
 
 ### What Was Completed
 
+Both strong 4-Joker packs built and on the site (`strong-min1` 10-04, `strong-min2` 10-06;
+`D-038` done); `min1` retired (`D-039`); nothing running on the Mac since 10-06 15:10.
 All four original packs re-judged with the Coach and on the site (2026-09-29 to 10-02). The Coach's
 double count of claimed discards found and fixed (10-01), measured at the noise floor; the same
 double count in the table drawing found by Changs and fixed (10-03). `strong-min1` built and on the
@@ -140,15 +142,13 @@ whole pack.
 
 ### Next
 
-Nothing is building. Both strong 4-Joker packs are on the site (`D-038` done). The next piece of
-work is Changs's choice:
-
-1. Refit the two models (discard policy, claim model) on Coach-judged labels with the tile counts
-   right: about 40,000 decisions at Coach speed, three to four days of the Mac open, then the money
-   test against the shipped Coach before anything ships.
-2. Grade longer for bigger strong packs (`GRADE_HOURS=80` roughly doubles a pack), or a second
-   strong 0-Joker pack.
-3. Retire `coach` once `strong-min2` is big enough (`retired` in its index, `D-039`).
+Nothing is building and nothing is waiting on the agent. The plan's phase is "use it and say what
+is wrong" (`PLAN.md`, Q-001, Q-004). The next build is Changs's choice; the one the agent
+recommends is the refit of the two fitted models on Coach-judged labels with the tile counts right
+(about 40,000 decisions at Coach speed, three to four days of the Mac open, then the money test
+against the shipped Coach before anything ships). Alternatives: bigger strong packs
+(`GRADE_HOURS=80`); retire `coach` once `strong-min2` is big enough (`D-039`); Q-002, the clipped
+dealer badge on late tables, open since 09-16.
 
 ### Why
 
