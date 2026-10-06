@@ -598,6 +598,45 @@ the best on 1,966 (90%). Both packs inside the range named before the run.
 
 **Status:** DONE. `D-038` is carried out: both strong 4-Joker packs are on the site.
 
+### The two fitted models refitted on Coach-judged labels with the counts right
+
+**Uncertainty addressed:** the shipped discard policy (`D-035`) and claim model (`D-036`) were
+fitted on labels from play-outs by the simple `shanten` bots and on tile counts that counted a
+claimed discard twice (fixed 2026-10-01). Both win money against the Coach as it is, so the
+question is not whether they are broken but whether labels from the Coach's own play-outs, with
+the counts right, make them better, and by how much. Changs chose this on 2026-10-06: "Refit".
+
+**Origin:** `NEXT.md` after `D-038`; the second of the two things left that rested on simple bots.
+
+**What exists already:** 75,125 decisions graded by the Coach at the two 4-Joker tables
+(`run-strong-min1` 34,764, `run-strong-min2` 40,361, every legal action, 64 play-outs with
+halving), made for the strong packs. Nothing at 0 Jokers, which is Changs's table.
+
+**What is built:** `evaluate.ts` reads the no-Joker danger table at 0 Jokers when its policy is
+`coach` (it read the 4-Joker one before; `coachpack.ts` and the app already did this). A folder
+`run-strong2-nowild-coach` shares the strong 0-Joker run's hands by symlink, so the Coach's grades
+go beside the run's shanten grades rather than being skipped as already done.
+
+**Named before the run, 2026-10-06 18:45:**
+1. Grade `run-strong2-nowild-coach` with the Coach for 40 hours (`coach2/grade-nowild-coach.sh`):
+   about 40,000 decisions at 0.3 a second.
+2. Meanwhile, a first fit on the 75,125 4-Joker decisions alone (`policyfit.ts`, regret loss,
+   hidden 16, held out the two strong packs' discard questions), `policy-c-4j.json`; money test at
+   the 4-Joker min-1 table against the shipped Coach, three Coaches in the other chairs, 8,000
+   paired deals. This is the early read; it does not ship on its own, because it has seen no
+   0-Joker hand.
+3. When the 0-Joker grades land: the fit on all three runs (`policy-c.json`), money tests at the
+   0-Joker min-1 table and the 4-Joker min-1 table, each against the shipped Coach with the shipped
+   policy inside it. The gate is the one every candidate has met: past two standard errors against
+   three Coaches on fresh deals. The claim model the same way (`claimpolicy.ts` has to learn to read
+   several runs and write a candidate file, and `policymoney.ts` to play a candidate claim model).
+4. Expected: small. The shipped models already carry most of what the labels teach; the counts
+   fix moved the Coach by +0.095 +/- 0.059. A gain inside the bar means the shipped weights stay
+   and the finding is recorded; a loss past the bar would say the Coach's own play-outs are a worse
+   teacher of the Coach than the simple bots were, which would be worth knowing.
+
+**Status:** RUNNING from 2026-10-06 18:45.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54

@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
 import { GameState, makeRng, kindOf, type Bot, type RulesConfig } from 'sg-mahjong-engine';
-import { rejudge, rolloutBots as solverRolloutBots, type ActionEval, type OutcomeMix } from 'sg-mahjong-solver';
+import { rejudge, rolloutBots as solverRolloutBots, AltReadsCoachBot, READS_NOWILD, type ActionEval, type OutcomeMix } from 'sg-mahjong-solver';
 import { positionAt } from './position.js';
 import { playHand } from './session.js';
 import { makeBot, type RandomnessConfig } from './bots.js';
@@ -59,7 +59,11 @@ export function evaluateDecision(g: GameState, rec: DecisionRecord, a: EvalArgs,
   const seat = pending.seat;
   const judged = rejudge(g.snapshot(), rules, seat, pending.legal, {
     rollouts: a.rollouts, seed: a.seed, key: `${rec.g}:${rec.h}:${rec.d}`,
-    policy: a.policy === 'efficiency' ? (rng) => makeBot('efficiency', rng, a.randomness) : a.policy,
+    // the Coach reads danger from the table's own Joker count (D-030): at 0 Jokers the no-Joker
+    // table, as the app and coachpack.ts do; a plain CoachBot would read the 4-Joker one
+    policy: a.policy === 'efficiency' ? (rng) => makeBot('efficiency', rng, a.randomness)
+      : a.policy === 'coach' && rules.jokers.count === 0 ? () => new AltReadsCoachBot(READS_NOWILD)
+      : a.policy,
     coupled: a.coupled !== false, adaptive: a.adaptive, oracle: a.mode === 'oracle',
   });
   const actions: ActionEval[] = judged.map(({ outcomes: _drop, ...x }) => x);
