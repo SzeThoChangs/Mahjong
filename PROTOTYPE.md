@@ -587,6 +587,17 @@ rule; 75 with a tip, 37 with a cause. The recorded seat (a Coach) chose the best
 1,922 (90%), so "hard only" has 189 questions to draw from. Within the range named before the run
 (2,000 to 3,000) at the low end, for the two pauses. `strong-min2` grading from 10:16.
 
+**`strong-min2` landed 2026-10-06 15:10, on the site 15:25.** Grading: the Mac was shut down from
+04:50 to 13:28 on 10-05 with 18,096 on disk; resumed with the remaining 22 hours; 40,361 decisions
+in all, 0 errors. Build: 2,829 candidates decisive at 64 (138 of 14,828 early discards, 519 of
+13,663 mid, 365 of 3,853 late; 436 of 3,154 early claims, 686 of 3,343 mid, 285 of 1,007 late; 372
+of 455 self), 112 with a tip, 77 with a cause. Finish at 256, 158 to 215 minutes a worker: 202
+best moved, 651 dropped (23.0%), 2,178 kept: 713 discards, 1,067 claims, 398 self; early 597, mid
+1,102, late 479; 658 win offers, all by the rule; 65 with a tip, 35 with a cause; the Coach seat had
+the best on 1,966 (90%). Both packs inside the range named before the run.
+
+**Status:** DONE. `D-038` is carried out: both strong 4-Joker packs are on the site.
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54

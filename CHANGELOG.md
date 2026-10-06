@@ -60,6 +60,15 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-06 — The sixth pack: 4 Jokers, min 2 Tai, strong table
+
+**Changed:** `strong-min2`, 2,178 questions from hands played by four Coaches and judged by the
+Coach from the first candidate, on the site. Five pack buttons.
+
+**Why:** `D-038`, now carried out.
+
+**Impact:** Ten passes in `MISTAKES.md`; the counts in `PROTOTYPE.md` and `FINDINGS.md`.
+
 ### 2026-10-04 — The weak-bot 4-Joker min-1 pack retired
 
 **Changed:** `min1` is off the pack buttons; its files stay, so Review records against it still

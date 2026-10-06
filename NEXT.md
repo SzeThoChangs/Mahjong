@@ -134,28 +134,21 @@ big one, and he ruled that no answer may rest on simple bots (`D-037`). The app'
 judges now run the Coach; each question names its judge; `datagen/src/coachpack.ts` re-judges a
 whole pack.
 
-**Running on the Mac:** the `coach` pack (4 Jokers, min 2) re-judged with the Coach, six workers,
-the last of the chain (`data/gen/coach2/coachpack-rest-chain.sh`), started 2026-10-01 15:27 under
-`caffeinate -is`; logs `coachpack-coach-w*.log`; `coachpack-coach.done` when merged. The Mac must
-stay open and plugged in: `min1-nowild` took 15 hours and `min1` 11 for eight hours of work each,
-asleep with the lid closed the rest.
+**Running on the Mac:** nothing, from 2026-10-06 15:10.
 
 ## Recommended Next Action
 
 ### Next
 
-1. `strong-min2` (`D-038`): grading from 2026-10-04 10:16; the Mac was shut down 04:50 to 13:28 on
-   10-05 (18,096 graded on disk, about 1,800 unflushed lost and regraded), restarted 13:34 with the
-   remaining 22 hours; then build and finish by itself; expected to merge about 2026-10-06 15:30. Then: copy `data/gen/coachpacks/strong-min2/`
-   into `web/public/quiz/strong-min2/`, rewrite `web/public/quiz/index.json` from the per-pack
-   indexes (the Node one-liner in the 2026-10-04 commit, or quizpack's Listed pass), ten passes with
-   the felt tile count, deploy, record the counts as for `strong-min1`.
-2. Then Changs's call: grade longer for bigger strong packs (`GRADE_HOURS`); whether to refit the
-   two models on Coach-judged labels; and when `strong-min2` is big enough, retire `coach` the way
-   `min1` was (`retired` in its index, `D-039`).
+Nothing is building. Both strong 4-Joker packs are on the site (`D-038` done). The next piece of
+work is Changs's choice:
 
-The `--field pool` arm and the `shanten` defaults in `challenge.ts` and `buildrare.ts` were dropped
-on 2026-10-04 19:20; `halving.ts` keeps shanten because it measures the halving method, not a position.
+1. Refit the two models (discard policy, claim model) on Coach-judged labels with the tile counts
+   right: about 40,000 decisions at Coach speed, three to four days of the Mac open, then the money
+   test against the shipped Coach before anything ships.
+2. Grade longer for bigger strong packs (`GRADE_HOURS=80` roughly doubles a pack), or a second
+   strong 0-Joker pack.
+3. Retire `coach` once `strong-min2` is big enough (`retired` in its index, `D-039`).
 
 ### Why
 

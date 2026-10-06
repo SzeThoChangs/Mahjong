@@ -157,6 +157,39 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The sixth pack, 4 Jokers min 2 at a strong table, on the site — Tue Oct  6 15:14:04 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175; nothing else was running on the Mac.
+The merged pack copied from `data/gen/coachpacks/strong-min2/` into `web/public/quiz/strong-min2/`;
+the top index rewritten from the per-pack indexes, the retired `min1` left out; `web/dist` checked
+byte-identical after the build.
+
+**Test boundary**
+
+- Workflows: choosing the new pack on Train and answering its questions.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark, the win
+  rule, the best answer against the stored actions, the tile count on the felt, the top index.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; five pack buttons: "4 Jokers, min 2 Tai", "0 Jokers, min 1 Tai", "4 Jokers, min 1 Tai, strong table", "4 Jokers, min 2 Tai, strong table", "0 Jokers, min 1 Tai, strong table" | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 9 questions answered at three widths | 0 |
+| 3 | Links | The new button pressed: exactly one control matched, questions carried `strong-min2 /` ids | 0 |
+| 4 | Workflow steps | 9 questions answered and Next position pressed (1354:6:57, 2713:5:21, 2403:8:0, 5726:5:26, 5249:7:22, 3592:8:21, 2611:9:1, 3468:1:30, 4796:14:21; discards, chows, a pass): each showed the play-outs line and "Judged by strong play"; on each the felt's tile images counted by kind, none above four | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 2,178 questions in 29 shards, equal to the index; every shard's kinds and causes equal to its index entry; every question `judge: 'coach'` at n 256, the index `judge: 'coach'`, `rollouts: 256`, `players: 'strong'`, table 4 Jokers min 2; no duplicate ids; every best among its actions, ordered best first; every discard carries the seat's own throw; 658 win offers, all carrying the rule and answering "win"; no question inside two standard errors of its runner-up; no kind over four copies with claimed tiles out of the pile | 0 |
+| 7 | Reconciliation | The build's 2,829 drawn; the six finish logs' 2,829 judged, 202 moved, 651 dropped; 2,829 minus 651 is 2,178, equal to the index; the top index lists 10,547, 10,291, 1,922, 2,178 and 10,751 in 106, 103, 26, 29 and 108 shards, equal to the five per-pack indexes; `./check.sh` green | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px with the new pack selected: page scroll width equal to the screen, 0 elements past the right edge outside a scroller; the new button wraps to two lines at 280px, 233 by 48px | 0 |
+| 10 | Look at it | Screenshot at 390px, read: five pack buttons with the new one selected in dark green, "hard only" pressed, a 北圈 第9巡 table with sets on three sides and the player's bonus tiles below, "Which tile do you discard?". The right seat's "dealer" badge is cut at the felt's edge, which is `Q-002`, open since 2026-09-16 | 0 |
+
+**Defects found:** none new.
+
+**Not checked:** a real phone; Review, Spot and Play on this build; the Challenge button on a
+new-pack question.
+
 ### The weak-bot 4-Joker min-1 pack retired — Sun Oct  4 23:28:19 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175, the `strong-min2` grader paused

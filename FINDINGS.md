@@ -78,6 +78,9 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   1,922 questions. The recorded Coach seat already had the best answer on 90% of them. A Coach-built
   pack is about a fifth the size of a shanten-screened one for the same wall-clock, and a quarter
   of what the Coach calls decisive at 64 play-outs does not hold at 256.
+- **The second** (`strong-min2`, 4 Jokers min 2, 2026-10-06): 40,361 graded, 2,829 decisive, 651
+  dropped at 256 (23.0%), 202 best moved, 2,178 kept, the Coach seat best on 90%. The two packs
+  agree on every rate to within two points, so the numbers above are the method's, not one pack's.
 - **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
   in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
   engine's unseen count from 0 to 255. Over half the questions in each pack had a kind
