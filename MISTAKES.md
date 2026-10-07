@@ -157,6 +157,41 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The refit on Coach-judged labels (experiment tools only, no app change) — Wed Oct  7 21:39:27 +08 2026
+
+Passes run on the tools and their outputs; nothing on the site changed. The 0-Joker Coach grading
+ran under the money tests and was stopped by hand once the control answered the question.
+
+**Test boundary**
+
+- Workflows: grade with the Coach at 0 Jokers; fit the discard policy from scratch and from a warm
+  start; fit the claim model on several runs; play a candidate claim model and a candidate policy
+  for money; the harness's own mirror.
+- Screens: none.
+- Access restrictions: none exist.
+- Values, records and calculations: held-out regret and top-1 by phase and run; chips a game with
+  standard errors; the win mixes; the mirror.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | not run — no screen | not run — tools |
+| 2 | Errors | Every run's log read: the two discard fits and the claim fit ended with weights written; eight money tests ended with their summary lines; the grader 0 errors and 0 failed workers before it was stopped | 0 |
+| 3 | Links | not run — no screen | not run — tools |
+| 4 | Workflow steps | `policyfit.ts` on two runs with the packs held out (1,382 discards), from scratch and `--init` from the shipped weights; `claimpolicy.ts --dirs` on two runs with the packs held out (1,562 claims), 2,680 labels, written as `.json`; `policymoney.ts` with `--weights`, `--weights --hybrid`, and the shipped weights, at two tables; the grader at 0 Jokers with `--policy coach` reading the no-Joker table (the factory branch read in `evaluateDecision`) | 0 |
+| 5 | Writes | `policy-c-4j.json`, `policy-c-4j-ft.json` (carrying `initFrom`), `claim-c-4j.json` (carrying the held-out figures) read back by the harness; nothing written into `solver/src` | 0 |
+| 6 | The data it moves | The harness mirror after its changes: `--self` on 400 paired deals at 0 Jokers, +0.000 +/- 0.000, hands 96 against 96; the control arm (shipped weights, every tile) agrees with the candidates to within their bars at 4 Jokers (+0.430 against +0.380, +0.536, +0.476) and with candidate A's September figure at 0 Jokers (+0.017 against +0.218 +/- 0.106) | 0 |
+| 7 | Reconciliation | Each money summary's hands won and chips agree with its own mix lines; the warm start's held-out regret (1.347) sits between the scratch fit (1.415) and the shipped Coach (1.118), as a warm start should; the 0-Joker grades on disk, 5,478, are the 6,650 logged less the unflushed batches of six workers | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | not run — no screen | not run — tools |
+| 10 | Look at it | The four 4-Joker win mixes read side by side: every every-tile arm wins about 2,500 hands at about 12.7 chips with 27 to 40 half-colour wins, every hybrid arm about 2,000 at about 16 with about 393; the trade is the same whoever fitted the weights | 0 |
+
+**Defects found:** none in the tools. The 40-hour grading budget was spent at a quarter of its
+rate because three money tests shared the Mac; a budget in hours is a budget in Mac-hours only
+when nothing else runs.
+
+**Not checked:** the 4-Joker min-2 table; the candidate claim model for money (its held-out
+figure was below the shipped model's, so it was not played); the rule in every chair.
+
 ### The sixth pack, 4 Jokers min 2 at a strong table, on the site — Tue Oct  6 15:14:04 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175; nothing else was running on the Mac.

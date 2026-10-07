@@ -192,6 +192,7 @@ type Weights = {
   w?: readonly number[]; W1?: readonly (readonly number[])[]; b1?: readonly number[]; w2?: readonly number[];
 };
 
+export type ClaimWeights = Weights;
 export function claimScore(raw: number[], p: Weights = CLAIM_POLICY as Weights): number {
   const x = raw.map((v, j) => (v - p.mu[j]!) / p.sd[j]!);
   if (!p.hidden) { let t = 0; for (let j = 0; j < x.length; j++) t += p.w![j]! * x[j]!; return t; }
@@ -233,7 +234,13 @@ export interface ClaimRanking { best: ClaimCandidate; options: ClaimOptionScore[
 
 /** Rank the legal claims (always including `pass`) by the learned model. */
 export function claimRank(candidates: ClaimCandidate[], concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context): ClaimRanking {
-  const scores = candidates.map((c) => claimScore(claimFeatures(c, concealed, melds, offered, ctx)));
+  return claimRankWith(candidates, concealed, melds, offered, ctx, CLAIM_POLICY as Weights);
+}
+
+/** The same ranking under weights handed in, so a candidate claim model from `datagen/src/claimpolicy.ts`
+ *  can be played for money (`policymoney.ts --claim-weights`) before anything is baked into `claim.weights.ts`. */
+export function claimRankWith(candidates: ClaimCandidate[], concealed: TileKind[], melds: Meld[], offered: TileKind, ctx: Context, weights: Weights): ClaimRanking {
+  const scores = candidates.map((c) => claimScore(claimFeatures(c, concealed, melds, offered, ctx), weights));
   const mx = Math.max(...scores);
   const ex = scores.map((s) => Math.exp(s - mx));
   const sum = ex.reduce((a, b) => a + b, 0);

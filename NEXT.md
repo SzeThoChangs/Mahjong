@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-10-06 18:15 (Singapore)
+2026-10-07 21:50 (Singapore)
 
 ## Last Session / Work Package
 
@@ -70,6 +70,8 @@ the 4-Joker tables judged by the Coach from the first candidate.
 
 ### What Was Completed
 
+The refit on Coach-judged labels run and closed (2026-10-06 to 07): labels not the lever; the
+every-tile rule worth 0.4 to 0.5 chips at 4 Jokers min 1, nothing at 0 Jokers (`Q-008`).
 Both strong 4-Joker packs built and on the site (`strong-min1` 10-04, `strong-min2` 10-06;
 `D-038` done); `min1` retired (`D-039`); nothing running on the Mac since 10-06 15:10.
 All four original packs re-judged with the Coach and on the site (2026-09-29 to 10-02). The Coach's
@@ -142,13 +144,12 @@ whole pack.
 
 ### Next
 
-Nothing is building and nothing is waiting on the agent. The plan's phase is "use it and say what
-is wrong" (`PLAN.md`, Q-001, Q-004). The next build is Changs's choice; the one the agent
-recommends is the refit of the two fitted models on Coach-judged labels with the tile counts right
-(about 40,000 decisions at Coach speed, three to four days of the Mac open, then the money test
-against the shipped Coach before anything ships). Alternatives: bigger strong packs
-(`GRADE_HOURS=80`); retire `coach` once `strong-min2` is big enough (`D-039`); Q-002, the clipped
-dealer badge on late tables, open since 09-16.
+Waiting on `Q-008`, Changs's decision on the Coach's plan rule at the 4-Joker tables. If yes: the
+rule by Joker count in `rank.ts`, a money test at the 4-Joker min-2 table first (an hour), ten
+passes, then re-judge the three 4-Joker packs (`coach`, `strong-min1`, `strong-min2`, about 20
+hours with the lid open) because their play-outs are the Coach's. If no: `D-035` stands, the
+finding is recorded, nothing to build. The 0-Joker Coach grades (5,478, resumable) are kept for a
+later, bigger 0-Joker pack if one is wanted.
 
 ### Why
 

@@ -46,13 +46,23 @@ const packs = (arg('packs', '') ?? '').split(',').filter(Boolean);
 const outPath = arg('out', '../data/gen/coach2/policy.json')!;
 const epochs = Number(arg('epochs', '40'));
 const H = Number(arg('hidden', '0'));
-const lr = Number(arg('lr', H ? '0.01' : '0.05'));
+const lr = Number(arg('lr', process.argv.includes('--init') ? '0.002' : H ? '0.01' : '0.05'));
 const l2 = Number(arg('l2', '1e-4'));
 const lossKind = arg('loss', 'regret') as 'regret' | 'ce';
 const clear = Number(arg('clear', '2'));           // ce only: the old decisive threshold
 const cap = Number(arg('cap', '20'));              // regret only: chips beyond which a throw is just "bad"
 const maxPerDir = Number(arg('maxPerDir', '200000'));
 const batch = Number(arg('batch', '256'));
+/**
+ * `--init <weights.json>`: start from fitted weights instead of random ones, keeping their feature
+ * standardisation, so a model fitted on many cheap labels can be moved by fewer expensive ones (the
+ * Coach-judged refit of 2026-10-06, where 100,000 Coach labels are all the Mac can grade in days
+ * against the 442,474 shanten labels the shipped weights learned from). The learning rate defaults
+ * to a fifth of the usual so the start is not thrown away in the first epoch.
+ */
+const initPath = arg('init', '');
+const init = initPath ? (JSON.parse(readFileSync(initPath, 'utf8')) as { hidden: number; mu: number[]; sd: number[]; W1?: number[][]; b1?: number[]; w2?: number[]; w?: number[] }) : null;
+if (init && init.hidden !== H) throw new Error(`--init has hidden ${init.hidden}, --hidden is ${H}`);
 
 const FEATURES = POLICY_FEATURE_NAMES;
 const D = FEATURES.length;
@@ -167,6 +177,7 @@ for (const e of train) for (let c = 0; c < e.n; c++) { const o = e.off + c * D; 
 for (let j = 0; j < D; j++) mu[j]! /= Math.max(1, rows);
 for (const e of train) for (let c = 0; c < e.n; c++) { const o = e.off + c * D; for (let j = 0; j < D; j++) sd[j]! += (X[o + j]! - mu[j]!) ** 2; }
 for (let j = 0; j < D; j++) sd[j] = Math.sqrt(sd[j]! / Math.max(1, rows)) || 1;
+if (init) { mu.set(init.mu); sd.set(init.sd); }   // the start's own standardisation, or its weights mean nothing
 for (let o = 0; o < used; o += D) for (let j = 0; j < D; j++) X[o + j] = (X[o + j]! - mu[j]!) / sd[j]!;   // in place, once
 
 // ---------------------------------------------------------------- the scorer: linear, or one tanh layer
@@ -174,6 +185,7 @@ const w = new Float64Array(D);
 const W1 = Array.from({ length: H }, () => new Float64Array(D));
 const b1 = new Float64Array(H), w2 = new Float64Array(H);
 if (H) { const r0 = makeRng(11); const scale = Math.sqrt(1 / D); for (let h = 0; h < H; h++) { for (let j = 0; j < D; j++) W1[h]![j] = (r0() * 2 - 1) * scale; w2[h] = (r0() * 2 - 1) * 0.5; } }
+if (init) { if (H) { for (let h = 0; h < H; h++) W1[h]!.set(init.W1![h]!); b1.set(init.b1!); w2.set(init.w2!); } else w.set(init.w!); }
 const hidden = new Float64Array(H);
 const scoreAt = (o: number): number => {
   if (!H) { let t = 0; for (let j = 0; j < D; j++) t += w[j]! * X[o + j]!; return t; }
@@ -271,7 +283,7 @@ for (let di = 0; di < dirs.length; di++) report(dirs[di]!.split('/').pop()!.slic
 const round = (xs: ArrayLike<number>) => Array.from(xs, (x) => Number(x.toFixed(6)));
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, JSON.stringify({
-  features: FEATURES, hidden: H, mu: round(mu), sd: round(sd),
+  features: FEATURES, hidden: H, mu: round(mu), sd: round(sd), ...(init ? { initFrom: initPath } : {}),
   ...(H ? { W1: W1.map(round), b1: round(b1), w2: round(w2) } : { w: round(w) }),
   loss: lossKind, cap, clear, epochs, lr, l2, dirs, packs, trainedOn: train.length, heldOut: test.length, maxPerDir,
 }, null, 1));

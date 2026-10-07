@@ -57,6 +57,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-005 | QUESTION | Pack button to first question on a real phone on 4G is unmeasured | OPEN | Changs or any tester |
 | Q-006 | QUESTION | About twenty rare combination tai values are still engine defaults | OPEN | Changs |
 | Q-007 | QUESTION | Section 6.5 of the study, All-Pong at minimum 2, was never captured | OPEN | Agent |
+| Q-008 | QUESTION | Let the fitted policy choose every tile at the 4-Joker tables, giving up colour hands? Worth 0.4 to 0.5 chips a game at 4 Jokers min 1, nothing at 0 Jokers; the 4-Joker packs' play-outs would then be played by a changed Coach | OPEN | Changs |
 | Q-008 | QUESTION | Did the study's own simulations use wildcards? | OPEN | Agent |
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
@@ -910,3 +911,24 @@ step is a posted record, which needs somewhere to post to.
 **Status:** OPEN
 
 **Resolution:**
+
+## Q-008 — Let the fitted policy choose every tile at the 4-Joker tables?
+
+**Raised:** 2026-10-07, from the refit (`PROTOTYPE.md`, "The two fitted models refitted on
+Coach-judged labels"). **Owner:** Changs. **Status:** OPEN.
+
+**What is known:** `D-035` keeps the fitted discard policy inside the Coach's cheap plans, because
+choosing every tile gave up colour hands and lost against the recorded players at 0 Jokers. At the
+4-Joker min-1 table, choosing every tile beats the shipped Coach by 0.4 to 0.5 chips a game against
+three Coaches, four samples past the bar, with the shipped weights themselves. At the 0-Joker min-1
+table it makes nothing (+0.017 +/- 0.101).
+
+**What is not known:** the 4-Joker min-2 table (one money test, about an hour); what the rule does
+to the three 4-Joker packs' verdicts, since the Coach plays their play-outs (a re-judging of
+`coach`, `strong-min1` and `strong-min2` is about 20 hours); whether the gain holds against the
+Coach with the rule in every chair (a self-consistency test, not a gate).
+
+**Options:** (a) the rule at 4-Joker tables only, by the table's Joker count, then re-judge the
+4-Joker packs; (b) leave `D-035` as it is and record the finding; (c) measure the min-2 table first
+and decide on both.
+

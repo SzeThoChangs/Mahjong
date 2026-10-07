@@ -81,6 +81,20 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
 - **The second** (`strong-min2`, 4 Jokers min 2, 2026-10-06): 40,361 graded, 2,829 decisive, 651
   dropped at 256 (23.0%), 202 best moved, 2,178 kept, the Coach seat best on 90%. The two packs
   agree on every rate to within two points, so the numbers above are the method's, not one pack's.
+- **Coach-judged labels do not improve the fitted models at the volume the Mac can make**
+  (2026-10-06 to 07): 75,125 Coach-graded 4-Joker decisions, against the 442,474 shanten-graded
+  ones the shipped weights learned from. The claim model refitted on 2,680 decisive Coach-graded
+  claims: 79.0% held-out against the shipped 82.5%. The discard policy refitted from scratch, and
+  the shipped weights warm-started and moved by the Coach labels, both make the same money as the
+  shipped weights under the same rule. **What the refit found instead:** at the 4-Joker min-1
+  table, letting the fitted policy choose every tile, which gives up the colour hands, beats the
+  shipped Coach by +0.380 +/- 0.166 (scratch fit), +0.536 +/- 0.163 and +0.476 +/- 0.161 fresh
+  (warm start), and +0.430 +/- 0.134 (the shipped weights themselves): 2,500 to 2,580 hands won
+  against 1,999, at 12.5 to 12.8 chips each against 16.4, half-colour wins 27 to 40 against 399.
+  Used inside cheap plans only, the shipped way, the same weights make +0.106 to +0.129 +/- 0.11,
+  inside the bar. At the 0-Joker min-1 table the every-tile rule makes +0.017 +/- 0.101, nothing,
+  as candidate A's +0.218 +/- 0.106 pooled said in September. So `D-035`'s restriction is right at
+  Changs's table and costs about half a chip a game at the 4-Joker min-1 table.
 - **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
   in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
   engine's unseen count from 0 to 255. Over half the questions in each pack had a kind

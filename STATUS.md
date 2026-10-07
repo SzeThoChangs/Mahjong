@@ -60,10 +60,11 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
 | `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Done: every pack Coach-judged (2026-10-02); both strong 4-Joker packs on the site (2026-10-06, `D-038`) |
 
-Nothing is running on the Mac.
+Nothing is running on the Mac (the refit's 0-Joker grading was stopped 2026-10-07 21:45).
 
 ## Recently Completed
 
+- 2026-10-07: the refit on Coach-judged labels closed: the labels are not the lever; choosing every tile at the 4-Joker min-1 table is worth 0.4 to 0.5 chips a game and nothing at 0 Jokers (`Q-008`, Changs's call).
 - 2026-10-06: `strong-min2` on the site, 2,178 questions; `D-038` complete.
 - 2026-10-04: `min1` retired from the pack buttons (`D-039`), files kept for Review.
 - 2026-10-04: `strong-min1` on the site, 1,922 questions, the first pack judged by the Coach from the first candidate.

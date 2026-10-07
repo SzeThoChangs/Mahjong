@@ -60,6 +60,18 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-07 — The refit on Coach-judged labels (experiment tools only, no app change)
+
+**Changed:** `policyfit.ts --init` (a warm start from fitted weights), `claimpolicy.ts --dirs
+--packs` and a `.json` candidate output, `policymoney.ts --claim-weights`, `evaluate.ts` reading
+the no-Joker danger table at 0 Jokers. Nothing on the site changed.
+
+**Why:** Changs chose the refit on 2026-10-06. It found that Coach labels at the volume the Mac
+can make do not improve either model, and that the Coach's plan rule at the 4-Joker min-1 table
+costs about half a chip a game (`FINDINGS.md`, `Q-008`).
+
+**Impact:** Ten passes in `MISTAKES.md`; `Q-008` waits on Changs.
+
 ### 2026-10-06 — The sixth pack: 4 Jokers, min 2 Tai, strong table
 
 **Changed:** `strong-min2`, 2,178 questions from hands played by four Coaches and judged by the

@@ -19,6 +19,7 @@
  * far less than getting this one right.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { makeRng, type Meld, type TileKind } from 'sg-mahjong-engine';
 import { claimFeatures, claimCandidateOf, CLAIM_FEATURE_NAMES, visibleOfQuestion, type Context } from 'sg-mahjong-solver';
 import { eachEval } from './evalstats.js';
@@ -30,7 +31,8 @@ import { DEFAULT_RANDOMNESS } from './bots.js';
 import type { DecisionRecord, HandRecord } from './records.js';
 
 function arg(name: string, def?: string) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] ?? def) : def; }
-const dir = arg('dir', '../data/gen/run-money3')!;
+/** `--dirs a,b,c` (or the old `--dir`): several runs, with `--packs` naming each run's pack for the held-out set */
+const dirs = (arg('dirs', '') || arg('dir', '../data/gen/run-money3')!).split(',').filter(Boolean);
 const clear = Number(arg('clear', '2'));
 const epochs = Number(arg('epochs', '60'));
 const l2 = Number(arg('l2', '1e-4'));
@@ -38,14 +40,25 @@ const H = Number(arg('hidden', '16'));
 const KIND = 'claim' as const;
 const outPath = arg('out', '../solver/src/claim.weights.ts')!;
 
+const packPaths = (arg('packs', '') || arg('pack', '../web/public/quiz/money.json')!).split(',');
+interface Example { x: number[][]; label: number; heldOut: boolean; sel: number; turns: number; passIdx: number }
+const examples: Example[] = [];
+let drifted = 0, skippedRob = 0, unmatched = 0, replayed = 0, labelled = 0;
+for (let di = 0; di < dirs.length; di++) {
+const dir = dirs[di]!;
 const rules = rulesForDir(dir);
 const seVersion = seVersionOf(dir);
-const packPath = arg('pack', '../web/public/quiz/money.json')!;
+const packPath = packPaths[di] ?? '';
 const heldOutIds = new Set<string>();
-if (existsSync(packPath)) {
-  const pack = JSON.parse(readFileSync(packPath, 'utf8')) as { questions: { id: string; k: string }[] };
-  for (const q of pack.questions) if (q.k === KIND) heldOutIds.add(q.id);
-  console.log(`holding out ${heldOutIds.size} ${KIND} questions that also appear in the quiz pack`);
+if (packPath && existsSync(packPath)) {
+  // a pack is one file of questions (before 2026-09-10) or a directory of shards with an index
+  const qs: { id: string; k: string }[] = [];
+  if (existsSync(join(packPath, 'index.json'))) {
+    const ix = JSON.parse(readFileSync(join(packPath, 'index.json'), 'utf8')) as { shards: { file: string }[] };
+    for (const s of ix.shards) qs.push(...(JSON.parse(readFileSync(join(packPath, s.file), 'utf8')) as { questions: { id: string; k: string }[] }).questions);
+  } else qs.push(...(JSON.parse(readFileSync(packPath, 'utf8')) as { questions: { id: string; k: string }[] }).questions);
+  for (const q of qs) if (q.k === KIND) heldOutIds.add(q.id);
+  console.log(`${dir}: holding out ${heldOutIds.size} ${KIND} questions that also appear in its quiz pack`);
 }
 
 const label = new Map<string, string>();
@@ -55,14 +68,12 @@ eachEval(dir, (e) => {
   seenAll++;
   if (separationT(e.actions[0]!, e.actions[1]!, seVersion) > clear) label.set(`${e.g}:${e.h}:${e.d}`, e.best);
 });
-console.log(`${label.size} decisive ${KIND} decisions of ${seenAll} (${((100 * label.size) / Math.max(1, seenAll)).toFixed(1)}%)`);
+labelled += label.size;
+console.log(`${dir}: ${label.size} decisive ${KIND} decisions of ${seenAll} (${((100 * label.size) / Math.max(1, seenAll)).toFixed(1)}%)`);
 
 const wantHands = new Set<string>();
 for (const k of label.keys()) { const [g, h] = k.split(':'); wantHands.add(`${g}:${h}`); }
 
-interface Example { x: number[][]; label: number; heldOut: boolean; sel: number; turns: number; passIdx: number }
-const examples: Example[] = [];
-let drifted = 0, skippedRob = 0, unmatched = 0, replayed = 0;
 const hands: HandRecord[] = loadHands(dir).filter((h) => wantHands.has(`${h.g}:${h.h}`));
 console.log(`replaying ${hands.length} hands to recover their features…`);
 
@@ -108,6 +119,7 @@ for (const hand of hands) {
     } catch { unmatched++; }
   }
   if (++replayed % 2000 === 0) process.stdout.write(`\r${replayed}/${hands.length} hands`);
+}
 }
 console.log(`\r${' '.repeat(44)}\r${examples.length} examples (${drifted} hands drifted, ${skippedRob} rob-the-kong skipped, ${unmatched} unmatched)`);
 
@@ -225,8 +237,16 @@ console.log(`  random           ${(100 * randomAcc).toFixed(1)}%`);
 console.log(`  (the model itself says pass ${(100 * modelSaysPass).toFixed(1)}% of the time)`);
 
 const round = (xs: number[]) => xs.map((x) => Number(x.toFixed(6)));
+const runs = dirs.map((d) => d.split('/').pop()).join(', ');
+// a `.json` out path is a candidate for `policymoney.ts --claim-weights`, kept apart from the shipped weights
+if (outPath.endsWith('.json')) {
+  writeFileSync(outPath, JSON.stringify({ hidden: H, mu: round(mu), sd: round(sd), ...(H ? { W1: W1.map(round), b1: round(b1), w2: round(w2) } : { w: round(w) }),
+    fittedOn: train.length, runs: dirs, decisiveLabels: labelled, clear, heldOut: test.length, heldOutTop1: learned, alwaysPass: passAcc, recordedBot: botAcc, random: randomAcc }, null, 1));
+  console.log(`\nweights -> ${outPath}`);
+  process.exit(0);
+}
 writeFileSync(outPath, `/* AUTO-GENERATED by datagen/src/claimpolicy.ts - do not edit by hand.
- * ${KIND} policy fitted on ${train.length} decisions from ${dir.split('/').pop()} whose best action
+ * ${KIND} policy fitted on ${train.length} decisions from ${runs} whose best action
  * clears ${clear} SE. Held-out top-1: ${(100 * learned).toFixed(1)}% (bot ${(100 * botAcc).toFixed(1)}%, random ${(100 * randomAcc).toFixed(1)}%).
  */
 export const CLAIM_POLICY = {

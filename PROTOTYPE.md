@@ -637,6 +637,53 @@ go beside the run's shanten grades rather than being skipped as already done.
 
 **Status:** RUNNING from 2026-10-06 18:45.
 
+**The early read at the 4-Joker min-1 table, 2026-10-06 evening, 8,000 paired deals each against
+the shipped Coach with three shipped Coaches in the other chairs:**
+- Fit from scratch on the 75,125 Coach-graded 4-Joker decisions (60,267 discards; held out the two
+  strong packs' 1,382): held-out regret 1.415 against the shipped Coach's 1.118, top-1 83.3% against
+  85.1%; yet choosing every tile it makes **+0.380 +/- 0.166** (t 2.3): 2,498 hands won against
+  1,999 at 12.8 chips against 16.4, half-colour wins 30 against 399. Candidate A's trade of
+  2026-09-28, this time net positive.
+- The same data as a warm start from the shipped weights (`--init`, 20 epochs at a fifth of the
+  rate): held-out regret 1.347; choosing every tile **+0.536 +/- 0.163** (t 3.3), hands 2,577
+  against 1,999, half-colour 27 against 399.
+- The claim model refitted from scratch on 2,680 decisive Coach-graded claims: held-out top-1
+  79.0% against the shipped model's 82.5%. Not money-tested yet.
+So a worse fit of the labels is a better player of the game, again.
+- Used the shipped way, inside cheap plans only (`--hybrid`): the scratch fit +0.129 +/- 0.115
+  (t 1.1), the warm start +0.106 +/- 0.105 (t 1.0); half-colour wins 393 and 392 against 399. Inside
+  the bar. The money is in choosing every tile, which gives up the colour hands, not in better
+  tiles inside the cheap plans.
+- The warm start choosing every tile on fresh deals (7902001 to 7904000): **+0.476 +/- 0.161**
+  (t 3.0), hands 2,557 against 1,999, half-colour 40 against 388. Past the bar twice at this table.
+- The control, the SHIPPED weights choosing every tile at the same table: **+0.430 +/- 0.134**
+  (t 3.2), hands 2,560 against 1,999, half-colour 30 against 399. So the Coach labels did not
+  matter: the scratch fit (+0.380), the warm start (+0.536, +0.476 fresh) and the shipped weights
+  (+0.430) all make the same money the same way when allowed to choose every tile. The finding is
+  about the Coach's plan rule at 4 Jokers, not about the labels: letting the fitted policy choose
+  every tile, which gives up the colour hands, is worth about 0.4 to 0.5 chips a game against three
+  Coaches at the 4-Joker min-1 table. `D-035` kept the policy inside cheap plans because candidate A
+  lost against the recorded personality bots at 0 Jokers; that arm is gone (`D-037`), and at 0 Jokers
+  A's gain against three Coaches was +0.218 +/- 0.106 pooled, inside the bar.
+- The shipped weights choosing every tile at the 0-Joker min-1 table (Changs's table), 2026-10-07:
+  **+0.017 +/- 0.101** (t 0.2), hands 2,167 against 1,956, half-colour 29 against the Coach's usual
+  share. Nothing. So the rule is worth money at the 4-Joker min-1 table and not at the 0-Joker one,
+  which is what candidate A's three 0-Joker samples said in September (+0.218 +/- 0.106 pooled).
+
+**Status:** RUN, closed 2026-10-07 21:45. The 0-Joker Coach grading was stopped by hand at 6,650
+decisions (5,478 on disk under `run-strong2-nowild-coach` after the unflushed batches, resumable): its purpose was a fit on
+Coach labels, and the 4-Joker control showed the labels are not the lever. The Mac had been slowed
+by the money tests sharing it, so 40 hours would have graded about 10,000, not 40,000.
+
+**What it established:** at this volume, Coach-judged labels do not improve the fitted discard
+policy or the claim model over the shanten-judged labels they shipped with (the claim refit was
+worse on held-out; the discard refits made the same money as the shipped weights under the same
+rule). What it found instead: letting the fitted policy choose every tile, which gives up colour
+hands, is worth 0.4 to 0.5 chips a game against three Coaches at the 4-Joker min-1 table (three
+candidates, four samples, all past the bar) and nothing at the 0-Joker table. Not measured: the
+4-Joker min-2 table, and what the rule does to the 4-Joker packs' verdicts, whose play-outs the
+Coach plays. The rule change is Changs's decision (`Q-008`).
+
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 
 **Uncertainty addressed:** Changs called this one "a rubbish question" on 2026-09-29: at turn 54

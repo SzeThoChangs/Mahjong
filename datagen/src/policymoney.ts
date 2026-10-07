@@ -18,7 +18,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { playGame, shuffleWall, makeRng, kindOf, tableConfigOf, type Bot, type PlayerView, type TileInstance } from 'sg-mahjong-engine';
-import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, policyRank, rankDiscards, readsFor, claimRank, claimAdvice, type PolicyWeights, type ClaimCandidate } from 'sg-mahjong-solver';
+import { AltReadsCoachBot, READS_NOWILD, meldsOf, policyRankWith, policyRank, rankDiscards, readsFor, claimRank, claimRankWith, claimAdvice, type PolicyWeights, type ClaimCandidate, type ClaimWeights } from 'sg-mahjong-solver';
 import type { ClaimOption } from 'sg-mahjong-engine';
 import { fnv1a } from './records.js';
 import { rulesForDir } from './tablerules.js';
@@ -62,13 +62,16 @@ const colourBelow = process.argv.includes('--colour-below') ? Number(arg('colour
  * <dir>/solver/node_modules/sg-mahjong-engine`).
  */
 const oldPath = arg('old', '');
+/** `--claim-weights <json>`: arm B is the shipped Coach with a candidate claim model in place of the shipped one */
+const claimWeightsPath = arg('claim-weights', '');
+const claimWeights: ClaimWeights | null = claimWeightsPath ? (JSON.parse(readFileSync(claimWeightsPath, 'utf8')) as ClaimWeights) : null;
 const weightsPath = arg('weights', '');
 const dir = arg('dir', '../data/gen/run-min1-nowild');
 
 const rules = rulesForDir(dir);
 const cfg = tableConfigOf(rules);
 const reads = rules.jokers.count === 0 ? READS_NOWILD : readsFor(rules.jokers.count);
-if (!self && !weightsPath && !claims && !pure && chowCost === null && colourBelow === null && !oldPath) throw new Error('give --weights <json>, --claims, --pure, --chow <cost>, --colour-below <chips>, --old <path> or --self');
+if (!self && !weightsPath && !claims && !claimWeights && !pure && chowCost === null && colourBelow === null && !oldPath) throw new Error('give --weights <json>, --claims, --claim-weights <json>, --pure, --chow <cost>, --colour-below <chips>, --old <path> or --self');
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const old: any = oldPath ? await import(oldPath) : null;
 const oldReads = old ? (rules.jokers.count === 0 ? old.READS_NOWILD : old.readsFor(rules.jokers.count)) : null;
@@ -115,7 +118,7 @@ class HybridBot extends AltReadsCoachBot {
  * against the calls on offer. Discards stay the Coach's, so the result is the claim model alone.
  */
 class LearnedClaimBot extends AltReadsCoachBot {
-  constructor() { super(reads); }
+  constructor(private readonly weights: ClaimWeights | null = null) { super(reads); }
   override chooseClaim(v: PlayerView, options: ClaimOption[]): ClaimOption | null {
     const win = options.find((o) => o.kind === 'win'); if (win) return win;
     const offered = kindOf(v.lastDiscard!.tile);
@@ -126,7 +129,8 @@ class LearnedClaimBot extends AltReadsCoachBot {
       cands.push({ kind: o.kind, used: (o.tiles ?? []).map(kindOf), opt: o });
     }
     if (cands.length === 1) return null;
-    const r = claimRank(cands.map((c) => ({ kind: c.kind, used: c.used })), hand, melds, offered, ctx);
+    const plain = cands.map((c) => ({ kind: c.kind, used: c.used }));
+    const r = this.weights ? claimRankWith(plain, hand, melds, offered, ctx, this.weights) : claimRank(plain, hand, melds, offered, ctx);
     const picked = cands.find((c) => c.kind === r.best.kind && c.used.join() === r.best.used.join());
     return picked?.opt ?? null;
   }
@@ -226,7 +230,7 @@ for (let seat = 0; seat < 4; seat++) {
       return { chips: out.chipsDelta[seat]!, won: out.winner === seat, out };
     };
     const a = play(() => (old ? oldCoach() : new AltReadsCoachBot(reads)));
-    const b = play(() => (colourBelow !== null ? new ColourBelowBot(colourBelow) : chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
+    const b = play(() => (colourBelow !== null ? new ColourBelowBot(colourBelow) : chowCost !== null ? new ChowThresholdBot(chowCost) : pure ? new PureCoachBot() : claimWeights ? new LearnedClaimBot(claimWeights) : claims ? new LearnedClaimBot() : weights ? (hybrid ? new HybridBot(weights) : new FittedDiscardBot(weights)) : new AltReadsCoachBot(reads)));
     tally(mixA, seat, a.out); tally(mixB, seat, b.out);
     chipsA += a.chips; chipsB += b.chips; if (a.won) winsA++; if (b.won) winsB++;
     diffs.push(b.chips - a.chips);
@@ -236,7 +240,7 @@ for (let seat = 0; seat < 4; seat++) {
 const mean = diffs.reduce((x, y) => x + y, 0) / diffs.length;
 const sd = Math.sqrt(diffs.reduce((x, y) => x + (y - mean) ** 2, 0) / (diffs.length - 1));
 const se = sd / Math.sqrt(diffs.length);
-console.log(`\n${old ? `the Coach as it is, against the Coach at ${oldPath}` : self ? 'self-check' : colourBelow !== null ? `the fit allowed onto colour plans worth under ${colourBelow} chips` : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
+console.log(`\n${old ? `the Coach as it is, against the Coach at ${oldPath}` : self ? 'self-check' : colourBelow !== null ? `the fit allowed onto colour plans worth under ${colourBelow} chips` : chowCost !== null ? `a Chow bar of ${chowCost} against the shipped 0.4` : pure ? 'the Coach before the fitted policy (pure)' : claimWeights ? `the claim model at ${claimWeightsPath}` : claims ? 'the learned claim model' : weightsPath}${hybrid ? ' (hybrid: Coach keeps colour plans)' : ''} against the shipped Coach, ${rules.jokers.count}-Joker min-${rules.minimum_tai} table, field ${fieldKind}, deals ${from}..${from + n - 1}, all four chairs`);
 console.log(`${diffs.length} paired deals. Hands won: Coach ${winsA}, fitted ${winsB}. Chips: Coach ${chipsA}, fitted ${chipsB}`);
 console.log(`fitted minus Coach: ${mean >= 0 ? '+' : ''}${mean.toFixed(3)} chips a game +/- ${se.toFixed(3)} (t = ${(mean / se).toFixed(1)})`);
 const show = (name: string, m: Mix) => {
