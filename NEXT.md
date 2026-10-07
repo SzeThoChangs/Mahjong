@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-10-07 21:50 (Singapore)
+2026-10-08 02:19 (Singapore)
 
 ## Last Session / Work Package
 
@@ -144,7 +144,9 @@ whole pack.
 
 ### Next
 
-Waiting on `Q-008`, Changs's decision on the Coach's plan rule at the 4-Joker tables. If yes: the
+Waiting on `Q-008`, Changs's decision on the Coach's plan rule at the 4-Joker tables. The 4-Joker
+min-2 money test is running (started 2026-10-08, `coach2/money-b-everytile-min2.log`) so the
+decision has both 4-Joker tables measured. If yes: the
 rule by Joker count in `rank.ts`, a money test at the 4-Joker min-2 table first (an hour), ten
 passes, then re-judge the three 4-Joker packs (`coach`, `strong-min1`, `strong-min2`, about 20
 hours with the lid open) because their play-outs are the Coach's. If no: `D-035` stands, the
