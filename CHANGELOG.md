@@ -60,6 +60,16 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-08 — The 4-Joker min-1 strong pack judged again by the new Coach
+
+**Changed:** `strong-min1` carries answers from play-outs by the Coach with the every-tile rule
+(`D-040`): 1,922 judged, 10 best answers moved, 124 dropped as no longer past two standard errors
+on the fresh seed, 1,798 kept.
+
+**Why:** the pack's answers are the Coach's play, and the Coach changed at that table.
+
+**Impact:** Ten passes in `MISTAKES.md`. Nothing is running on the Mac.
+
 ### 2026-10-08 — At the 4-Joker minimum-1 table the Coach's tile-picker chooses every tile
 
 **Changed:** the fitted discard policy chooses the tile whatever the Coach's plan at 4 Jokers

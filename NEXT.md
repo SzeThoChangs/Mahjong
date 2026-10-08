@@ -144,10 +144,11 @@ whole pack.
 
 ### Next
 
-When `strong-min1`'s re-judging merges (`data/gen/coach2/strong-min1-v2.done`, about 21:30 on
-2026-10-08): copy `coachpacks/strong-min1-v2/` into `web/public/quiz/strong-min1/`, count against
-the shipped pack (moved, dropped), rewrite the top index, ten passes, deploy. Then nothing is
-building; the plan's phase is "use it and say what is wrong".
+Nothing is building and nothing waits on the agent (2026-10-08 20:35). `D-040` is in the Coach
+and the 4-Joker min-1 strong pack is judged by it. The plan's phase is "use it and say what is
+wrong" (`PLAN.md`, Q-001, Q-004). Open and cheap: Q-002, the clipped dealer badge on late tables.
+Open and Changs's: retire `coach` once `strong-min2` is big enough (`D-039`); grade longer for
+bigger strong packs; a second strong 0-Joker pack (5,478 Coach grades already on disk).
 
 ### Why
 

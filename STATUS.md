@@ -60,10 +60,11 @@ Coach for money at Changs's table?"). The win job is finished and on the site (`
 | Using the hard questions and saying whether they are hard enough | Changs | Started 2026-09-16 |
 | `D-037`: every pack re-judged with the Coach in the play-outs | Agent | Done: every pack Coach-judged (2026-10-02); both strong 4-Joker packs on the site (2026-10-06, `D-038`) |
 
-`strong-min1` is being judged again by the Coach with the every-tile rule (`D-040`), six workers, from 2026-10-08 18:14, about three hours.
+Nothing is running on the Mac (from 2026-10-08 20:25).
 
 ## Recently Completed
 
+- 2026-10-08: `strong-min1` judged again by the new Coach and on the site, 1,798 questions (10 moved, 124 dropped on the fresh seed).
 - 2026-10-08: `D-040`, the every-tile rule at the 4-Joker min-1 table, in the Coach and live; checked exact against the shipped weights and the old Coach.
 - 2026-10-07: the refit on Coach-judged labels closed: the labels are not the lever; choosing every tile at the 4-Joker min-1 table is worth 0.4 to 0.5 chips a game and nothing at 0 Jokers (`Q-008`, Changs's call).
 - 2026-10-06: `strong-min2` on the site, 2,178 questions; `D-038` complete.

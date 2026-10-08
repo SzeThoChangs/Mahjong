@@ -157,6 +157,40 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The 4-Joker min-1 strong pack judged again by the new Coach — Thu Oct  8 20:29:49 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175; nothing else was running on the Mac.
+The pack copied from `data/gen/coachpacks/strong-min1-v2/` over `web/public/quiz/strong-min1/`
+(the old shards removed first, since the pack shrank), the top index rewritten; `web/dist` checked
+byte-identical after the build.
+
+**Test boundary**
+
+- Workflows: choosing the pack on Train and answering its questions.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the pack index against its shards, the judge mark, the win
+  rule, the best answer against the stored actions, the tile count on the felt, the top index.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; five pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 8 questions answered at three widths | 0 |
+| 3 | Links | The pack button pressed: one control matched, questions carried `strong-min1 /` ids | 0 |
+| 4 | Workflow steps | 8 questions answered and Next position pressed (6231:6:44, 3860:10:26, 4653:23:27, 6362:22:16, 3748:10:36, 3031:0:18, 5713:9:52, 1527:14:62; pongs and discards): each showed the play-outs line and "Judged by strong play"; the felt's tile images counted by kind on each, none above four | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | In Node: 1,798 questions in 26 shards, equal to the index; every question `judge: 'coach'` at n 256; the index `judge: 'coach'`, `rollouts: 256`, `players: 'strong'`; no new ids against the shipped pack; every best among its actions, ordered best first; 535 win offers, all carrying the rule and answering "win"; no question inside two standard errors of its runner-up | 0 |
+| 7 | Reconciliation | The six finish logs: 375, 298, 295, 352, 321, 281 judged (1,922), 0, 3, 5, 5, 6, 4 moved (23 by the logs, which count a move against the pack's old best after the drop rule; 10 against the shipped best by id), 31, 22, 19, 18, 19, 15 dropped (124); 1,922 minus 124 is 1,798, equal to the index; the top index lists 10,547, 10,291, 1,798, 2,178 and 10,751 | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px with the pack selected: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px, read: five pack buttons with "4 Jokers, min 1 Tai, strong table" selected, "hard only" pressed, a 北圈 第7巡 table with sets on every side and three bonus tiles below, "Which tile do you discard?" | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; the discrepancy between the logs' 23 moved and the count's 10 was
+not run down (the logs count against each worker's in-memory copy before the drop; the id count
+against the shipped file is the one recorded).
+
 ### The every-tile rule at the 4-Joker minimum-1 table (D-040) — Thu Oct  8 18:14:56 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175 carrying the rule, the `strong-min1`
