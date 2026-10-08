@@ -57,7 +57,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-005 | QUESTION | Pack button to first question on a real phone on 4G is unmeasured | OPEN | Changs or any tester |
 | Q-006 | QUESTION | About twenty rare combination tai values are still engine defaults | OPEN | Changs |
 | Q-007 | QUESTION | Section 6.5 of the study, All-Pong at minimum 2, was never captured | OPEN | Agent |
-| Q-008 | QUESTION | Let the fitted policy choose every tile at the 4-Joker tables, giving up colour hands? Worth 0.4 to 0.5 chips a game at 4 Jokers min 1, nothing at 0 Jokers; the 4-Joker packs' play-outs would then be played by a changed Coach | OPEN | Changs |
+| Q-008 | QUESTION | Let the fitted policy choose every tile at the 4-Joker tables, giving up colour hands? Worth 0.4 to 0.5 chips a game at 4 Jokers min 1, nothing at 0 Jokers; the 4-Joker packs' play-outs would then be played by a changed Coach | RESOLVED 2026-10-08, `D-040`: at 4 Jokers min 1 only | Changs |
 | Q-008 | QUESTION | Did the study's own simulations use wildcards? | OPEN | Agent |
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
@@ -915,7 +915,8 @@ step is a posted record, which needs somewhere to post to.
 ## Q-008 — Let the fitted policy choose every tile at the 4-Joker tables?
 
 **Raised:** 2026-10-07, from the refit (`PROTOTYPE.md`, "The two fitted models refitted on
-Coach-judged labels"). **Owner:** Changs. **Status:** OPEN.
+Coach-judged labels"). **Owner:** Changs. **Status:** RESOLVED 2026-10-08 by `D-040`: the rule at
+4 Jokers minimum 1 only, the one table where it passed the bar; `strong-min1` judged again.
 
 **What is known:** `D-035` keeps the fitted discard policy inside the Coach's cheap plans, because
 choosing every tile gave up colour hands and lost against the recorded players at 0 Jokers. At the

@@ -112,7 +112,7 @@ const causeOf = (q: Q, best: string): Cause | null => {
     const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2) as TileKind[], concealed: m[1] === 1 }));
     const visible = visibleOfQuestion(q);
     const seat = q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat;
-    const ctx: Context = { seat, prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, reads, visible,
+    const ctx: Context = { seat, prevailingWind: q.w, bonus: q.b as TileKind[], playerTurns: q.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, reads, jokers: srcIx.table.wildcards, visible,
       opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };
     const r = rankDiscards(q.h as TileKind[], melds, ctx);
     return suggestCause(q.h as TileKind[], melds, { bonus: q.b as TileKind[], seat, prevailingWind: q.w, melds, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1 },

@@ -297,18 +297,28 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
    * The Coach's chips, reasons and explanations stay what they were; only the order changes, and
    * the plan line says so. `fitted: false` is the Coach as it was, which every money figure before
    * this date was measured against.
+   *
+   * At a 4-Joker minimum-1 table the policy chooses EVERY tile, colour plans included (D-040,
+   * 2026-10-08): measured four times past the bar against three Coaches there, +0.43 to +0.54 chips
+   * a game, by winning a quarter more hands at smaller size and giving up the half-colour ones. At
+   * the 0-Joker table the same rule makes +0.02 +/- 0.10 and at 4 Jokers minimum 2 +0.17 +/- 0.14,
+   * both inside the bar, so there the plan stays the Coach's (Q-008, PROTOTYPE.md "The two fitted
+   * models refitted on Coach-judged labels").
    */
   let fittedNote: string | null = null;
   if (cfg.fitted !== false && opts.length > 1) {
     const planOfCoach = opts[0]!.target.id;
-    if (planOfCoach !== 'half_color' && planOfCoach !== 'thirteen') {
+    const everyTile = ctx.jokers === 4 && ctx.minimumFan === 1;
+    if (everyTile || (planOfCoach !== 'half_color' && planOfCoach !== 'thirteen')) {
       let pick: TileKind | null = null;
       try { pick = policyRankWith(concealed, melds, ctx, POLICY).best; } catch { pick = null; }
       const i = pick === null ? -1 : opts.findIndex((o) => o.tile === pick);
       if (i > 0) {
         const [chosen] = opts.splice(i, 1);
         opts.unshift(chosen!);
-        fittedNote = `The Coach's own numbers liked ${kindName(opts[1]!.tile)} by ${fmt(opts[1]!.chips - chosen!.chips)}; inside a ${TARGET_NAME[planOfCoach] ?? planOfCoach} plan the fitted policy throws ${kindName(chosen!.tile)}, and it was measured to win more.`;
+        fittedNote = everyTile && (planOfCoach === 'half_color' || planOfCoach === 'thirteen')
+          ? `The Coach's own numbers liked ${kindName(opts[1]!.tile)} by ${fmt(opts[1]!.chips - chosen!.chips)} for a ${TARGET_NAME[planOfCoach] ?? planOfCoach} plan; at a 4-Joker minimum-1 table the fitted policy throws ${kindName(chosen!.tile)} whatever the plan, and it was measured to win more.`
+          : `The Coach's own numbers liked ${kindName(opts[1]!.tile)} by ${fmt(opts[1]!.chips - chosen!.chips)}; inside a ${TARGET_NAME[planOfCoach] ?? planOfCoach} plan the fitted policy throws ${kindName(chosen!.tile)}, and it was measured to win more.`;
       }
     }
   }

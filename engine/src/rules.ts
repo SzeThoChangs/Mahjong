@@ -221,12 +221,14 @@ export function validateRules(r: RulesConfig): void {
 /** Back-compat view used by payout/game/web: the handful of knobs they needed before the full rules layer. */
 export interface TableConfig {
   minimum_fan: number; fan_limit: number; self_draw_minimum_fan: number; immediate_payouts_multiplier: number; unplayable_tiles: number;
+  /** the table's Joker count, so a bot's view of the table says which table it is (the Coach's plan rule goes by it, Q-008) */
+  jokers: number;
 }
 export function tableConfigOf(r: RulesConfig): TableConfig {
   return { minimum_fan: r.minimum_tai, fan_limit: r.maximum_tai, self_draw_minimum_fan: r.self_draw_minimum_tai,
-    immediate_payouts_multiplier: r.kong_scoring.multiplier_by_minimum_tai[r.minimum_tai] ?? 1, unplayable_tiles: r.unplayable_tiles };
+    immediate_payouts_multiplier: r.kong_scoring.multiplier_by_minimum_tai[r.minimum_tai] ?? 1, unplayable_tiles: r.unplayable_tiles, jokers: r.jokers.count };
 }
 export function rulesOfTable(t: TableConfig): RulesConfig {
   return makeRules({ minimum_tai: t.minimum_fan, maximum_tai: t.fan_limit, self_draw_minimum_tai: t.self_draw_minimum_fan, unplayable_tiles: t.unplayable_tiles,
-    kong_scoring: { multiplier_by_minimum_tai: { [t.minimum_fan]: t.immediate_payouts_multiplier } } });
+    kong_scoring: { multiplier_by_minimum_tai: { [t.minimum_fan]: t.immediate_payouts_multiplier } }, jokers: { count: t.jokers } });
 }

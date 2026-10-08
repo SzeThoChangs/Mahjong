@@ -103,7 +103,7 @@ for (const hand of hands) {
     const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
     const ctx: Context = {
       seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: d.me.b as TileKind[], playerTurns: d.t,
-      minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1,
+      minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, jokers: rules.jokers.count,
       visible, opponentMelds: d.pub.m.map((ms, s) => (s === d.p ? -1 : ms.length)).filter((n) => n >= 0),
     };
 

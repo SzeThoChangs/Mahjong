@@ -100,7 +100,7 @@ const contextOf = (d: DecisionRecord, minimumTai: number, jokers: number): Conte
   const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
   return {
     seat: (d.p - d.dl + 4) % 4, prevailingWind: d.w, bonus: (d.me.b ?? []) as TileKind[], playerTurns: d.t,
-    minimumFan: minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(jokers),
+    minimumFan: minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(jokers), jokers,
     visible, opponentMelds: d.pub.m.map((ms, s) => (s === d.p ? -1 : ms.length)).filter((n) => n >= 0),
   };
 };

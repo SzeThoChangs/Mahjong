@@ -114,7 +114,7 @@ for (const hand of sample) {
     const visible = visibleOfQuestion({ seat: d.p, disc: d.pub.dl, pm: d.pub.m, pb: d.pub.b });
     const ctx: Context = {
       seat: role, prevailingWind: d.w, bonus: d.me.b as TileKind[], playerTurns: d.t,
-      minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, visible,
+      minimumFan: rules.minimum_tai === 2 ? 2 : 1, selfDrawMinimumFan: rules.self_draw_minimum_tai ?? 1, jokers: rules.jokers.count, visible,
       opponentMelds: d.pub.m.map((ms, s2) => (s2 === d.p ? -1 : ms.length)).filter((n) => n >= 0),
     };
     let coachPick: number | null = null;

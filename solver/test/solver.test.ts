@@ -125,6 +125,34 @@ describe('learned policy', () => {
   });
 });
 
+describe('the fitted policy reaches every tile at 4 Jokers minimum 1 only (Q-008)', () => {
+  // D-040: at the 4-Joker minimum-1 table the fitted policy chooses the tile whatever the Coach's
+  // plan; elsewhere it chooses only inside the cheap plans. Hands are drawn from a fixed stream
+  // until one shows the difference: a half-colour plan where the policy's tile is not the Coach's.
+  it('moves the pick on a colour plan at 4 Jokers min 1 and leaves it at 0 Jokers', async () => {
+    const { makeRng } = await import('sg-mahjong-engine');
+    const rng = makeRng(2026);
+    let shown = 0, sameAtZero = 0, tried = 0;
+    for (let n = 0; n < 400 && shown < 1; n++) {
+      // lean the hand into one suit so colour plans come up
+      const suit = Math.floor(rng() * 3) * 9;
+      const hand = Array.from({ length: 14 }, () => (rng() < 0.7 ? suit + Math.floor(rng() * 9) : Math.floor(rng() * 34)) as never);
+      const counts = new Map<number, number>(); let legal = true;
+      for (const k of hand as number[]) { counts.set(k, (counts.get(k) ?? 0) + 1); if (counts.get(k)! > 4) legal = false; }
+      if (!legal) continue;
+      tried++;
+      const four = rankDiscards(hand, [], ctx({ playerTurns: 12, minimumFan: 1, jokers: 4 }));
+      const zero = rankDiscards(hand, [], ctx({ playerTurns: 12, minimumFan: 1, jokers: 0 }));
+      const plain = rankDiscards(hand, [], ctx({ playerTurns: 12, minimumFan: 1 }));
+      if (zero.best.tile === plain.best.tile) sameAtZero++;
+      // `plan` is the label ("Half-Color in 筒"); the rule's own note on the detail line marks the case
+      if (four.best.tile !== zero.best.tile && four.planDetail.join(' ').includes('4-Joker minimum-1 table')) { shown++; expect(four.plan).toMatch(/Color/); }
+    }
+    expect(shown).toBe(1);
+    expect(sameAtZero).toBe(tried);   // leaving `jokers` out is the same as 0 Jokers: the cheap-plans rule
+  });
+});
+
 describe('the table is counted once', () => {
   // A discard claimed into a set stays in the discard log with `claimedBy` set and sits inside the
   // set too. Until 2026-10-01 both were counted, which read the kind as deader than it was and, at a
@@ -147,7 +175,7 @@ describe('the table is counted once', () => {
         { melds: [{ type: 'pong', tiles: [five, five, five], concealed: false }], bonus: [] },
         { melds: [], bonus: [] },
       ],
-      config: { minimum_fan: 1, self_draw_minimum_fan: 1 },
+      config: { minimum_fan: 1, self_draw_minimum_fan: 1, jokers: 0 },
     } as never;
     expect(visibleOf(v).filter((k) => k === five).length).toBe(4);
   });

@@ -1213,3 +1213,26 @@ it still open. Nothing is deleted.
 
 **Related:** D-032, D-037, D-038.
 
+## D-040 — At the 4-Joker minimum-1 table the fitted policy chooses every tile
+
+**Date:** 2026-10-08. **Decided by:** Changs (CONFIRMED): "yes, min 1 only". **Status:** ACTIVE
+
+**What was decided:** at the 4-Joker minimum-1 table the Coach lets the fitted discard policy
+choose the tile whatever its own plan is, colour plans included. At every other table `D-035`
+stands: the policy chooses only inside the Coach's cheap plans. The table is known from the
+context's Joker count and minimum (`Context.jokers`, carried by `TableConfig.jokers`).
+
+**Why:** measured against three Coaches over 8,000 paired deals each: at 4 Jokers min 1, choosing
+every tile makes +0.430 +/- 0.134 with the shipped weights, +0.380 +/- 0.166 and +0.536 +/- 0.163
+with two refits, and +0.476 +/- 0.161 on fresh deals; at 4 Jokers min 2, +0.170 +/- 0.142; at 0
+Jokers min 1, +0.017 +/- 0.101. One table past the bar, four times; the rule follows the evidence
+and no further. The money comes from winning a quarter more hands at smaller size and giving up
+the half-colour hands.
+
+**Checked exact:** the new Coach against the shipped weights choosing every tile at 4 Jokers min
+1, and against the Coach as it was at 0 Jokers and at 4 Jokers min 2: +0.000 +/- 0.000 on 400
+paired deals each. `strong-min1` is judged again by the new Coach, since its play-outs are the
+Coach's; the other packs' tables are unchanged.
+
+**Related:** D-035, D-037, D-038, `Q-008`, `PROTOTYPE.md` "The two fitted models refitted".
+

@@ -25,7 +25,7 @@ const cfg = loadTableConfig(), rules = loadTableRules();
 
 const ctxOf = (v: PlayerView, dangerWeight?: number): Context => ({
   seat: (v.seat - v.dealer + 4) % 4, prevailingWind: v.prevailingWind, bonus: v.bonus.map(kindOf), playerTurns: v.playerTurns,
-  minimumFan: v.config.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: v.config.self_draw_minimum_fan,
+  minimumFan: v.config.minimum_fan === 2 ? 2 : 1, selfDrawMinimumFan: v.config.self_draw_minimum_fan, jokers: v.config.jokers,
   wallRemaining: v.wallRemaining, dangerWeight,
   visible: visibleOf(v),
   opponentMelds: v.players.map((p, s) => (s === v.seat ? -1 : p.melds.length)).filter((x) => x >= 0),

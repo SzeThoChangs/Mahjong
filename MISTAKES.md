@@ -157,6 +157,38 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The every-tile rule at the 4-Joker minimum-1 table (D-040) — Thu Oct  8 18:14:56 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175 carrying the rule, the `strong-min1`
+re-judging workers paused with `SIGSTOP` while the browser was driven and resumed after.
+
+**Test boundary**
+
+- Workflows: answering discard questions on Train at the three strong-table packs.
+- Screens: Train.
+- Access restrictions: none exist.
+- Values, records and calculations: the Coach's pick and its plan line at each table; the exactness
+  of the Coach against the shipped weights and against the Coach as it was.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded; five pack buttons, a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 28 discard questions answered over three packs at three widths | 0 |
+| 3 | Links | Each strong-table button pressed: one control matched each, the ids followed the pack | 0 |
+| 4 | Workflow steps | 4 Jokers min 1 strong: 12 questions, the plan line on two of them (4682:2:2, 379:9:44) reading "for a Half-Color plan; at a 4-Joker minimum-1 table the fitted policy throws 8t whatever the plan", on four others the cheap-plans wording as before; 4 Jokers min 2 strong: 8 questions, 4 notes, none "whatever the plan"; 0 Jokers min 1 strong: 8 questions, 3 notes, none "whatever the plan" | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | `policymoney.ts` on 400 paired deals each: the new Coach against the shipped weights choosing every tile at 4 Jokers min 1, +0.000 +/- 0.000, hands 100 against 100; against the Coach as it was (a worktree of the previous commit) at 0 Jokers min 1, +0.000, 96 against 96; at 4 Jokers min 2, +0.000, 99 against 99. The solver test: over hands drawn from a fixed stream, at least one Half-Color hand where the 4-Joker min-1 context moves the pick and the 0-Joker context does not, and leaving `jokers` out equals 0 Jokers on every hand | 0 |
+| 7 | Reconciliation | `./check.sh` green: four packages typecheck, 84 solver and 94 engine tests, the web build; the built bundle carries the new wording | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280 and 390px on a question showing the new note: page scroll width equal to the screen, 0 elements past the right edge outside a scroller | 0 |
+| 10 | Look at it | Screenshot at 390px of strong-min1 6295:4:31, read: "Measured best: worth $31.16 per hand", "The Coach would discard 4萬. Agrees with the measurement.", "Coach reads this as Half-Color in 萬", "The Coach's own numbers liked R by +1.0 for a Half-Color plan; at a 4-Joker minimum-1 table the fitted policy throws 4w whatever the plan, and it was measured to win more.", then the fallback and switch lines as before. "R" and "4w" are the short tile names the plan line has always used | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone; the Play tab at a 4-Joker min-1 table (same `ctxOf`, pinned by the
+exactness check); the Film room (`Replay.tsx`), which builds its context from the fixed config and
+leaves `jokers` out, so it keeps the cheap-plans rule.
+
 ### The refit on Coach-judged labels (experiment tools only, no app change) — Wed Oct  7 21:39:27 +08 2026
 
 Passes run on the tools and their outputs; nothing on the site changed. The 0-Joker Coach grading

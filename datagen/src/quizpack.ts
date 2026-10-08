@@ -223,7 +223,7 @@ const causeOf = (e: EvalRecord, d: Decision, melds: Meld[], seat: number): Cause
     d.pub.m.forEach((ms, s) => { if (s !== d.p) for (const m of ms) visible.push(...m.slice(2)); });
     d.pub.b.forEach((bs, s) => { if (s !== d.p) visible.push(...bs); });
     const ctx: Context = {
-      seat, prevailingWind: d.w, bonus: d.me.b, playerTurns: d.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai, visible,
+      seat, prevailingWind: d.w, bonus: d.me.b, playerTurns: d.t, minimumFan, selfDrawMinimumFan: rules.self_draw_minimum_tai, jokers: rules.jokers.count, visible,
       opponentMelds: d.pub.m.map((ms, s) => (s === d.p ? -1 : ms.length)).filter((n) => n >= 0),
     };
     const r = rankDiscards(d.me.h, melds, ctx);

@@ -135,7 +135,7 @@ export default function Review({ onPractise }: { onPractise?: (c: Cause) => void
     const visible = visibleOfQuestion(quizQ);
     const ctx: Context = {
       seat: quizQ.dl !== undefined ? (quizQ.seat - quizQ.dl + 4) % 4 : quizQ.seat, prevailingWind: quizQ.w, bonus: quizQ.b,
-      playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), reads: readsFor(quizJokers ?? loadConfig().jokers), visible,
+      playerTurns: quizQ.t, minimumFan: minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, minTai), reads: readsFor(quizJokers ?? loadConfig().jokers), jokers: quizJokers ?? loadConfig().jokers, visible,
       opponentMelds: (quizQ.pm ?? []).map((ms, s2) => (s2 === quizQ.seat ? -1 : ms.length)).filter((n) => n >= 0),
     };
     try { return { melds, ctx, ranking: rankDiscards(quizQ.h, melds, ctx) }; } catch { return null; }

@@ -60,6 +60,17 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-08 — At the 4-Joker minimum-1 table the Coach's tile-picker chooses every tile
+
+**Changed:** the fitted discard policy chooses the tile whatever the Coach's plan at 4 Jokers
+minimum 1, and only inside cheap plans elsewhere (`D-040`). The context carries the table's Joker
+count (`Context.jokers`, `TableConfig.jokers`); the plan line says when the rule applied. One test.
+
+**Why:** measured four times past the bar at that table, inside the bar at the others (`Q-008`).
+
+**Impact:** Ten passes in `MISTAKES.md`; three exactness checks at +0.000; `strong-min1` is being
+judged again by the new Coach and ships when it merges.
+
 ### 2026-10-07 — The refit on Coach-judged labels (experiment tools only, no app change)
 
 **Changed:** `policyfit.ts --init` (a warm start from fitted weights), `claimpolicy.ts --dirs

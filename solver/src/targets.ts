@@ -63,6 +63,10 @@ export interface Context {
    *  coach counts four copies of a tile that is already dead, which inflates what a shape can still
    *  become. Optional so older callers keep working - they just reason blind. */
   visible?: readonly TileKind[];
+  /** The table's Joker count. The fitted discard policy's reach depends on it (`rankDiscards`,
+   *  `Q-008`): at 4 Jokers and minimum 1 it chooses every tile, elsewhere only inside the Coach's
+   *  cheap plans. Optional; a caller that leaves it out gets the cheap-plans rule. */
+  jokers?: number;
   /** An alternative reads table to price danger with. Defaults to the shipped one; exists so a
    *  regenerated table can be PLAYED against the current one before it replaces it. */
   reads?: ReadsTables;

@@ -124,7 +124,7 @@ export default function AskHand() {
     // Context wants. Elsewhere it is derived as (seat - dealer + 4) % 4 from an absolute seat.
     seat, prevailingWind: round, bonus, playerTurns: turn,
     // the table set in Table setup, not the fixed config, which says min 2 whatever the player plays at
-    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers),
+    minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers), jokers: loadConfig().jokers,
     visible: seen, opponentMelds: oppMelds,
   }), [seat, round, bonus, turn, seen, oppMelds]);
 

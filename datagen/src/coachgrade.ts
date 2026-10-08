@@ -53,7 +53,7 @@ const onColourPlan = (q: Q & { h: number[]; m: number[][]; disc?: number[][]; pm
   const melds: Meld[] = q.m.map((m) => ({ type: m[0] === 0 ? 'chow' : m[0] === 1 ? 'pong' : 'kong', tiles: m.slice(2), concealed: m[1] === 1 }));
   const visible = visibleOfQuestion(q);
   const ctx: Context = { seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-    minimumFan: ixTable.table.minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(ixTable.table.wildcards), visible,
+    minimumFan: ixTable.table.minimumTai === 2 ? 2 : 1, selfDrawMinimumFan: 1, reads: readsFor(ixTable.table.wildcards), jokers: ixTable.table.wildcards, visible,
     opponentMelds: (q.pm ?? []).map((ms, seat) => (seat === q.seat ? -1 : ms.length)).filter((n) => n >= 0) };
   try { return rankDiscards(q.h, melds, ctx, { fitted: false }).best.target.id === 'half_color'; } catch { return false; }
 };

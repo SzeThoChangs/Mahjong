@@ -16,6 +16,8 @@ export function loadTableConfig(path?: string): TableConfig {
       self_draw_minimum_fan: raw.self_draw_minimum_fan ?? DEFAULT_TABLE.self_draw_minimum_fan,
       immediate_payouts_multiplier: raw.immediate_payouts_multiplier ?? DEFAULT_TABLE.immediate_payouts_multiplier,
       unplayable_tiles: raw.unplayable_tiles ?? DEFAULT_TABLE.unplayable_tiles,
+      // the file keeps the Joker count under its rules block, where the engine's rules read it
+      jokers: (raw as { rules?: { jokers?: { count?: number } } }).rules?.jokers?.count ?? DEFAULT_TABLE.jokers,
     };
   } catch {
     return { ...DEFAULT_TABLE };

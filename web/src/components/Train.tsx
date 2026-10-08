@@ -348,7 +348,8 @@ export default function Train() {
   const tableMin = packs.find((p) => p.id === pack)?.table?.minimumTai ?? loadConfig().minTai ?? CONFIG.minimum_fan;
   const selfDrawMin = Math.min(CONFIG.self_draw_minimum_fan, tableMin);
   // and the danger reads measured at that table's Joker count: a no-Joker table has its own (D-030)
-  const tableReads = readsFor(packs.find((p) => p.id === pack)?.table?.wildcards ?? loadConfig().jokers);
+  const tableJokers = packs.find((p) => p.id === pack)?.table?.wildcards ?? loadConfig().jokers;
+  const tableReads = readsFor(tableJokers);
   const coach = useMemo(() => {
     if (!q) return null;
     try {
@@ -359,7 +360,7 @@ export default function Train() {
       const visible = visibleOfQuestion(q);
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads, jokers: tableJokers,
         visible,
         opponentMelds: (q.pm ?? []).map((ms, s2) => (s2 === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
@@ -391,7 +392,7 @@ export default function Train() {
       const visible = visibleOfQuestion(q);
       const ctx: Context = {
         seat: q.dl !== undefined ? (q.seat - q.dl + 4) % 4 : q.seat, prevailingWind: q.w, bonus: q.b, playerTurns: q.t,
-        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads,
+        minimumFan: tableMin === 2 ? 2 : 1, selfDrawMinimumFan: selfDrawMin, reads: tableReads, jokers: tableJokers,
         visible, opponentMelds: (q.pm ?? []).map((ms, s) => (s === q.seat ? -1 : ms.length)).filter((n) => n >= 0),
       };
       // The COACH, not the learned model. This block said "the learned model would..." while

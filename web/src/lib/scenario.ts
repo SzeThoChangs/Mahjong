@@ -19,6 +19,7 @@ export const PHASE_TURNS: Record<Exclude<Phase, 'any'>, [number, number]> = { ea
 export const CONFIG: TableConfig = {
   minimum_fan: tableConfig.minimum_fan, fan_limit: tableConfig.fan_limit, self_draw_minimum_fan: tableConfig.self_draw_minimum_fan,
   immediate_payouts_multiplier: tableConfig.immediate_payouts_multiplier, unplayable_tiles: 15,
+  jokers: (tableConfig as { rules?: { jokers?: { count?: number } } }).rules?.jokers?.count ?? 4,
 };
 
 /**
@@ -124,7 +125,7 @@ export function makeScenario(seed: number, phase: Phase, wantInteresting: boolea
     const publicMelds: Meld[][] = view.players.map((p, s) => (s === view.seat ? [] : p.melds.map((m) => ({ type: m.type, tiles: m.tiles, concealed: m.concealed }))));
     const publicBonus: TileKind[][] = view.players.map((p, s) => (s === view.seat ? [] : p.bonus.map(kindOf)));
     const visible = visibleOf(view);
-    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers), visible,
+    const ctx: Context = { seat: (view.seat - view.dealer + 4) % 4, prevailingWind: view.prevailingWind, bonus, playerTurns: view.playerTurns, minimumFan: loadConfig().minTai === 2 ? 2 : 1, selfDrawMinimumFan: Math.min(CONFIG.self_draw_minimum_fan, loadConfig().minTai), reads: readsFor(loadConfig().jokers), jokers: loadConfig().jokers, visible,
       opponentMelds: view.players.map((p2, s2) => (s2 === view.seat ? -1 : p2.melds.length)).filter((n) => n >= 0),
       opponents: view.players.flatMap((p2, s2) => (s2 === view.seat ? [] : [{
         label: WIND_NAME[(s2 - view.dealer + 4) % 4]!,

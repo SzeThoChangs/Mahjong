@@ -682,7 +682,7 @@ rule). What it found instead: letting the fitted policy choose every tile, which
 hands, is worth 0.4 to 0.5 chips a game against three Coaches at the 4-Joker min-1 table (three
 candidates, four samples, all past the bar) and nothing at the 0-Joker table. The 4-Joker
 min-2 table, measured 2026-10-08: +0.170 +/- 0.142, inside the bar. Not measured: what the rule
-does to the 4-Joker packs' verdicts, whose play-outs the Coach plays. The rule change is Changs's decision (`Q-008`).
+does to the 4-Joker packs' verdicts, whose play-outs the Coach plays. Changs decided on 2026-10-08: the rule at 4 Jokers min 1 only (`D-040`).
 
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 

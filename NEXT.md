@@ -144,14 +144,10 @@ whole pack.
 
 ### Next
 
-Waiting on `Q-008`, Changs's decision on the Coach's plan rule at the 4-Joker tables. The 4-Joker
-min-2 money test is running (started 2026-10-08, `coach2/money-b-everytile-min2.log`) so the
-decision has both 4-Joker tables measured. If yes: the
-rule by Joker count in `rank.ts`, a money test at the 4-Joker min-2 table first (an hour), ten
-passes, then re-judge the three 4-Joker packs (`coach`, `strong-min1`, `strong-min2`, about 20
-hours with the lid open) because their play-outs are the Coach's. If no: `D-035` stands, the
-finding is recorded, nothing to build. The 0-Joker Coach grades (5,478, resumable) are kept for a
-later, bigger 0-Joker pack if one is wanted.
+When `strong-min1`'s re-judging merges (`data/gen/coach2/strong-min1-v2.done`, about 21:30 on
+2026-10-08): copy `coachpacks/strong-min1-v2/` into `web/public/quiz/strong-min1/`, count against
+the shipped pack (moved, dropped), rewrite the top index, ten passes, deploy. Then nothing is
+building; the plan's phase is "use it and say what is wrong".
 
 ### Why
 
