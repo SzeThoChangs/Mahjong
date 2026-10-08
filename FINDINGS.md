@@ -94,7 +94,8 @@ and the deal ranges are in `PROTOTYPE.md`, "Can anything beat the Coach for mone
   Used inside cheap plans only, the shipped way, the same weights make +0.106 to +0.129 +/- 0.11,
   inside the bar. At the 0-Joker min-1 table the every-tile rule makes +0.017 +/- 0.101, nothing,
   as candidate A's +0.218 +/- 0.106 pooled said in September. So `D-035`'s restriction is right at
-  Changs's table and costs about half a chip a game at the 4-Joker min-1 table.
+  Changs's table and costs about half a chip a game at the 4-Joker min-1 table; at the 4-Joker
+  min-2 table the rule makes +0.170 +/- 0.142, inside the bar.
 - **The table counted once** (2026-10-01): a discard claimed into a set was counted in the pool and
   in the set, the tile on offer was counted twice on a claim, and a fifth sighting wrapped the
   engine's unseen count from 0 to 255. Over half the questions in each pack had a kind

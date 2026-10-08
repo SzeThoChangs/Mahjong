@@ -680,9 +680,9 @@ policy or the claim model over the shanten-judged labels they shipped with (the 
 worse on held-out; the discard refits made the same money as the shipped weights under the same
 rule). What it found instead: letting the fitted policy choose every tile, which gives up colour
 hands, is worth 0.4 to 0.5 chips a game against three Coaches at the 4-Joker min-1 table (three
-candidates, four samples, all past the bar) and nothing at the 0-Joker table. Not measured: the
-4-Joker min-2 table, and what the rule does to the 4-Joker packs' verdicts, whose play-outs the
-Coach plays. The rule change is Changs's decision (`Q-008`).
+candidates, four samples, all past the bar) and nothing at the 0-Joker table. The 4-Joker
+min-2 table, measured 2026-10-08: +0.170 +/- 0.142, inside the bar. Not measured: what the rule
+does to the 4-Joker packs' verdicts, whose play-outs the Coach plays. The rule change is Changs's decision (`Q-008`).
 
 ### A second disputed verdict: throw the dead tile, strong-table question 5375:17:65
 

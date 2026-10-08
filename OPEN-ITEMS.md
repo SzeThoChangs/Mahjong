@@ -923,7 +923,11 @@ choosing every tile gave up colour hands and lost against the recorded players a
 three Coaches, four samples past the bar, with the shipped weights themselves. At the 0-Joker min-1
 table it makes nothing (+0.017 +/- 0.101).
 
-**What is not known:** the 4-Joker min-2 table (one money test, about an hour); what the rule does
+**Measured 2026-10-08, the 4-Joker min-2 table:** the shipped weights choosing every tile +0.170
++/- 0.142 (t 1.2), hands 2,380 against 1,997 at 15.0 chips against 18.4, half-colour 35 against
+451. Inside the bar. So the rule is past the bar at one table only, 4 Jokers min 1.
+
+**What is not known:** what the rule does
 to the three 4-Joker packs' verdicts, since the Coach plays their play-outs (a re-judging of
 `coach`, `strong-min1` and `strong-min2` is about 20 hours); whether the gain holds against the
 Coach with the rule in every chair (a self-consistency test, not a gate).
