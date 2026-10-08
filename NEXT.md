@@ -144,11 +144,10 @@ whole pack.
 
 ### Next
 
-Q-002, open since 2026-09-12: on a phone a late hand's table outgrows its card and scrolls
-sideways, which clips the dealer badge and hides discards. Changs decides: accept the scroll, or
-a smaller tile on late hands so the whole table fits. The agent recommends the smaller tile,
-because reading the discards late in a hand is the point of the table. Nothing else is building;
-the plan's phase is "use it and say what is wrong".
+Nothing is building and nothing waits on the agent (2026-10-08 22:10). `Q-002` is closed by
+`D-041`. The plan's phase is "use it and say what is wrong" (`PLAN.md`, Q-001, Q-004). Open and
+Changs's: retire `coach` once `strong-min2` is big enough (`D-039`); grade longer for bigger
+strong packs; a second strong 0-Joker pack (5,478 Coach grades on disk).
 
 ### Why
 

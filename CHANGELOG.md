@@ -60,6 +60,15 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-08 — The table shrinks to fit its card
+
+**Changed:** when the table is wider than its card it is scaled down to fit, with the card given
+the scaled height; the dealer badge is no longer clipped and nothing scrolls sideways (`D-041`).
+
+**Why:** `Q-002`, open since 2026-09-12; Changs took the recommendation.
+
+**Impact:** Ten passes in `MISTAKES.md`, at 280, 320, 360 and 1280px.
+
 ### 2026-10-08 — The 4-Joker min-1 strong pack judged again by the new Coach
 
 **Changed:** `strong-min1` carries answers from play-outs by the Coach with the every-tile rule

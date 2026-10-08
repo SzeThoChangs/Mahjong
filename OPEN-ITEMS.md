@@ -51,7 +51,7 @@ appear under "Research needed" in `RESEARCH.md`.
 | ID | Type | Title | Status | Owner |
 |---|---|---|---|---|
 | Q-001 | QUESTION | Does the Play loop feel like mahjong, and is the review worth reading? | OPEN | Changs |
-| Q-002 | QUESTION | The late-game table at 360px: accept the scroll, or a smaller tile on late hands? | OPEN | Changs |
+| Q-002 | QUESTION | The late-game table at 360px: accept the scroll, or a smaller tile on late hands? | RESOLVED 2026-10-08, `D-041`: the table shrinks to fit | Changs |
 | Q-003 | QUESTION | Are Train, Spot, Review and Tips the right four primary tabs? | OPEN | Changs |
 | Q-004 | QUESTION | The framework draft is awaiting the owner's review | OPEN | Changs |
 | Q-005 | QUESTION | Pack button to first question on a real phone on 4G is unmeasured | OPEN | Changs or any tester |
@@ -122,7 +122,8 @@ tile was decided (D-018); what to do when it outgrows the card was not.
 **Why It Matters:** Reading danger off the discards is half of what the app teaches, and the late
 hand is where it matters most.
 
-**Owner:** Changs.
+**Owner:** Changs. **Status:** RESOLVED 2026-10-08 by `D-041`: the table is scaled to fit its card
+when wider than it; the badge is no longer clipped.
 
 **Source:** `NEXT.md` 2026-09-12, "What needs Changs", item 2.
 

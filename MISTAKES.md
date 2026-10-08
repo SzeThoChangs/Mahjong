@@ -157,6 +157,38 @@ of the passes for any change to the table or the packs.
 
 ## Ten passes
 
+### The table shrinks to fit its card (D-041) — Thu Oct  8 21:58:02 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175; nothing else was running on the
+Mac. The change is `useFit` in `PublicTable.tsx`: a ResizeObserver on the card and the felt, a
+scale transform when the felt is wider than the card, the card given the scaled height.
+
+**Test boundary**
+
+- Workflows: answering Train questions on a phone-width screen, late in a hand.
+- Screens: Train (the table drawing is shared by Review, Spot, Play and the generated hand).
+- Access restrictions: none exist.
+- Values, records and calculations: the felt's width against the card's, the badge's position,
+  the page's scroll width, at four widths.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded at 360px; a question on screen | 0 |
+| 2 | Errors | `console.error` and window errors hooked; 26 questions walked at 360px, then four widths | 0 |
+| 3 | Links | The strong 0-Joker pack button pressed: one control matched; Next position walked the pack | 0 |
+| 4 | Workflow steps | 26 questions walked until one at 第16巡 (the latest the pack served in that walk); on each the felt measured inside the card | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | On the 第16巡 question: natural felt width 420px; at 360px the card is 320 and the felt scaled to 0.762 and 320px wide, the dealer badge inside the card, page scroll width 360; at 320px scale 0.667, felt 280 in 280; at 280px scale 0.571, felt 240 in 240, 0 elements past the right edge outside a scroller; at 1280px no transform, felt 766 in a 944 card. The card's height follows the scale (365, 319, 274px) | 0 |
+| 7 | Reconciliation | At every width the felt's width equals the card's width times one, or the natural width times the scale, to the pixel | 0 |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | 280, 320, 360 and 1280px as above; page scroll width equal to the screen at each | 0 |
+| 10 | Look at it | Screenshot at 360px, read: the whole 第16巡 table inside its card at 76%, 東 and its "dealer" badge in the top left corner uncut, 北's sets along the top, 西's sets and flowers down the right, four piles of discards, the player's 2-3-4萬 below; the 22px tiles now about 17px and still readable on the screenshot | 0 |
+
+**Defects found:** none.
+
+**Not checked:** a real phone, which is the whole question for a 17px tile; the Play tab's table
+mid-hand on this build (same drawing).
+
 ### The 4-Joker min-1 strong pack judged again by the new Coach — Thu Oct  8 20:29:49 +08 2026
 
 Passes run against a static build of `web/dist` on port 5175; nothing else was running on the Mac.

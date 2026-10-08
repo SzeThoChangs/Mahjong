@@ -33,6 +33,35 @@ import { Tile } from '@/components/Tile';
 import { cn } from '@/lib/utils';
 import { J } from '@/lib/jargon';
 import { usePhone } from '@/lib/phone';
+import { useLayoutEffect, useRef, useState } from 'react';
+
+/**
+ * Fit the table to its card. A late hand's pile is about 410px across at the 22px tile against
+ * about 320px of card on a 360px phone; until 2026-10-08 the table scrolled sideways inside the
+ * card, which hid discards and clipped the dealer badge (Q-002, open since 09-12). Changs chose
+ * the smaller tile over the scroll (D-041), so when the table's natural width is wider than the
+ * card, the whole table is scaled down to fit and the card is given the scaled height, because a
+ * transform does not change layout on its own. At a width that fits, nothing is done.
+ */
+function useFit(): { outer: React.RefObject<HTMLDivElement | null>; inner: React.RefObject<HTMLDivElement | null>; scale: number; natural: { w: number; h: number } } {
+  const outer = useRef<HTMLDivElement | null>(null), inner = useRef<HTMLDivElement | null>(null);
+  const [fit, setFit] = useState({ scale: 1, natural: { w: 0, h: 0 } });
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const measure = () => {
+      // offsetWidth is the layout size, untouched by the transform, so this never feeds back on itself
+      const w = i.offsetWidth, h = i.offsetHeight, avail = o.clientWidth;
+      const scale = w > avail && avail > 0 ? avail / w : 1;
+      setFit((f) => (Math.abs(f.scale - scale) < 0.002 && f.natural.w === w && f.natural.h === h ? f : { scale, natural: { w, h } }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o); ro.observe(i);
+    return () => ro.disconnect();
+  });
+  return { outer, inner, ...fit };
+}
 
 export interface SeatPublic {
   wind: string;
@@ -207,6 +236,7 @@ export function PublicTable({ seats, you, centre }: {
   const bottom = at(0), right = at(1), top = at(2), left = at(3);
   const anyConcealed = seats.some((s) => s.melds.some((m) => m.concealed));
   const holder = [bottom, right, top, left].find((s) => s.hand?.length);
+  const fit = useFit();
 
   return (
     <Card>
@@ -216,13 +246,15 @@ export function PublicTable({ seats, you, centre }: {
              are the ones the header explains: none inside a pile or a set, 6px between a seat's
              flowers and sets, 11px between what a seat has shown and their pile - which here is
              5px of grid gap, the pile's 2px border and its 4px of padding. ---------- */}
-        <div className="overflow-x-auto">
+        <div ref={fit.outer} className="relative overflow-hidden" style={fit.scale < 1 ? { height: Math.ceil(fit.natural.h * fit.scale) } : undefined}>
           {/* The table is green felt and the discard pile sits on it in its own pale box, so the two
               kinds of tile read apart at a glance: what a seat has shown lies on the felt, what it
               has thrown lies in the box (Changs, 2026-09-16). The felt is the same in dark mode,
               because a card table is green whatever the room's lights are doing. */}
-          <div className={cn('grid w-max mx-auto rounded-2xl text-emerald-50 shadow-[inset_0_0_28px_rgba(0,0,0,0.35)]', sz.phone ? 'gap-[5px] p-1' : 'gap-x-3 gap-y-2 p-3')}
-          style={{ gridTemplateColumns: 'auto auto auto', gridTemplateRows: 'auto auto auto', background: FELT }}>
+          <div ref={fit.inner} className={cn('grid w-max mx-auto rounded-2xl text-emerald-50 shadow-[inset_0_0_28px_rgba(0,0,0,0.35)]', sz.phone ? 'gap-[5px] p-1' : 'gap-x-3 gap-y-2 p-3')}
+          style={{ gridTemplateColumns: 'auto auto auto', gridTemplateRows: 'auto auto auto', background: FELT,
+            // scaled to fit the card when wider than it (Q-002): placed at the top left and scaled from there
+            ...(fit.scale < 1 ? { position: 'absolute', left: 0, top: 0, transform: `scale(${fit.scale})`, transformOrigin: 'top left', margin: 0 } : {}) }}>
 
           {/* The seats along the sides are named down their edge, as they sit. On a phone that
               costs 28px a side that the piles need, so their names go in the top corners instead,

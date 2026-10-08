@@ -1236,3 +1236,20 @@ Coach's; the other packs' tables are unchanged.
 
 **Related:** D-035, D-037, D-038, `Q-008`, `PROTOTYPE.md` "The two fitted models refitted".
 
+## D-041 — The table shrinks to fit its card instead of scrolling sideways
+
+**Date:** 2026-10-08. **Decided by:** Changs (CONFIRMED): asked for the agent's recommendation on
+`Q-002` and took it. **Status:** ACTIVE
+
+**What was decided:** when the table's natural width is wider than its card, the whole table is
+scaled down to fit and the card takes the scaled height. Nothing changes at a width where it fits.
+`D-018` (the square table on a phone at a 22px tile) stands as the natural size; this decides
+what happens when that outgrows the card, which `D-018` left open.
+
+**Why:** reading danger off the discards late in a hand is the point of the table, and a table
+that scrolls sideways hides them and clipped the dealer badge (`Q-002`, open since 2026-09-12).
+Measured on the built app: at 360px a 第16巡 table scales to 76%, at 320px to 67%, at 280px to
+57%, each with the felt and the badge inside the card and no page scroll; at 1280px unscaled.
+
+**Related:** D-018, Q-002.
+
