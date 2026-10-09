@@ -71,7 +71,7 @@ the 4-Joker tables judged by the Coach from the first candidate.
 ### What Was Completed
 
 The refit on Coach-judged labels run and closed (2026-10-06 to 07): labels not the lever; the
-every-tile rule worth 0.4 to 0.5 chips at 4 Jokers min 1, nothing at 0 Jokers (`Q-008`).
+every-tile rule worth 0.4 to 0.5 chips at 4 Jokers min 1, nothing at 0 Jokers (`Q-014`).
 Both strong 4-Joker packs built and on the site (`strong-min1` 10-04, `strong-min2` 10-06;
 `D-038` done); `min1` retired (`D-039`); nothing running on the Mac since 10-06 15:10.
 All four original packs re-judged with the Coach and on the site (2026-09-29 to 10-02). The Coach's

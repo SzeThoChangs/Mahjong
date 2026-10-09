@@ -1234,7 +1234,7 @@ the half-colour hands.
 paired deals each. `strong-min1` is judged again by the new Coach, since its play-outs are the
 Coach's; the other packs' tables are unchanged.
 
-**Related:** D-035, D-037, D-038, `Q-008`, `PROTOTYPE.md` "The two fitted models refitted".
+**Related:** D-035, D-037, D-038, `Q-014`, `PROTOTYPE.md` "The two fitted models refitted".
 
 ## D-041 — The table shrinks to fit its card instead of scrolling sideways
 

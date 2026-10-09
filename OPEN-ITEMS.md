@@ -57,13 +57,13 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-005 | QUESTION | Pack button to first question on a real phone on 4G is unmeasured | OPEN | Changs or any tester |
 | Q-006 | QUESTION | About twenty rare combination tai values are still engine defaults | OPEN | Changs |
 | Q-007 | QUESTION | Section 6.5 of the study, All-Pong at minimum 2, was never captured | OPEN | Agent |
-| Q-008 | QUESTION | Let the fitted policy choose every tile at the 4-Joker tables, giving up colour hands? Worth 0.4 to 0.5 chips a game at 4 Jokers min 1, nothing at 0 Jokers; the 4-Joker packs' play-outs would then be played by a changed Coach | RESOLVED 2026-10-08, `D-040`: at 4 Jokers min 1 only | Changs |
 | Q-008 | QUESTION | Did the study's own simulations use wildcards? | OPEN | Agent |
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
 | Q-012 | QUESTION | How do the opponents at Changs's real table play, which decides the right answer on wins and claims? | RESOLVED | Changs |
 | Q-013 | QUESTION | The Coach declines an offered win on some positions, and says so beside the rule that says to take it | RESOLVED | Agent |
+| Q-014 | QUESTION | Let the fitted policy choose every tile at the 4-Joker tables, giving up colour hands? Worth 0.4 to 0.5 chips a game at 4 Jokers min 1, nothing at 0 Jokers; the 4-Joker packs' play-outs would then be played by a changed Coach | RESOLVED 2026-10-08, `D-040`: at 4 Jokers min 1 only | Changs |
 | A-001 | ASSUMPTION | Training on play-out-graded decisive positions improves real play | OPEN | Changs |
 | A-002 | ASSUMPTION | The stage order and the minute split of the practice hour | OPEN | Changs |
 | A-003 | ASSUMPTION | Spotting is a separate skill from solving | OPEN | Agent |
@@ -913,7 +913,10 @@ step is a posted record, which needs somewhere to post to.
 
 **Resolution:**
 
-## Q-008 — Let the fitted policy choose every tile at the 4-Joker tables?
+## Q-014 — Let the fitted policy choose every tile at the 4-Joker tables?
+
+(Recorded first as Q-008 on 2026-10-07, an id already taken by "Did the study's own simulations
+use wildcards?"; renumbered 2026-10-10. `MISTAKES.md` M-006.)
 
 **Raised:** 2026-10-07, from the refit (`PROTOTYPE.md`, "The two fitted models refitted on
 Coach-judged labels"). **Owner:** Changs. **Status:** RESOLVED 2026-10-08 by `D-040`: the rule at

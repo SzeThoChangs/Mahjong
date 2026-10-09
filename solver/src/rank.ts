@@ -302,7 +302,7 @@ export function rankDiscards(concealed: TileKind[], melds: Meld[], ctx: Context,
    * 2026-10-08): measured four times past the bar against three Coaches there, +0.43 to +0.54 chips
    * a game, by winning a quarter more hands at smaller size and giving up the half-colour ones. At
    * the 0-Joker table the same rule makes +0.02 +/- 0.10 and at 4 Jokers minimum 2 +0.17 +/- 0.14,
-   * both inside the bar, so there the plan stays the Coach's (Q-008, PROTOTYPE.md "The two fitted
+   * both inside the bar, so there the plan stays the Coach's (Q-014, PROTOTYPE.md "The two fitted
    * models refitted on Coach-judged labels").
    */
   let fittedNote: string | null = null;

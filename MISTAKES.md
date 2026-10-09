@@ -141,6 +141,23 @@ place that represents that fact before closing the fix, and look at each one. Fo
 cheap: count the tile images on the felt per kind and nothing may pass four; that count is now part
 of the passes for any change to the table or the packs.
 
+## M-006 — Giving a new open item an id without checking it was free
+
+**Count:** 1 (2026-10-07, found 2026-10-10)
+
+**What happened:** the every-tile question was recorded as `Q-008`. `Q-008` already existed ("Did
+the study's own simulations use wildcards?", open, owned by the agent), and for three days the
+decision record, the changelog, the status, the code comments and a test all pointed at an id that
+meant two things. Found while reassessing for `/next`, by listing the open rows and seeing two.
+
+**Why it happens:** the summary row table is long and the agent wrote the new row next to the last
+row it remembered rather than reading the highest id. Ids are meant to be stable, so a clash is
+not a typo: once something cites the id, renumbering is the only fix and it touches every file.
+
+**The check:** before adding any `Q`, `A`, `C`, `DEP`, `R` or `D` id, list the existing ones of
+that letter and take the next free number: `grep -o "^| Q-[0-9]*" OPEN-ITEMS.md | sort | tail -1`.
+Renumbered to `Q-014`, with a note on the item saying it was first written as `Q-008`.
+
 ## M-001 — [The kind of mistake]
 
 **Count: 1.**

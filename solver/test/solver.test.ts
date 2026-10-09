@@ -125,7 +125,7 @@ describe('learned policy', () => {
   });
 });
 
-describe('the fitted policy reaches every tile at 4 Jokers minimum 1 only (Q-008)', () => {
+describe('the fitted policy reaches every tile at 4 Jokers minimum 1 only (Q-014)', () => {
   // D-040: at the 4-Joker minimum-1 table the fitted policy chooses the tile whatever the Coach's
   // plan; elsewhere it chooses only inside the cheap plans. Hands are drawn from a fixed stream
   // until one shows the difference: a half-colour plan where the policy's tile is not the Coach's.

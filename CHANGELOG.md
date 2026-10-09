@@ -85,7 +85,7 @@ on the fresh seed, 1,798 kept.
 minimum 1, and only inside cheap plans elsewhere (`D-040`). The context carries the table's Joker
 count (`Context.jokers`, `TableConfig.jokers`); the plan line says when the rule applied. One test.
 
-**Why:** measured four times past the bar at that table, inside the bar at the others (`Q-008`).
+**Why:** measured four times past the bar at that table, inside the bar at the others (`Q-014`).
 
 **Impact:** Ten passes in `MISTAKES.md`; three exactness checks at +0.000; `strong-min1` is being
 judged again by the new Coach and ships when it merges.
@@ -98,9 +98,9 @@ the no-Joker danger table at 0 Jokers. Nothing on the site changed.
 
 **Why:** Changs chose the refit on 2026-10-06. It found that Coach labels at the volume the Mac
 can make do not improve either model, and that the Coach's plan rule at the 4-Joker min-1 table
-costs about half a chip a game (`FINDINGS.md`, `Q-008`).
+costs about half a chip a game (`FINDINGS.md`, `Q-014`).
 
-**Impact:** Ten passes in `MISTAKES.md`; `Q-008` waits on Changs.
+**Impact:** Ten passes in `MISTAKES.md`; `Q-014` waits on Changs.
 
 ### 2026-10-06 — The sixth pack: 4 Jokers, min 2 Tai, strong table
 

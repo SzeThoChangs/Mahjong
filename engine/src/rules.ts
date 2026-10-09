@@ -221,7 +221,7 @@ export function validateRules(r: RulesConfig): void {
 /** Back-compat view used by payout/game/web: the handful of knobs they needed before the full rules layer. */
 export interface TableConfig {
   minimum_fan: number; fan_limit: number; self_draw_minimum_fan: number; immediate_payouts_multiplier: number; unplayable_tiles: number;
-  /** the table's Joker count, so a bot's view of the table says which table it is (the Coach's plan rule goes by it, Q-008) */
+  /** the table's Joker count, so a bot's view of the table says which table it is (the Coach's plan rule goes by it, Q-014) */
   jokers: number;
 }
 export function tableConfigOf(r: RulesConfig): TableConfig {
