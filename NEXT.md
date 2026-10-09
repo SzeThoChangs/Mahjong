@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-10-08 21:50 (Singapore)
+2026-10-10 03:31 (Singapore)
 
 ## Last Session / Work Package
 
@@ -144,10 +144,14 @@ whole pack.
 
 ### Next
 
-Nothing is building and nothing waits on the agent (2026-10-08 22:10). `Q-002` is closed by
-`D-041`. The plan's phase is "use it and say what is wrong" (`PLAN.md`, Q-001, Q-004). Open and
-Changs's: retire `coach` once `strong-min2` is big enough (`D-039`); grade longer for bigger
-strong packs; a second strong 0-Joker pack (5,478 Coach grades on disk).
+The two open items the agent owns that need no compute: `Q-007` (the study's section 6.5, All-Pong
+at minimum 2, never captured) and `Q-008` (did the study's simulations use wildcards). Both can be
+answered from the owner's page captures in `Data Analytic Evluation of Singapore Mahjong/`; a
+reading of them started 2026-10-10 03:31. Then record the answers in `RESEARCH.md` and `OPEN-ITEMS.md`, and if
+6.5 gives real minimum-2 All-Pong values, replace the flat +0.5 in the solver and measure it.
+
+Beside that, the plan's phase is "use it and say what is wrong" (`PLAN.md`, Q-001, Q-004).
+Changs's, any time: retire `coach` once `strong-min2` is big enough (`D-039`); bigger strong packs.
 
 ### Why
 
