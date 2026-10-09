@@ -267,6 +267,16 @@ hands on 2026-09-04.
 
 **Recheck:** Q-007 and Q-008 remain open against it.
 
+**Re-read 2026-10-10 for Q-007 and Q-008 (agent-gathered, from the owner's captures):** 56 of the
+116 captures opened by a reading agent, five more requested and not returned, 55 not opened (mostly
+chapters 5 and 7 to 12); three re-read by the agent directly (pages 21 to 22, 128 to 129, 135). The
+study never mentions wildcards on any opened page and its wall holds 148 tiles, so its simulations
+had no Jokers (Q-008 resolved). Section 6.5, the All-Pong tables at minimum 0 and 2, sits on pages
+130 to 134, which were never captured (Q-007 waits on them). Found on the way: draw rate 8% and
+about 43 player turns at minimum 1, 14% and 48 at minimum 2 (pages 248 to 250); All-Pong at minimum
+1 by tile breakdown at turns 0, 20 and 40 (tables 6:1, 6:3, 6:4, pages 123 to 126), and the chance a
+pong pair becomes a pong by tile type (table 6:5, page 128).
+
 **Resolves / informs:** D-001, D-006, Q-007, Q-008.
 
 **Material:** `RULES.md` (the implementation notes), `knowledge/sources/strategy.dataanalytic.json`

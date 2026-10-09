@@ -56,8 +56,8 @@ appear under "Research needed" in `RESEARCH.md`.
 | Q-004 | QUESTION | The framework draft is awaiting the owner's review | OPEN | Changs |
 | Q-005 | QUESTION | Pack button to first question on a real phone on 4G is unmeasured | OPEN | Changs or any tester |
 | Q-006 | QUESTION | About twenty rare combination tai values are still engine defaults | OPEN | Changs |
-| Q-007 | QUESTION | Section 6.5 of the study, All-Pong at minimum 2, was never captured | OPEN | Agent |
-| Q-008 | QUESTION | Did the study's own simulations use wildcards? | OPEN | Agent |
+| Q-007 | QUESTION | Section 6.5 of the study, All-Pong at minimum 2, was never captured | OPEN, waits on five screenshots, book pages 130 to 134 | Changs |
+| Q-008 | QUESTION | Did the study's own simulations use wildcards? | RESOLVED 2026-10-10: no; a 148-tile wall | Agent |
 | Q-009 | QUESTION | The pack phase mix leans mid-hand: correct it or accept it? | OPEN | Changs |
 | Q-010 | QUESTION | Which device holds the owner's own record | OPEN | Changs |
 | Q-011 | QUESTION | Per-card table labels where a verdict differs between tables: still wanted? | OPEN | Changs |
@@ -275,9 +275,13 @@ coach is from the measurement" (2026-08-26).
 
 **Target Resolution:** Not scheduled.
 
-**Status:** OPEN
+**Status:** OPEN, blocked on the owner.
 
-**Resolution:**
+**Resolution:** Not possible from what is on disk. Read 2026-10-10: the owner's captures jump from
+book pages 128 to 129 (`Screenshot 2026-08-23 at 1.50.42 AM.png`, still section 6.4) to page 135
+(`Screenshot 2026-08-23 at 1.53.25 AM.png`, Chapter 7). Pages 130 to 134 were never captured, and
+page 126 (`1.50.36 AM`) says All-Pong results at minimum fan 0 and 2 are in section 6.5, so that is
+where they are. Unblocked by Changs taking five screenshots: book pages 130 to 134.
 
 ---
 
@@ -304,9 +308,17 @@ not settle" under "The wildcard rule changes the game more than any opponent doe
 
 **Target Resolution:** Listed under "Research needed" in `RESEARCH.md`.
 
-**Status:** OPEN
+**Status:** RESOLVED 2026-10-10 (OBSERVED, by inference from the study's own numbers).
 
-**Resolution:**
+**Resolution:** No wildcards. The study never mentions Jokers, wildcards or substitution on 56 of
+its 116 captured pages, including the rules, the variations survey (pages 68 to 71) and the
+simulation set-up (page 79). Its wall is two sections of 38 and two of 36 tiles (page 21 to 22,
+`Screenshot 2026-08-22 at 5.47.08 PM.png`, read again by the agent), 148 in all, which is 136
+regular tiles, 8 flowers and 4 animals and leaves no room for Jokers. Its Half-Colour player "is
+only playing with 47% of the tiles" (page 93), which is 64 of 136. The description above had the
+draw rate wrong: the study gives 8% at minimum 1 and 14% at minimum 2, about 43 and 48 player
+turns (pages 248 to 250), so its 14% was the minimum-2 figure. What this does not establish: the
+tile-set definition (section 2.1) is before the first capture, so no page states it outright.
 
 ---
 
