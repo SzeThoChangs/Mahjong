@@ -382,8 +382,9 @@ paths inside `node_modules/.pnpm/` and glob the version directory rather than ha
 example `node ../node_modules/.pnpm/vite@5*/node_modules/vite/bin/vite.js`. The web package builds
 with TypeScript 6; engine, solver and datagen build with TypeScript 5.
 
-**Run `./check.sh` before committing.** It runs exactly what the CI workflow runs: typecheck of all
-four packages, the engine and solver tests, and the web build. `tsc --noEmit -p .` inside `web/`
+**Run `./check.sh` before committing.** It runs what the CI workflow runs: typecheck of all four
+packages, the web lint, the engine and solver tests, and the web build. When CI gains a step,
+`check.sh` gains it in the same commit. After a push, read CI's conclusion as well as the deploy's. `tsc --noEmit -p .` inside `web/`
 checks nothing at all, because that tsconfig is a solution file with an empty `files` array, and
 trusting it has shipped broken commits twice.
 

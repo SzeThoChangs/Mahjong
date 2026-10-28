@@ -380,7 +380,7 @@ export default function Train() {
       };
       return { plan: hv.best.id.replace('_', '-'), detail: [], best: null as number | null, tied: [] as number[], reasonFor: () => [] as string[], reasonForAction };
     } catch { return null; }
-  }, [q, tableMin, selfDrawMin, tableReads]);
+  }, [q, tableMin, selfDrawMin, tableReads, tableJokers]);
 
   // What the learned models would do here. Grading stays on the measured EVs - those are the
   // authority in this tab - but the models are what the Train tab teaches, so showing their answer
@@ -420,7 +420,7 @@ export default function Train() {
       }
       return null;
     } catch { return null; }
-  }, [q, tableMin, selfDrawMin, tableReads]);
+  }, [q, tableMin, selfDrawMin, tableReads, tableJokers]);
 
   const fmt = (x: number) => `${x < 0 ? '−' : ''}${unit === '$' ? '$' : ''}${Math.abs(x).toFixed(2)}${unit === '$' ? '' : ''}`;
 
@@ -441,7 +441,7 @@ export default function Train() {
       bonus: q.b, seat: (q.seat - (q.dl ?? 0) + 4) % 4, prevailingWind: q.w, melds,
       minimumFan: tableMin, selfDrawMinimumFan: selfDrawMin,
     });
-  }, [q, tableMin, selfDrawMin, tableReads]);
+  }, [q, tableMin, selfDrawMin]);
   const money = useMemo(() => loadConfig(), []);
   const actions = useMemo(() => {
     if (!q?.actions?.some((a) => a.mix)) return q?.actions ?? [];

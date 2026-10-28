@@ -226,6 +226,9 @@ export function PublicTable({ seats, you, centre }: {
 }) {
   const has = (s: SeatPublic | undefined) => !!s && (s.bonus.length > 0 || s.melds.length > 0 || s.discards.length > 0 || !!s.hand?.length);
   const sz = usePhone() ? PHONE : WIDE;
+  // every hook before the early return: an empty table at the deal and a full one a moment later
+  // must call the same hooks in the same order, or React stops the tab (lint caught it, 2026-10-28)
+  const fit = useFit();
   if (!seats.some(has)) return null;
 
   // counter-clockwise from you: +1 right, +2 opposite, +3 left. `seats` comes from callers as a
@@ -236,7 +239,6 @@ export function PublicTable({ seats, you, centre }: {
   const bottom = at(0), right = at(1), top = at(2), left = at(3);
   const anyConcealed = seats.some((s) => s.melds.some((m) => m.concealed));
   const holder = [bottom, right, top, left].find((s) => s.hand?.length);
-  const fit = useFit();
 
   return (
     <Card>

@@ -158,6 +158,24 @@ not a typo: once something cites the id, renumbering is the only fix and it touc
 that letter and take the next free number: `grep -o "^| Q-[0-9]*" OPEN-ITEMS.md | sort | tail -1`.
 Renumbered to `Q-014`, with a note on the item saying it was first written as `Q-008`.
 
+## M-007 — Confirming a deploy without reading CI
+
+**Count:** 1 (2026-10-09, found 2026-10-28)
+
+**What happened:** `D-041` put a React hook after an early return in `PublicTable.tsx`. CI's lint
+step caught it on the next push and failed, and kept failing on every push after, for nineteen
+days. Nobody saw it, because each push was confirmed by grepping the live site for the change, and
+Pages deploys whether CI passes or not. `check.sh`, which `CLAUDE.md` says "runs exactly what the
+CI workflow runs", never ran lint, so it said ALL GREEN on the same commits.
+
+**Why it happens:** the deploy and the checks are separate workflows, and only the deploy was
+watched. A local script that claims to mirror CI drifts the first time CI gains a step.
+
+**The check:** `check.sh` now runs `oxlint` the way CI does and fails on its errors (proved by
+running it on the broken file: FAILED). After every push, read the CI run's conclusion as well as
+the deploy's: `curl -s https://api.github.com/repos/SzeThoChangs/Mahjong/actions/runs?per_page=2`.
+When CI gains a step, `check.sh` gains it in the same commit.
+
 ## M-001 — [The kind of mistake]
 
 **Count: 1.**
@@ -173,6 +191,36 @@ Renumbered to `Q-014`, with a note on the item saying it was first written as `Q
 ---
 
 ## Ten passes
+
+### The hook order in the table, and lint in check.sh — Wed Oct 28 22:42:10 +08 2026
+
+Passes run against a static build of `web/dist` on port 5175; nothing else was running on the
+Mac. The change: `useFit` called before the table's early return; `tableJokers` in two Train memo
+dependency lists and a needless `tableReads` out of a third; `check.sh` runs `oxlint`.
+
+**Test boundary**
+
+- Workflows: a Play hand from the deal; Train, Spot, Review and the Film room opening a table.
+- Screens: Play, Train, Spot, Review, Film room.
+- Access restrictions: none exist.
+- Values, records and calculations: lint errors before and after; CI's failing runs.
+
+| Pass | Dimension | What was done | Found |
+|---|---|---|---|
+| 1 | Cold start | Local and session storage cleared, reloaded on `#play` | 0 |
+| 2 | Errors | `console.error` and window errors hooked through every step below: none | 0 |
+| 3 | Links | Train, Spot, Review pressed: `#train`, `#spot`, `#review`; `#film` opened by hash | 0 |
+| 4 | Workflow steps | Play: Deal, 22 tile images at the deal, six of the player's turns or passes taken to 第22 turn; Train 102 images, Spot 61, Review the empty state; Film room: a hand opened (16 images) and stepped five times (21) | 0 |
+| 5 | Writes | not run — nothing stored | not run — nothing stored |
+| 6 | The data it moves | `oxlint` on the fixed tree: exit 0, 21 warnings, 0 errors; on the old `PublicTable.tsx` (stashed back in): exit 1, the hook error, and `check.sh` prints it and FAILED | 0 |
+| 7 | Reconciliation | GitHub Actions: CI failed at Lint on 7588b0e, ac4f86d and 370a42e (2026-10-09), the three pushes after `D-041`; Deploy succeeded on two and was cancelled on one; the live site served the change throughout | 1 found, this change fixes it |
+| 8 | Access | not run — the app has no accounts or restricted actions | not run — no access control exists |
+| 9 | Width | not run — no layout changed | not run — no layout change |
+| 10 | Look at it | The live site's Play dealt a hand without error before the fix, because the acting seat's hand makes the table non-empty from the first render; the rule break never fired for the player, and the fix removes it | 0 |
+
+**Defects found:** the hook order (fixed) and the gap between `check.sh` and CI (`M-007`).
+
+**Not checked:** a real phone; whether CI is green on this push until it has run (read it after).
 
 ### The table shrinks to fit its card (D-041) — Thu Oct  8 21:58:02 +08 2026
 

@@ -29,6 +29,15 @@ done
 printf '  %-9s ' web
 (cd web && node "$TS6" -b --force 2>&1 | head -10) && echo ok || { echo FAILED; fail=1; }
 
+echo "== lint"
+printf '  %-9s ' web
+# CI runs `pnpm lint` between the typecheck and the tests; until 2026-10-28 this script did not, and
+# CI failed on four pushes in a row while this said ALL GREEN (an error in PublicTable.tsx)
+OXLINT=$(ls -d "$ROOT/node_modules/.pnpm/"oxlint@*/node_modules/oxlint/bin/oxlint 2>/dev/null | head -1)
+# oxlint exits non-zero on an error; warnings are counted and left alone, as CI leaves them
+(cd web && out=$(node "$OXLINT" 2>&1); rc=$?; w=$(printf '%s\n' "$out" | grep -c ": warning "); e=$(printf '%s\n' "$out" | grep ": error ")
+ [ $rc -eq 0 ] && echo "ok ($w warnings)" || { printf '%s\n' "$e" | head -5; exit 1; }) || { echo FAILED; fail=1; }
+
 echo "== tests"
 for pkg in engine solver; do
   printf '  %-9s ' "$pkg"

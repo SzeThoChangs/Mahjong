@@ -60,6 +60,16 @@ Nothing left a phone before.
 
 **Impact:** Every money figure from this date is against the new Coach. Ten passes in `MISTAKES.md`.
 
+### 2026-10-28 — CI green again; check.sh runs lint
+
+**Changed:** the table's fit hook is called before its early return; two Train memos list the
+Joker count they use; `check.sh` runs `oxlint` as CI does.
+
+**Why:** CI failed at lint on every push from 2026-10-09, unseen, because only the deploy was
+checked and `check.sh` had no lint step (`M-007`).
+
+**Impact:** Ten passes in `MISTAKES.md`.
+
 ### 2026-10-08 — The table shrinks to fit its card
 
 **Changed:** when the table is wider than its card it is scaled down to fit, with the card given
