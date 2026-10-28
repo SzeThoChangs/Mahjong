@@ -59,7 +59,7 @@ recorded properly in `OPEN-ITEMS.md`, and any decision that results from acting 
 
 ## Last Updated
 
-2026-10-10 03:31 (Singapore)
+2026-10-28 22:49 (Singapore)
 
 ## Last Session / Work Package
 
@@ -144,12 +144,11 @@ whole pack.
 
 ### Next
 
-`Q-008` resolved 2026-10-10: the study used no wildcards (a 148-tile wall). `Q-007` waits on
-Changs: five screenshots of the study, book pages 130 to 134 (section 6.5, All-Pong at minimum 2).
-When they arrive, read the table, replace the flat +0.5 in the solver, and measure it.
-
-Beside that, the plan's phase is "use it and say what is wrong" (`PLAN.md`, Q-001, Q-004).
-Changs's, any time: retire `coach` once `strong-min2` is big enough (`D-039`); bigger strong packs.
+Nothing is building and nothing waits on the agent (2026-10-28 22:49). CI is green again (it had failed at
+lint since 2026-10-09, fixed today, `M-007`). `Q-007` waits on Changs: five screenshots of the
+study, book pages 130 to 134. Beside that, the plan's phase is "use it and say what is wrong"
+(`PLAN.md`, Q-001, Q-004). Changs's, any time: retire `coach` once `strong-min2` is big enough
+(`D-039`); bigger strong packs.
 
 ### Why
 
